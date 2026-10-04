@@ -1,0 +1,37 @@
+# dvr-cowork configuration. Every value is optional (defaults shown).
+
+[resolve]
+timeline_name = "Edit"        # timeline that receives the narration
+audio_bin = "4. Audio"        # top-level bin the audio is imported into
+audio_track = 4               # A4
+backup_timeline = true        # duplicate the timeline before changing it (Edit_bak_YYYYMMDD_HHMMSS)
+save_project = true
+# Only if Resolve is installed somewhere unusual:
+# script_api = 'C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting'
+# script_lib = 'C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionscript.dll'
+
+[whisper]
+model = "small.en"            # English narration. Faster: "base.en". Other languages: "small" + language
+language = "en"
+device = "cpu"                # "cuda" only if CUDA 12 + cuDNN 9 are installed
+compute_type = "int8"         # cpu: int8 | cuda: float16
+beam_size = 5
+cpu_threads = 0               # 0 = automatic
+
+[align]
+head_pad = 0.10               # s of room kept before each sentence (breath / attack)
+tail_pad = 0.25               # s kept after each sentence (natural decay)
+min_silence = 0.06            # shortest pause that counts as a sentence gap
+silence_db_below_speech = 32  # pause threshold relative to speech loudness
+min_confidence = 0.60         # below this share of recognised words -> flagged
+on_overlap = "push"           # line longer than its gap: push (start later) | trim (cut previous) | abort
+guard_frames = 1              # minimum gap between pieces
+timestamp_clock = "timecode"  # [mm:ss] read off Resolve's timecode. Use "realtime" if taken from a media player
+timestamp_offset = 0.0        # add seconds to every stamp
+markers = false               # timeline marker with the sentence at every onset
+color_low_confidence = "Orange"
+color_pushed = "Pink"
+
+[paths]
+work_dir = ".work"
+models_dir = ".models"

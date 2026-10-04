@@ -1,0 +1,6 @@
+# Example narration timestamp file. [mm:ss] = where the sentence starts on timeline "Edit".
+# Lines starting with # are ignored. Decimals allowed: [01:10.5]
+[00:15] As the first light touches the canopy, the harpy eagle is already watching.
+[00:42] Forty metres below, a troop of brown capuchins moves through the figs.
+[00:51] They are clever, quick, and never alone.
+[01:05] But one juvenile has drifted to the edge of the group.

@@ -1,0 +1,33 @@
+{
+  "skill_name": "hide-logo",
+  "evals": [
+    {
+      "id": 1,
+      "name": "detect_logo_shot_232",
+      "prompt": "/hide-logo",
+      "expected_output": "Detect broadcast logo in shot_232.mp4, add LOGO-START and LOGO-END markers, identify corner location (top-left or top-right), report detection confidence for user approval",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "detect_logo_shot_198",
+      "prompt": "/hide-logo",
+      "expected_output": "Detect broadcast logo in shot_198.mp4, add markers, identify corner, report for review",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "remove_logo_object_removal",
+      "prompt": "/hide-logo --method object-removal --execute",
+      "expected_output": "Apply Object Removal to marked logo regions, create Fusion composition, report success and manual adjustment note",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "remove_logo_zoom_pan",
+      "prompt": "/hide-logo --method zoom-pan --zoom 1.085 --execute",
+      "expected_output": "Apply zoom (1.085) and pan to hide logo off-screen, preserve frame content, report zoom factor and position adjustments applied",
+      "files": []
+    }
+  ]
+}
