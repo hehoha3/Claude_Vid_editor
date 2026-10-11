@@ -19,7 +19,7 @@ DEFAULTS: dict = {
     "resolve": {
         "timeline_name": "Edit",
         "audio_bin": "4. Audio",
-        "audio_track": 4,
+        "audio_track": 2,
         "backup_timeline": True,
         "save_project": True,
         "script_api": "",
@@ -50,6 +50,7 @@ DEFAULTS: dict = {
     "paths": {
         "work_dir": ".work",
         "models_dir": ".models",
+        "ai_video": r"D:\AI_video",  # AI-generated clips root, differs per machine (config.toml)
     },
 }
 

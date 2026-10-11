@@ -355,7 +355,7 @@ def export_frames(resolve, cfg, times, out_dir):
     project.SetCurrentTimeline(tl)
     fps = timeline_fps(tl, project)
     start = int(tl.GetStartFrame())
-    out_dir = Path(out_dir)
+    out_dir = Path(out_dir).resolve()  # Resolve writes nothing for a relative path
     out_dir.mkdir(parents=True, exist_ok=True)
     try:
         page = resolve.GetCurrentPage()

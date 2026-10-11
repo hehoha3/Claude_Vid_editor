@@ -3,7 +3,7 @@
 Workspace dùng với **Claude Code CLI trên Windows 11**. Gồm:
 
 - **vo-sync**: đọc file timestamp + nghe audio narration bằng Whisper → import vào bin `4. Audio`
-  → đặt lên track **A4** của timeline **Edit** → chia thành từng câu và đặt mỗi câu bắt đầu đúng
+  → đặt lên track **A2** của timeline **Edit** → chia thành từng câu và đặt mỗi câu bắt đầu đúng
   thời điểm trong file timestamp.
 - **Mắt cho Claude**: xuất frame đã grade từ timeline + "scope số" (độ sáng, clipping, saturation,
   ám màu) để Claude nhận xét có căn cứ.
@@ -15,14 +15,19 @@ Workspace dùng với **Claude Code CLI trên Windows 11**. Gồm:
 Yêu cầu: DaVinci Resolve 18.5+ (khuyến nghị 19/20), **Python 3.11 hoặc 3.12 64-bit** từ
 python.org (tick "Add python.exe to PATH"), Claude Code.
 
-1. Giải nén vào ví dụ `D:\dvr-cowork` (đường dẫn nên không dấu).
-2. Mở PowerShell trong thư mục đó:
+Thêm: **ffmpeg** trên PATH (`winget install Gyan.FFmpeg`), ổ mạng chung map thành **`Z:`** (chỉ đọc + copy),
+GPU NVIDIA cho YOLO (không có thì chạy setup với `-SkipYolo`).
+
+1. `git clone <repo> D:\dvr-cowork` (đường dẫn nên không dấu).
+2. Sửa `config.toml` → `[paths] ai_video` = thư mục clip AI trên máy bạn (mặc định `D:\AI_video`).
+3. Mở PowerShell trong thư mục đó:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\setup.ps1
    ```
-   Script tạo `.venv`, cài thư viện, tải model Whisper (~0,5 GB, một lần), chạy self-test và `doctor`.
-3. Trong Resolve: **Preferences > System > General > External scripting using = Local**, khởi động lại Resolve.
-4. Mở project, chạy lại kiểm tra: `.\dvr.cmd doctor` — cần thấy `[OK]` cho Resolve và timeline `Edit`.
+   Script tạo `.venv`, cài thư viện + torch/ultralytics (YOLO), tải model Whisper (~0,5 GB, một lần), chạy
+   self-test và `doctor`. Index + tag thư viện (`.work/library/`) đã có sẵn trong repo: không cần tag lại.
+4. Trong Resolve: **Preferences > System > General > External scripting using = Local**, khởi động lại Resolve.
+5. Mở project, chạy lại kiểm tra: `.\dvr.cmd doctor` — cần thấy `[OK]` cho Resolve và timeline `Edit`.
 
 > Nếu `doctor` vẫn không kết nối được (một số bản Free hạn chế scripting từ bên ngoài): chạy
 > `install_inapp.ps1` một lần. Khi đó: `.\dvr.cmd vo-sync analyze ...` ở ngoài, rồi trong Resolve
@@ -35,7 +40,7 @@ cd D:\dvr-cowork
 claude
 ```
 Lệnh nhanh:
-- `/sync-vo "D:\VO\ep1.mp3" "D:\VO\ep1_timestamps.txt"` — đồng bộ narration lên A4
+- `/sync-vo "D:\VO\ep1.mp3" "D:\VO\ep1_timestamps.txt"` — đồng bộ narration lên A2
 - `/review-frame 01:10 02:35 04:02` — Claude xem frame đã grade và đề xuất cách sửa cụ thể
 - `/project-status` — tóm tắt project / timeline / track
 
@@ -57,8 +62,8 @@ Các bước:
 2. Khớp từng câu trong file với lời nghe được (chịu được từ nghe sai, số viết bằng chữ/số).
 3. Tinh chỉnh điểm cắt vào **đúng khoảng lặng thật** giữa hai câu trên dạng sóng (chính xác ~10 ms;
    Whisper một mình lệch 50–200 ms).
-4. Trong Resolve: tạo bin `4. Audio` nếu chưa có, import audio nếu chưa có, tạo track A4 nếu chưa
-   có, **sao lưu timeline** (`Edit_bak_...`), xoá các đoạn cũ của chính file này trên A4, rồi đặt
+4. Trong Resolve: tạo bin `4. Audio` nếu chưa có, import audio nếu chưa có, tạo track A2 nếu chưa
+   có, **sao lưu timeline** (`Edit_bak_...`), xoá các đoạn cũ của chính file này trên A2, rồi đặt
    từng câu sao cho **âm tiết đầu tiên rơi đúng timestamp** (giữ 0,10 s trước và 0,25 s sau câu để
    không mất hơi thở/đuôi âm).
 5. Kiểm tra lại vị trí từng đoạn, ghi báo cáo `.work/<tên audio>/report.md`.
@@ -67,11 +72,11 @@ Các bước:
 nhiều clip trên timeline cùng trỏ vào **một file nguồn** với điểm in/out khác nhau. Công cụ tạo ra
 đúng cấu trúc đó — **không cắt ra file nhỏ nào**, vẫn roll/slip/ripple từng đoạn như clip đã blade.
 
-Màu trên A4: **cam** = câu cần nghe lại (nhận dạng kém / ranh giới không rõ), **hồng** = câu bị đẩy
+Màu trên A2: **cam** = câu cần nghe lại (nhận dạng kém / ranh giới không rõ), **hồng** = câu bị đẩy
 muộn vì câu trước dài hơn khoảng trống tới timestamp kế tiếp. Không màu = sạch.
 
 Tuỳ chọn: `--markers` (marker kèm nội dung câu), `--dry-run` (chỉ tính, không đổi gì),
-`--on-overlap push|trim|abort`, `--force-clear` (A4 đang có clip khác), `--no-backup`.
+`--on-overlap push|trim|abort`, `--force-clear` (A2 đang có clip khác), `--no-backup`.
 Mọi thông số khác trong `config.toml`.
 
 **Lần chạy thật đầu tiên:** nên chạy `--dry-run` trước, sau đó chạy thật và nghe 2–3 điểm nối.
@@ -93,8 +98,12 @@ FreeCAD/KiCad trong project robot của bạn).
 ```
 CLAUDE.md                vai trò + quy tắc (luôn nạp, ngắn)
 .claude/commands/        /sync-vo, /review-frame, /project-status
-.claude/skills/          vo-sync, colorist, edit-craft, audio-post, frame-review, resolve-api
-dvr_cowork/              mã nguồn CLI
+.claude/skills/          doc-edit, scan-source, tag-source, process-ai-video, audio-expert, colorist,
+                         edit-craft, hide-logo, resolve-api
+dvr_cowork/              mã nguồn CLI (vo-sync, frames, info, doctor)
+luts/                    LUT Amazona (make_luts.py, README = luật thiết kế)
+.models/                 Whisper, YOLO-World + CLIP (tải tự động)
+.work/                   cache + index thư viện + plan từng video (không commit)
 inapp/                   script chạy trong Resolve (phương án dự phòng)
 tests/                   self-test (audio tổng hợp + Resolve giả lập)
 config.toml              thông số
@@ -110,4 +119,4 @@ examples/                file timestamp mẫu
 | nhiều câu bị đẩy (hồng) vài phần mười giây | timestamp chỉ chính xác tới giây; dùng `[01:10.4]` hoặc giãn kịch bản |
 | mọi câu lệch đều một khoảng | `timestamp_offset` trong config |
 | lệch tăng dần trên timeline 23.976 | đổi `timestamp_clock` thành `"realtime"` nếu timestamp lấy từ trình phát media |
-| A4 đang có clip khác | chuyển chúng sang track khác hoặc dùng `--force-clear` |
+| A2 đang có clip khác | chuyển chúng sang track khác hoặc dùng `--force-clear` |

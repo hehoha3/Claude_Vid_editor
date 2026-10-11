@@ -279,23 +279,24 @@ def test_overlap(cfg, tmp):
 
 
 def test_apply_mock(cfg, plan, tight_plan):
+    vo = cfg["resolve"]["audio_track"]
     r = FakeResolve()
     proj = r.pm.project
     res = apply_plan(r, plan, cfg, log=lambda m: None)
     tl = proj.timelines[1]
-    a4 = tl.GetItemListInTrack("audio", 4)
-    assert tl.GetTrackCount("audio") == 4, "A3/A4 should have been created"
+    vo_items = tl.GetItemListInTrack("audio", vo)
+    assert tl.GetTrackCount("audio") >= vo, "VO track should exist"
     assert proj.pool.root.subs[0].GetName() == "4. Audio" and proj.imports == 1
-    assert len(a4) == len(plan["segments"]) and res["placed"] == len(a4)
-    assert all(ti.GetMediaPoolItem() is a4[0].GetMediaPoolItem() for ti in a4), "one source clip"
+    assert len(vo_items) == len(plan["segments"]) and res["placed"] == len(vo_items)
+    assert all(ti.GetMediaPoolItem() is vo_items[0].GetMediaPoolItem() for ti in vo_items), "one source clip"
     assert res["max_start_dev"] == 0 and res["max_in_dev"] == 0
     assert res["backup"] and any(t.name == res["backup"] for t in proj.timelines)
     # re-run: no re-import, old pieces replaced, still no overlaps
     res2 = apply_plan(r, plan, cfg, log=lambda m: None, backup=False)
-    assert proj.imports == 1 and res2["removed"] == len(a4)
-    assert len(tl.GetItemListInTrack("audio", 4)) == len(plan["segments"])
-    # foreign clip on A4 -> refuse unless force_clear
-    tl.items[("audio", 4)].append(TItem(MPI("C:/other.wav"), 86400 + 99999, 10, 0))
+    assert proj.imports == 1 and res2["removed"] == len(vo_items)
+    assert len(tl.GetItemListInTrack("audio", vo)) == len(plan["segments"])
+    # foreign clip on the VO track -> refuse unless force_clear
+    tl.items[("audio", vo)].append(TItem(MPI("C:/other.wav"), 86400 + 99999, 10, 0))
     try:
         apply_plan(r, plan, cfg, log=lambda m: None, backup=False)
         raise AssertionError("should refuse")
@@ -304,7 +305,7 @@ def test_apply_mock(cfg, plan, tight_plan):
     apply_plan(r, plan, cfg, log=lambda m: None, backup=False, force_clear=True)
     # tight timestamps with push -> placed without overlap (mock asserts), pushed items coloured
     apply_plan(r, tight_plan, cfg, log=lambda m: None, backup=False, force_clear=True, markers=True)
-    colored = [ti for ti in tl.GetItemListInTrack("audio", 4) if ti.color == cfg["align"]["color_pushed"]]
+    colored = [ti for ti in tl.GetItemListInTrack("audio", vo) if ti.color == cfg["align"]["color_pushed"]]
     assert colored and len(tl.markers) == len(tight_plan["segments"])
     try:
         apply_plan(r, tight_plan, cfg, log=lambda m: None, backup=False, force_clear=True, on_overlap="abort")
@@ -312,10 +313,10 @@ def test_apply_mock(cfg, plan, tight_plan):
     except OverlapError:
         pass
     # dry run changes nothing
-    before = len(tl.GetItemListInTrack("audio", 4))
+    before = len(tl.GetItemListInTrack("audio", vo))
     apply_plan(r, plan, cfg, log=lambda m: None, dry_run=True, force_clear=True)
-    assert len(tl.GetItemListInTrack("audio", 4)) == before
-    print(f"  mock Resolve: bin+import+A4 ok, {res['placed']} items from 1 source clip, rerun idempotent, "
+    assert len(tl.GetItemListInTrack("audio", vo)) == before
+    print(f"  mock Resolve: bin+import+A{vo} ok, {res['placed']} items from 1 source clip, rerun idempotent, "
           f"guards ok, {len(colored)} pushed items coloured")
 
 

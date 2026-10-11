@@ -1,0 +1,4506 @@
+{
+ "clips": {
+  "1376845a3821e8f4": {
+   "path": "Nature_sound\\birds\\bird-ambience-SBA-300025718.mp3",
+   "duration": 20.49,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bird ambience",
+   "category": "Nature_sound"
+  },
+  "a38542b5197f6655": {
+   "path": "Nature_sound\\birds\\bird-call-SBA-300286707.mp3",
+   "duration": 2.51,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bird call",
+   "category": "Nature_sound"
+  },
+  "33df602f415ce8cf": {
+   "path": "Nature_sound\\birds\\bird-chirping-SBA-300283468.mp3",
+   "duration": 0.95,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bird chirping",
+   "category": "Nature_sound"
+  },
+  "a1a20ab8cc692114": {
+   "path": "Nature_sound\\birds\\bird-chirps-SBA-300113567.mp3",
+   "duration": 7.26,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bird chirps",
+   "category": "Nature_sound"
+  },
+  "2756bf91bb447e81": {
+   "path": "Nature_sound\\birds\\bird-wood-thrush-chirp-SBA-300130363.mp3",
+   "duration": 1.33,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bird wood thrush chirp",
+   "category": "Nature_sound"
+  },
+  "3b62b6b23a701bd8": {
+   "path": "Nature_sound\\birds\\dove-cry-2-SBA-300020032.mp3",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "dove cry 2",
+   "category": "Nature_sound"
+  },
+  "8c9cabff125458a9": {
+   "path": "Nature_sound\\birds\\forest-bird-singing-2-nature-quiet-relax-SBA-300420016.mp3",
+   "duration": 87.38,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "forest bird singing 2 nature quiet relax",
+   "category": "Nature_sound"
+  },
+  "6213905010c8f44b": {
+   "path": "Nature_sound\\birds\\forest-bird-singing-nature-quiet-relax-SBA-300420040.mp3",
+   "duration": 133.18,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "forest bird singing nature quiet relax",
+   "category": "Nature_sound"
+  },
+  "e5b30273f007e024": {
+   "path": "Nature_sound\\birds\\morning-birds-chirping-SBA-300420983.mp3",
+   "duration": 47.72,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "morning birds chirping",
+   "category": "Nature_sound"
+  },
+  "0506861ef09c6e78": {
+   "path": "Nature_sound\\crickets_night\\ambience-loops-evening-crickets-chirping-close-up-2-SBA-355011320.mp3",
+   "width": 375,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 6.0,
+   "has_audio": true,
+   "title_hint": "ambience loops evening crickets chirping close up 2",
+   "category": "Nature_sound"
+  },
+  "b87ff6f6d0f78b19": {
+   "path": "Nature_sound\\crickets_night\\cricket-chirping-SBA-300283914.mp3",
+   "duration": 75.17,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "cricket chirping",
+   "category": "Nature_sound"
+  },
+  "9830972a5ac42b84": {
+   "path": "Nature_sound\\crickets_night\\crickets-near-country-road-SBA-300054858.mp3",
+   "duration": 100.13,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "crickets near country road",
+   "category": "Nature_sound"
+  },
+  "88d097d6e0048dad": {
+   "path": "Nature_sound\\crickets_night\\evening-bugs-distant-traffic-rooster-quiet-dusk-01-SBA-355011054.mp3",
+   "width": 500,
+   "height": 501,
+   "fps": 90000.0,
+   "duration": 149.23,
+   "has_audio": true,
+   "title_hint": "evening bugs distant traffic rooster quiet dusk 01",
+   "category": "Nature_sound"
+  },
+  "85a21a40b9f28039": {
+   "path": "Nature_sound\\crickets_night\\field-crickets-ambience-evening-nature-summer-SBA-300419971.mp3",
+   "duration": 62.95,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "field crickets ambience evening nature summer",
+   "category": "Nature_sound"
+  },
+  "0ebd8ed550f16a72": {
+   "path": "Nature_sound\\crickets_night\\loop-forest-woodlands-summer-night-insect-noise-up-close-03-SBA-355011325.mp3",
+   "width": 375,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 32.72,
+   "has_audio": true,
+   "title_hint": "loop forest woodlands summer night insect noise up close 03",
+   "category": "Nature_sound"
+  },
+  "768bfc338876b6a4": {
+   "path": "Nature_sound\\crickets_night\\loop-night-insects-rural-mountian-crickets-chatter-1-tennessee-SBA-355011219.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 24.5,
+   "has_audio": true,
+   "title_hint": "loop night insects rural mountian crickets chatter 1 tennessee",
+   "category": "Nature_sound"
+  },
+  "70eb07f61cf3d823": {
+   "path": "Nature_sound\\crickets_night\\loop-night-insects-rural-mountian-crickets-chatter-2-tennessee-SBA-355011199.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 50.0,
+   "has_audio": true,
+   "title_hint": "loop night insects rural mountian crickets chatter 2 tennessee",
+   "category": "Nature_sound"
+  },
+  "053c78e1473edc8c": {
+   "path": "Nature_sound\\crickets_night\\windy-cricket-meadow-SBA-300055811.mp3",
+   "duration": 103.97,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "windy cricket meadow",
+   "category": "Nature_sound"
+  },
+  "912d44974d5c3369": {
+   "path": "Nature_sound\\forest_ambience\\forest-wind-trees-creek-birds-singing-SBA-300426210.mp3",
+   "duration": 54.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "forest wind trees creek birds singing",
+   "category": "Nature_sound"
+  },
+  "f0434ed299a5c928": {
+   "path": "Nature_sound\\forest_ambience\\loop-forest-alpine-mountian-river-waterflow-birds-distant-thunder-02-SBA-354859790.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 210.41,
+   "has_audio": true,
+   "title_hint": "loop forest alpine mountian river waterflow birds distant thunder 02",
+   "category": "Nature_sound"
+  },
+  "272df88ae64f427f": {
+   "path": "Nature_sound\\forest_ambience\\loop-forest-summer-birdsong-wildlife-insect-drone-01-SBA-355011165.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 152.0,
+   "has_audio": true,
+   "title_hint": "loop forest summer birdsong wildlife insect drone 01",
+   "category": "Nature_sound"
+  },
+  "398c874c8042e28e": {
+   "path": "Nature_sound\\forest_ambience\\loop-forest-summer-birdsong-wildlife-insect-drone-02-SBA-355011161.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 144.15,
+   "has_audio": true,
+   "title_hint": "loop forest summer birdsong wildlife insect drone 02",
+   "category": "Nature_sound"
+  },
+  "a7862d4a4d63c32f": {
+   "path": "Nature_sound\\forest_ambience\\walk-on-leaves-in-forest-3-SBA-300426094.mp3",
+   "duration": 51.69,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "walk on leaves in forest 3",
+   "category": "Nature_sound"
+  },
+  "0115f1a180cea9c6": {
+   "path": "Nature_sound\\insects\\animals-bug-insect-flies-hum-buzz-fly-around-garden-SBA-355012243.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 3.59,
+   "has_audio": true,
+   "title_hint": "animals bug insect flies hum buzz fly around garden",
+   "category": "Nature_sound"
+  },
+  "5c912ed07a0a349e": {
+   "path": "Nature_sound\\insects\\bee-buzzing-SBA-300156768.mp3",
+   "duration": 5.95,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bee buzzing",
+   "category": "Nature_sound"
+  },
+  "af14f6c286fd7243": {
+   "path": "Nature_sound\\insects\\bumblebee-buzzing-SBA-300419101.mp3",
+   "duration": 9.05,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bumblebee buzzing",
+   "category": "Nature_sound"
+  },
+  "9a91db2dc304a88d": {
+   "path": "Nature_sound\\insects\\house-fly-wings-fly-by-electrical-source-zap-SBA-300099313.mp3",
+   "duration": 2.44,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "house fly wings fly by electrical source zap",
+   "category": "Nature_sound"
+  },
+  "ba8a0ca31b688fce": {
+   "path": "Nature_sound\\insects\\insect-buzzing-SBA-300070863.mp3",
+   "duration": 7.06,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "insect buzzing",
+   "category": "Nature_sound"
+  },
+  "fdb9b2e177a2f5dd": {
+   "path": "Nature_sound\\rain\\hard-rain-SBA-300283515.mp3",
+   "duration": 262.79,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "hard rain",
+   "category": "Nature_sound"
+  },
+  "3e246cddda537b04": {
+   "path": "Nature_sound\\rain\\loop-rain-heavy-on-leaves-forest-woodland-birds-SBA-355239831.mp3",
+   "width": 375,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 24.75,
+   "has_audio": true,
+   "title_hint": "loop rain heavy on leaves forest woodland birds",
+   "category": "Nature_sound"
+  },
+  "ebcce78719ebb02d": {
+   "path": "Nature_sound\\rain\\rain-country-forest-drizzle-on-leaves-medium-steady-SBA-355239907.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 144.0,
+   "has_audio": true,
+   "title_hint": "rain country forest drizzle on leaves medium steady",
+   "category": "Nature_sound"
+  },
+  "a279a940cf7cd2d9": {
+   "path": "Nature_sound\\rain\\rain-in-forest-ambience-SBA-300282361.mp3",
+   "duration": 90.02,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "rain in forest ambience",
+   "category": "Nature_sound"
+  },
+  "413fe4d05c80bf5d": {
+   "path": "Nature_sound\\thunder\\distant-isolated-thunder-SBA-300054414.mp3",
+   "duration": 26.11,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "distant isolated thunder",
+   "category": "Nature_sound"
+  },
+  "513900f4b1c67cd6": {
+   "path": "Nature_sound\\thunder\\distant-rumbling-strong-thunder-SBA-300062179.mp3",
+   "duration": 15.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "distant rumbling strong thunder",
+   "category": "Nature_sound"
+  },
+  "b0773e31ab976514": {
+   "path": "Nature_sound\\thunder\\isolated-thunder-strikes-with-light-rain-SBA-300055717.mp3",
+   "duration": 35.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "isolated thunder strikes with light rain",
+   "category": "Nature_sound"
+  },
+  "5c6b34df67d21679": {
+   "path": "Nature_sound\\thunder\\strong-distant-thunder-SBA-300055821.mp3",
+   "duration": 18.27,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "strong distant thunder",
+   "category": "Nature_sound"
+  },
+  "a74cb762062bc42b": {
+   "path": "Nature_sound\\thunder\\strong-fast-thunder-SBA-300070165.mp3",
+   "duration": 7.62,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "strong fast thunder",
+   "category": "Nature_sound"
+  },
+  "e576539a2bae8609": {
+   "path": "Nature_sound\\thunder\\tieng_sấm.mp3",
+   "duration": 7.16,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "tieng sấm",
+   "category": "Nature_sound"
+  },
+  "643cb6c418822c32": {
+   "path": "Nature_sound\\thunder\\tieng_sấm_va_mưa.mp3",
+   "duration": 60.02,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "tieng sấm va mưa",
+   "category": "Nature_sound"
+  },
+  "521497f0f8697911": {
+   "path": "Nature_sound\\thunder\\transition-nature-weather-thunder-distant-boom-rain-07-SBA-355245297.mp3",
+   "width": 500,
+   "height": 500,
+   "fps": 90000.0,
+   "duration": 14.34,
+   "has_audio": true,
+   "title_hint": "transition nature weather thunder distant boom rain 07",
+   "category": "Nature_sound"
+  },
+  "59de5c2a00bf2870": {
+   "path": "Nature_sound\\water\\forest-river-flowing-gently-ambience-SBA-300282283.mp3",
+   "duration": 150.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "forest river flowing gently ambience",
+   "category": "Nature_sound"
+  },
+  "64beec0949371811": {
+   "path": "Nature_sound\\water\\river-flowing-ambience-01-SBA-300282231.mp3",
+   "duration": 60.01,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "river flowing ambience 01",
+   "category": "Nature_sound"
+  },
+  "a4a5c2d32e9938fb": {
+   "path": "Nature_sound\\water\\river-rushing-ambience-02-SBA-300282306.mp3",
+   "duration": 120.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "river rushing ambience 02",
+   "category": "Nature_sound"
+  },
+  "509cbe69f6161ec8": {
+   "path": "Nature_sound\\water\\small-river-flowing-01-SBA-300282391.mp3",
+   "duration": 210.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "small river flowing 01",
+   "category": "Nature_sound"
+  },
+  "b74fed6744b58209": {
+   "path": "Nature_sound\\water\\small-river-flowing-02-SBA-300282396.mp3",
+   "duration": 210.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "small river flowing 02",
+   "category": "Nature_sound"
+  },
+  "1bbf1ba95d4317fa": {
+   "path": "Nature_sound\\water\\tiếng_suối.mp3",
+   "duration": 39.55,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "tiếng suối",
+   "category": "Nature_sound"
+  },
+  "6ef4fe5a8b09d0a3": {
+   "path": "Nature_sound\\water\\under_water_1.mp3",
+   "duration": 22.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "under water 1",
+   "category": "Nature_sound"
+  },
+  "e7eac5e839b2fc61": {
+   "path": "Nature_sound\\water\\waterfall-1-SBA-300286969.mp3",
+   "duration": 41.33,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "waterfall 1",
+   "category": "Nature_sound"
+  },
+  "624be4c52a9ee423": {
+   "path": "Nature_sound\\water\\waterfall-ambience-SBA-300282389.mp3",
+   "duration": 59.99,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "waterfall ambience",
+   "category": "Nature_sound"
+  },
+  "ba897be473265708": {
+   "path": "Nature_sound\\wind\\howling-wind-looping-SBA-300055791.mp3",
+   "duration": 59.54,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "howling wind looping",
+   "category": "Nature_sound"
+  },
+  "0637ab9c81f6ace4": {
+   "path": "Nature_sound\\wind\\light-wind-forest-ambience-breeze-nature-morning-SBA-300420725.mp3",
+   "duration": 117.66,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "light wind forest ambience breeze nature morning",
+   "category": "Nature_sound"
+  },
+  "d8d416fc07eae1e4": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 1.wav",
+   "duration": 2.71,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 1",
+   "category": "SXF"
+  },
+  "80691a79bf8be4ae": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 2.wav",
+   "duration": 5.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 2",
+   "category": "SXF"
+  },
+  "126d95343ac53f07": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 3.wav",
+   "duration": 2.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 3",
+   "category": "SXF"
+  },
+  "69a8188d6b839699": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 4.wav",
+   "duration": 8.13,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 4",
+   "category": "SXF"
+  },
+  "12545be64018c4b3": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 5.wav",
+   "duration": 3.39,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 5",
+   "category": "SXF"
+  },
+  "a8ea28be792dec05": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 6.wav",
+   "duration": 2.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 6",
+   "category": "SXF"
+  },
+  "4ccb5b2997635092": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 7.wav",
+   "duration": 4.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 7",
+   "category": "SXF"
+  },
+  "24f0568a26ba27b6": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 8.wav",
+   "duration": 3.39,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 8",
+   "category": "SXF"
+  },
+  "a14dda0446c5fcce": {
+   "path": "SXF\\336 SFX\\ELEMENT\\FIRE\\FIRE 9.wav",
+   "duration": 5.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FIRE 9",
+   "category": "SXF"
+  },
+  "d413be05b0ab04d4": {
+   "path": "SXF\\336 SFX\\ELEMENT\\WATER\\WATER 1.wav",
+   "duration": 5.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WATER 1",
+   "category": "SXF"
+  },
+  "ca48176bf1aa7932": {
+   "path": "SXF\\336 SFX\\ELEMENT\\WATER\\WATER 2.wav",
+   "duration": 2.71,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WATER 2",
+   "category": "SXF"
+  },
+  "0ceebc7c0dba5d8b": {
+   "path": "SXF\\336 SFX\\ELEMENT\\WATER\\WATER 3.wav",
+   "duration": 5.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WATER 3",
+   "category": "SXF"
+  },
+  "783506c4f944f44d": {
+   "path": "SXF\\336 SFX\\ELEMENT\\WATER\\WATER 4.wav",
+   "duration": 2.71,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WATER 4",
+   "category": "SXF"
+  },
+  "8bf09a6ef767598b": {
+   "path": "SXF\\336 SFX\\ELEMENT\\WATER\\WATER 5.wav",
+   "duration": 5.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WATER 5",
+   "category": "SXF"
+  },
+  "0785f66557529484": {
+   "path": "SXF\\336 SFX\\ELEMENT\\WATER\\WATER 6.wav",
+   "duration": 2.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WATER 6",
+   "category": "SXF"
+  },
+  "2cb9073f9233a0e8": {
+   "path": "SXF\\336 SFX\\HITS\\Continue hit.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Continue hit",
+   "category": "SXF"
+  },
+  "d4df7d05fcab849f": {
+   "path": "SXF\\336 SFX\\HITS\\Deep hit.wav",
+   "duration": 10.51,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep hit",
+   "category": "SXF"
+  },
+  "32c63426f11d6999": {
+   "path": "SXF\\336 SFX\\HITS\\Deep intense hit two.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep intense hit two",
+   "category": "SXF"
+  },
+  "17a185da5411cbbc": {
+   "path": "SXF\\336 SFX\\HITS\\Deep intense hit.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep intense hit",
+   "category": "SXF"
+  },
+  "1a26462224d67a0f": {
+   "path": "SXF\\336 SFX\\HITS\\Deep solid hit.wav",
+   "duration": 3.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep solid hit",
+   "category": "SXF"
+  },
+  "a62d5a3e28c6be52": {
+   "path": "SXF\\336 SFX\\HITS\\Deep solid two.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep solid two",
+   "category": "SXF"
+  },
+  "a1d5a0d24370875e": {
+   "path": "SXF\\336 SFX\\HITS\\Deep whoosh hit.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep whoosh hit",
+   "category": "SXF"
+  },
+  "cae6216424f98c06": {
+   "path": "SXF\\336 SFX\\HITS\\Different.wav",
+   "duration": 24.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Different",
+   "category": "SXF"
+  },
+  "13de34b6364f6bf1": {
+   "path": "SXF\\336 SFX\\HITS\\Gleam hit.wav",
+   "duration": 7.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Gleam hit",
+   "category": "SXF"
+  },
+  "b02f36278515aab3": {
+   "path": "SXF\\336 SFX\\HITS\\Hit.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Hit",
+   "category": "SXF"
+  },
+  "6cbbe07b86032b4e": {
+   "path": "SXF\\336 SFX\\HITS\\Intense hit three.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense hit three",
+   "category": "SXF"
+  },
+  "0170067d93a06b25": {
+   "path": "SXF\\336 SFX\\HITS\\Intense hit two.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense hit two",
+   "category": "SXF"
+  },
+  "11cdcb569d1eeea3": {
+   "path": "SXF\\336 SFX\\HITS\\Intense hit.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense hit",
+   "category": "SXF"
+  },
+  "4a7588f583abf533": {
+   "path": "SXF\\336 SFX\\HITS\\Intense solid.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense solid",
+   "category": "SXF"
+  },
+  "d5c38f96b7b59e14": {
+   "path": "SXF\\336 SFX\\HITS\\It's over.wav",
+   "duration": 7.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "It's over",
+   "category": "SXF"
+  },
+  "275526c43ac2a748": {
+   "path": "SXF\\336 SFX\\HITS\\It's raining hit.wav",
+   "duration": 12.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "It's raining hit",
+   "category": "SXF"
+  },
+  "65833b250f550629": {
+   "path": "SXF\\336 SFX\\HITS\\It's time.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "It's time",
+   "category": "SXF"
+  },
+  "eaae87ea79af9abb": {
+   "path": "SXF\\336 SFX\\HITS\\Pause hit.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Pause hit",
+   "category": "SXF"
+  },
+  "5770ef2ae99d48b9": {
+   "path": "SXF\\336 SFX\\HITS\\Repeat this hit.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Repeat this hit",
+   "category": "SXF"
+  },
+  "e7e2b7415084ac8e": {
+   "path": "SXF\\336 SFX\\HITS\\Solid hit four.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Solid hit four",
+   "category": "SXF"
+  },
+  "dd6e2ab963b552c4": {
+   "path": "SXF\\336 SFX\\HITS\\Solid hit one.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Solid hit one",
+   "category": "SXF"
+  },
+  "3fbe7613010da9fa": {
+   "path": "SXF\\336 SFX\\HITS\\Solid hit three.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Solid hit three",
+   "category": "SXF"
+  },
+  "ef9b82d8b3cba936": {
+   "path": "SXF\\336 SFX\\HITS\\Solid hit two.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Solid hit two",
+   "category": "SXF"
+  },
+  "0499b967ac7dcfcd": {
+   "path": "SXF\\336 SFX\\HITS\\Stand off.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Stand off",
+   "category": "SXF"
+  },
+  "04db873326df5482": {
+   "path": "SXF\\336 SFX\\HITS\\Thunder.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Thunder",
+   "category": "SXF"
+  },
+  "0661b40d21f09cf9": {
+   "path": "SXF\\336 SFX\\HITS\\Water hit.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Water hit",
+   "category": "SXF"
+  },
+  "2bc97e1d2ff6d16d": {
+   "path": "SXF\\336 SFX\\HITS\\Whoosh hit.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh hit",
+   "category": "SXF"
+  },
+  "1ba7b2da3379f1a1": {
+   "path": "SXF\\336 SFX\\HITS\\low deep.wav",
+   "duration": 14.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "low deep",
+   "category": "SXF"
+  },
+  "8e5de705d56e433f": {
+   "path": "SXF\\336 SFX\\MIX\\360-riser-impact-370401.mp3",
+   "duration": 5.09,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "360 riser impact 370401",
+   "category": "SXF"
+  },
+  "44b9cfb20faa05bc": {
+   "path": "SXF\\336 SFX\\MIX\\AIRY WHOOSH (1).wav",
+   "duration": 11.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "AIRY WHOOSH (1)",
+   "category": "SXF"
+  },
+  "d6f5a10371089ba3": {
+   "path": "SXF\\336 SFX\\MIX\\BASS DROP (10).wav",
+   "duration": 7.0,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "BASS DROP (10)",
+   "category": "SXF"
+  },
+  "7eb8a1ceb3f07d28": {
+   "path": "SXF\\336 SFX\\MIX\\BASS DROP (16).wav",
+   "duration": 15.3,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "BASS DROP (16)",
+   "category": "SXF"
+  },
+  "620a618d3f12c80d": {
+   "path": "SXF\\336 SFX\\MIX\\BOOM IMPACT (23).wav",
+   "duration": 11.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "BOOM IMPACT (23)",
+   "category": "SXF"
+  },
+  "2113aa8d82a1443b": {
+   "path": "SXF\\336 SFX\\MIX\\CLOCK TENSION (7).wav",
+   "duration": 8.0,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "CLOCK TENSION (7)",
+   "category": "SXF"
+  },
+  "3e14605a2fb23884": {
+   "path": "SXF\\336 SFX\\MIX\\Cinematic Boom 3.mp3",
+   "duration": 6.03,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Cinematic Boom 3",
+   "category": "SXF"
+  },
+  "cdb4dc28121868ff": {
+   "path": "SXF\\336 SFX\\MIX\\Cinematic Boom Soft.wav",
+   "duration": 7.73,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Boom Soft",
+   "category": "SXF"
+  },
+  "39105e17ec1423fb": {
+   "path": "SXF\\336 SFX\\MIX\\Cool whoosh.wav",
+   "duration": 1.6,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Cool whoosh",
+   "category": "SXF"
+  },
+  "48b171949fb3417f": {
+   "path": "SXF\\336 SFX\\MIX\\DEEP DRONE (32).wav",
+   "duration": 30.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "DEEP DRONE (32)",
+   "category": "SXF"
+  },
+  "547210426a120c50": {
+   "path": "SXF\\336 SFX\\MIX\\DEEP WHOOSH (4).wav",
+   "duration": 5.85,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "DEEP WHOOSH (4)",
+   "category": "SXF"
+  },
+  "2e39dd21ad2c758b": {
+   "path": "SXF\\336 SFX\\MIX\\DISTORTED IMPACT (17).wav",
+   "duration": 4.46,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "DISTORTED IMPACT (17)",
+   "category": "SXF"
+  },
+  "2de7dfa9dc349279": {
+   "path": "SXF\\336 SFX\\MIX\\ETHERAL DRONE (43).wav",
+   "duration": 19.54,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "ETHERAL DRONE (43)",
+   "category": "SXF"
+  },
+  "40c9ec49a93fbc51": {
+   "path": "SXF\\336 SFX\\MIX\\Fast whip.wav",
+   "duration": 1.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Fast whip",
+   "category": "SXF"
+  },
+  "3420eddbf8ee0909": {
+   "path": "SXF\\336 SFX\\MIX\\Fast whoosh.wav",
+   "duration": 1.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Fast whoosh",
+   "category": "SXF"
+  },
+  "6982c38ef5ff15e7": {
+   "path": "SXF\\336 SFX\\MIX\\Gears  2.wav",
+   "duration": 2.15,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Gears  2",
+   "category": "SXF"
+  },
+  "7d127c7188148488": {
+   "path": "SXF\\336 SFX\\MIX\\HIT WHOOSH (1).wav",
+   "duration": 5.08,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "HIT WHOOSH (1)",
+   "category": "SXF"
+  },
+  "894d46627fc7c506": {
+   "path": "SXF\\336 SFX\\MIX\\LONG RISER (33).wav",
+   "duration": 11.67,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "LONG RISER (33)",
+   "category": "SXF"
+  },
+  "8e6586eb1e48b1d1": {
+   "path": "SXF\\336 SFX\\MIX\\LOW HORN (39).wav",
+   "duration": 2.31,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "LOW HORN (39)",
+   "category": "SXF"
+  },
+  "d9f8b9bf667ad4b2": {
+   "path": "SXF\\336 SFX\\MIX\\LOW HORN (5).wav",
+   "duration": 10.7,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "LOW HORN (5)",
+   "category": "SXF"
+  },
+  "f9e2adba61c73ce0": {
+   "path": "SXF\\336 SFX\\MIX\\Long swoosh.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Long swoosh",
+   "category": "SXF"
+  },
+  "dd36709867331e74": {
+   "path": "SXF\\336 SFX\\MIX\\METAL HIT (1).wav",
+   "duration": 5.0,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "METAL HIT (1)",
+   "category": "SXF"
+  },
+  "4ded4470345304dc": {
+   "path": "SXF\\336 SFX\\MIX\\PIANO TENSION (1).wav",
+   "duration": 4.0,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "PIANO TENSION (1)",
+   "category": "SXF"
+  },
+  "16d12ea756a00984": {
+   "path": "SXF\\336 SFX\\MIX\\QUICK RISER (7).wav",
+   "duration": 2.29,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "QUICK RISER (7)",
+   "category": "SXF"
+  },
+  "ba3e1b9b778a8a85": {
+   "path": "SXF\\336 SFX\\MIX\\QUICK WHOOSH (7).wav",
+   "duration": 1.04,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "QUICK WHOOSH (7)",
+   "category": "SXF"
+  },
+  "56bbb0e500829e1c": {
+   "path": "SXF\\336 SFX\\MIX\\REVERB HIT (12).wav",
+   "duration": 5.88,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "REVERB HIT (12)",
+   "category": "SXF"
+  },
+  "00f0974a86beee3e": {
+   "path": "SXF\\336 SFX\\MIX\\REVERSE (16).wav",
+   "duration": 3.99,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "REVERSE (16)",
+   "category": "SXF"
+  },
+  "86b6b360148fbc07": {
+   "path": "SXF\\336 SFX\\MIX\\REVERSE (42).wav",
+   "duration": 0.93,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "REVERSE (42)",
+   "category": "SXF"
+  },
+  "f3c0be2d462ad5e8": {
+   "path": "SXF\\336 SFX\\MIX\\RUMBLE AMBIENT (10).wav",
+   "duration": 25.85,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "RUMBLE AMBIENT (10)",
+   "category": "SXF"
+  },
+  "eaf87bb10d83ecd6": {
+   "path": "SXF\\336 SFX\\MIX\\Riser 4.wav",
+   "duration": 6.52,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Riser 4",
+   "category": "SXF"
+  },
+  "64e8ce1dd352ef8d": {
+   "path": "SXF\\336 SFX\\MIX\\Riser Dark.wav",
+   "duration": 4.01,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Riser Dark",
+   "category": "SXF"
+  },
+  "74bc3b03b68e5663": {
+   "path": "SXF\\336 SFX\\MIX\\Swoosh 2.wav",
+   "duration": 1.0,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Swoosh 2",
+   "category": "SXF"
+  },
+  "6ef7117a134b10dd": {
+   "path": "SXF\\336 SFX\\MIX\\Swoosh very long.wav",
+   "duration": 4.26,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Swoosh very long",
+   "category": "SXF"
+  },
+  "38805f0d1093f088": {
+   "path": "SXF\\336 SFX\\MIX\\WIND AMBIENT (4).wav",
+   "duration": 6.0,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "WIND AMBIENT (4)",
+   "category": "SXF"
+  },
+  "6e5969733167f12d": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh 1.wav",
+   "duration": 1.6,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Whoosh 1",
+   "category": "SXF"
+  },
+  "ad1c784efa141733": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh 3.wav",
+   "duration": 3.1,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Whoosh 3",
+   "category": "SXF"
+  },
+  "2f336d63b6a93786": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh 8.wav",
+   "duration": 3.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh 8",
+   "category": "SXF"
+  },
+  "1b9548c6f00f309d": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh 9.wav",
+   "duration": 2.38,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Whoosh 9",
+   "category": "SXF"
+  },
+  "21196627bce9e760": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh Airy Tonal Tail.wav",
+   "duration": 1.96,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh Airy Tonal Tail",
+   "category": "SXF"
+  },
+  "35750db8873f712c": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh Deep Light.wav",
+   "duration": 3.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh Deep Light",
+   "category": "SXF"
+  },
+  "3ba3fe64d5317e22": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh Deep Short (2).wav",
+   "duration": 2.34,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh Deep Short (2)",
+   "category": "SXF"
+  },
+  "c73b43762d135cd6": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh Deep Short.wav",
+   "duration": 2.34,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh Deep Short",
+   "category": "SXF"
+  },
+  "7899af991b945a5a": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh Main.wav",
+   "duration": 1.72,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Whoosh Main",
+   "category": "SXF"
+  },
+  "10a960031b815418": {
+   "path": "SXF\\336 SFX\\MIX\\Whoosh3.wav",
+   "duration": 2.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh3",
+   "category": "SXF"
+  },
+  "acb51d5dba313098": {
+   "path": "SXF\\336 SFX\\MIX\\big-bubble-2-169074.mp3",
+   "duration": 0.58,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "big bubble 2 169074",
+   "category": "SXF"
+  },
+  "9a6d61e4699d1a11": {
+   "path": "SXF\\336 SFX\\MIX\\fast-whoosh-118248.mp3",
+   "duration": 1.2,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "fast whoosh 118248",
+   "category": "SXF"
+  },
+  "3aff1ec3566ea973": {
+   "path": "SXF\\336 SFX\\MIX\\panoramic.wav",
+   "duration": 1.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "panoramic",
+   "category": "SXF"
+  },
+  "90a51fbd414d00e6": {
+   "path": "SXF\\336 SFX\\MIX\\sharp-riser-327342.mp3",
+   "duration": 1.88,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "sharp riser 327342",
+   "category": "SXF"
+  },
+  "c624327a1009d076": {
+   "path": "SXF\\336 SFX\\MIX\\snaping-42970.mp3",
+   "duration": 12.34,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "snaping 42970",
+   "category": "SXF"
+  },
+  "1d1762b16b7132f7": {
+   "path": "SXF\\336 SFX\\MIX\\swoosh-026-454861.mp3",
+   "duration": 1.12,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "swoosh 026 454861",
+   "category": "SXF"
+  },
+  "d87039931436638e": {
+   "path": "SXF\\336 SFX\\MIX\\swoosh-riser-reverb-390309.mp3",
+   "duration": 6.19,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "swoosh riser reverb 390309",
+   "category": "SXF"
+  },
+  "5cfa20dad29b5ad4": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Again.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Again",
+   "category": "SXF"
+  },
+  "305ec276aa995647": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Birds take off.wav",
+   "duration": 3.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Birds take off",
+   "category": "SXF"
+  },
+  "61a9fe6c4e62cc35": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Deep riser two.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep riser two",
+   "category": "SXF"
+  },
+  "ec4f185e7e837761": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Deep riser.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep riser",
+   "category": "SXF"
+  },
+  "c1343ad5a3fe0e38": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Deep rumble.wav",
+   "duration": 6.94,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep rumble",
+   "category": "SXF"
+  },
+  "2e6b4e0b39733194": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Distructive.wav",
+   "duration": 10.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Distructive",
+   "category": "SXF"
+  },
+  "f1505308a44924e8": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Fast two.wav",
+   "duration": 2.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Fast two",
+   "category": "SXF"
+  },
+  "9d4d43a2e4a6f251": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Fast.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Fast",
+   "category": "SXF"
+  },
+  "bc356e734049ccbb": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\High tone.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "High tone",
+   "category": "SXF"
+  },
+  "08e54e52409f30cc": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Intense two.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense two",
+   "category": "SXF"
+  },
+  "ab2dc0ff114c057a": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Intense.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense",
+   "category": "SXF"
+  },
+  "110aac78252b4976": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Into slowmo.wav",
+   "duration": 7.81,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Into slowmo",
+   "category": "SXF"
+  },
+  "8841c31e99d57386": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\It is coming too.wav",
+   "duration": 10.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "It is coming too",
+   "category": "SXF"
+  },
+  "426bbe92c02adaa3": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\It is coming.wav",
+   "duration": 7.81,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "It is coming",
+   "category": "SXF"
+  },
+  "f2e60ded2ed9fff9": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Riser.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Riser",
+   "category": "SXF"
+  },
+  "be340048a300fae7": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\The wind.wav",
+   "duration": 2.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "The wind",
+   "category": "SXF"
+  },
+  "8fcb3169ac62802a": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Under water.wav",
+   "duration": 7.81,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Under water",
+   "category": "SXF"
+  },
+  "fa4f6e21cda702c1": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\Unstoppable.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Unstoppable",
+   "category": "SXF"
+  },
+  "88aa58d07a5b0354": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\We are beautiful.wav",
+   "duration": 15.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "We are beautiful",
+   "category": "SXF"
+  },
+  "ecb5c9ecc11cea11": {
+   "path": "SXF\\336 SFX\\RISERS\\01_RISER\\stop time.wav",
+   "duration": 3.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "stop time",
+   "category": "SXF"
+  },
+  "7425298ff64355d2": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\Flare two.wav",
+   "duration": 3.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Flare two",
+   "category": "SXF"
+  },
+  "6dceb406aa33ce11": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\Flare.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Flare",
+   "category": "SXF"
+  },
+  "de5431c1d407475c": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\High.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "High",
+   "category": "SXF"
+  },
+  "47fb0140245795bb": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\Low.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Low",
+   "category": "SXF"
+  },
+  "d79ce599de302cf7": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\Medium.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Medium",
+   "category": "SXF"
+  },
+  "51203dac354a0a96": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\Normal.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Normal",
+   "category": "SXF"
+  },
+  "cb04a9683282d39f": {
+   "path": "SXF\\336 SFX\\RISERS\\03 BELL RISER\\Unique.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Unique",
+   "category": "SXF"
+  },
+  "95621a72c0409b09": {
+   "path": "SXF\\336 SFX\\RISERS\\04 WIND RISER\\Into the clouds.wav",
+   "duration": 10.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Into the clouds",
+   "category": "SXF"
+  },
+  "cd6a1e8fb497458b": {
+   "path": "SXF\\336 SFX\\RISERS\\04 WIND RISER\\We waited.wav",
+   "duration": 10.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "We waited",
+   "category": "SXF"
+  },
+  "78dbe8813c185f6b": {
+   "path": "SXF\\336 SFX\\RISERS\\04 WIND RISER\\Wind riser.wav",
+   "duration": 8.3,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Wind riser",
+   "category": "SXF"
+  },
+  "ee0fca28724b196b": {
+   "path": "SXF\\336 SFX\\RISERS\\05WATER RISER\\Intense water.wav",
+   "duration": 15.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense water",
+   "category": "SXF"
+  },
+  "01a932435b9e2508": {
+   "path": "SXF\\336 SFX\\RISERS\\05WATER RISER\\Somewhere special.wav",
+   "duration": 15.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Somewhere special",
+   "category": "SXF"
+  },
+  "55d9591ae48b10d0": {
+   "path": "SXF\\336 SFX\\RISERS\\05WATER RISER\\The cave.wav",
+   "duration": 15.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "The cave",
+   "category": "SXF"
+  },
+  "cadd5231348444a3": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Fly by multiple.wav",
+   "duration": 28.3,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Fly by multiple",
+   "category": "SXF"
+  },
+  "24451c330dbb513d": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Inspire.wav",
+   "duration": 25.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Inspire",
+   "category": "SXF"
+  },
+  "3e16d55caeb45383": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Intense slow mo.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense slow mo",
+   "category": "SXF"
+  },
+  "328c00555c550e13": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Multiple two.wav",
+   "duration": 7.81,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Multiple two",
+   "category": "SXF"
+  },
+  "695d1f78cd714be2": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Multiple.wav",
+   "duration": 10.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Multiple",
+   "category": "SXF"
+  },
+  "c4408a344af51ec7": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Must use this too.wav",
+   "duration": 35.15,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Must use this too",
+   "category": "SXF"
+  },
+  "acf5f23897362b47": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Must use this.wav",
+   "duration": 18.25,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Must use this",
+   "category": "SXF"
+  },
+  "b4884370947a4c4e": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Passing by.wav",
+   "duration": 13.88,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Passing by",
+   "category": "SXF"
+  },
+  "28304c2659711dda": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Slow motion.wav",
+   "duration": 31.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Slow motion",
+   "category": "SXF"
+  },
+  "3a29fdb91cbe399b": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Time is passing.wav",
+   "duration": 57.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Time is passing",
+   "category": "SXF"
+  },
+  "5be2b396e746a618": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Unique passing.wav",
+   "duration": 39.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Unique passing",
+   "category": "SXF"
+  },
+  "0e965d2ccd1d4d35": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\Windy.wav",
+   "duration": 10.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Windy",
+   "category": "SXF"
+  },
+  "b3bc250152bdfcbd": {
+   "path": "SXF\\336 SFX\\SLOW MOTION\\examen.wav",
+   "duration": 58.01,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "examen",
+   "category": "SXF"
+  },
+  "3848e7cab6b90174": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Dark.wav",
+   "duration": 4.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dark",
+   "category": "SXF"
+  },
+  "3cb9499a37fc6134": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Deep slow mo.wav",
+   "duration": 6.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep slow mo",
+   "category": "SXF"
+  },
+  "df8413072fb784cd": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Deep whoosh two.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep whoosh two",
+   "category": "SXF"
+  },
+  "9d5eaa4c29fc021c": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Deep whoosh.wav",
+   "duration": 5.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Deep whoosh",
+   "category": "SXF"
+  },
+  "5c9578115aac312a": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Glory two.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Glory two",
+   "category": "SXF"
+  },
+  "99084339e2c04e97": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Glory.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Glory",
+   "category": "SXF"
+  },
+  "849820f59f00c1f9": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\High whoosh two.wav",
+   "duration": 10.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "High whoosh two",
+   "category": "SXF"
+  },
+  "8eeade142312bce0": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\High whoosh.wav",
+   "duration": 6.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "High whoosh",
+   "category": "SXF"
+  },
+  "e6d0b10537f93be1": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Intense whoosh.wav",
+   "duration": 6.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Intense whoosh",
+   "category": "SXF"
+  },
+  "df54143cfa0e45c5": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Into the water.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Into the water",
+   "category": "SXF"
+  },
+  "49fc5414b5f7d2ef": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Outside.wav",
+   "duration": 6.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Outside",
+   "category": "SXF"
+  },
+  "7b47a482013f298b": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Slow motion.wav",
+   "duration": 8.68,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Slow motion",
+   "category": "SXF"
+  },
+  "b576706f7884d84f": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Water whoosh.wav",
+   "duration": 6.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Water whoosh",
+   "category": "SXF"
+  },
+  "8ed6f44f753df522": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Whoosh four.wav",
+   "duration": 5.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh four",
+   "category": "SXF"
+  },
+  "f384542931e4ab92": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Whoosh three.wav",
+   "duration": 5.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh three",
+   "category": "SXF"
+  },
+  "b7605659dc640c1b": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Whoosh two.wav",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh two",
+   "category": "SXF"
+  },
+  "b17a7fc89171c076": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Wind whoosh two.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Wind whoosh two",
+   "category": "SXF"
+  },
+  "3a9f4557c1bd2696": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Wind whoosh.wav",
+   "duration": 6.94,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Wind whoosh",
+   "category": "SXF"
+  },
+  "17c7c25563c8fe62": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\Woosh one.wav",
+   "duration": 1.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Woosh one",
+   "category": "SXF"
+  },
+  "ddfe2ae0035e8f3e": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\high tone.wav",
+   "duration": 5.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "high tone",
+   "category": "SXF"
+  },
+  "a2ea6962a88f07a6": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\the base.wav",
+   "duration": 5.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "the base",
+   "category": "SXF"
+  },
+  "5a0c7c4d78e16358": {
+   "path": "SXF\\336 SFX\\WHOOSHES\\void.wav",
+   "duration": 3.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "void",
+   "category": "SXF"
+  },
+  "fa2f50d345e479bd": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Sub Drop\\Cinematic Sub Drop - 01.wav",
+   "duration": 3.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Sub Drop   01",
+   "category": "SXF"
+  },
+  "892d87de7efd33f0": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Sub Drop\\Cinematic Sub Drop - 02.wav",
+   "duration": 3.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Sub Drop   02",
+   "category": "SXF"
+  },
+  "042da0459afc9221": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Sub Drop\\Cinematic Sub Drop - 03.wav",
+   "duration": 3.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Sub Drop   03",
+   "category": "SXF"
+  },
+  "8543a82c8ca0645b": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Sub Drop\\Cinematic Sub Drop - 04.wav",
+   "duration": 3.04,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Sub Drop   04",
+   "category": "SXF"
+  },
+  "5b7d95530ef34c81": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Sub Drop\\Cinematic Sub Drop - 05.wav",
+   "duration": 3.27,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Sub Drop   05",
+   "category": "SXF"
+  },
+  "cd3afb9a1c706be2": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\01.wav",
+   "duration": 2.7,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "01",
+   "category": "SXF"
+  },
+  "a1731458818edb83": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\02.wav",
+   "duration": 2.73,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "02",
+   "category": "SXF"
+  },
+  "a79be0a93c3b8053": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\03.wav",
+   "duration": 2.17,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "03",
+   "category": "SXF"
+  },
+  "ad0f86dcccbb276b": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\04.wav",
+   "duration": 1.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "04",
+   "category": "SXF"
+  },
+  "51c077eb75772e8f": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\05.wav",
+   "duration": 1.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "05",
+   "category": "SXF"
+  },
+  "9eb28f293ca650d1": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\06.wav",
+   "duration": 3.2,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "06",
+   "category": "SXF"
+  },
+  "2b954b2d5560ce20": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\07.wav",
+   "duration": 2.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "07",
+   "category": "SXF"
+  },
+  "d7e5948c5dcd457b": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\08.wav",
+   "duration": 2.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "08",
+   "category": "SXF"
+  },
+  "a02b80094256f7f0": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\09.wav",
+   "duration": 3.14,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "09",
+   "category": "SXF"
+  },
+  "7db0ee1c3adc90f9": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 1\\10.wav",
+   "duration": 2.4,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10",
+   "category": "SXF"
+  },
+  "b3309683470f37be": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 01.wav",
+   "duration": 2.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 01",
+   "category": "SXF"
+  },
+  "bf1d64d7ba7c73b4": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 02.wav",
+   "duration": 2.24,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 02",
+   "category": "SXF"
+  },
+  "15df4810d81a8890": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 03.wav",
+   "duration": 3.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 03",
+   "category": "SXF"
+  },
+  "7717b3d9d4657e27": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 04.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 04",
+   "category": "SXF"
+  },
+  "d1a80031c13102ab": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 05.wav",
+   "duration": 3.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 05",
+   "category": "SXF"
+  },
+  "f3379c3609f9aaed": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 06.wav",
+   "duration": 2.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 06",
+   "category": "SXF"
+  },
+  "46106959aaf4cfae": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 07.wav",
+   "duration": 3.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 07",
+   "category": "SXF"
+  },
+  "25766ccb5b3b5a90": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 08.wav",
+   "duration": 2.34,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 08",
+   "category": "SXF"
+  },
+  "607ecd3a33c10262": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 09.wav",
+   "duration": 4.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 09",
+   "category": "SXF"
+  },
+  "b4027f0234b65e07": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 2\\Cinematic Whoosh 10.wav",
+   "duration": 2.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Cinematic Whoosh 10",
+   "category": "SXF"
+  },
+  "70d28f23451acc08": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\01.wav",
+   "duration": 4.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "01",
+   "category": "SXF"
+  },
+  "c5646c316c0984be": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\02.wav",
+   "duration": 2.64,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "02",
+   "category": "SXF"
+  },
+  "bbf0806639ad4d09": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\03.wav",
+   "duration": 3.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "03",
+   "category": "SXF"
+  },
+  "59385968acb61c71": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\04.wav",
+   "duration": 3.34,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "04",
+   "category": "SXF"
+  },
+  "a1bdead838ff17dd": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\05.wav",
+   "duration": 3.34,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "05",
+   "category": "SXF"
+  },
+  "5bf260d7af05a6f5": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\06.wav",
+   "duration": 2.9,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "06",
+   "category": "SXF"
+  },
+  "405c3fe08d3c4f47": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\07.wav",
+   "duration": 3.4,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "07",
+   "category": "SXF"
+  },
+  "f00de6288ecfae28": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\08.wav",
+   "duration": 2.7,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "08",
+   "category": "SXF"
+  },
+  "8af1cb6875259b2b": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\09.wav",
+   "duration": 1.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "09",
+   "category": "SXF"
+  },
+  "d3026a85d75ef37f": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 3\\10.wav",
+   "duration": 2.84,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10",
+   "category": "SXF"
+  },
+  "bddcd2404106b00b": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\01.wav",
+   "duration": 3.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "01",
+   "category": "SXF"
+  },
+  "f100539803d17d6a": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\02.wav",
+   "duration": 2.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "02",
+   "category": "SXF"
+  },
+  "b8fbfbc0caac0f00": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\03.wav",
+   "duration": 2.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "03",
+   "category": "SXF"
+  },
+  "9ea271af04e39ed4": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\04.wav",
+   "duration": 2.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "04",
+   "category": "SXF"
+  },
+  "64d45c60065f3480": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\05.wav",
+   "duration": 2.24,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "05",
+   "category": "SXF"
+  },
+  "bf1725f850a34787": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\06.wav",
+   "duration": 3.27,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "06",
+   "category": "SXF"
+  },
+  "af9bd446a6dcdf58": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\07.wav",
+   "duration": 2.84,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "07",
+   "category": "SXF"
+  },
+  "020988f4ba797980": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\08.wav",
+   "duration": 2.97,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "08",
+   "category": "SXF"
+  },
+  "9faf3fa879e81058": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\09.wav",
+   "duration": 2.44,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "09",
+   "category": "SXF"
+  },
+  "04149d025ce778b0": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 4\\10.wav",
+   "duration": 2.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10",
+   "category": "SXF"
+  },
+  "b244097705ea4aae": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\01.wav",
+   "duration": 2.04,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "01",
+   "category": "SXF"
+  },
+  "c0020039108c50a1": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\02.wav",
+   "duration": 2.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "02",
+   "category": "SXF"
+  },
+  "425dbcf5dfc80721": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\03.wav",
+   "duration": 2.34,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "03",
+   "category": "SXF"
+  },
+  "41a7bbf26acfc72f": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\04.wav",
+   "duration": 1.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "04",
+   "category": "SXF"
+  },
+  "c491077692c64cc1": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\05.wav",
+   "duration": 2.24,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "05",
+   "category": "SXF"
+  },
+  "2e4dc89eb184fecc": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\06.wav",
+   "duration": 1.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "06",
+   "category": "SXF"
+  },
+  "bc7fe492fe6ecd85": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\07.wav",
+   "duration": 2.17,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "07",
+   "category": "SXF"
+  },
+  "2943b2e92d0c2e3d": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\08.wav",
+   "duration": 2.67,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "08",
+   "category": "SXF"
+  },
+  "043e84e046285363": {
+   "path": "SXF\\450 cinematic sound effects\\Cinematic Whoosh Swoosh Sounds - pack 5\\09.wav",
+   "duration": 2.2,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "09",
+   "category": "SXF"
+  },
+  "45d98371f5586aff": {
+   "path": "SXF\\450 cinematic sound effects\\Dramatic Horn Transitions\\Dramatic Horn Transition 01.wav",
+   "duration": 5.61,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dramatic Horn Transition 01",
+   "category": "SXF"
+  },
+  "77ef09ce70d7e454": {
+   "path": "SXF\\450 cinematic sound effects\\Dramatic Horn Transitions\\Dramatic Horn Transition 02.wav",
+   "duration": 5.51,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dramatic Horn Transition 02",
+   "category": "SXF"
+  },
+  "8e27cd161d6035f6": {
+   "path": "SXF\\450 cinematic sound effects\\Dramatic Horn Transitions\\Dramatic Horn Transition 03.wav",
+   "duration": 5.54,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dramatic Horn Transition 03",
+   "category": "SXF"
+  },
+  "c0735a2c37a8347c": {
+   "path": "SXF\\450 cinematic sound effects\\Dramatic Horn Transitions\\Dramatic Horn Transition 04.wav",
+   "duration": 5.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dramatic Horn Transition 04",
+   "category": "SXF"
+  },
+  "90d945be7cbce3e4": {
+   "path": "SXF\\450 cinematic sound effects\\Dramatic Horn Transitions\\Dramatic Horn Transition 05.wav",
+   "duration": 5.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dramatic Horn Transition 05",
+   "category": "SXF"
+  },
+  "d60129134da1c3bb": {
+   "path": "SXF\\450 cinematic sound effects\\Epic Cinematic Trailer Impact - Pack 2\\Epic Cinematic Trailer Impact - 01.wav",
+   "duration": 5.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Epic Cinematic Trailer Impact   01",
+   "category": "SXF"
+  },
+  "7789d056bbdfa3a8": {
+   "path": "SXF\\450 cinematic sound effects\\Epic Cinematic Trailer Impact - Pack 2\\Epic Cinematic Trailer Impact - 02.wav",
+   "duration": 5.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Epic Cinematic Trailer Impact   02",
+   "category": "SXF"
+  },
+  "3a6690c4b37b1ee5": {
+   "path": "SXF\\450 cinematic sound effects\\Epic Cinematic Trailer Impact - Pack 2\\Epic Cinematic Trailer Impact - 03.wav",
+   "duration": 4.92,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Epic Cinematic Trailer Impact   03",
+   "category": "SXF"
+  },
+  "177417bda3922730": {
+   "path": "SXF\\450 cinematic sound effects\\Epic Cinematic Trailer Impact - Pack 2\\Epic Cinematic Trailer Impact - 04.wav",
+   "duration": 7.11,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Epic Cinematic Trailer Impact   04",
+   "category": "SXF"
+  },
+  "79492f9f4ad139d2": {
+   "path": "SXF\\450 cinematic sound effects\\Epic Cinematic Trailer Impact - Pack 2\\Epic Cinematic Trailer Impact - 05.wav",
+   "duration": 6.56,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Epic Cinematic Trailer Impact   05",
+   "category": "SXF"
+  },
+  "0c5b113c0958988e": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_01.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 01",
+   "category": "SXF"
+  },
+  "296675c5660b8d60": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_02.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 02",
+   "category": "SXF"
+  },
+  "237c4c5059947044": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_03.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 03",
+   "category": "SXF"
+  },
+  "a46a67dce0b65ff1": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_04.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 04",
+   "category": "SXF"
+  },
+  "d18d25378d74e46a": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_05.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 05",
+   "category": "SXF"
+  },
+  "a4735b80261d4b14": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_06.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 06",
+   "category": "SXF"
+  },
+  "ae44a119c68115e4": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low+Hi\\SD_Low+Hi_07.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low+Hi 07",
+   "category": "SXF"
+  },
+  "a446207870e444e8": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_01.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 01",
+   "category": "SXF"
+  },
+  "6c35d661208960d7": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_02.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 02",
+   "category": "SXF"
+  },
+  "bdc84069925e8470": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_03.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 03",
+   "category": "SXF"
+  },
+  "15875a8339cd8230": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_04.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 04",
+   "category": "SXF"
+  },
+  "dc815c0a6030a4ce": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_05.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 05",
+   "category": "SXF"
+  },
+  "42c78e7167d203a8": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_06.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 06",
+   "category": "SXF"
+  },
+  "3742f0cc1602050f": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_07.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 07",
+   "category": "SXF"
+  },
+  "f73b050705835858": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_08.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 08",
+   "category": "SXF"
+  },
+  "738411a79d1cf3f5": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_09.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 09",
+   "category": "SXF"
+  },
+  "3ec1d24575e69986": {
+   "path": "SXF\\450 cinematic sound effects\\Subdrop Low\\SD_Low_10.wav",
+   "duration": 8.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "SD Low 10",
+   "category": "SXF"
+  },
+  "51df0d793b7342ff": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Delay woosh.wav",
+   "duration": 3.11,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Delay woosh",
+   "category": "SXF"
+  },
+  "79fb4cc0ad69d08c": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Fast swish.wav",
+   "duration": 0.57,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Fast swish",
+   "category": "SXF"
+  },
+  "c92630c3bafc719c": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Fast zing.wav",
+   "duration": 2.08,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Fast zing",
+   "category": "SXF"
+  },
+  "b41cf16855977cb2": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Flame pass.wav",
+   "duration": 5.35,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Flame pass",
+   "category": "SXF"
+  },
+  "03df2606afe4702b": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Future swoosh.wav",
+   "duration": 3.77,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Future swoosh",
+   "category": "SXF"
+  },
+  "99cca26c993e1d30": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Future zing.wav",
+   "duration": 8.86,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Future zing",
+   "category": "SXF"
+  },
+  "0a79b2c28bcfb00d": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Golden swoosh.wav",
+   "duration": 1.23,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Golden swoosh",
+   "category": "SXF"
+  },
+  "0688b1d68a68340e": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Low fly.wav",
+   "duration": 1.54,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Low fly",
+   "category": "SXF"
+  },
+  "73d3e6d837969418": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Reverse riser 01.wav",
+   "duration": 5.16,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Reverse riser 01",
+   "category": "SXF"
+  },
+  "13f072c06442ebf7": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Rumble swish.wav",
+   "duration": 3.83,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Rumble swish",
+   "category": "SXF"
+  },
+  "9efcf14a27089ddb": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Sharp swoosh.wav",
+   "duration": 0.57,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Sharp swoosh",
+   "category": "SXF"
+  },
+  "26a2c07c4744fd25": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Short whip.wav",
+   "duration": 1.02,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Short whip",
+   "category": "SXF"
+  },
+  "9e573aa8d6c96162": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Space ship fly by.wav",
+   "duration": 1.02,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Space ship fly by",
+   "category": "SXF"
+  },
+  "f67c478358af1ee3": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Windy swish.wav",
+   "duration": 2.76,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Windy swish",
+   "category": "SXF"
+  },
+  "1fcdb309e145c0ac": {
+   "path": "SXF\\450 cinematic sound effects\\Swishes\\Woosh rattle.wav",
+   "duration": 3.12,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Woosh rattle",
+   "category": "SXF"
+  },
+  "f0fde32edd142312": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\1 - swoosh - normal.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "1   swoosh   normal",
+   "category": "SXF"
+  },
+  "29b6f8a85fc98c8b": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\10 - swoosh - short.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10   swoosh   short",
+   "category": "SXF"
+  },
+  "b715b2e431dacd00": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\2 - swoosh - norm.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "2   swoosh   norm",
+   "category": "SXF"
+  },
+  "4c8fbfc37019b403": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\3 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "3   swoosh   long",
+   "category": "SXF"
+  },
+  "ee81cbfad8fad15b": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\4 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "4   swoosh   long",
+   "category": "SXF"
+  },
+  "8a41e78cdf81c11b": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\5 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "5   swoosh   long",
+   "category": "SXF"
+  },
+  "794eb3751a3041e6": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\6 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "6   swoosh   long",
+   "category": "SXF"
+  },
+  "57b3550f13947bef": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\7 - swoosh - short.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "7   swoosh   short",
+   "category": "SXF"
+  },
+  "bd89ee098f268ab2": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\8 - swoosh - short.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "8   swoosh   short",
+   "category": "SXF"
+  },
+  "f4889df6d2d08bf4": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 2\\9 - swoosh - short.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "9   swoosh   short",
+   "category": "SXF"
+  },
+  "6ef54d8613d96cef": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\1 - whoosh swoosh.wav",
+   "duration": 1.9,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "1   whoosh swoosh",
+   "category": "SXF"
+  },
+  "390c07d808c14bc7": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\10 - whoosh swoosh.wav",
+   "duration": 1.9,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10   whoosh swoosh",
+   "category": "SXF"
+  },
+  "a2afe81433d10688": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\2 - whoosh swoosh.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "2   whoosh swoosh",
+   "category": "SXF"
+  },
+  "2803af28eb8e24df": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\3 - whoosh swoosh.wav",
+   "duration": 1.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "3   whoosh swoosh",
+   "category": "SXF"
+  },
+  "c4a46d69f4876319": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\4 - whoosh swoosh.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "4   whoosh swoosh",
+   "category": "SXF"
+  },
+  "c925719926110ebe": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\5 - whoosh swoosh.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "5   whoosh swoosh",
+   "category": "SXF"
+  },
+  "d1958f177e0be3b7": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\6 - whoosh swoosh.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "6   whoosh swoosh",
+   "category": "SXF"
+  },
+  "dddb44413b09c5a0": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\7 - whoosh swoosh.wav",
+   "duration": 1.84,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "7   whoosh swoosh",
+   "category": "SXF"
+  },
+  "301e3684ac81b287": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\8 - whoosh swoosh.wav",
+   "duration": 1.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "8   whoosh swoosh",
+   "category": "SXF"
+  },
+  "7be2ac93edf73632": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh Sounds - pack 3\\9 - whoosh swoosh.wav",
+   "duration": 1.8,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "9   whoosh swoosh",
+   "category": "SXF"
+  },
+  "71d5692b0bc4fdd7": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\1 - swoosh - short.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "1   swoosh   short",
+   "category": "SXF"
+  },
+  "a8fa27f99eb5e7f1": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\10 - swoosh - normal.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10   swoosh   normal",
+   "category": "SXF"
+  },
+  "c238c9a8efd26338": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\2 - swoosh - short.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "2   swoosh   short",
+   "category": "SXF"
+  },
+  "8aff634941e5a340": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\3 - swoosh - normal.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "3   swoosh   normal",
+   "category": "SXF"
+  },
+  "714fa49b88f886cc": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\4 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "4   swoosh   long",
+   "category": "SXF"
+  },
+  "bbe11c788273c46e": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\5 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "5   swoosh   long",
+   "category": "SXF"
+  },
+  "2d18aef0d71930de": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\6 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "6   swoosh   long",
+   "category": "SXF"
+  },
+  "f6e83ba05f3eae3a": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\7 - swoosh - normal.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "7   swoosh   normal",
+   "category": "SXF"
+  },
+  "f3077428fa7b32f3": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\8 - swoosh - long.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "8   swoosh   long",
+   "category": "SXF"
+  },
+  "443ccb8c60d4c46e": {
+   "path": "SXF\\450 cinematic sound effects\\Swoosh sounds - pack 1\\9 - swoosh - normal.wav",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "9   swoosh   normal",
+   "category": "SXF"
+  },
+  "9b6b4fd0b5ffb5d7": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Baseball bat wood swing whoosh_BLASTWAVEFX_29344.mp3",
+   "duration": 0.26,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Baseball bat wood swing whoosh BLASTWAVEFX 29344",
+   "category": "SXF"
+  },
+  "28053bf0fe0d03ec": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Bongo Reverse Hits 10 1.mp3",
+   "duration": 0.94,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Bongo Reverse Hits 10 1",
+   "category": "SXF"
+  },
+  "0b18662cd54177b7": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Dark_corner.mp3",
+   "duration": 9.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Dark corner",
+   "category": "SXF"
+  },
+  "198e072a7f5459d7": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Doom1.mp3",
+   "duration": 14.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Doom1",
+   "category": "SXF"
+  },
+  "a167227d0272e0d2": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\EFX INT Punch Whip 04_2.mp3",
+   "duration": 8.25,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "EFX INT Punch Whip 04 2",
+   "category": "SXF"
+  },
+  "11beaef5e64efcab": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\FOLEY BRANCH SWING WHOOSH 01.mp3",
+   "duration": 0.29,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FOLEY BRANCH SWING WHOOSH 01",
+   "category": "SXF"
+  },
+  "8390ce10f30ad2bc": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\FOLEY WOOD ROD WHOOSH 01.mp3",
+   "duration": 0.19,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FOLEY WOOD ROD WHOOSH 01",
+   "category": "SXF"
+  },
+  "8d723614f83ce452": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\FX-148 1.mp3",
+   "duration": 4.88,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "FX 148 1",
+   "category": "SXF"
+  },
+  "0c8282c7afc07935": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\HOUSEHOLD FLY SWATTER LARGE WHOOSH HARD 01.mp3",
+   "duration": 0.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "HOUSEHOLD FLY SWATTER LARGE WHOOSH HARD 01",
+   "category": "SXF"
+  },
+  "5a378a66abdced6c": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Object whoosh fly by 01_SFXBible_ss06024.mp3",
+   "duration": 1.36,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Object whoosh fly by 01 SFXBible ss06024",
+   "category": "SXF"
+  },
+  "a3864b6c5e25a0ba": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds.mp3",
+   "duration": 2.53,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "d253873a37d88e89": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 1.41,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "9835eb81dd8cac36": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_2.mp3",
+   "duration": 10.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 2",
+   "category": "SXF"
+  },
+  "0baeca88a3a979e8": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 2.4,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "276f241b38237082": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_4.mp3",
+   "duration": 3.45,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "4333d21d37f2bcbf": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 1.62,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "21d1c87fa88292e5": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 2.98,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "c363add7129b08de": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 1.8,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "e1dec84b3a0ebc0f": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 2.12,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "bcc8a65e262eccf7": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 10 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 3.58,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 10   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "45d9a81092c25726": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds.mp3",
+   "duration": 5.59,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "c6235ba70567c2f9": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 4.94,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "d626bf0efe322dde": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_2.mp3",
+   "duration": 4.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 2",
+   "category": "SXF"
+  },
+  "62feaa3ddef3d441": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 2.56,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "65103aa5c2f2186b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_4.mp3",
+   "duration": 0.97,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "b5b1c8c5fc42c231": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 0.81,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "ac9dfdfc48c68d69": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 2.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "64580ec148124ca0": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 1.36,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "0af95bdfa747ce29": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 1.62,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "ec5ae8c767b04377": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 11 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 1.85,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 11   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "3a23924fbae28f5b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds.mp3",
+   "duration": 4.62,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "b2460cc951d29c7c": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 1.52,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "18dfdfd19be148c9": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_2.mp3",
+   "duration": 3.79,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 2",
+   "category": "SXF"
+  },
+  "e19440698528ca7d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 6.82,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "e97f5944d94259d7": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_4.mp3",
+   "duration": 5.15,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "ed32748013c14b5b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 4.86,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "6a7e14fa835a8876": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 1.83,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "5cbe020816c1532d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 0.86,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "43dca96ef72fe439": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 2.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "8b5451f91ca0dea7": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 12 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 2.53,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 12   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "36d5a15ed5bb54b0": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds.mp3",
+   "duration": 2.95,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "5394b9c2ad42d54b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 2.51,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "82116b2a4f1afb45": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_2.mp3",
+   "duration": 1.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 2",
+   "category": "SXF"
+  },
+  "a4f5dafc13aae24c": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 3.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "5ebc815036b1e818": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_4.mp3",
+   "duration": 8.41,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "1b3603413be70582": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 3.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "4de6f481d95e1b3d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 5.15,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "5c294c569f839595": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 2.12,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "452b08dbb53f8a7b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 2.85,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "6e9c9339985ca2cd": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 13 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 3.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 13   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "79a78fd2d035ceca": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds.mp3",
+   "duration": 4.78,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "dacaa17116f81304": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 1.52,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "ecffac4375466ca1": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_2.mp3",
+   "duration": 3.16,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 2",
+   "category": "SXF"
+  },
+  "b29c2b134c107e5d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 2.8,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "e96da9d0f07e518a": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_4.mp3",
+   "duration": 2.66,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "c7531234ba48dd11": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 2.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "f07644d4346363e2": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 2.17,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "dc750b047531bcf0": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 6.32,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "d2cc79eaa7c09e71": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 3.81,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "be53154a4f191171": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 14 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 2.59,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 14   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "4bd84be2f66ae90c": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 2 - Whoosh_ Swish Sounds.MP3",
+   "duration": 5.08,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 2   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "cbaabcfd8354b230": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 3 - Whoosh_ Swish Sounds.MP3",
+   "duration": 2.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 3   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "c25178b1bd3245e2": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 4 - Whoosh_ Swish Sounds.MP3",
+   "duration": 2.56,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 4   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "e3437740c523999a": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 5 - Whoosh_ Swish Sounds.MP3",
+   "duration": 0.29,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 5   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "48209c906dabbd4d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 6 - Whoosh_ Swish Sounds.MP3",
+   "duration": 0.99,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 6   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "f1e636242e8663a4": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds.mp3",
+   "duration": 6.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "920534278c68124d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 4.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "37c75489dcbe3dec": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 11.35,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "c50c31ff64e4bd4e": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 3.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "6b3049db0ebd0f92": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 3.04,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "079632a0fdaae6e4": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 3.61,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "d820527efe4b8c28": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 7 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 2.64,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 7   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "74dc9bea5be0e927": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 8 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 3.84,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 8   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "f06591f1ba803977": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 8 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 8.2,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 8   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "f102c445339f9d46": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds.mp3",
+   "duration": 4.92,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "9d5f06da81ed9847": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_10.mp3",
+   "duration": 0.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 10",
+   "category": "SXF"
+  },
+  "3e0c0db4538ec05f": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_2.mp3",
+   "duration": 4.36,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 2",
+   "category": "SXF"
+  },
+  "788f0c0eb431e1a6": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_3.mp3",
+   "duration": 2.12,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "5d289db002c7dcb4": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_4.mp3",
+   "duration": 7.52,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "69983205ced15a9f": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_5.mp3",
+   "duration": 0.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 5",
+   "category": "SXF"
+  },
+  "cce5d65f39ad9c8a": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_6.mp3",
+   "duration": 7.76,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 6",
+   "category": "SXF"
+  },
+  "8909a4dd1eeeb4a3": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_7.mp3",
+   "duration": 3.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 7",
+   "category": "SXF"
+  },
+  "a3563c5f4f49bfa3": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_8.mp3",
+   "duration": 2.35,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "4c7c3720fdee2dc6": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Page 9 - Whoosh_ Swish Sounds_9.mp3",
+   "duration": 2.49,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Page 9   Whoosh  Swish Sounds 9",
+   "category": "SXF"
+  },
+  "75e9ca5cd766d0c5": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Rope whoosh spin twirl reel_BLASTWAVEFX_23019.mp3",
+   "duration": 3.43,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Rope whoosh spin twirl reel BLASTWAVEFX 23019",
+   "category": "SXF"
+  },
+  "0450509f96790ae8": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\SWORD SWISHES 1.mp3",
+   "duration": 5.96,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "SWORD SWISHES 1",
+   "category": "SXF"
+  },
+  "d549e98ce43c3fcf": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Sound Design_Title Sfx_Metal Shimmer_Whoosh_Sweep_Low Reverse_HutchSFX_3.mp3",
+   "duration": 3.6,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Sound Design Title Sfx Metal Shimmer Whoosh Sweep Low Reverse HutchSFX 3",
+   "category": "SXF"
+  },
+  "0bc2d3f7ebf48f8c": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Sound design shimmer accent whoosh fly by_BLASTWAVEFX_18611.mp3",
+   "duration": 4.36,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Sound design shimmer accent whoosh fly by BLASTWAVEFX 18611",
+   "category": "SXF"
+  },
+  "33a2706e11e51842": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Sound design sweeper vocal PAd_BLASTWAVEFX_08852.mp3",
+   "duration": 8.72,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Sound design sweeper vocal PAd BLASTWAVEFX 08852",
+   "category": "SXF"
+  },
+  "ed73f3da617dfbc6": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Swoosh_low.mp3",
+   "duration": 0.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Swoosh low",
+   "category": "SXF"
+  },
+  "76e2fac357d03e7d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Swoosh_multiple_long.mp3",
+   "duration": 5.65,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Swoosh multiple long",
+   "category": "SXF"
+  },
+  "ece4286a45e3cf55": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\WHIP WHOOSH FAST 01.mp3",
+   "duration": 0.24,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "WHIP WHOOSH FAST 01",
+   "category": "SXF"
+  },
+  "e517d2f21cb93356": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh low slow suspense_BLASTWAVEFX_09971.mp3",
+   "duration": 6.67,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh low slow suspense BLASTWAVEFX 09971",
+   "category": "SXF"
+  },
+  "6556030cda6788a0": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh mystery dark metallic_BLASTWAVEFX_16682.mp3",
+   "duration": 4.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh mystery dark metallic BLASTWAVEFX 16682",
+   "category": "SXF"
+  },
+  "cf90227b8d203f80": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh small star fly by_BLASTWAVEFX_18872.mp3",
+   "duration": 3.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh small star fly by BLASTWAVEFX 18872",
+   "category": "SXF"
+  },
+  "1a04effb9abd20ba": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh swell crystal flange_BLASTWAVEFX_09934.mp3",
+   "duration": 5.22,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh swell crystal flange BLASTWAVEFX 09934",
+   "category": "SXF"
+  },
+  "f372ba1b50fa848f": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh- jet pass- cripsly.mp3",
+   "duration": 3.08,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh  jet pass  cripsly",
+   "category": "SXF"
+  },
+  "b8db9fcaf3d3a42b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_ Swish Sounds.MP3",
+   "duration": 1.13,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh  Swish Sounds",
+   "category": "SXF"
+  },
+  "1492b31c7074c49c": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_ Swish Sounds_3.MP3",
+   "duration": 2.85,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh  Swish Sounds 3",
+   "category": "SXF"
+  },
+  "3dd9d540bfccfe6a": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_ Swish Sounds_4.MP3",
+   "duration": 0.79,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh  Swish Sounds 4",
+   "category": "SXF"
+  },
+  "05c3062201d5db4d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_ Swish Sounds_8.MP3",
+   "duration": 0.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh  Swish Sounds 8",
+   "category": "SXF"
+  },
+  "b93c71c49924d47b": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_Swoosh_Multiple_Swing_Fencing_Sword_Fienup_002.mp3",
+   "duration": 1.11,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Whoosh Swoosh Multiple Swing Fencing Sword Fienup 002",
+   "category": "SXF"
+  },
+  "d63f16e98ef9b888": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_Swoosh_Multiple_Swing_Fencing_Sword_Fienup_004.mp3",
+   "duration": 0.96,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Whoosh Swoosh Multiple Swing Fencing Sword Fienup 004",
+   "category": "SXF"
+  },
+  "4d5b6425cf60f2da": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_Swoosh_Swing_Fishing_Pole_CloseFull_Fienup_001.mp3",
+   "duration": 0.18,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh Swoosh Swing Fishing Pole CloseFull Fienup 001",
+   "category": "SXF"
+  },
+  "2f76032d1ed7696d": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\Whoosh_Swoosh_Swing_Fishing_Pole_DistHalf_Fienup_045.mp3",
+   "duration": 0.19,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Whoosh Swoosh Swing Fishing Pole DistHalf Fienup 045",
+   "category": "SXF"
+  },
+  "542e8948a90b79d0": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\reverse.mp3",
+   "duration": 3.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "reverse",
+   "category": "SXF"
+  },
+  "e386e454b0060016": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\wheesh woosh fast shake.mp3",
+   "duration": 0.84,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "wheesh woosh fast shake",
+   "category": "SXF"
+  },
+  "d7ccc8307e2e5903": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\whoosh 2.mp3",
+   "duration": 1.15,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "whoosh 2",
+   "category": "SXF"
+  },
+  "f99e83a1dab81232": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\whoosh 4 Low.mp3",
+   "duration": 0.3,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "whoosh 4 Low",
+   "category": "SXF"
+  },
+  "69fcff64f17f4fbe": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\woosh_10.mp3",
+   "duration": 0.44,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "woosh 10",
+   "category": "SXF"
+  },
+  "f94e34fd627566b9": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\woosh_11.mp3",
+   "duration": 0.52,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "woosh 11",
+   "category": "SXF"
+  },
+  "570649521faf2209": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\woosh_5.mp3",
+   "duration": 0.43,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "woosh 5",
+   "category": "SXF"
+  },
+  "458439aa5a3e3d1a": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\woosh_7.mp3",
+   "duration": 0.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "woosh 7",
+   "category": "SXF"
+  },
+  "7d4698136322c1c6": {
+   "path": "SXF\\450 cinematic sound effects\\Transition Sound Effects\\woosh_9.mp3",
+   "duration": 0.39,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "woosh 9",
+   "category": "SXF"
+  },
+  "29ca77a67f3d4597": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\1 - whoosh swoosh - short.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "1   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "e06d9afcb0f9d7f8": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\10 - whoosh swoosh - long.wav",
+   "duration": 3.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "b86ea8a4e1781f01": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\2 - whoosh swoosh - long.wav",
+   "duration": 2.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "2   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "00956fdc32de9e95": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\3 - whoosh swoosh - long.wav",
+   "duration": 2.24,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "3   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "2d69eb4982a13ba0": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\4 - whoosh swoosh - short.wav",
+   "duration": 1.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "4   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "3ff4e65142dd88d2": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\5 - whoosh swoosh - long.wav",
+   "duration": 2.14,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "5   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "40ae3911abd63316": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\6 - whoosh swoosh - short.wav",
+   "duration": 1.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "6   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "da28a84fb16e9b8e": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\7 - whoosh swoosh - long.wav",
+   "duration": 3.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "7   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "13dfb256022c28b4": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\8 - whoosh swoosh - long.wav",
+   "duration": 2.67,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "8   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "e0e661c142ae2d22": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh Sounds - pack 4\\9 - whoosh swoosh - long.wav",
+   "duration": 2.84,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "9   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "905dd28c8a61375c": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\1 - whoosh swoosh - long.wav",
+   "duration": 2.17,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "1   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "cea8bf71923c8dd3": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\10 - whoosh swoosh - short.wav",
+   "duration": 1.53,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "10   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "9862559fed594213": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\2 - whoosh swoosh - long.wav",
+   "duration": 3.14,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "2   whoosh swoosh   long",
+   "category": "SXF"
+  },
+  "96324a14dd469d0e": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\3 - whoosh swoosh - normal.wav",
+   "duration": 2.14,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "3   whoosh swoosh   normal",
+   "category": "SXF"
+  },
+  "dc8ed12fcd82b6e3": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\4 - whoosh swoosh - normal.wav",
+   "duration": 1.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "4   whoosh swoosh   normal",
+   "category": "SXF"
+  },
+  "a45684a7d4f640b1": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\5 - whoosh swoosh - normal.wav",
+   "duration": 1.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "5   whoosh swoosh   normal",
+   "category": "SXF"
+  },
+  "3ff17e73f01ba97d": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\6 - whoosh swoosh - short.wav",
+   "duration": 1.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "6   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "38a5979191d8c76d": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\7 - whoosh swoosh - normal.wav",
+   "duration": 1.53,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "7   whoosh swoosh   normal",
+   "category": "SXF"
+  },
+  "328cce0e5385b7a3": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\8 - whoosh swoosh - short.wav",
+   "duration": 1.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "8   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "767665113c7bd5cc": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 5\\9 - whoosh swoosh - short.wav",
+   "duration": 1.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "9   whoosh swoosh   short",
+   "category": "SXF"
+  },
+  "b5b45368e94cd642": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\4_Classical_Whoosh_Soft_Elements.wav",
+   "duration": 2.19,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "4 Classical Whoosh Soft Elements",
+   "category": "SXF"
+  },
+  "6f934b16f684ce1f": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\5_Classical_Whoosh_Low_Elements.wav",
+   "duration": 8.92,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "5 Classical Whoosh Low Elements",
+   "category": "SXF"
+  },
+  "3d680df20dd2de9e": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Soft_Whoosh_12.wav",
+   "duration": 6.0,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Soft Whoosh 12",
+   "category": "SXF"
+  },
+  "781901322ab86cbe": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Soft_Whoosh_22.wav",
+   "duration": 3.55,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Soft Whoosh 22",
+   "category": "SXF"
+  },
+  "d9f7a78b2d8a8314": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Soft_Whoosh_33.wav",
+   "duration": 4.5,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Soft Whoosh 33",
+   "category": "SXF"
+  },
+  "68567156aa69a5f2": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_15.wav",
+   "duration": 4.47,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh 15",
+   "category": "SXF"
+  },
+  "1ec6ff214552c6f2": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_16.wav",
+   "duration": 4.18,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh 16",
+   "category": "SXF"
+  },
+  "aa7f761e034ec622": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_17.wav",
+   "duration": 5.27,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh 17",
+   "category": "SXF"
+  },
+  "f2d72c0da985d3d1": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_18.wav",
+   "duration": 3.39,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh 18",
+   "category": "SXF"
+  },
+  "b8f9688270e1be66": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_19.wav",
+   "duration": 3.85,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh 19",
+   "category": "SXF"
+  },
+  "a135ae74350fb10d": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_20.wav",
+   "duration": 5.0,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh 20",
+   "category": "SXF"
+  },
+  "bdca4c68f31a3a14": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_Panoramed_1.wav",
+   "duration": 2.6,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Whoosh Panoramed 1",
+   "category": "SXF"
+  },
+  "06d3cd5e3cf4db8b": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_Panoramed_10.wav",
+   "duration": 2.36,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh Panoramed 10",
+   "category": "SXF"
+  },
+  "b26158c50969e3e5": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whoosh_Panoramed_12.wav",
+   "duration": 2.39,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whoosh Panoramed 12",
+   "category": "SXF"
+  },
+  "fc5638572576b6fa": {
+   "path": "SXF\\450 cinematic sound effects\\Whoosh Swoosh sounds - pack 6\\Whooshe_Modern_12.wav",
+   "duration": 1.6,
+   "sample_rate": 96000,
+   "channels": 2,
+   "title_hint": "Whooshe Modern 12",
+   "category": "SXF"
+  },
+  "9af347eb59fe2569": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\alesiadavina-horror-sound-lurking-horror-monster-189948.mp3",
+   "duration": 20.22,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "alesiadavina horror sound lurking horror monster 189948",
+   "category": "SXF"
+  },
+  "bbbec02b16d8e222": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\bryansantosbreton-critical-tension-cinematic-braam-impact-184273.mp3",
+   "duration": 6.45,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "bryansantosbreton critical tension cinematic braam impact 184273",
+   "category": "SXF"
+  },
+  "626e63f4240f57b2": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\freesound_community-tension-build-6035.mp3",
+   "duration": 15.79,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "freesound community tension build 6035",
+   "category": "SXF"
+  },
+  "517616fe66927058": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\gd_salman-tension-stinger-ambience-355381.mp3",
+   "duration": 7.87,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "gd salman tension stinger ambience 355381",
+   "category": "SXF"
+  },
+  "afd2c4932b326519": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\preshkeyzmusic-tension-effects-297613.mp3",
+   "duration": 33.05,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "preshkeyzmusic tension effects 297613",
+   "category": "SXF"
+  },
+  "66f794d1ad3455e6": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\sounds_ykt-time-freeze-tension-327055.mp3",
+   "duration": 3.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "sounds ykt time freeze tension 327055",
+   "category": "SXF"
+  },
+  "9bb28f4b1e67bc5d": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\thefealdoproject-tension-booster-01-250483.mp3",
+   "duration": 15.26,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "thefealdoproject tension booster 01 250483",
+   "category": "SXF"
+  },
+  "12ce2c8971ff14a9": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\u_mx4xkr2bzy-slow-cinematic-clock-ticking-tension-323080.mp3",
+   "duration": 8.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "u mx4xkr2bzy slow cinematic clock ticking tension 323080",
+   "category": "SXF"
+  },
+  "f441cdbe4e148625": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\universfield-creepy-tension-background-30-352872.mp3",
+   "duration": 30.07,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "universfield creepy tension background 30 352872",
+   "category": "SXF"
+  },
+  "016030fc57779ff0": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\universfield-scary-string-tension-454849.mp3",
+   "duration": 3.68,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "universfield scary string tension 454849",
+   "category": "SXF"
+  },
+  "cb0fef769c67b768": {
+   "path": "SXF\\450 cinematic sound effects\\horror & tension\\universfield-tense-paranormal-horror-15s-498138.mp3",
+   "duration": 15.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "universfield tense paranormal horror 15s 498138",
+   "category": "SXF"
+  },
+  "0e2150268ed20736": {
+   "path": "SXF\\450 cinematic sound effects\\mix\\audiopapkin-long-riser-hit-ps-001-336716.mp3",
+   "duration": 44.02,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "audiopapkin long riser hit ps 001 336716",
+   "category": "SXF"
+  },
+  "cc38aeeffd2dc6e7": {
+   "path": "SXF\\450 cinematic sound effects\\mix\\dragon-studio-clock-ticking-down-376897.mp3",
+   "duration": 8.99,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "dragon studio clock ticking down 376897",
+   "category": "SXF"
+  },
+  "e365d6de6b57c0a4": {
+   "path": "SXF\\450 cinematic sound effects\\mix\\freesound_community-cash-register-purchase-87313.mp3",
+   "duration": 2.81,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community cash register purchase 87313",
+   "category": "SXF"
+  },
+  "51aeb9308d2f17ec": {
+   "path": "SXF\\450 cinematic sound effects\\mix\\trading_nation-long-riser-185557.mp3",
+   "duration": 11.71,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "trading nation long riser 185557",
+   "category": "SXF"
+  },
+  "f48b76e5bee09849": {
+   "path": "SXF\\Heartbeat_(Loop).mp3",
+   "duration": 15.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Heartbeat (Loop)",
+   "category": "SXF"
+  },
+  "90532fb52c8bbcb8": {
+   "path": "SXF\\Heartbeat_01.mp3",
+   "duration": 6.35,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Heartbeat 01",
+   "category": "SXF"
+  },
+  "e3f8285d6a972b69": {
+   "path": "SXF\\Heartbeat_02.mp3",
+   "duration": 4.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Heartbeat 02",
+   "category": "SXF"
+  },
+  "2a7c9782b7e646e9": {
+   "path": "SXF\\Heartbeat_03.mp3",
+   "duration": 4.36,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Heartbeat 03",
+   "category": "SXF"
+  },
+  "dfe950e0d927f7b7": {
+   "path": "ambience_sound\\01_main.mp3",
+   "duration": 56.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "01 main",
+   "category": "ambience_sound"
+  },
+  "6a9ad9e9ada602f3": {
+   "path": "ambience_sound\\01_main.wav",
+   "duration": 56.77,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "01 main",
+   "category": "ambience_sound"
+  },
+  "ac6728f34ef0019b": {
+   "path": "ambience_sound\\Amazon Rainforest - 60 Sec..mp3",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 60.32,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   60 Sec.",
+   "category": "ambience_sound"
+  },
+  "5cb2777fbb14692d": {
+   "path": "ambience_sound\\Amazon Rainforest - 60 Sec..wav",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 60.25,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   60 Sec.",
+   "category": "ambience_sound"
+  },
+  "0ffa821b3b62216c": {
+   "path": "ambience_sound\\Amazon Rainforest - Alternative.mp3",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 195.76,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   Alternative",
+   "category": "ambience_sound"
+  },
+  "3f4718b0756f8895": {
+   "path": "ambience_sound\\Amazon Rainforest - Alternative.wav",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 195.71,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   Alternative",
+   "category": "ambience_sound"
+  },
+  "f09b821035300018": {
+   "path": "ambience_sound\\Amazon Rainforest - Full.mp3",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 195.76,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   Full",
+   "category": "ambience_sound"
+  },
+  "c0d6203f7d2844ff": {
+   "path": "ambience_sound\\Amazon Rainforest - Full.wav",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 195.7,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   Full",
+   "category": "ambience_sound"
+  },
+  "6f0d1a00b47f60ed": {
+   "path": "ambience_sound\\Amazon Rainforest - Loop.mp3",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 162.54,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   Loop",
+   "category": "ambience_sound"
+  },
+  "c6fd6a7e682b93b0": {
+   "path": "ambience_sound\\Amazon Rainforest - Loop.wav",
+   "width": 1400,
+   "height": 1400,
+   "fps": 90000.0,
+   "duration": 162.46,
+   "has_audio": true,
+   "title_hint": "Amazon Rainforest   Loop",
+   "category": "ambience_sound"
+  },
+  "9a532e108399f222": {
+   "path": "ambience_sound\\Jungle 2.mp3",
+   "duration": 115.97,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Jungle 2",
+   "category": "ambience_sound"
+  },
+  "180ba6ca1e11ac81": {
+   "path": "ambience_sound\\Jungle 2.wav",
+   "duration": 116.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Jungle 2",
+   "category": "ambience_sound"
+  },
+  "2cc8350949bb732b": {
+   "path": "ambience_sound\\Jungle Ident 2.mp3",
+   "duration": 30.54,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Jungle Ident 2",
+   "category": "ambience_sound"
+  },
+  "5e878390bb1be471": {
+   "path": "ambience_sound\\Jungle Ident 2.wav",
+   "duration": 30.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Jungle Ident 2",
+   "category": "ambience_sound"
+  },
+  "31d6320b7afca121": {
+   "path": "ambience_sound\\Monkey Horror Shines.mp3",
+   "duration": 86.25,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Monkey Horror Shines",
+   "category": "ambience_sound"
+  },
+  "f74eee35284bea32": {
+   "path": "ambience_sound\\OhmLab_Drum-Dada-Nature-Meditation-Bundle_Other_Instrumental.mp3",
+   "duration": 274.94,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "OhmLab Drum Dada Nature Meditation Bundle Other Instrumental",
+   "category": "ambience_sound"
+  },
+  "9db4cac62b6a8c32": {
+   "path": "ambience_sound\\OhmLab_Drum-Dada-Nature-Meditation-Bundle_Other_Instrumental.wav",
+   "duration": 274.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "OhmLab Drum Dada Nature Meditation Bundle Other Instrumental",
+   "category": "ambience_sound"
+  },
+  "9f7ac3b5dbac3ae5": {
+   "path": "ambience_sound\\OhmLab_Drum-Dada-Nature-Meditation_Main.mp3",
+   "duration": 273.63,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "OhmLab Drum Dada Nature Meditation Main",
+   "category": "ambience_sound"
+  },
+  "3cb1bf80b54de423": {
+   "path": "ambience_sound\\OhmLab_Drum-Dada-Nature-Meditation_Main.wav",
+   "duration": 273.56,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "OhmLab Drum Dada Nature Meditation Main",
+   "category": "ambience_sound"
+  },
+  "e41f26abf17e80d3": {
+   "path": "ambience_sound\\Rainforest (Full Version).mp3",
+   "duration": 85.06,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Rainforest (Full Version)",
+   "category": "ambience_sound"
+  },
+  "f677319f560e037b": {
+   "path": "ambience_sound\\Rainforest (Full Version).wav",
+   "duration": 85.06,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Rainforest (Full Version)",
+   "category": "ambience_sound"
+  },
+  "bc2b7de646fff7fc": {
+   "path": "ambience_sound\\Rainforest (Short Version).mp3",
+   "duration": 39.06,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Rainforest (Short Version)",
+   "category": "ambience_sound"
+  },
+  "ee11494b86e9faf7": {
+   "path": "ambience_sound\\Rainforest (Short Version).wav",
+   "duration": 39.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Rainforest (Short Version)",
+   "category": "ambience_sound"
+  },
+  "d84efc5e80dd356b": {
+   "path": "ambience_sound\\Realm of Fantastic Ambience.mp3",
+   "duration": 600.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Realm of Fantastic Ambience",
+   "category": "ambience_sound"
+  },
+  "c4e9c5bee4fbf5fc": {
+   "path": "ambience_sound\\Realm of Fantastic Ambience.wav",
+   "duration": 600.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Realm of Fantastic Ambience",
+   "category": "ambience_sound"
+  },
+  "f3bccfb299d79b4c": {
+   "path": "ambience_sound\\Woodland Atmosphere.wav",
+   "duration": 132.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Woodland Atmosphere",
+   "category": "ambience_sound"
+  },
+  "f51b99ee63303e84": {
+   "path": "ambience_sound\\alien-rainforest-SBA-349122372.mp3",
+   "duration": 92.5,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "alien rainforest",
+   "category": "ambience_sound"
+  },
+  "0c9b4d1fcf94efc5": {
+   "path": "ambience_sound\\amazon-rainforest-SBA-347359793.mp3",
+   "duration": 55.58,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "amazon rainforest",
+   "category": "ambience_sound"
+  },
+  "38f81c0849f120ca": {
+   "path": "ambience_sound\\birds-ambient-SBA-300540052.mp3",
+   "duration": 40.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "birds ambient",
+   "category": "ambience_sound"
+  },
+  "ab930a873654dcae": {
+   "path": "ambience_sound\\enchanted-forest-SBA-349009630.mp3",
+   "duration": 55.26,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "enchanted forest",
+   "category": "ambience_sound"
+  },
+  "165f6b08f191b749": {
+   "path": "ambience_sound\\forest-ambient-SBA-300541254.mp3",
+   "duration": 40.42,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "forest ambient",
+   "category": "ambience_sound"
+  },
+  "2b75094ecb6efd99": {
+   "path": "ambience_sound\\hypnotic-nature-journey-SBA-355051685.mp3",
+   "duration": 143.88,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "hypnotic nature journey",
+   "category": "ambience_sound"
+  },
+  "25d93216d8f13431": {
+   "path": "ambience_sound\\hypnotic-nature-journey-extended-version-five-minutes-SBA-355051803.mp3",
+   "duration": 300.37,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "hypnotic nature journey extended version five minutes",
+   "category": "ambience_sound"
+  },
+  "0b83e6a091eead77": {
+   "path": "ambience_sound\\nature-wildlife-soundscape-SBA-353341320.mp3",
+   "duration": 404.21,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "nature wildlife soundscape",
+   "category": "ambience_sound"
+  },
+  "809c7ba735c4bf7a": {
+   "path": "ambience_sound\\paranoia-shadows-SBA-353299734.mp3",
+   "duration": 173.4,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "paranoia shadows",
+   "category": "ambience_sound"
+  },
+  "ade418bf89e86ca5": {
+   "path": "openning\\delosound-suspense-tension-background-music-302978.mp3",
+   "duration": 132.05,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "delosound suspense tension background music 302978",
+   "category": "openning"
+  },
+  "838cc3d86a13c693": {
+   "path": "openning\\nocopyrightsound633-blod-tense-303152.mp3",
+   "duration": 75.12,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "nocopyrightsound633 blod tense 303152",
+   "category": "openning"
+  },
+  "e7f575204724d445": {
+   "path": "openning\\sigmamusicart-cinematic-tense-trailer-198846.mp3",
+   "duration": 94.88,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "sigmamusicart cinematic tense trailer 198846",
+   "category": "openning"
+  },
+  "76f30a4c255576f2": {
+   "path": "openning\\stockaudios-tense-suspense-cinematic-no-copyright-empire-awakens-254852.mp3",
+   "duration": 56.61,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "stockaudios tense suspense cinematic no copyright empire awakens 254852",
+   "category": "openning"
+  },
+  "7ed1020e604ab7bc": {
+   "path": "tense_music\\222.mp3",
+   "width": 360,
+   "height": 360,
+   "fps": 90000.0,
+   "duration": 112.09,
+   "has_audio": true,
+   "title_hint": "222",
+   "category": "tense_music"
+  },
+  "34cd94fdf3e66851": {
+   "path": "tense_music\\Màn_Săn_Bóng_Tối.mp3",
+   "width": 360,
+   "height": 360,
+   "fps": 90000.0,
+   "duration": 138.21,
+   "has_audio": true,
+   "title_hint": "Màn Săn Bóng Tối",
+   "category": "tense_music"
+  },
+  "ac2373f704ca5e45": {
+   "path": "tense_music\\leberch-airium-tense-610770.mp3",
+   "duration": 122.04,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "leberch airium tense 610770",
+   "category": "tense_music"
+  },
+  "b10355f36184c315": {
+   "path": "tense_music\\suspicions-SBA-348626989.mp3",
+   "duration": 45.41,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "suspicions",
+   "category": "tense_music"
+  },
+  "b251faf37253d682": {
+   "path": "tense_music\\tense-disturbance-SBA-348793138.mp3",
+   "duration": 162.58,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "tense disturbance",
+   "category": "tense_music"
+  },
+  "6237d75fd069e3d7": {
+   "path": "tense_music\\tense_2.mp3",
+   "duration": 69.14,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "tense 2",
+   "category": "tense_music"
+  },
+  "b5165488be34974e": {
+   "path": "tense_music\\tense_3.mp3",
+   "duration": 86.54,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "tense 3",
+   "category": "tense_music"
+  },
+  "52f68c8ce85dde98": {
+   "path": "tense_music\\the-arrival-SBA-354589217.mp3",
+   "duration": 85.77,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "the arrival",
+   "category": "tense_music"
+  },
+  "f2501fbef89371b1": {
+   "path": "tense_music\\the-ticking-clock-strings-horn-SBA-354276883.mp3",
+   "duration": 105.95,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "the ticking clock strings horn",
+   "category": "tense_music"
+  }
+ },
+ "kind": "audio",
+ "root": "Z:\\Unseen\\Amazona\\audio",
+ "updated": "2026-10-11",
+ "layout": {
+  "<category>/": "folder name as given by the user (ambience_sound, Nature_sound, tense_music...)",
+  "fields": "category from folder; title_hint = stock file name"
+ },
+ "stats": {
+  "files": 555,
+  "minutes": 212.6,
+  "category": {
+   "Nature_sound": 51,
+   "SXF": 456,
+   "ambience_sound": 35,
+   "openning": 4,
+   "tense_music": 9
+  }
+ }
+}

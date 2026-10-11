@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(*SendKeys*)",
+      "Bash(*SendWait*)"
+    ],
+    "ask": [
+      "Bash(*--replace*)",
+      "Bash(*place.py*)",
+      "Bash(*apply.py*)",
+      "Bash(*DeleteClips*)",
+      "Bash(*DeleteTimelines*)",
+      "Bash(*ClearTrack*)",
+      "Bash(*reframe.py*--apply*)",
+      "Bash(*grade.py apply*)"
+    ]
+  }
+}

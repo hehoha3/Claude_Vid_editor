@@ -8,7 +8,7 @@ description: Documentary editing craft in DaVinci Resolve - narration-led cuttin
 For export settings read `references/delivery.md`.
 
 ## The narration-led edit
-1. VO sits on A4 (vo-sync). Picture is cut to serve it: the image should show what the line is
+1. VO sits on A2 (vo-sync). Picture is cut to serve it: the image should show what the line is
    about at the moment it is said, or just before (the image prompts the word). Never contradict it.
 2. Let lines breathe: after a revelation or a strike, leave 1-3 s without narration; picture and
    sound effects carry it. Silence is a tool.

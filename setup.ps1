@@ -3,9 +3,11 @@
 #   powershell -ExecutionPolicy Bypass -File .\setup.ps1
 # Options:
 #   -SkipModel     do not pre-download the Whisper model now
+#   -SkipYolo      do not install torch + ultralytics (no NVIDIA GPU; plan falls back to tags)
 #   -Python "C:\Path\python.exe"   force a specific interpreter
 param(
     [switch]$SkipModel,
+    [switch]$SkipYolo,
     [string]$Python = ""
 )
 $ErrorActionPreference = "Stop"
@@ -48,6 +50,23 @@ $venvPy = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 if ($LASTEXITCODE -ne 0) { throw "pip install failed" }
 Write-Host "Python packages installed." -ForegroundColor Green
 
+if (-not $SkipYolo) {
+    # YOLO-World for /doc-edit plan + reframe (NVIDIA GPU; CUDA 12.8 wheels, ~3 GB). Model + CLIP land in .models/
+    Write-Host "Installing torch (CUDA 12.8) + ultralytics for YOLO..." -ForegroundColor Cyan
+    & $venvPy -m pip install torch --index-url https://download.pytorch.org/whl/cu128 --quiet
+    & $venvPy -m pip install "ultralytics>=8.4" --quiet
+    if ($LASTEXITCODE -ne 0) { throw "YOLO install failed (re-run with -SkipYolo to skip; plan then uses tags only)" }
+    & (Join-Path $PSScriptRoot ".venv\Scripts\yolo.exe") settings "weights_dir=$PSScriptRoot\.models" "runs_dir=$PSScriptRoot\.work\yolo_runs" sync=False | Out-Null
+}
+
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    Write-Host "ffmpeg not found on PATH (needed by every skill): winget install Gyan.FFmpeg, then reopen the terminal." -ForegroundColor Red
+}
+if (-not (Test-Path "Z:\Unseen")) {
+    Write-Host "Z:\Unseen not mapped: map the shared drive as Z: (READ + COPY only)." -ForegroundColor Yellow
+}
+Write-Host "Set your AI clips folder in config.toml -> [paths] ai_video (now: $((Select-String -Path config.toml -Pattern '^ai_video').Line))" -ForegroundColor Yellow
+
 if (-not $SkipModel) {
     Write-Host "Downloading Whisper model (about 0.5 GB, one time)..." -ForegroundColor Cyan
     & $venvPy -m dvr_cowork prefetch
@@ -61,4 +80,4 @@ Write-Host "Resolve check:" -ForegroundColor Cyan
 & $venvPy -m dvr_cowork doctor
 Write-Host ""
 Write-Host "Done. Open Claude Code in this folder:  claude" -ForegroundColor Green
-Write-Host "Then:  /sync-vo `"D:\path\narration.mp3`" `"D:\path\timestamps.txt`""
+Write-Host "Then:  /doc-edit <audios-folder>   (step 1 of a new video)"

@@ -1,14 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir -p /c/Users/ADMIN/Claude_editor/.claude/skills)",
-      "Bash(rm .claude/skills/trim-character-sheet/run.sh .work/shot050_f0.png .work/shot143_f0_f1.png)",
-      "Bash(rm -f .claude/skills/trim-character-sheet/scripts/cs_detect.py)",
-      "Bash(time .venv/Scripts/python .claude/skills/trim-character-sheet/scripts/trim_character_sheet.py)"
+      "Edit(/.claude/skills/hide-logo/**)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "Edit(/.claude/skills/doc-edit/**)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+      "Edit(/.claude/skills/resolve-api/**)",
+      "Edit(/.claude/skills/audio-expert/**)",
+      "Edit(/.claude/skills/colorist/**)",
+      "Bash(.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest)"
+    ],
+    "deny": [
+      "Bash(*SendKeys*)",
+      "Bash(*SendWait*)"
+    ],
+    "ask": [
+      "Bash(*--replace*)",
+      "Bash(*place.py*)",
+      "Bash(*apply.py*)",
+      "Bash(*DeleteClips*)",
+      "Bash(*DeleteTimelines*)",
+      "Bash(*ClearTrack*)",
+      "Bash(*reframe.py*--apply*)",
+      "Bash(*grade.py apply*)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\ADMIN\\Claude_editor\\.claude\\skills",
-      "C:\\Users\\ADMIN\\Claude_editor\\.claude\\skills\\trim-character-sheet"
+      "C:\\Users\\ADMIN\\Claude_editor\\.claude\\skills"
     ]
   }
 }
