@@ -24,8 +24,28 @@ from dvr_cowork.config import load_config  # noqa: E402
 TIMELINE = "Edit"
 CACHE = ROOT / ".work" / "hide_logo" / "scan.json"
 EXTS = {".mp4", ".mov", ".mkv", ".mxf", ".avi", ".m4v"}
-OUT_DIR = "_nologo"
-Z_OUT = Path(load_config()["paths"]["ai_video"]) / "_check" / "_z_nologo"  # logo-free copies of Z: clips (scan-source and process-ai-video skip it)
+# every logo-free copy (D: and read-only Z: sources) waits here until the project is Done; scan-source and
+# process-ai-video skip it. MANIFEST maps copy -> original for the overwrite question at /doc-edit done.
+NOLOGO = Path(load_config()["paths"]["ai_video"]) / "_check" / "_nologo"
+MANIFEST = ROOT / ".work" / "hide_logo" / "nologo.json"
+OVERWRITTEN = ROOT / ".work" / "hide_logo" / "overwritten.json"  # replaced copies to relink back after a Resolve quit
+
+
+def manifest():
+    return json.loads(MANIFEST.read_text("utf-8")) if MANIFEST.exists() else {}
+
+
+def record(src, dst):
+    m = manifest()
+    m[str(dst)] = str(src)
+    MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    MANIFEST.write_text(json.dumps(m, indent=1, ensure_ascii=False), "utf-8")
+
+
+def original_of(path):
+    """A clip already relinked to its logo-free copy -> the untouched original (always redo from it)."""
+    m = {os.path.normcase(k): v for k, v in manifest().items()}
+    return m.get(os.path.normcase(str(path)), str(path))
 PREFIXES = ("LOGO", "[LOGO-")
 W, H, N = 640, 360, 8          # analysis size, frames sampled per file
 HI, LO = 0.45, 0.33            # NCC: >= HI logo, LO..HI suspect (vid_3: logos 0.47-0.66, clean <= ~0.35)
@@ -167,7 +187,7 @@ def mark(files_out):
     return n
 
 
-def delogo(src, box, start=0.0):
+def delogo(src, box, start=0.0, end=None):
     w, h, _ = probe(src)
     x0, y0 = max(1, int(box[0] * w) - EDGE_PAD), max(1, int(box[1] * h) - EDGE_PAD)
     x1, y1 = min(w - 2, int(np.ceil(box[2] * w)) + EDGE_PAD), min(h - 2, int(np.ceil(box[3] * h)) + EDGE_PAD)
@@ -184,13 +204,15 @@ def delogo(src, box, start=0.0):
         a = np.frombuffer(raw[:bw * bh], np.uint8).reshape(bh, bw).astype(np.float32)
         hf = a[1:-1, 1:-1] - (a[:-2, 1:-1] + a[2:, 1:-1] + a[1:-1, :-2] + a[1:-1, 2:]) / 4
         grain = int(np.clip(hf.std() * 2.0, 0, 15))
-    en = f":enable='gte(t,{start:.3f})'" if start > 0 else ""
+    en = (f":enable='between(t,{start:.3f},{end:.3f})'" if end is not None
+          else f":enable='gte(t,{start:.3f})'" if start > 0 else "")
     vf = f"[0:v]delogo=x={x0}:y={y0}:w={bw}:h={bh}{en}"
     if grain >= 2:
         vf += f",split[a][b];[b]crop={bw}:{bh}:{x0}:{y0},noise=alls={grain}:allf=t[n];[a][n]overlay={x0}:{y0}{en}"
-    # drive Z: is READ + COPY only (user rule 2026-10-11): cleaned copies of Z: footage go to Z_OUT on D:
-    # ponytail: flat folder, two Z: files with the same name would overwrite each other
-    dst = (Z_OUT if Path(src).drive.upper() == "Z:" else Path(src).parent / OUT_DIR) / Path(src).name
+    # one flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name
+    dst = NOLOGO / Path(src).name
+    if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
+        dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
     assert dst.drive.upper() != "Z:", dst
     dst.parent.mkdir(parents=True, exist_ok=True)
     r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", vf + "[v]", "-map", "[v]",
@@ -219,7 +241,7 @@ def execute():
         if it is None or not clip_path(it):
             continue
         used.append(f)
-        todo.setdefault(clip_path(it), it.GetMediaPoolItem())
+        todo.setdefault(os.path.normcase(original_of(clip_path(it))), it.GetMediaPoolItem())
     if not todo:
         sys.exit("No markers on V1 clips.")
     jobs = [(p, cache["files"].get(p, {}).get("box", cache["default_box"])) for p in todo]
@@ -229,6 +251,7 @@ def execute():
     for src, dst, err, grain in results:
         if dst and todo[src].ReplaceClip(dst):
             done += 1
+            record(src, dst)
             if grain >= BUSY:
                 busy.append(Path(src).stem)
         else:
@@ -236,7 +259,7 @@ def execute():
     if not failed:
         for f in used:
             tl.DeleteMarkerAtFrame(f)
-    print(f"delogo {done}/{len(todo)} clips -> '{OUT_DIR}' next to the originals, media pool relinked | "
+    print(f"delogo {done}/{len(todo)} clips -> {NOLOGO}, media pool relinked | "
           + ("markers deleted" if not failed else "markers kept (failures): " + "; ".join(failed)))
     print("REVIEW FIRST (detailed background, patch may show): " + (", ".join(sorted(busy)) or "none"))
 
@@ -253,7 +276,7 @@ def _run(idx, gap):
     return max(runs, key=lambda r: r[1] - r[0])
 
 
-def late_logo(src, quads, h2, w2):
+def late_logo(src, quads, h2, w2, head=False):
     """Logo that pops in late and stays: its pixels all stop changing at the same frame, packed in one small
     window, while the background settles at scattered times. Returns (corner, box@640x360, start_s) or None."""
     from numpy.lib.stride_tricks import sliding_window_view
@@ -262,6 +285,8 @@ def late_logo(src, quads, h2, w2):
     f = np.frombuffer(raw, np.uint8)[:len(raw) // (W * H) * W * H].reshape(-1, H, W).astype(np.float32)
     if len(f) < 16:
         return None
+    if head:   # logo shown from the start, gone later = a late logo in the reversed clip
+        f = f[::-1].copy()
     best = None
     for corner, (oy, ox) in quads.items():
         c = f[:, oy:oy + h2, ox:ox + w2]
@@ -279,36 +304,38 @@ def late_logo(src, quads, h2, w2):
                 r0, r1 = _run(np.nonzero(m.sum(1) >= 3)[0], 2)
                 c0, c1 = _run(np.nonzero(m[r0:r1 + 1].sum(0) >= 2)[0], 8)
                 bx = (ox + c0 - 2, oy + r0 - 2, ox + c1 + 3, oy + r1 + 3)
-                best = (share, corner, bx, max(0.0, (t - 2) / FPS_END))
-    return best[1:] if best else None
+                tt = (len(f) - t + 2) / FPS_END if head else max(0.0, (t - 2) / FPS_END)
+                best = (share, corner, bx, tt)
+    return best   # (share, corner, box@640x360, start_s | end_s when head) or None
 
 
-def one_clip(name, corner=None, endpart=False):
+def one_clip(name, corner=None, endpart=False, head=False):
     """One shot name or video path: find its static logo in a corner (persistent edges over 8 frames), delogo,
-    relink the V1 clip using it (if any). endpart=True: logo appears late in the clip."""
+    relink the V1 clip using it (if any). endpart=True: logo appears late in the clip; head=True: logo only at
+    the start of the clip, gone later."""
     _, tl = edit_timeline()
     items = tl.GetItemListInTrack("video", 1)
     if Path(name).is_file():
         src = str(Path(name).resolve())
-        it = next((i for i in items if clip_path(i) == os.path.normcase(src)), None)
+        it = next((i for i in items if os.path.normcase(original_of(clip_path(i))) == os.path.normcase(src)), None)
     else:
         it = next((i for i in items if Path(name).stem.lower() in i.GetName().lower()), None)
         if it is None:
             sys.exit(f"'{name}' is not a file and not on V1 of '{TIMELINE}'")
         src = it.GetMediaPoolItem().GetClipProperty("File Path")
     mpi = it.GetMediaPoolItem() if it else None
-    if Path(src).parent.name == OUT_DIR:   # clip already relinked: always redo from the untouched original
-        src = str(Path(src).parent.parent / Path(src).name)
+    src = original_of(src)   # clip already relinked: always redo from the untouched original
     h2, w2 = H // 2, W // 2
     quads = {"tl": (0, 0), "tr": (0, w2), "bl": (h2, 0), "br": (h2, w2)}
-    start = 0.0
-    if endpart:
+    start, end = 0.0, None
+    if endpart or head:
         bh, bw = H // 5, W * 3 // 10    # channel logos hug the frame edge: search a corner band, not a quadrant
         bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
-        found = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw)
+        found = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
         if not found:
-            sys.exit(f"no logo appearing late found in corner {corner or 'any'}")
-        corner, bx, start = found
+            sys.exit(f"no logo {'leaving' if head else 'appearing late'} found in corner {corner or 'any'}")
+        _, corner, bx, t = found
+        start, end = (0.0, t) if head else (t, None)
     else:
         _, per = sample(src)
         if per is None:
@@ -321,17 +348,220 @@ def one_clip(name, corner=None, endpart=False):
         k = (abs(xs - np.median(xs)) < 80) & (abs(ys - np.median(ys)) < 40)   # densest cluster, drops stray edges
         bx = (ox + xs[k].min() - 2, oy + ys[k].min() - 2, ox + xs[k].max() + 3, oy + ys[k].max() + 3)
     box = [bx[0] / W, bx[1] / H, bx[2] / W, bx[3] / H]
-    _, dst, err, grain = delogo(src, box, start)
+    _, dst, err, grain = delogo(src, box, start, end)
     if not dst or (mpi and not mpi.ReplaceClip(dst)):
         sys.exit(f"failed: {err or 'ReplaceClip failed'}")
-    print(f"{Path(src).stem}: logo {corner} {[int(v) for v in bx]}@640x360 from {start:.1f}s removed -> {dst} | "
+    record(src, dst)
+    when = f"0.0-{end:.1f}s" if end is not None else f"from {start:.1f}s"
+    print(f"{Path(src).stem}: logo {corner} {[int(v) for v in bx]}@640x360 {when} removed -> {dst} | "
           + ("relinked" if mpi else "not on V1, file only") + f" | grain {grain}"
           + (" REVIEW (detailed background)" if grain >= BUSY else ""))
+
+
+def at_clip(tc, corner=None):
+    """Timeline position the user saw the logo at (mm:ss or hh:mm:ss) -> the V1 clip there, or a neighbour within
+    1 s (a reported time often lands just before the cut), whichever shows the most static edges in the corner."""
+    project, tl = edit_timeline()
+    fps, t0 = float(tl.GetSetting("timelineFrameRate")), int(tl.GetStartFrame())
+    sec = sum(float(v) * 60 ** i for i, v in enumerate(reversed(tc.split(":"))))
+    fr, pad = t0 + round(sec * fps), round(fps)
+    h2, w2 = H // 2, W // 2
+    quads = {"tl": (0, 0), "tr": (0, w2), "bl": (h2, 0), "br": (h2, w2)}
+    best, srcs = None, []
+    for it in tl.GetItemListInTrack("video", 1):
+        if not (it.GetStart() <= fr + pad and it.GetEnd() > fr - pad) or not it.GetMediaPoolItem():
+            continue
+        src = it.GetMediaPoolItem().GetClipProperty("File Path")
+        src = original_of(src)
+        _, per = sample(src)
+        if per is None:
+            continue
+        score = max(int(np.count_nonzero(per[y:y + h2, x:x + w2])) for c, (y, x) in quads.items() if c in (corner or quads))
+        span = f"{(it.GetStart() - t0) / fps:.1f}-{(it.GetEnd() - t0) / fps:.1f}s"
+        print(f"  candidate {span} {Path(src).name}: static edges {score}")
+        if best is None or score > best[0]:
+            best = (score, src)
+        srcs.append(src)
+    if best and best[0] >= 20:
+        return one_clip(best[1], corner)
+    # no logo through the whole clip: one shown only at the start (head) or popping in late (end)
+    bh, bw = H // 5, W * 3 // 10
+    bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
+    part = None
+    for src in srcs:
+        for head in (True, False):
+            f = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
+            print(f"  {Path(src).name} {'start' if head else 'late'}: " + (f"share {f[0]:.2f}" if f else "none"))
+            if f and (part is None or f[0] > part[0]):
+                part = (f[0], src, head)
+    if not part:
+        sys.exit(f"no logo found near {tc}")
+    one_clip(part[1], corner, endpart=not part[2], head=part[2])
+
+
+def frame_info(p):
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
+                        "stream=nb_read_packets,width,height", "-of", "json", str(p)], capture_output=True, text=True)
+    return json.loads(r.stdout)["streams"][0]
+
+
+def _relink(project, names, target):
+    """Media pool items whose file name is one of `names` -> `target` (all bins of the project)."""
+    def walk(f):
+        yield from f.GetClipList() or []
+        for s in f.GetSubFolderList() or []:
+            yield from walk(s)
+    hits = [c for c in walk(project.GetMediaPool().GetRootFolder())
+            if Path(c.GetClipProperty("File Path") or "").name in names
+            and os.path.normcase(c.GetClipProperty("File Path")) != os.path.normcase(str(target))]
+    return sum(bool(c.ReplaceClip(str(target))) for c in hits)
+
+
+def _move_id(ss, orig, old_id):
+    """Tags (library index), YOLO cache and clip ledger follow the file to its new content hash."""
+    new_id, moved = ss.fast_hash(orig), []
+    for key, (root, kind, _) in ss.ROOTS.items():
+        p = ss.index_of(root)
+        if root.drive.upper() == orig.drive.upper() and p.exists():
+            idx = json.loads(p.read_text("utf-8"))
+            if old_id in idx["clips"]:
+                idx["clips"][new_id] = idx["clips"].pop(old_id)
+                ss.save(root, kind, idx)
+                moved.append(key + " index")
+    p = ROOT / ".work" / "library" / "yolo.json"
+    if p.exists():
+        cache = json.loads(p.read_text("utf-8"))
+        if old_id in cache:
+            cache[new_id] = cache.pop(old_id)
+            p.write_text(json.dumps(cache, separators=(",", ":")), "utf-8")
+            moved.append("yolo cache")
+    led = ROOT / ".work" / "doc_edit" / "recent_clips.json"
+    if led.exists() and old_id in led.read_text("utf-8"):
+        led.write_text(led.read_text("utf-8").replace(old_id, new_id), "utf-8")
+        moved.append("clip ledger")
+    return f"id {old_id} -> {new_id} ({', '.join(moved) or 'not indexed'})"
+
+
+def pending():
+    """Logo-free copies waiting for the overwrite question at /doc-edit done."""
+    m = manifest()
+    for clean, orig in m.items():
+        z = " (Z: read-only, copy stays)" if Path(orig).drive.upper() == "Z:" else ""
+        print(f"  {Path(orig).name}{z}" + ("" if Path(clean).exists() else "  MISSING copy " + clean))
+    print(f"{len(m)} logo-free copies in {NOLOGO}")
+
+
+def relink_pending():
+    """Open project: items on an original -> its logo-free copy (pending), items on a replaced copy -> the
+    original again (after an overwrite that had to quit Resolve)."""
+    project = connect().GetProjectManager().GetCurrentProject()
+    m, back = manifest(), (json.loads(OVERWRITTEN.read_text("utf-8")) if OVERWRITTEN.exists() else {})
+    n = sum(_relink(project, {Path(c).name, Path(o).name}, c) for c, o in m.items() if Path(c).exists())
+    k = sum(_relink(project, {Path(c).name, Path(o).name}, o) for c, o in back.items() if Path(o).exists())
+    OVERWRITTEN.unlink(missing_ok=True)
+    print(f"relinked {n} item(s) to {len(m)} logo-free copies, {k} item(s) back to {len(back)} overwritten originals")
+
+
+def _replace_all(jobs):
+    import time
+    done, locked = [], []
+    for c, o, old_id in jobs:
+        for _ in range(10):  # Resolve releases the media handles a moment after the close
+            try:
+                c.replace(o)
+                done.append((c, o, old_id))
+                break
+            except PermissionError:
+                time.sleep(1)
+        else:
+            locked.append((c, o, old_id))
+    return done, locked
+
+
+def overwrite_all():
+    """User said yes at /doc-edit done (video already exported): each copy in NOLOGO replaces its original (Z:
+    originals stay, read-only), Resolve is relinked to the original paths, tags / YOLO cache / ledger move to the
+    new content hash. Resolve keeps the files open (Windows refuses the replace): the project is saved and closed
+    around the replaces and reopened on the same timeline; if a file is still locked Resolve is quit, the rest is
+    replaced, and --relink (after the user reopens the project) points the items back at the originals."""
+    import time
+    sys.path.insert(0, str(ROOT / ".claude" / "skills" / "scan-source" / "scripts"))
+    import scan_source as ss
+    m = manifest()
+    jobs, kept, bad = [], [], []
+    for clean, orig in m.items():
+        c, o = Path(clean), Path(orig)
+        if o.drive.upper() == "Z:":
+            kept.append(o.name)
+        elif not (c.is_file() and o.is_file()) or frame_info(c) != frame_info(o):
+            bad.append(f"{o.name}: missing file or frame count differs")
+        else:
+            jobs.append((c, o, ss.fast_hash(o)))
+    if not jobs:
+        sys.exit(f"nothing to overwrite | kept (Z:) {kept} | problems {bad}")
+    resolve = connect()
+    pm = resolve.GetProjectManager()
+    project = pm.GetCurrentProject()
+    name, cur = project.GetName(), (project.GetCurrentTimeline() or project.GetTimelineByIndex(1)).GetName()
+    assert pm.SaveProject(), "project not saved - nothing changed"
+    assert pm.CloseProject(project), "could not close the project - nothing changed"
+    done, locked = _replace_all(jobs)
+    quit_ = bool(locked)
+    if quit_:  # closing the project did not release every file: quit Resolve and try again
+        resolve.Quit()
+        for _ in range(60):
+            out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq Resolve.exe"], capture_output=True, text=True).stdout
+            if "Resolve.exe" not in out:
+                break
+            time.sleep(1)
+        more, locked = _replace_all(locked)
+        done += more
+    for c, o, old_id in done:   # bookkeeping first: the files are already replaced
+        print(f"  {o.name}: {_move_id(ss, o, old_id)}")
+        m.pop(str(c), None)
+    MANIFEST.write_text(json.dumps(m, indent=1, ensure_ascii=False), "utf-8")
+    back = {str(c): str(o) for c, o, _ in done}
+    tail = f" | kept (Z: read-only) {len(kept)} | still locked {[o.name for _, o, _ in locked]} | problems {bad}"
+    if quit_:
+        OVERWRITTEN.write_text(json.dumps(back, indent=1, ensure_ascii=False), "utf-8")
+        print(f"overwritten {len(done)}/{len(jobs)} originals | Resolve was quit to free the files: reopen project "
+              f"'{name}', then run --relink" + tail)
+        return
+    project = pm.LoadProject(name)
+    if not project:
+        OVERWRITTEN.write_text(json.dumps(back, indent=1, ensure_ascii=False), "utf-8")
+        sys.exit(f"overwritten {len(done)} originals; reopen project '{name}' by hand, then run --relink")
+    tl = next((t for t in (project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1))
+               if t.GetName() == cur), None)
+    if tl:
+        project.SetCurrentTimeline(tl)
+    n = sum(_relink(project, {c.name, o.name}, o) for c, o, _ in done)
+    print(f"overwritten {len(done)}/{len(jobs)} originals | relinked {n} media pool item(s) | "
+          f"project '{name}' reopened on '{cur}'" + tail)
 
 
 if __name__ == "__main__":
     if "--execute" in sys.argv:
         execute()
+    elif "--at" in sys.argv:   # --at 21:38 tl 05:12 tr 07:40   (corner optional after each time)
+        jobs = []
+        for a in sys.argv[sys.argv.index("--at") + 1:]:
+            if a in ("tl", "tr", "bl", "br") and jobs:
+                jobs[-1][1] = a
+            else:
+                jobs.append([a, None])
+        for tc, corner in jobs:
+            print(f"{tc} {corner or 'any corner'}:")
+            try:
+                at_clip(tc, corner)
+            except SystemExit as e:   # one shot failing must not stop the others
+                print(f"  FAILED: {e}")
+    elif "--pending" in sys.argv:
+        pending()
+    elif "--overwrite-all" in sys.argv:
+        overwrite_all()
+    elif "--relink" in sys.argv:
+        relink_pending()
     elif len(sys.argv) > 1 and Path(sys.argv[1]).is_dir():
         scan(sys.argv[1])
     elif len(sys.argv) > 1:
@@ -339,4 +569,4 @@ if __name__ == "__main__":
         args = [a for a in sys.argv[1:] if a != "--end"]
         one_clip(args[0], args[1] if len(args) > 1 else None, endpart)
     else:
-        sys.exit("usage: hide_logo.py <folder> | --execute | <shot_NNN|video path> [tl|tr|bl|br] [--end]")
+        sys.exit("usage: hide_logo.py <folder> | --execute | <shot_NNN|video path> [tl|tr|bl|br] [--end] | --at <mm:ss> [corner] | --pending | --overwrite-all | --relink")

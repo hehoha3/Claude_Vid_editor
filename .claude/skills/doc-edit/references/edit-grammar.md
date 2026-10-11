@@ -94,6 +94,10 @@ Give 2-4 tokens per shot; over-filtering pushes good clips to WEAK.
   `underwater`, `wings`; species `crocodile`/`caiman`, `eagle`, `snake`, `bird`, `big_cat` (leopard, cheetah),
   `lion`, `elephant`, `hyena`, `hippo`; SXF `hit`, `impact`, `whoosh`, `riser`, `heartbeat`, `drop`.
 - A8/A9: SFX hit at the slot start (`A8=branch,snap`, `A8=thunder`); busy A8 -> A9 automatically.
+- A6/A8/A9 never substitute: every keyword must be in the file name, and a file naming an animal is used only on
+  a slot of that species or its relative (KIN in plan.py). Otherwise the cue is audio THIẾU: list it in the plan
+  reply (slot, timecode, sound needed). The user downloads a fitting file (rescan, re-plan) or says no -> delete
+  that token from the spec, no SFX there.
 - Empty = nothing new on that slot.
 
 ## Sound that moves the viewer

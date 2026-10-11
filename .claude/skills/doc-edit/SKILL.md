@@ -84,8 +84,9 @@ read by the script only). `<video>` = parent folder name of the audios folder.
 
    plan.py also runs YOLO-World (`scripts/yolo.py`, local GPU, 0 tokens) on the clips of the spec's species that
    are not measured yet (cache `.work/library/yolo.json`, each clip once, ~1-2 s per clip): cuts land where the
-   subject is in frame and the measured shot size replaces the tag. A first plan with many new
-   clips can take minutes: run it with `run_in_background` and wait; spec errors stop it before YOLO starts.
+   subject is in frame and the measured shot size replaces the tag. `/tag-source` measures new clips right after
+   tagging (`yolo.py --warm`), so this is normally 0. If the `yolo:` line shows many clips measured now, the cache
+   was not warm: run plan with `run_in_background` and wait; spec errors stop it before YOLO starts.
    Read only the `yolo:` stdout line, never the cache.
    It prints ALL spec errors at once (grouped by kind, with `##` numbers): fix them all in one pass with
    targeted edits on those lines (never rewrite or re-read the whole spec), then re-run.
@@ -100,7 +101,9 @@ read by the script only). `<video>` = parent folder name of the audios folder.
    Outputs: `.work/doc_edit/<video>/plan.json` (step 3 input) and `<video>/plan.md` (table for the user:
    shot, chosen clip caption, fit, audio; VO ● = narration over the slot).
 4. Reply in Vietnamese from stdout: shots, OK / WEAK / THIẾU / GFX counts, species missing from the library,
-   THIẾU by character, slots lost to the ledger by character, the audio line, audio THIẾU, path of plan.md. End with:
+   THIẾU by character, slots lost to the ledger by character, the audio line, path of plan.md, and every audio
+   THIẾU (slot, timecode, sound needed): no substitute is placed there; ask the user to download one or say no
+   (no -> remove that audio token from spec.txt). End with:
    "Duyệt plan.md (muốn đổi shot/clip nào cứ nói), xong báo tôi để sang bước 3 (đặt lên timeline)."
 
 User edits: change spec.txt (pin a clip, change filter/shot) and re-run plan.py; never hand-edit plan.json.
@@ -148,7 +151,10 @@ Puts the clip ids (library content hash, survives moves/renames) of `<video>`'s 
 `.work/doc_edit/recent_clips.json`; the 4th oldest video drops off. Re-running for the same video replaces its
 entry; a re-plan of a video already in the ledger still may use its own clips. Clips swapped by hand in Resolve
 after the plan are not seen (the plan is the record).
-Reply in Vietnamese: clips recorded, the ledger line (videos newest first).
+Then `hide_logo.py --pending` (skill hide-logo, "Overwrite at Done"): copies listed -> ask whether the video is
+exported; exported -> ask whether to overwrite the originals with the `_nologo` files; "có"/"yes" ->
+`hide_logo.py --overwrite-all`, otherwise nothing changes.
+Reply in Vietnamese: clips recorded, the ledger line (videos newest first), the overwrite question (or its result).
 
 ## Missing footage prompts: `/doc-edit missing-prompts`
 

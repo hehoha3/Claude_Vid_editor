@@ -142,7 +142,7 @@ def scan(name):
     clips = idx["clips"]
     seen, new, moved, dups = set(), [], [], []
     for p in sorted(root.rglob("*")):
-        if p.suffix.lower() not in EXTS[kind] or not p.is_file() or "_z_nologo" in p.parts:  # logo-free copies of Z: footage
+        if p.suffix.lower() not in EXTS[kind] or not p.is_file() or {"_nologo", "_z_nologo"} & set(p.parts):  # logo-free copies (hide-logo)
             continue
         rel = p.relative_to(root)
         cid = fast_hash(p)

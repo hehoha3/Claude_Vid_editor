@@ -34,6 +34,9 @@ SIZES = ["extreme_close", "close_up", "medium", "wide", "aerial"]
 OK_FIT, WEAK_FIT = 0.6, 0.35
 FALLBACK_T = 300.0  # first 5 min: strict matches only; later THIẾU shots may use related/neutral clips
 FALLBACK_FIT = 0.2
+# action shots are hard (user rule 2026-10-11): a strike/chase shot takes only a clip that shows action, else it
+# stays THIẾU (red marker -> missing-prompts) instead of a walking or resting animal; no FALLBACK for them either
+STRIKE = {"attack", "hunt", "fight", "run", "stalk", "jump"}
 NEUTRAL = {"landscape", "bird", "birds", "insects", "butterfly", "frog", "hummingbird", "toucan-bird", "spider",
            "supplementary_shots", "others"}  # folders of side shots: scenery, insects, birds, frogs
 INTRO_MIN, INTRO_MAX = 15.0, 30.0  # '# INTRO m:ss' in the spec: the intro may be all scenery; default INTRO_MIN
@@ -259,6 +262,8 @@ def fit(c, f, prev_size):
         return None
     if "light" in f and ("night" in f["light"]) != (t.get("light") == "night"):
         return None
+    if set(f.get("act", [])) & STRIKE and not set(t.get("action") or []) & STRIKE:
+        return None
     pts = mx = 0
     for k, w in (("act", 3), ("set", 2), ("size", 2), ("light", 1), ("mood", 1), ("cam", 1), ("dir", 1), ("count", 1)):
         if k not in f:
@@ -270,6 +275,8 @@ def fit(c, f, prev_size):
             pts += min(w, len(have & set(f[k])))
         elif have & set(f[k]):
             pts += w
+        elif k == "act" and set(f[k]) & STRIKE and have & STRIKE:  # lunge / chase for an attack: close enough
+            pts += w - 1
         elif k == "size" and v in SIZES and any(abs(SIZES.index(v) - SIZES.index(x)) == 1 for x in f[k] if x in SIZES):
             pts += 1
     if "kw" in f:
@@ -385,7 +392,7 @@ def match(slots, clips):
 
     for i, s in enumerate(slots):
         f = s["filter"]
-        if s["status"] != "THIEU" or s["start"] < FALLBACK_T or f.get("pin") == ["none"]:
+        if s["status"] != "THIEU" or s["start"] < FALLBACK_T or f.get("pin") == ["none"] or set(f.get("act", [])) & STRIKE:
             continue
         soft = {k: v for k, v in f.items() if k in ("size", "light", "set", "mood", "cam", "no")}
         want = set(f.get("sp", [])) - {"none"}
@@ -424,6 +431,24 @@ EN_WORDS = {"mưa": "rain", "gió": "wind", "lửa": "fire", "nước chảy": "
             "rinhrap_nguyhiem": "tense danger stalk suspense", "emdiu_thugian": "calm gentle peaceful",
             "trungtinh_quansat": "neutral observe", "bian_khampha": "mystery explore wonder"}
 CATEGORY = {"sfx": "Nature_sound", "animal": "Nature_sound", "sound": "music"}  # read-only roots -> AUDIO_POOL category
+# Foley / SFX (A6, A8, A9) never substitute (user rule 2026-10-11): every keyword must hit, and a file naming an
+# animal is only used on a slot of that animal or a close relative (no house-fly wings on an eagle, no hoof
+# footsteps on a jaguar). No such file -> audio THIẾU, reported in the plan reply; the user downloads one or drops it.
+STRICT = {6, 8, 9}
+ANIMALS = set("fly insect insects bee wasp mosquito cricket crickets cicada frog bird birds parrot macaw owl eagle "
+              "hawk raptor vulture baboon monkey primate ape chimp gorilla antelope deer giraffe zebra cheetah leopard "
+              "lion tiger cat hyena wolf dog elephant hippo horse hoof cow pig boar crocodile alligator caiman snake "
+              "carnivore herbivore whale dolphin seal otter capybara peccary jaguar anaconda fish rodent".split())
+KIN = {"jaguar": "cat cheetah leopard lion tiger carnivore", "peccary": "pig boar hoof herbivore",
+       "capybara": "herbivore rodent", "otter": "carnivore", "giant otter": "otter carnivore",
+       "caiman": "crocodile alligator carnivore", "alligator": "crocodile caiman carnivore", "anaconda": "snake",
+       "harpy eagle": "eagle bird birds raptor hawk carnivore", "capuchin monkey": "monkey primate",
+       "capuchin": "monkey primate", "fish": "fish"}
+
+
+def kin(sp):
+    """Animal words a sound file may name on a slot of these species."""
+    return {w for x in sp if x != "none" for w in (x + " " + KIN.get(x, "")).split()}
 
 
 def load_audio():
@@ -454,6 +479,9 @@ def match_audio(slots, lib, end):
                 k = (sum(w in a["words"] for w in e["kw"]), -used[a["abs"]])
                 return k + (a["duration"] >= e["span"], -abs(a["duration"] - e["span"])) if "span" in e else k
             pool = [a for a in lib if a["category"] in AUDIO_POOL[e["track"]]]
+            if e["track"] in STRICT:
+                ok = kin(s.get("filter", {}).get("sp", []))
+                pool = [a for a in pool if all(w in a["words"] for w in e["kw"]) and set(a["words"].split()) & ANIMALS <= ok]
             a = max(pool, key=key, default=None)
             if not a or key(a)[0] <= 0:
                 e["status"] = "THIEU"
@@ -603,6 +631,13 @@ def selftest():
     assert sl[1]["path"] == "j_close" and sl[1]["status"] == "WEAK"  # adjacent size, no reuse
     assert sl[2]["status"] == "THIEU" and sl[3]["status"] == "THIEU"  # used up / too short
     assert sl[1]["src_in"] == 3.5  # centred in the AI-trimmed range 0.3..9.7
+    # a strike shot never takes a walking animal, not even as FALLBACK after 5 min; a lunging one is fine
+    st = [{"slot": 1, "dur": 3, "src": "any", "need": "[J]", "filter": {"sp": ["jaguar"], "act": ["attack"]}, "start": 400.0}]
+    match(st, clips[:2])
+    assert st[0]["status"] == "THIEU", st
+    st = [{"slot": 1, "dur": 3, "src": "any", "need": "[J]", "filter": {"sp": ["jaguar"], "act": ["attack"]}, "start": 400.0}]
+    match(st, clips[:2] + [mk("j_lunge", "real", species=["jaguar"], action=["run"], shot_size="medium")])
+    assert st[0]["path"] == "j_lunge", st
     # after 5 min a THIẾU jaguar shot may take a neutral side shot; before 5 min it stays THIẾU
     clips2 = clips + [mk("moss", "real", species=[], count="none", shot_size="wide", subject="landscape")]
     late = [{"slot": 1, "dur": 3, "src": "any", "need": "[T]", "filter": {"sp": ["tapir"], "size": ["wide"]}, "start": 400.0},
@@ -688,6 +723,15 @@ def selftest():
     sl = [{"start": 0, "audio": [{"track": 7, "kw": ["tense"]}]}, {"start": 90, "audio": [{"track": 7, "kw": ["off"]}]}]
     match_audio(sl, lib, 200)
     assert sl[0]["audio"][0]["path"] == "m95" and sl[0]["audio"][0]["span"] == 90
+    # SFX: no substitute - fly wings never on an eagle, every keyword must hit, a missing sound stays THIẾU
+    lib = [{"abs": p, "words": w, "category": "Nature_sound", "duration": 2} for p, w in
+           (("fly", "insects house fly wings"), ("flap", "shared wings flap"), ("hoof", "shared footsteps hoof run"))]
+    sl = [{"start": 0, "filter": {"sp": ["harpy eagle"]}, "audio": [{"track": 8, "kw": ["wings"]}]},
+          {"start": 5, "filter": {"sp": ["jaguar"]}, "audio": [{"track": 6, "kw": ["footsteps"]}]},
+          {"start": 9, "filter": {"sp": ["peccary"]}, "audio": [{"track": 6, "kw": ["footsteps"]}]},
+          {"start": 12, "filter": {"sp": ["otter"]}, "audio": [{"track": 6, "kw": ["otter", "call"]}]}]
+    match_audio(sl, lib, 20)
+    assert [s["audio"][0].get("path", "THIEU") for s in sl] == ["flap", "THIEU", "hoof", "THIEU"], sl
     # a slot no single clip covers is cut into 2-3 shots from different clips; audio stays on the first part
     sc = [dict(mk(f"j{k}", "real", species=["jaguar"]), duration=3.0) for k in range(5)]
     for c in sc:

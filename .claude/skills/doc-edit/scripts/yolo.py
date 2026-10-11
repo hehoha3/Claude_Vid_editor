@@ -7,6 +7,7 @@ clip's tagged species (or 'animal'), [cx, cy, w, h] normalized, 0 = no subject. 
   seen  share of samples with the subject
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/yolo.py --selftest
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/yolo.py --warm   # measure all uncached tagged clips
 """
 import json
 import subprocess
@@ -89,5 +90,13 @@ def selftest():
     print("selftest ok")
 
 
+def warm():
+    """Measure every tagged library clip not cached yet, so /doc-edit plan never waits on YOLO."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    from plan import load_clips
+    new, sec = measure(load_clips())
+    print(f"yolo warm: {new} clips measured now ({sec}s) -> {CACHE}")
+
+
 if __name__ == "__main__":
-    selftest()
+    warm() if "--warm" in sys.argv else selftest()

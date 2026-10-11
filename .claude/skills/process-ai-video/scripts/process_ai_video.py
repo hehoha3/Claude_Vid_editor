@@ -258,7 +258,7 @@ def targets(args):
     for a in args or [str(ROOT)]:
         p = Path(a)
         out += sorted(x for x in p.rglob("*") if x.suffix.lower() in EXTS and ".processing" not in x.name
-                   and "_z_nologo" not in x.parts) \
+                   and not {"_nologo", "_z_nologo"} & set(x.parts)) \
             if p.is_dir() else [p]
     return out
 

@@ -22,6 +22,7 @@ from dvr_cowork.resolve_ops import (_norm, clip_fps, ensure_audio_track, find_bi
 # starting levels (integrated LUFS per clip); final mix is done by ear in Fairlight
 TARGET = {3: -32, 4: -32, 5: -34, 6: -28, 7: -26, 8: -22, 9: -22}
 BED_OVERLAP = 4.0
+SFX_TAIL = 2.0  # s an A8/A9 hit may run past the end of its slot
 A1_DB = -12  # AI clips bring their own audio to A1, this much below the clip level (user rule 2026-10-09)
 FADE = {3: 4.0, 4: 4.0, 5: 2.0, 6: 0.5, 7: 3.0, 8: 0.0, 9: 0.0}
 BINS = {"A_roll": "1. A_roll", "B_roll": "2. B_roll", "ai": "3. AI_roll", "audio": "4. Audio"}
@@ -52,7 +53,9 @@ def audio_events(slots, end):
             if tr in (3, 5, 7):
                 spans[tr].append((s["start"], e.get("path") if e.get("status") == "OK" else None))
             elif e.get("status") == "OK":
-                ln = min(e["dur"], s["dur"]) if tr == 6 else e["dur"]
+                # A6 = its slot; A8/A9 hits ring at most SFX_TAIL into the next shot (a 104 s water file once ran
+                # from 12:34 to 14:19 over three other scenes)
+                ln = min(e["dur"], s["dur"] + (SFX_TAIL if tr in (8, 9) else 0))
                 out.append([tr, s["start"], ln, e["path"], 0.0])
     i = 0  # bed piece counter, global so a bed change lands on the other track
     for tr, ch in spans.items():
@@ -248,6 +251,8 @@ def selftest():
     assert bed_p[0][0] == 0 and abs(max(b for _, b in bed_p) - 601) < 1e-6  # bed covers the whole timeline
     assert all(b[0] < a[1] for a, b in zip(bed_p, bed_p[1:]))  # no holes between bed pieces
     assert [e[0] for e in ev if e[3] == "h2"] == [8] and [e[2] for e in ev if e[3] == "m"] == [100]
+    long = audio_events([S(0, 3, [{"track": 8, "kw": ["x"], "status": "OK", "path": "w", "dur": 104}])], 10.0)
+    assert [e[2] for e in long] == [3 + SFX_TAIL], long  # a long SFX file is cut to its slot + tail
     print("selftest ok")
 
 

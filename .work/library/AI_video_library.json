@@ -4371,8 +4371,8 @@
     "v": 2
    }
   },
-  "3c34d2124a7dd26b": {
-   "path": "_check\\shot_001.mp4",
+  "65f2f281e76f3c39": {
+   "path": "_check\\shot_004.mp4",
    "width": 1920,
    "height": 1080,
    "fps": 24.0,
@@ -4384,40 +4384,39 @@
    "setting_folder": null,
    "source": "ai",
    "tags": {
-    "count": "one",
+    "count": "none",
     "action": [
-     "walk",
-     "run"
+     "none"
     ],
-    "shot_size": "medium",
-    "angle": "eye",
+    "shot_size": "wide",
+    "angle": "high",
     "camera": "moving",
-    "light": "day",
+    "light": "dusk",
     "setting": [
-     "forest_floor",
-     "undergrowth"
+     "swamp",
+     "lake"
     ],
-    "weather": "none",
-    "mood": "calm",
-    "direction": "right",
-    "issues": [],
-    "species": [
-     "marten"
+    "weather": "clear",
+    "mood": "eerie",
+    "direction": "none",
+    "issues": [
+     "dark"
     ],
+    "species": [],
     "good": [
      1,
-     3
+     2
     ],
-    "caption": "Marten bounds over mossy roots on the forest floor",
-    "sure": false,
+    "caption": "Dim pond covered in lily pads at dusk",
+    "sure": true,
     "best": [
      0.3,
-     2.75
+     5.25
     ],
     "v": 2
    }
   },
-  "ddd350afc7907ba5": {
+  "f6c5816f13daf4de": {
    "path": "_check\\shot_005.mp4",
    "width": 1920,
    "height": 1080,
@@ -4430,175 +4429,39 @@
    "setting_folder": null,
    "source": "ai",
    "tags": {
-    "count": "one",
-    "action": [
-     "walk",
-     "stalk"
-    ],
-    "shot_size": "close_up",
-    "angle": "eye",
-    "camera": "moving",
-    "light": "dusk",
-    "setting": [
-     "forest_floor",
-     "undergrowth"
-    ],
-    "weather": "none",
-    "mood": "tense",
-    "direction": "right",
-    "issues": [
-     "dark"
-    ],
-    "species": [
-     "marten"
-    ],
-    "good": [
-     1,
-     2
-    ],
-    "caption": "Dark-furred marten sniffs along mossy roots in dim forest",
-    "sure": false,
-    "best": [
-     0.3,
-     5.25
-    ],
-    "v": 2
-   }
-  },
-  "adfda1eec2b2e05b": {
-   "path": "_check\\shot_006.mp4",
-   "width": 1920,
-   "height": 1080,
-   "fps": 24.0,
-   "duration": 10.0,
-   "has_audio": true,
-   "title_hint": null,
-   "subject": "_check",
-   "action": false,
-   "setting_folder": null,
-   "source": "ai",
-   "tags": {
     "count": "none",
     "action": [
      "none"
     ],
-    "shot_size": "wide",
+    "shot_size": "medium",
     "angle": "eye",
     "camera": "static",
-    "light": "dusk",
+    "light": "day",
     "setting": [
-     "forest",
-     "undergrowth"
-    ],
-    "weather": "mist",
-    "mood": "eerie",
-    "direction": "none",
-    "issues": [
-     "dark"
-    ],
-    "species": [],
-    "good": [
-     1,
-     2
-    ],
-    "caption": "Misty jungle interior fading from dusk into blue night",
-    "sure": true,
-    "best": [
-     0.3,
-     5.25
-    ],
-    "v": 2
-   }
-  },
-  "ffba5d74af74276a": {
-   "path": "_check\\shot_007.mp4",
-   "width": 1920,
-   "height": 1080,
-   "fps": 24.0,
-   "duration": 10.0,
-   "has_audio": true,
-   "title_hint": null,
-   "subject": "_check",
-   "action": false,
-   "setting_folder": null,
-   "source": "ai",
-   "tags": {
-    "count": "none",
-    "action": [
-     "none"
-    ],
-    "shot_size": "wide",
-    "angle": "low",
-    "camera": "moving",
-    "light": "golden",
-    "setting": [
-     "forest_floor",
-     "undergrowth"
-    ],
-    "weather": "none",
-    "mood": "calm",
-    "direction": "none",
-    "issues": [
-     "dark"
-    ],
-    "species": [],
-    "good": [
-     2
-    ],
-    "caption": "Low camera glides over ferns and roots on the forest floor",
-    "sure": true,
-    "best": [
-     2.75,
-     5.25
-    ],
-    "v": 2
-   }
-  },
-  "33b89b7ed830fd73": {
-   "path": "_check\\shot_011.mp4",
-   "width": 1920,
-   "height": 1080,
-   "fps": 24.0,
-   "duration": 10.0,
-   "has_audio": true,
-   "title_hint": null,
-   "subject": "_check",
-   "action": false,
-   "setting_folder": null,
-   "source": "ai",
-   "tags": {
-    "count": "none",
-    "action": [
-     "none"
-    ],
-    "shot_size": "close_up",
-    "angle": "low",
-    "camera": "moving",
-    "light": "golden",
-    "setting": [
+     "swamp",
      "riverbank"
     ],
-    "weather": "none",
-    "mood": "calm",
+    "weather": "clear",
+    "mood": "tense",
     "direction": "none",
     "issues": [
-     "blur",
-     "morph"
+     "unnatural"
     ],
     "species": [],
     "good": [
-     3
+     3,
+     4
     ],
-    "caption": "Low camera over muddy riverbank with tracks, smeared texture",
-    "sure": true,
+    "caption": "Mud lump bursts in shallow reedy water and clouds the pond",
+    "sure": false,
     "best": [
      5.25,
-     7.75
+     9.7
     ],
     "v": 2
    }
   },
-  "a260483910696ac8": {
+  "0c2b578fc7eb8b52": {
    "path": "_check\\shot_012.mp4",
    "width": 1920,
    "height": 1080,
@@ -4611,29 +4474,75 @@
    "setting_folder": null,
    "source": "ai",
    "tags": {
+    "count": "few",
+    "action": [
+     "look"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "swamp",
+     "lake"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [
+     "frog"
+    ],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Small frogs on lily pads and debris in a murky pond",
+    "sure": false,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "c21efde7e19dd3c8": {
+   "path": "_check\\shot_014.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": null,
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
     "count": "none",
     "action": [
      "none"
     ],
-    "shot_size": "close_up",
+    "shot_size": "medium",
     "angle": "low",
     "camera": "moving",
-    "light": "golden",
+    "light": "day",
     "setting": [
-     "riverbank"
+     "river",
+     "underwater"
     ],
-    "weather": "none",
+    "weather": "clear",
     "mood": "calm",
     "direction": "none",
     "issues": [
-     "blur"
+     "unnatural"
     ],
     "species": [],
     "good": [
      3,
      4
     ],
-    "caption": "Low camera moves over trampled muddy riverbank in golden light",
+    "caption": "Camera skims water surface then dips underwater beside a bank",
     "sure": true,
     "best": [
      5.25,
@@ -4642,8 +4551,8 @@
     "v": 2
    }
   },
-  "487d203bd5a7c2b6": {
-   "path": "_check\\shot_016.mp4",
+  "dd478efed9c9006d": {
+   "path": "_check\\shot_021.mp4",
    "width": 1920,
    "height": 1080,
    "fps": 24.0,
@@ -4659,130 +4568,35 @@
     "action": [
      "none"
     ],
-    "shot_size": "aerial",
+    "shot_size": "wide",
     "angle": "high",
     "camera": "moving",
     "light": "day",
     "setting": [
-     "river",
-     "forest"
+     "forest_floor",
+     "riverbank"
     ],
     "weather": "none",
     "mood": "eerie",
-    "direction": "none",
+    "direction": "away",
     "issues": [
-     "dark"
+     "blur"
     ],
     "species": [],
     "good": [
-     1,
-     2,
      3,
      4
     ],
-    "caption": "Aerial move over a dark jungle river bend between mossy trees",
+    "caption": "Camera glides low over muddy forest ground with animal tracks beside a puddle",
     "sure": true,
     "best": [
-     0.3,
+     5.25,
      9.7
     ],
     "v": 2
    }
   },
-  "fc4272c729611d55": {
-   "path": "_check\\shot_023.mp4",
-   "width": 1920,
-   "height": 1080,
-   "fps": 24.0,
-   "duration": 10.0,
-   "has_audio": true,
-   "title_hint": null,
-   "subject": "_check",
-   "action": false,
-   "setting_folder": null,
-   "source": "ai",
-   "tags": {
-    "count": "none",
-    "action": [
-     "none"
-    ],
-    "shot_size": "wide",
-    "angle": "low",
-    "camera": "moving",
-    "light": "dusk",
-    "setting": [
-     "riverbank",
-     "swamp"
-    ],
-    "weather": "rain",
-    "mood": "eerie",
-    "direction": "none",
-    "issues": [
-     "dark"
-    ],
-    "species": [],
-    "good": [
-     2,
-     3,
-     4
-    ],
-    "caption": "Low camera over muddy wetland shore with reeds under a pink dusk sky and light rain",
-    "sure": true,
-    "best": [
-     2.75,
-     9.7
-    ],
-    "v": 2
-   }
-  },
-  "159db38647614c02": {
-   "path": "_check\\shot_026.mp4",
-   "width": 1920,
-   "height": 1080,
-   "fps": 24.0,
-   "duration": 10.0,
-   "has_audio": true,
-   "title_hint": null,
-   "subject": "_check",
-   "action": false,
-   "setting_folder": null,
-   "source": "ai",
-   "tags": {
-    "count": "none",
-    "action": [
-     "none"
-    ],
-    "shot_size": "wide",
-    "angle": "top_down",
-    "camera": "moving",
-    "light": "day",
-    "setting": [
-     "swamp",
-     "forest_floor"
-    ],
-    "weather": "none",
-    "mood": "eerie",
-    "direction": "none",
-    "issues": [
-     "dark"
-    ],
-    "species": [],
-    "good": [
-     1,
-     2,
-     3,
-     4
-    ],
-    "caption": "Top-down view of dark forest pool with a floating leaf and ripples reflecting the canopy",
-    "sure": true,
-    "best": [
-     0.3,
-     9.7
-    ],
-    "v": 2
-   }
-  },
-  "e4fc30f871c7642a": {
+  "d5f56da171ff04d8": {
    "path": "_check\\shot_028.mp4",
    "width": 1920,
    "height": 1080,
@@ -4800,35 +4614,34 @@
      "none"
     ],
     "shot_size": "wide",
-    "angle": "high",
+    "angle": "eye",
     "camera": "moving",
-    "light": "golden",
+    "light": "dusk",
     "setting": [
      "forest",
-     "riverbank",
-     "undergrowth"
+     "canopy"
     ],
-    "weather": "none",
-    "mood": "calm",
-    "direction": "away",
+    "weather": "rain",
+    "mood": "eerie",
+    "direction": "none",
     "issues": [
-     "blur"
+     "dark"
     ],
     "species": [],
     "good": [
-     3,
+     2,
      4
     ],
-    "caption": "Moving camera follows a muddy forest trail down to a pond with reeds",
+    "caption": "Dense rainforest foliage in light rain with warm backlight, slow camera drift",
     "sure": true,
     "best": [
-     5.25,
-     9.7
+     2.75,
+     5.25
     ],
     "v": 2
    }
   },
-  "2e24f9a4ab5936cf": {
+  "7f7559a58a36d62b": {
    "path": "_check\\shot_030.mp4",
    "width": 1920,
    "height": 1080,
@@ -4841,37 +4654,34 @@
    "setting_folder": null,
    "source": "ai",
    "tags": {
-    "count": "one",
+    "count": "none",
     "action": [
-     "jump",
-     "swim"
+     "none"
     ],
-    "shot_size": "medium",
+    "shot_size": "wide",
     "angle": "eye",
-    "camera": "static",
+    "camera": "moving",
     "light": "dusk",
     "setting": [
-     "river",
-     "riverbank"
+     "forest",
+     "undergrowth"
     ],
-    "weather": "clear",
-    "mood": "dramatic",
-    "direction": "right",
+    "weather": "rain",
+    "mood": "eerie",
+    "direction": "none",
     "issues": [
      "dark"
     ],
-    "species": [
-     "salmon"
-    ],
+    "species": [],
     "good": [
-     1,
-     2
+     3,
+     4
     ],
-    "caption": "Fish leaps out of the water at dusk and splashes back in",
+    "caption": "Dense dark jungle foliage with red flowers in rain, camera drifts",
     "sure": true,
     "best": [
-     0.3,
-     5.25
+     5.25,
+     9.7
     ],
     "v": 2
    }
@@ -49681,6 +49491,54 @@
     "v": 2
    }
   },
+  "152e16eb4b4d34d8": {
+   "path": "deer\\_nologo\\muntjac_small-horned-deer-stands-alert-green-close-up_smooth.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "muntjac small horned deer stands alert green close up smooth",
+   "subject": "deer",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "look"
+    ],
+    "shot_size": "close_up",
+    "angle": "eye",
+    "camera": "static",
+    "light": "day",
+    "setting": [
+     "forest",
+     "undergrowth"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "left",
+    "issues": [
+     "logo"
+    ],
+    "species": [
+     "deer"
+    ],
+    "good": [
+     2,
+     3,
+     4
+    ],
+    "caption": "Muntjac deer stands alert in green forest, close on its head and horn",
+    "sure": true,
+    "best": [
+     2.75,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "77b9dbc44b69d7a8": {
    "path": "deer\\antelope_crocodile-carries-small-jaws-swims-muddy-medium.mp4",
    "width": 1920,
@@ -72849,6 +72707,51 @@
     "v": 2
    }
   },
+  "94038d6dfd9f27e8": {
+   "path": "fish\\fish_school-silver-swims-past-submerged-logs-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "fish school silver swims past submerged logs medium",
+   "subject": "fish",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "underwater",
+     "river"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "fish"
+    ],
+    "good": [
+     1,
+     2
+    ],
+    "caption": "School of silver fish swims past submerged logs in murky river water with light rays",
+    "sure": true,
+    "best": [
+     0.3,
+     5.25
+    ],
+    "v": 2
+   }
+  },
   "156b47608080b016": {
    "path": "fish\\fish_school-silvery-among-sunlit-submerged-roots-wide.mp4",
    "width": 1920,
@@ -72988,6 +72891,51 @@
     "v": 2
    }
   },
+  "f8da6d6e4894168e": {
+   "path": "fish\\fish_school-swims-among-roots-plants-green-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "fish school swims among roots plants green medium",
+   "subject": "fish",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "underwater",
+     "river"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "fish"
+    ],
+    "good": [
+     1,
+     2
+    ],
+    "caption": "School of fish swims among roots and plants in green underwater scene with bubbles",
+    "sure": true,
+    "best": [
+     0.3,
+     5.25
+    ],
+    "v": 2
+   }
+  },
   "757660feafdca19e": {
    "path": "fish\\fish_school-swims-submerged-tree-roots-clear-medium.mp4",
    "width": 1920,
@@ -73076,6 +73024,52 @@
     "sure": true,
     "best": [
      0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "5ce740c9db3c6c3f": {
+   "path": "fish\\fish_small-hover-school-among-reeds-sunlit-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "fish small hover school among reeds sunlit medium",
+   "subject": "fish",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "underwater",
+     "river"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [
+     "fish"
+    ],
+    "good": [
+     1,
+     3,
+     4
+    ],
+    "caption": "Small fish hover in a school among reeds in sunlit underwater scene",
+    "sure": true,
+    "best": [
+     5.25,
      9.7
     ],
     "v": 2
@@ -117725,6 +117719,51 @@
     "v": 2
    }
   },
+  "bfb89b9cef4727ad": {
+   "path": "landscape\\forest_floor\\landscape_animal-paw-prints-wet-mud-follows-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape animal paw prints wet mud follows close up",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "forest_floor",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "close_up",
+    "angle": "high",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "forest_floor",
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "tense",
+    "direction": "away",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Animal paw prints in wet mud, camera follows a muddy forest trail",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "62f9ca055f38bf81": {
    "path": "landscape\\forest_floor\\landscape_animal-paw-prints-wet-mud-pulls-close-up.mp4",
    "width": 1920,
@@ -118522,6 +118561,91 @@
     "sure": true,
     "best": [
      2.75,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "315723c46bc794f2": {
+   "path": "landscape\\forest_floor\\landscape_moves-along-muddy-forest-path-toward-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape moves along muddy forest path toward wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "forest_floor",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "high",
+    "camera": "moving",
+    "light": "dusk",
+    "setting": [
+     "forest_floor",
+     "undergrowth"
+    ],
+    "weather": "none",
+    "mood": "eerie",
+    "direction": "toward",
+    "issues": [],
+    "species": [],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Camera moves along a muddy forest path toward a tree with hanging roots and a dark den-like opening",
+    "sure": true,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "a8fa2e9c816dc521": {
+   "path": "landscape\\forest_floor\\landscape_moves-dirt-forest-trail-covered-small-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape moves dirt forest trail covered small wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "forest_floor",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "high",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "forest_floor"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "away",
+    "issues": [],
+    "species": [],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Camera moves over a dirt forest trail covered in small paw prints toward dense vegetation",
+    "sure": true,
+    "best": [
+     5.25,
      9.7
     ],
     "v": 2
@@ -119544,6 +119668,50 @@
     "v": 2
    }
   },
+  "452cb2353e8603c5": {
+   "path": "landscape\\lake\\landscape_ripples-spread-across-dark-pond-reflecting-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape ripples spread across dark pond reflecting close up",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "lake",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "close_up",
+    "angle": "low",
+    "camera": "moving",
+    "light": "dusk",
+    "setting": [
+     "lake",
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "eerie",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     2,
+     3,
+     4
+    ],
+    "caption": "Ripples spread across dark pond reflecting reeds at dusk",
+    "sure": true,
+    "best": [
+     2.75,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "aed56a7df99eef68": {
    "path": "landscape\\lake\\landscape_top-down-water-lettuce-plants-floating-medium.mp4",
    "width": 1920,
@@ -119583,6 +119751,49 @@
     "sure": true,
     "best": [
      0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "d13a9487bd2321d7": {
+   "path": "landscape\\lake\\landscape_wake-ripples-calm-pond-cattails-dusk-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape wake ripples calm pond cattails dusk wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "lake",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "dusk",
+    "setting": [
+     "lake",
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Wake ripples on a calm pond with cattails at dusk",
+    "sure": true,
+    "best": [
+     5.25,
      9.7
     ],
     "v": 2
@@ -120539,6 +120750,51 @@
      4
     ],
     "caption": "Brown river flows past a fallen tree with a green leaf drifting by",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "dd6e1c779ea5d525": {
+   "path": "landscape\\river\\landscape_calm-misty-jungle-river-overhanging-tree-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape calm misty jungle river overhanging tree wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "river",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "dusk",
+    "setting": [
+     "river",
+     "forest"
+    ],
+    "weather": "mist",
+    "mood": "majestic",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Calm misty jungle river under an overhanging tree with red-tinted leaves",
     "sure": true,
     "best": [
      0.3,
@@ -121913,6 +122169,51 @@
     "v": 2
    }
   },
+  "d7431f473a75173e": {
+   "path": "landscape\\river\\landscape_top-down-wake-brown-water-beside-aerial.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape top down wake brown water beside aerial",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "river",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "aerial",
+    "angle": "top_down",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "river",
+     "swamp"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Top-down view of a wake on brown water beside lily pads and plants",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "f1d64692cf50481d": {
    "path": "landscape\\river\\landscape_top-view-shallow-forest-stream-bending-aerial.mp4",
    "width": 1920,
@@ -121996,6 +122297,50 @@
      4
     ],
     "caption": "Wide view of a river lined with dense vine-covered jungle in bright daylight",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "7c40daab3bebd12c": {
+   "path": "landscape\\riverbank\\landscape_animal-paw-prints-cracked-dry-mud-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape animal paw prints cracked dry mud close up",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "riverbank",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "close_up",
+    "angle": "high",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "riverbank"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "away",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Animal paw prints in cracked dry mud beside a water edge, camera tracks along",
     "sure": true,
     "best": [
      0.3,
@@ -122456,6 +122801,49 @@
     "v": 2
    }
   },
+  "1ed10631e2b3ad52": {
+   "path": "landscape\\riverbank\\landscape_muddy-bank-golden-reeds-beside-shallow-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape muddy bank golden reeds beside shallow wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "riverbank",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "riverbank",
+     "swamp"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Muddy bank and golden reeds beside shallow water",
+    "sure": true,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "aa175a8e81a49c54": {
    "path": "landscape\\riverbank\\landscape_muddy-bank-many-small-tracks-beside-wide.mp4",
    "width": 1920,
@@ -122495,6 +122883,49 @@
     "best": [
      5.25,
      9.7
+    ],
+    "v": 2
+   }
+  },
+  "0fad0795e22700b7": {
+   "path": "landscape\\riverbank\\landscape_muddy-brown-water-churning-forest-bank-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape muddy brown water churning forest bank close up",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "riverbank",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "close_up",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "riverbank",
+     "forest_floor"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     2,
+     3
+    ],
+    "caption": "Muddy brown water churning over a forest bank",
+    "sure": true,
+    "best": [
+     2.75,
+     7.75
     ],
     "v": 2
    }
@@ -122539,6 +122970,51 @@
      4
     ],
     "caption": "Muddy riverbank with tangled roots and driftwood beside a brown stream",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "66779d53fcd412c8": {
+   "path": "landscape\\riverbank\\landscape_reeds-edge-calm-pond-golden-light-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape reeds edge calm pond golden light wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "riverbank",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "riverbank",
+     "swamp"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Reeds at the edge of a calm pond in golden light",
     "sure": true,
     "best": [
      0.3,
@@ -122628,6 +123104,51 @@
      4
     ],
     "caption": "Tracked muddy bank beside a river as dusk falls",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "d8666152f269e119": {
+   "path": "landscape\\riverbank\\landscape_wind-blown-orange-reeds-beside-muddy-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape wind blown orange reeds beside muddy wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "riverbank",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "riverbank",
+     "swamp"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Wind-blown orange reeds beside muddy water at golden hour",
     "sure": true,
     "best": [
      0.3,
@@ -122778,6 +123299,96 @@
     "v": 2
    }
   },
+  "96bf4b764f9bffd2": {
+   "path": "landscape\\swamp\\landscape_broken-reed-stems-piled-water-edge-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape broken reed stems piled water edge medium",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "medium",
+    "angle": "low",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "swamp",
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Broken reed stems piled at the water edge, low angle",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "1f77454111b01fb5": {
+   "path": "landscape\\swamp\\landscape_brown-pond-floating-water-lettuce-drifting-wide.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape brown pond floating water lettuce drifting wide",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "wide",
+    "angle": "high",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "swamp",
+     "river"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Brown pond with floating water lettuce, camera drifting over the surface",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "d083da3c0e8400d0": {
    "path": "landscape\\swamp\\landscape_camera-moves-flooded-forest-hanging-roots-wide.mp4",
    "width": 1920,
@@ -122865,6 +123476,49 @@
     "sure": true,
     "best": [
      0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "879605d09f6eadb3": {
+   "path": "landscape\\swamp\\landscape_dark-pond-floating-vegetation-lily-pads-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape dark pond floating vegetation lily pads medium",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "swamp",
+     "lake"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Dark pond with floating vegetation and lily pads",
+    "sure": true,
+    "best": [
+     5.25,
      9.7
     ],
     "v": 2
@@ -123048,6 +123702,51 @@
     "v": 2
    }
   },
+  "dd26c3479fa5acdc": {
+   "path": "landscape\\swamp\\landscape_mud-mound-shallow-water-among-reeds-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape mud mound shallow water among reeds medium",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "medium",
+    "angle": "high",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "swamp",
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Mud mound in shallow water among reeds, ripples spreading",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "ac9dcd4669b67a02": {
    "path": "landscape\\swamp\\landscape_muddy-water-erupts-churns-among-water-medium.mp4",
    "width": 1920,
@@ -123130,6 +123829,181 @@
     "best": [
      2.75,
      9.7
+    ],
+    "v": 2
+   }
+  },
+  "decff5b388c689d6": {
+   "path": "landscape\\swamp\\landscape_ripples-fallen-leaves-brown-forest-pond-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape ripples fallen leaves brown forest pond medium",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "swamp",
+     "river"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3
+    ],
+    "caption": "Ripples with fallen leaves on a brown forest pond",
+    "sure": true,
+    "best": [
+     0.3,
+     7.75
+    ],
+    "v": 2
+   }
+  },
+  "f651a50f0f0cd613": {
+   "path": "landscape\\swamp\\landscape_water-hyacinth-plants-water-line-warm-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape water hyacinth plants water line warm close up",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "close_up",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "swamp",
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Water hyacinth plants at the water line in warm light",
+    "sure": true,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "6b5af1407da003dd": {
+   "path": "landscape\\swamp\\landscape_water-lettuce-plants-floating-dark-water-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape water lettuce plants floating dark water close up",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "swamp",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "close_up",
+    "angle": "low",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "swamp",
+     "lake"
+    ],
+    "weather": "clear",
+    "mood": "calm",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Water lettuce plants floating on dark water, close shot",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "c79c68c865460019": {
+   "path": "landscape\\underwater\\landscape_underwater-sediment-cloud-billows-riverbed-medium.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "landscape underwater sediment cloud billows riverbed medium",
+   "subject": "landscape",
+   "action": null,
+   "setting_folder": "underwater",
+   "source": "ai",
+   "tags": {
+    "count": "none",
+    "action": [
+     "none"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "underwater"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "none",
+    "issues": [],
+    "species": [],
+    "good": [
+     1,
+     2,
+     3
+    ],
+    "caption": "Underwater sediment cloud billows up from the riverbed",
+    "sure": true,
+    "best": [
+     0.3,
+     7.75
     ],
     "v": 2
    }
@@ -190086,7 +190960,7 @@
  },
  "kind": "video",
  "root": "D:\\AI_video",
- "updated": "2026-10-10",
+ "updated": "2026-10-11",
  "layout": {
   "<subject>/": "animal does nothing: rests, sleeps, looks around",
   "<subject>/action/": "animal does something: walks, runs, stalks, hunts, eats, flies, swims",
@@ -190096,10 +190970,10 @@
   "fields": "subject/action/setting_folder from folders (user's decision); tags = older vision tags where present; title_hint = stock file name"
  },
  "stats": {
-  "files": 4045,
-  "minutes": 651.7,
+  "files": 4065,
+  "minutes": 655.0,
   "subject": {
-   "_check": 124,
+   "_check": 120,
    "agouti": 15,
    "alligator": 7,
    "anaconda": 107,
@@ -190111,10 +190985,10 @@
    "capuchin_monkey": 133,
    "capybara": 160,
    "crocodile_caiman": 243,
-   "deer": 76,
+   "deer": 77,
    "eagle": 172,
    "elephant": 212,
-   "fish": 38,
+   "fish": 41,
    "forest_buffalo": 37,
    "frog": 101,
    "hippo": 40,
@@ -190122,7 +190996,7 @@
    "hummingbird": 99,
    "insects": 195,
    "jaguar": 226,
-   "landscape": 283,
+   "landscape": 303,
    "leopard": 28,
    "lion": 23,
    "monkey": 117,

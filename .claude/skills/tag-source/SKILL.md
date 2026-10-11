@@ -27,7 +27,16 @@ first (hashes must be current: `process-ai-video` rewrites files).
    `.work/tag_source/review.md` before tagging the rest. Do not open the sheets yourself except to settle
    a disputed tag (max ~6 images).
 
-Reply (Vietnamese): batches applied, clips tagged / total (`status`), MISSING and off-vocab notes.
+5. After the last `apply` (and `organize.py --apply` if run), measure the new clips with YOLO-World (local GPU,
+   0 tokens, ~1.5-2 s per uncached clip, already-measured clips are skipped) so `/doc-edit plan` never waits on it.
+   Run it with `run_in_background`; it saves per 8 clips, safe to stop and re-run:
+
+       .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/yolo.py --warm
+
+   Then commit only the cache so the team shares it: `git add .work/library/yolo.json` and commit
+   "yolo cache: +N clips" (N from the `yolo warm:` line; nothing else in that commit).
+
+Reply (Vietnamese): batches applied, clips tagged / total (`status`), MISSING and off-vocab notes, the `yolo warm:` line.
 
 ## File the new AI clips (after apply)
 `D:\AI_video\_check` is the user's holding folder (never a species). To rename the tagged `shot_*` clips there

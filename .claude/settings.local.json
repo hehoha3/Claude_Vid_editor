@@ -11,7 +11,8 @@
       "Edit(/.claude/skills/resolve-api/**)",
       "Edit(/.claude/skills/audio-expert/**)",
       "Edit(/.claude/skills/colorist/**)",
-      "Bash(.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest)"
+      "Bash(.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest)",
+      "Bash(PYTHONIOENCODING=utf8 .venv/Scripts/python -c ' *)"
     ],
     "deny": [
       "Bash(*SendKeys*)",

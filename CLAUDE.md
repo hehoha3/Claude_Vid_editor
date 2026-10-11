@@ -24,7 +24,8 @@ DaVinci MCP: general ops (render, clip properties, grades, markers). Skills are 
    on it (scripts refuse Z: writes). Something on Z: should go -> list the full paths for the user, who deletes them.
    All library indexes live in `.work/library/` (in git, shared with the team); music licenses `.work/audio_licenses.md`.
 5. Files on other media drives (D:): dry-run, Python `Path`, verify after; `rmdir` never `rm -rf`. Deletes are blocked for
-   Claude: write the script into `.work/` and let the user run it.
+   Claude: write the script into `.work/` and let the user run it. Exception: `hide_logo.py --overwrite-all` at `/doc-edit
+   done` after the user answers "có" to overwriting the originals with logos (user rule 2026-10-11).
 6. Tokens: never open audio, transcripts, plan.json, `_library.json`, caches; read stdout summaries, open report.md
    only for flagged rows; prefer `--stats` numbers, max ~6 images per pass.
 7. Advice: observation (numbers/frames) -> Resolve action with starting values -> why -> 1-2 alternatives +
