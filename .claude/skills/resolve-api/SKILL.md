@@ -28,8 +28,10 @@ TimelineItems (per track). Gallery for stills. Fusion comps per item.
   (`GetStartFrame()` is often 86400 = 01:00:00:00 at 24 fps); markers use frames relative to start.
 - There is **no blade/split method**. Equivalent: `MediaPool.AppendToTimeline([{ "mediaPoolItem",
   "startFrame", "endFrame", "mediaType" (1 video, 2 audio), "trackIndex", "recordFrame" }])` with
-  different source ranges of the same clip. Treat endFrame inclusive/exclusive as possibly off by one
-  and verify with `item.GetStart()`, `GetDuration()`, `GetLeftOffset()`.
+  different source ranges of the same clip. endFrame is exclusive (verified 21.1). Source fps !=
+  timeline fps: source length = ceil(timeline_frames * src_fps / tl_fps); verify `item.GetStart/GetEnd`.
+- API calls take positional args only: `tl.AddMarker(frame, "Red", name, note, dur, customData)`;
+  keyword args silently fail (return False / None).
 - `ImportMedia` imports into the *current* media-pool folder: `SetCurrentFolder(bin)` first.
 - `AppendToTimeline` targets the *current* timeline: `project.SetCurrentTimeline(tl)` first.
 - `DeleteClips(items, ripple)` removes timeline items; there is no "move item" - delete and append.

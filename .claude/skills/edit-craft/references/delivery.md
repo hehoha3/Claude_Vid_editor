@@ -16,7 +16,7 @@
 
 ## Audio
 - AAC 320 kbps (or PCM in MOV), 48 kHz, stereo.
-- Mix to about -14 LUFS integrated, true peak <= -1 dBTP (see audio-post skill). YouTube turns
+- Mix to about -14 LUFS integrated, true peak <= -1 dBTP (see audio-expert skill). YouTube turns
   louder uploads down; it does not turn quieter ones up.
 
 ## Before upload checklist

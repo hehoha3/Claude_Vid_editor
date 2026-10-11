@@ -3,7 +3,7 @@
 [resolve]
 timeline_name = "Edit"        # timeline that receives the narration
 audio_bin = "4. Audio"        # top-level bin the audio is imported into
-audio_track = 4               # A4
+audio_track = 2               # A2 = Narrator Voice
 backup_timeline = true        # duplicate the timeline before changing it (Edit_bak_YYYYMMDD_HHMMSS)
 save_project = true
 # Only if Resolve is installed somewhere unusual:
@@ -35,3 +35,4 @@ color_pushed = "Pink"
 [paths]
 work_dir = ".work"
 models_dir = ".models"
+ai_video = 'D:\AI_video'      # AI-generated clips root on THIS machine (Z:\Unseen is the shared read-only drive)

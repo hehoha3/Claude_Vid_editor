@@ -1,176 +1,80 @@
 ---
 name: hide-logo
-description: Detect and remove broadcast logos (BBC, Discovery, etc.) from video using Object Removal or zoom/pan. Use this when videos have logos in corners that need to be hidden. Provide timeline name or use current. Skill will detect logo presence, add markers at visible range, report for approval, then apply Object Removal (Studio) or fallback to zoom/pan technique to hide logo while preserving frame content.
-compatibility: DaVinci Resolve 21.1 Studio (Object Removal), ffmpeg, Fusion API
+description: Find video files with a broadcast logo (BBC, BBC EARTH...) in a folder, mark their clips on timeline "Edit" for review, then remove the logo with ffmpeg delogo and relink the clips. Use for /hide-logo or any request to find/remove channel logos in shots, including "remove the logo on shot_NNN" / Object Removal of a logo on one clip.
 ---
 
-# Hide Logo Skill
+# Hide logo
 
-Automatically detects and removes broadcast logos from video using DaVinci Resolve Object Removal or zoom/pan technique.
+Scan folder -> user reviews markers in Resolve -> `--execute`. Run each command once, reply only from its
+stdout. Never open images, never ask the user to click in Resolve.
 
-## What is a Logo?
+## Scan: `/hide-logo <folder>` (no argument given -> ask for a folder or a shot)
 
-A broadcast logo is typically:
-- **Network badge** (BBC, Discovery, Animal Planet, etc.)
-- **Located in corners** — usually top-left, sometimes top-right
-- **Semi-transparent** or opaque
-- **Small but visible** — occupies ~2-5% of frame
+    .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py "<folder>"
 
-Examples: BBC logo, Discovery Channel logo, Animal Planet logo in video corners
+Marks V1 clips of "Edit": Purple = logo (score >= 0.45), Yellow = suspect (0.33-0.45). Saves
+`.work/hide_logo/scan.json` for execute.
+Reply in Vietnamese, plain text: count, the LOGO list and SUSPECT list exactly as printed; ask the user to add
+markers on missed clips, delete wrong ones, then run `--execute`.
 
-## Workflow
+Every logo-free copy (D: and read-only Z: sources) goes to `D:\AI_video\_check\_nologo\` (flat; scan-source and
+process-ai-video skip it) and is recorded in `.work/hide_logo/nologo.json` (copy -> original). Originals stay
+untouched until the project is Done (see "Overwrite at Done"). Re-running on a relinked clip always reads the original.
 
-When you invoke this skill:
+## Execute: `/hide-logo --execute`
 
-1. **Detection phase** — Scans frames for logo patterns (small rectangular region with network branding)
-2. **Marking phase** — Adds markers at:
-   - `[LOGO-START]` — first frame where logo is visible
-   - `[LOGO-END]` — last frame where logo is visible
-3. **Review phase** — Shows you frame captures highlighting logo location, reports detection confidence
-4. **Execute phase** (after your approval) — Applies one of two techniques:
-   - **Object Removal (Studio)** — AI-powered inpainting to remove logo
-   - **Fallback zoom/pan** — Zoom X 1.070-1.096 + adjust position Y to hide logo off-screen
+    .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py --execute
 
-## Using This Skill
+Any marker on a V1 clip = delogo that clip's file into `_check\_nologo\`, relink via ReplaceClip, delete
+markers. Reply: clips done + the REVIEW FIRST list (busy backgrounds where the patch may show).
+Undo one clip: Replace Clip back to the original.
 
-### Basic usage (scan current timeline)
+## One shot: `/hide-logo <shot_NNN | video.mp4 path> <corner>`
 
-```
-/hide-logo
-```
+    .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py "<shot_NNN or path>" tr
 
-Scans all clips in timeline "Edit" track V1 for logos.
+Corner from the user's words: top-left `tl`, top-right `tr`, bottom-left `bl`, bottom-right `br` (none given
+-> omit it, the script picks the corner with most static edges). No scan, no markers, ~20s. Finds the static
+logo in that corner, delogoes into `_check\_nologo\`, relinks the V1 clip that uses it (a path not on the
+timeline -> file only). Logo only near the end / appears partway ("gần cuối", "giữa video") -> add `--end`:
+finds the frame where the logo pops in and delogoes only from there. Reply with the one output line; if it says
+REVIEW, ask the user to check that corner. "Object Removal" requests for a logo -> use this.
 
-### Scan specific timeline
+## Logo reported at timeline positions ("shot ở 21:38 và 05:12 có logo góc trên trái")
 
-```
-/hide-logo --timeline "MyTimeline"
-```
+The user works in Resolve and checks the result there: run it, reply with the output lines, no stills, no
+questions, no overwrite question.
 
-### Execute with specific removal method
+    .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py --at 21:38 tl 05:12 tr 07:40
 
-**Object Removal (Studio):**
-```
-/hide-logo --execute
-```
-or
-```
-/hide-logo --execute object-removal
-```
+Corner optional after each time. For each time it scores the V1 clip there and its neighbours within 1 s (a
+reported time often lands just before the cut), delogoes the one with the logo into `_check\_nologo\` and
+relinks it in the open project; a failed shot does not stop the others. No logo through the whole clip ->
+it tries a logo shown only at the start (removed 0-Ns) and one popping in late (removed from Ns), best share wins;
+shares are close between neighbours, so check the chosen clip's corner yourself (ffmpeg crop of the original at
+its `src_in`, not a timeline still) before replying. Reply in Vietnamese: per time the clip
+(time range, file), REVIEW flag, FAILED lines.
 
-**Zoom-Pan (auto-optimized):**
-```
-/hide-logo --execute zoom-pan
-```
+## Overwrite at Done (user rule 2026-10-11)
 
-When using zoom-pan, the skill automatically calculates:
-- **Zoom factor**: 1.083 (within your tested range 1.070-1.096)
-- **Position Y shift**: Based on detected logo corner (top/bottom)
+When the user reports the video finished (or `/doc-edit done`): run `--pending`. Copies listed -> first ask
+"Bạn đã xuất (render) video chưa?". Not yet -> stop, ask again after the export. Exported -> ask
+"Bạn có muốn ghi đè các file trong folder _nologo lên các file gốc của chúng không?" (with the list).
+Only on "có"/"yes":
 
-If result isn't perfect, skill suggests fine-tuning values.
+    .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py --pending
+    .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py --overwrite-all
 
-## What Happens
+`--overwrite-all` drives Resolve itself: saves + closes the project (Resolve holds the files open), each copy
+replaces its original, reopens the project on the same timeline, relinks to the original paths, and moves each
+clip's tags / YOLO cache / ledger id to the new content hash (no re-tag, no rescan). A file still locked after
+the close -> it quits Resolve, finishes, and says so: ask the user to reopen the project, then run `--relink`.
+Z: originals are never overwritten (copy stays linked). Reply in Vietnamese: originals overwritten, relinked,
+kept (Z:), problems.
+`--relink`: open project -> items on an original point at its pending copy, items on an overwritten copy at the
+original again.
 
-### Detection phase:
-- Reads frames from V1 track
-- Detects logo pattern (corner badge with specific color/shape characteristics)
-- Identifies visible range (LOGO-START to LOGO-END)
+## Limits
 
-### Marking phase:
-- Places `[LOGO-START]` marker at first logo frame
-- Places `[LOGO-END]` marker at last logo frame
-- Exports sample frames highlighting detected logo region for your review
-
-### Review & Execute:
-- You see frame captures with logo highlighted + detection confidence
-- Markers visible in Resolve timeline
-- Approve markers, then invoke with `--execute` flag
-
-### Removal phase (two options):
-
-**Option A: Object Removal (Studio)**
-- Uses Fusion API to create Object Removal effect
-- AI removes logo while preserving background
-- Applied to both V1 and A1 (video/audio remain synced)
-- Result: Logo disappears, background filled naturally
-
-**Option B: Zoom-Pan (fallback)**
-- Zooms clip by factor 1.070-1.096 (adjustable)
-- Shifts position Y to hide logo off-frame
-- Preserves all video content, just reframed
-- Applied to both V1 and A1 (they scale together)
-- Result: Logo pushed off-screen, more of center content visible
-
-## Output
-
-After detection:
-- Markers visible in Resolve: `[LOGO-START]`, `[LOGO-END]`
-- Frame exports: `.work/hide_logo/<clipname>/logo_detected.jpg`, `logo_location.jpg`
-- Report: detection confidence, logo location (corner), method selected
-
-After execution:
-- Logo removed or hidden
-- Report: method used, clips affected, result preview
-
-## Possible Issues & Solutions
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| "No logo detected" | Video doesn't have visible logo, or pattern differs | Manually check video, use Resolve marker tool if needed |
-| "Logo not fully removed" | Object Removal incomplete, or logo partially visible | Try zoom-pan fallback, or manually tweak Object Removal mask |
-| "Content cut off after zoom" | Zoom factor too high | Review with `--method zoom-pan` and bạn can adjust zoom in preview |
-| "Object Removal not available" | Not using DaVinci Resolve Studio | Automatically falls back to zoom-pan technique |
-| "Gaps created" | Audio/video mismatch | Skill handles sync automatically |
-
-## Technical Details
-
-- **Logo detection** — Corner badge recognition + color analysis + shape heuristics
-- **Object Removal** — Uses TimelineItem.AddFusionComp() with Fusion Object Removal effect
-- **Zoom-Pan** — Uses TimelineItem.SetZoom() + SetPosition() (requires Studio or proper API support)
-- **Frame-accurate** — Markers placed at exact frame boundaries
-- **Synced trim** — Both V1 and A1 modified together to maintain sync
-
-## When to Use This Skill
-
-✅ Videos have broadcast logos in corners (BBC, Discovery, etc.)
-✅ You want automatic detection + manual approval before removal
-✅ You want AI-powered removal (Object Removal) or simple reframing (zoom-pan)
-✅ Logos appear intermittently (beginning/end, or specific segments)
-
-❌ Don't use for watermark removal (different technique)
-❌ Don't use for logos that are central to the shot (they should stay visible)
-❌ Don't use if you want to keep the logo (use this to remove it)
-
-## Workflow Best Practices
-
-1. **Scan first** — Run skill without `--execute` to preview markers
-2. **Review in Resolve** — Open timeline, play around marked frames
-3. **Check method** — If Object Removal applied, review quality (may need mask adjustment)
-4. **Fallback if needed** — If Object Removal unsatisfactory, try zoom-pan (`--method zoom-pan --execute`)
-5. **Verify result** — Play affected clips in Resolve to confirm logo gone and content still good
-
-## Advanced Options
-
-### Custom zoom factor (override auto-calculated)
-
-```
-/hide-logo --execute zoom-pan --zoom 1.085
-```
-
-Skill auto-calculates zoom (1.083 default, within your range 1.070-1.096). Use `--zoom` to override if needed.
-
-### Manually specify logo corner
-
-```
-/hide-logo --corner top-left --execute zoom-pan
-```
-
-If auto-detection misses corner, hint which corner logo is in. Helps optimize Y shift calculation.
-
-### Preview without executing
-
-```
-/hide-logo --preview
-```
-
-Shows detection results and suggested zoom/pan values without applying them.
+delogo is soft on foliage (upgrade: ProPainter). One logo position per folder. Fusion Object Removal is not
+usable: Scene Analysis cannot be triggered from the API (Resolve 21.1).

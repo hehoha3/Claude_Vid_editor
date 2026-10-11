@@ -9,6 +9,7 @@ Read the reference that fits the question; do not load all of them:
 - `references/pipeline.md` - color management, scopes, node tree template, primaries/secondaries tools
 - `references/looks.md` - aesthetic principles, story color scripting, wildlife/environment recipes
 - `references/ai-footage.md` - problems specific to generated clips and how to fix them
+- `luts/README.md` (workspace root) - the channel's AMZ LUT library, its design rules and how to rebuild/install it
 
 ## Non-negotiables
 1. Balance before look. Every shot gets a neutral, matched base (exposure, white balance, contrast)
@@ -22,6 +23,16 @@ Read the reference that fits the question; do not load all of them:
 6. One look per story chapter, varied deliberately (color script), consistent within the chapter.
 7. Protect natural references: fur, feathers, foliage, water and sky have expected hues; viewers
    notice when a lion turns orange or a canopy turns neon.
+
+## Match a whole edit (one place, clean look): `scripts/grade.py`
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py plan --sheet   # Resolve untouched; run in background
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py apply          # only after the user's "yes"
+`plan` balances every V1 shot of "Edit" toward one target per light group (Day / Golden / Dusk, from the library
+light tag) with a CDL, simulates CDL + AMZ LUT and nudges until the house limits pass (clean blacks, whites ~0.95,
+no neon, no clip). Read only its stdout: per group the shot-to-shot spread of p50 / sat (lower = more one place),
+mean p1 / p99 / sat before -> after, flagged count. View `sheet.jpg` once (6 shots, ungraded top / graded bottom).
+`apply`: backup `Edit_bak_grade_*`, Color Group per light with its LUT on the group post-clip node 1, CDL on clip
+node 1 (overwrites node 1: destructive, ask first). Re-run `plan` after any V1 change.
 
 ## Fast diagnosis -> first move
 | symptom (stats/scopes) | first move |

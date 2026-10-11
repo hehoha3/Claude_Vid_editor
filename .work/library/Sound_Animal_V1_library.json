@@ -1,0 +1,1158 @@
+{
+ "clips": {
+  "720d3a44404cb3b4": {
+   "path": "Hiện tượng tự nhiên\\Mưa\\mưa + gió.wav",
+   "duration": 38.75,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "mưa + gió",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "2cf395e6135c02ee": {
+   "path": "Hiện tượng tự nhiên\\Mưa\\mưa + tiếng sấm.wav",
+   "duration": 113.43,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "mưa + tiếng sấm",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "a2192ea16c84b9ca": {
+   "path": "Hiện tượng tự nhiên\\Mưa\\mưa xối xả 1.mp3",
+   "duration": 49.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "mưa xối xả 1",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "c7b81bbf06af1eef": {
+   "path": "Hiện tượng tự nhiên\\Mưa\\mưa xối xả 2.wav",
+   "duration": 49.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "mưa xối xả 2",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "1f4b948d125e559b": {
+   "path": "Hiện tượng tự nhiên\\Mưa\\tiếng mưa rầm rì.wav",
+   "width": 1024,
+   "height": 1024,
+   "fps": 90000.0,
+   "duration": 129.38,
+   "has_audio": true,
+   "title_hint": "tiếng mưa rầm rì",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "5e6e595651789a66": {
+   "path": "Hiện tượng tự nhiên\\tiếng gió thổi nhẹ.mp3",
+   "duration": 8.05,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "tiếng gió thổi nhẹ",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "63f53b21a52a7883": {
+   "path": "Hiện tượng tự nhiên\\tiếng lửa cháy.mp3",
+   "duration": 150.58,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "tiếng lửa cháy",
+   "category": "Hiện tượng tự nhiên"
+  },
+  "f12301827efc62a0": {
+   "path": "Tiếng dùng chung\\Môi trường\\Nươc Chay Mạnh 1.mp3",
+   "duration": 555.0,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "Nươc Chay Mạnh 1",
+   "category": "Tiếng dùng chung"
+  },
+  "4bbede0d261d55c2": {
+   "path": "Tiếng dùng chung\\Môi trường\\Nươc chay nhe nhang.mp3",
+   "duration": 27.74,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Nươc chay nhe nhang",
+   "category": "Tiếng dùng chung"
+  },
+  "8fe9ba94154c8f63": {
+   "path": "Tiếng dùng chung\\Môi trường\\Nước chảy + Chim hót 2.mp3",
+   "duration": 50.5,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Nước chảy + Chim hót 2",
+   "category": "Tiếng dùng chung"
+  },
+  "2bae1edf9f9280b6": {
+   "path": "Tiếng dùng chung\\Môi trường\\Nước chảy + chim hót 1.mp3",
+   "duration": 244.54,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Nước chảy + chim hót 1",
+   "category": "Tiếng dùng chung"
+  },
+  "b8eb850989c90136": {
+   "path": "Tiếng dùng chung\\Môi trường\\Nước chảy mạnh 2.mp3",
+   "duration": 240.04,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Nước chảy mạnh 2",
+   "category": "Tiếng dùng chung"
+  },
+  "7d2b62ad68c48be3": {
+   "path": "Tiếng dùng chung\\Noi\\Noi 1.wav",
+   "duration": 30.39,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Noi 1",
+   "category": "Tiếng dùng chung"
+  },
+  "209cad5ba666553d": {
+   "path": "Tiếng dùng chung\\Noi\\Noi 2.mp3",
+   "duration": 7.56,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Noi 2",
+   "category": "Tiếng dùng chung"
+  },
+  "ce5f9f4617cc8c50": {
+   "path": "Tiếng dùng chung\\Noi\\Noi 3.mp3",
+   "duration": 36.07,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Noi 3",
+   "category": "Tiếng dùng chung"
+  },
+  "330e3936e11ca401": {
+   "path": "Tiếng dùng chung\\Noi\\tiếng cỏ khô xào xạc nhẹ\\dragon-studio-dry-field-grass-rustling-482893.mp3",
+   "duration": 518.88,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "dragon studio dry field grass rustling 482893",
+   "category": "Tiếng dùng chung"
+  },
+  "e021ed24508c9c6c": {
+   "path": "Tiếng dùng chung\\Noi\\tiếng cỏ khô xào xạc nhẹ\\dragon-studio-dry-grass-rustling-478361.mp3",
+   "duration": 1.39,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "dragon studio dry grass rustling 478361",
+   "category": "Tiếng dùng chung"
+  },
+  "4ac07827b5217701": {
+   "path": "Tiếng dùng chung\\Noi\\tiếng cỏ khô xào xạc nhẹ\\dragon-studio-dry-leaves-rustling-482874.mp3",
+   "duration": 10.7,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "dragon studio dry leaves rustling 482874",
+   "category": "Tiếng dùng chung"
+  },
+  "51c90f10f920c79b": {
+   "path": "Tiếng dùng chung\\Noi\\tiếng cỏ khô xào xạc nhẹ\\dragon-studio-grass-rustling-04-511301.mp3",
+   "duration": 1.8,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "dragon studio grass rustling 04 511301",
+   "category": "Tiếng dùng chung"
+  },
+  "b5dbdabbda18950f": {
+   "path": "Tiếng dùng chung\\Noi\\tiếng cỏ khô xào xạc nhẹ\\freesound_community-footsteps-on-dry-leaves-grass-and-tarmac-cornwall-uk-25745.mp3",
+   "duration": 301.56,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community footsteps on dry leaves grass and tarmac cornwall uk 25745",
+   "category": "Tiếng dùng chung"
+  },
+  "d4931a9856fd9fb4": {
+   "path": "Tiếng dùng chung\\Noi\\tiếng cỏ khô xào xạc nhẹ\\tanweraman-leaves-rustle-03-329001.mp3",
+   "duration": 1.59,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "tanweraman leaves rustle 03 329001",
+   "category": "Tiếng dùng chung"
+  },
+  "bd7e7f7555590bb5": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\Tiếng chạy nhanh.mp3",
+   "duration": 4.32,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng chạy nhanh",
+   "category": "Tiếng dùng chung"
+  },
+  "5c23f6330ce57d51": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\chạy nhanh.mp3",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "chạy nhanh",
+   "category": "Tiếng dùng chung"
+  },
+  "0cbd29028bb3eac0": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (1).mp3",
+   "duration": 13.54,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (1)",
+   "category": "Tiếng dùng chung"
+  },
+  "3fe2e9e72761536a": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (10).mp3",
+   "duration": 7.71,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "đi chậm trên cỏ (10)",
+   "category": "Tiếng dùng chung"
+  },
+  "26ba48fd57cc885b": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (2).mp3",
+   "duration": 48.34,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (2)",
+   "category": "Tiếng dùng chung"
+  },
+  "d76d91c78535b68f": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (3).mp3",
+   "duration": 18.34,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (3)",
+   "category": "Tiếng dùng chung"
+  },
+  "5794e4046bd46e4e": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (4).mp3",
+   "duration": 80.88,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (4)",
+   "category": "Tiếng dùng chung"
+  },
+  "6074b847d1173949": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (5).mp3",
+   "duration": 6.91,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (5)",
+   "category": "Tiếng dùng chung"
+  },
+  "e8c6b657869fe88f": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (6).mp3",
+   "duration": 52.15,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (6)",
+   "category": "Tiếng dùng chung"
+  },
+  "1631e973f3c4c61e": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (7).mp3",
+   "duration": 35.04,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "đi chậm trên cỏ (7)",
+   "category": "Tiếng dùng chung"
+  },
+  "f896b56384d29abf": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (8).mp3",
+   "duration": 18.29,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "đi chậm trên cỏ (8)",
+   "category": "Tiếng dùng chung"
+  },
+  "6c295fa3729cb4cb": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Di chuyển - Bước chân\\đi chậm trên cỏ (9).mp3",
+   "duration": 14.58,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "đi chậm trên cỏ (9)",
+   "category": "Tiếng dùng chung"
+  },
+  "d83c8579165f8397": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Hô hấp - Thở phì, Gầm rên\\freesound_community-animal_breathing_monster-78392.mp3",
+   "duration": 19.18,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community animal breathing monster 78392",
+   "category": "Tiếng dùng chung"
+  },
+  "bea6accc28cd4333": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Hô hấp - Thở phì, Gầm rên\\freesound_community-dragon-sounds-heavy-breathing-sliced-26756.mp3",
+   "duration": 21.53,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community dragon sounds heavy breathing sliced 26756",
+   "category": "Tiếng dùng chung"
+  },
+  "5124344f7f56698d": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Hô hấp - Thở phì, Gầm rên\\tiếng kêu rừ rừ.mp3",
+   "duration": 25.18,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "tiếng kêu rừ rừ",
+   "category": "Tiếng dùng chung"
+  },
+  "fb237b9a9dff1f12": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Tiếng uống nước\\Tiếng uống nước (1).mp3",
+   "duration": 4.85,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng uống nước (1)",
+   "category": "Tiếng dùng chung"
+  },
+  "ecf317a7d0dea40a": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Tiếng uống nước\\Tiếng uống nước (2).mp3",
+   "duration": 2.54,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng uống nước (2)",
+   "category": "Tiếng dùng chung"
+  },
+  "57309ec4970a69da": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Tiếng uống nước\\Tiếng uống nước (3).mp3",
+   "duration": 28.68,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng uống nước (3)",
+   "category": "Tiếng dùng chung"
+  },
+  "1dd9d912578f3a4e": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Tiếng uống nước\\Tiếng uống nước (4).mp3",
+   "duration": 15.31,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "Tiếng uống nước (4)",
+   "category": "Tiếng dùng chung"
+  },
+  "1e555c561207cc14": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Tiếng uống nước\\Tiếng uống nước (5).mp3",
+   "duration": 7.26,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng uống nước (5)",
+   "category": "Tiếng dùng chung"
+  },
+  "a28fb139ae0b50bb": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Tiếng uống nước\\Tiếng uống nước (6).mp3",
+   "duration": 14.34,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Tiếng uống nước (6)",
+   "category": "Tiếng dùng chung"
+  },
+  "20a1215aece9f6cf": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (1).mp3",
+   "duration": 4.97,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (1)",
+   "category": "Tiếng dùng chung"
+  },
+  "f30eb5be12a0160f": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (10).mp3",
+   "duration": 121.1,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (10)",
+   "category": "Tiếng dùng chung"
+  },
+  "bdcf5f4a684b4d6f": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (11).mp3",
+   "duration": 21.02,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (11)",
+   "category": "Tiếng dùng chung"
+  },
+  "2d5e868a590b2846": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (12).mp3",
+   "duration": 3.87,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (12)",
+   "category": "Tiếng dùng chung"
+  },
+  "813da65ad94cb677": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (13).mp3",
+   "duration": 104.35,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (13)",
+   "category": "Tiếng dùng chung"
+  },
+  "51d6c7b1e97469d4": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (14).mp3",
+   "duration": 31.75,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (14)",
+   "category": "Tiếng dùng chung"
+  },
+  "40edde68faf8f5e8": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (2).mp3",
+   "duration": 1.68,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (2)",
+   "category": "Tiếng dùng chung"
+  },
+  "47bf8050fe08d8dd": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (3).mp3",
+   "duration": 5.09,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Di chuyển dưới nước (3)",
+   "category": "Tiếng dùng chung"
+  },
+  "a5fb877b237d4a44": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (4).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (4)",
+   "category": "Tiếng dùng chung"
+  },
+  "203cb6a3ce787b61": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (5).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (5)",
+   "category": "Tiếng dùng chung"
+  },
+  "ff0c33946adb71de": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (6).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (6)",
+   "category": "Tiếng dùng chung"
+  },
+  "bc21ec424e901391": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (7).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (7)",
+   "category": "Tiếng dùng chung"
+  },
+  "e64a7a547509a233": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (8).mp3",
+   "duration": 4.92,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (8)",
+   "category": "Tiếng dùng chung"
+  },
+  "c13efc2f382793cb": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Vượt sông, âm thanh động vật dưới hồ nước\\Di chuyển dưới nước (9).mp3",
+   "duration": 10.03,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Di chuyển dưới nước (9)",
+   "category": "Tiếng dùng chung"
+  },
+  "3682839075772f01": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\Gặm cỏ.mp3",
+   "duration": 123.72,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Gặm cỏ",
+   "category": "Tiếng dùng chung"
+  },
+  "cbec3b661deb2e46": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\gặm cỏ 2.mp3",
+   "duration": 45.7,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "gặm cỏ 2",
+   "category": "Tiếng dùng chung"
+  },
+  "67a90f525b0635bd": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\gặm cỏ 3.mp3",
+   "duration": 5.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "gặm cỏ 3",
+   "category": "Tiếng dùng chung"
+  },
+  "a30b12fb42ff95a9": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\gặm xương 2.mp3",
+   "duration": 91.46,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "gặm xương 2",
+   "category": "Tiếng dùng chung"
+  },
+  "ae5ec7c37df3ae7e": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\gặm xương.mp3",
+   "duration": 297.36,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "gặm xương",
+   "category": "Tiếng dùng chung"
+  },
+  "3c6b5443c818f332": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\magiaz-crushing-396172.mp3",
+   "duration": 5.07,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "magiaz crushing 396172",
+   "category": "Tiếng dùng chung"
+  },
+  "8e1a6d5b79ffcddc": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\ăn thit 3.mp3",
+   "duration": 37.78,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "ăn thit 3",
+   "category": "Tiếng dùng chung"
+  },
+  "40d0709d57da52df": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\ăn thịt 2.mp3",
+   "duration": 80.09,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "ăn thịt 2",
+   "category": "Tiếng dùng chung"
+  },
+  "0f69bdb42fa2638b": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\ăn thịt 3.mp3",
+   "duration": 62.88,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "ăn thịt 3",
+   "category": "Tiếng dùng chung"
+  },
+  "78ac14c7ba5d86e9": {
+   "path": "Tiếng dùng chung\\Tiếng Động Vật\\Ăn uống - Xé xác & Gặm cỏ\\ăn thịt1.mp3",
+   "duration": 97.58,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "ăn thịt1",
+   "category": "Tiếng dùng chung"
+  },
+  "4638f4574975d36a": {
+   "path": "Tiếng đặc trưng của từng loài\\Báo săn (cheetah)\\Tiếng Báo săn(Cheetah) (15).mp3",
+   "duration": 2.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng Báo săn(Cheetah) (15)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "c26837e5fc8e8645": {
+   "path": "Tiếng đặc trưng của từng loài\\Báo săn (cheetah)\\engyclick-cheetah-sound-effect-440936.mp3",
+   "duration": 65.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "engyclick cheetah sound effect 440936",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "beed09a4666bbac2": {
+   "path": "Tiếng đặc trưng của từng loài\\Báo săn (cheetah)\\kêu gọi đồng loại.mp3",
+   "duration": 3.0,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "kêu gọi đồng loại",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "6c945cb40f0bb242": {
+   "path": "Tiếng đặc trưng của từng loài\\Caracal (Linh miêu tai đen)\\caracal-hissing-sound.mp3",
+   "duration": 3.89,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "caracal hissing sound",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "618e639266a51cac": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\capaholiczsfx-bird-song-realistic-active-bird-landscape-403199.mp3",
+   "duration": 70.16,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "capaholiczsfx bird song realistic active bird landscape 403199",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "a81fffb30043dbf0": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\chim vỗ cánh.mp3",
+   "duration": 4.94,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "chim vỗ cánh",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "1c91ce3e06e79c96": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\dragon-studio-bird-chirping-482865.mp3",
+   "duration": 2.53,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "dragon studio bird chirping 482865",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "aa520f3539563497": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\dragon-studio-bird-chittering-sfx-364487.mp3",
+   "duration": 8.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "dragon studio bird chittering sfx 364487",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "143e2827598bba79": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\freesound_community-026499_crows-bird-squawking-fight-74501.mp3",
+   "duration": 47.02,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community 026499 crows bird squawking fight 74501",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "a2eb86f123d646a0": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\freesound_community-bird-song-17925.mp3",
+   "duration": 264.36,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community bird song 17925",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "b2e4b3dbe255b898": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\freesound_community-woodland-bird-calls-in-spring-23905.mp3",
+   "duration": 118.3,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community woodland bird calls in spring 23905",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "29d7dc517475fb71": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\juliush-bird-singing-and-water-splashing-nature-sounds-7802.mp3",
+   "duration": 111.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "juliush bird singing and water splashing nature sounds 7802",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "0d76699d9d95555c": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\nematoki-loon-bird-605570.mp3",
+   "duration": 7.63,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "nematoki loon bird 605570",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "1575d4e1a68ce339": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\ollie53-bird-chirping-sound-415216.mp3",
+   "duration": 34.73,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "ollie53 bird chirping sound 415216",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "2520a5ea5738b4d3": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\rzalmanialmani-crow-bird-calling-bird-crow-sound-8908.mp3",
+   "duration": 46.08,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "rzalmanialmani crow bird calling bird crow sound 8908",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "e853be6ca0719d00": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\startoutreach-humming-bird-333662.mp3",
+   "duration": 20.54,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "startoutreach humming bird 333662",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "a4b91206ce731f4a": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\u_uep0ai84mb-bird-sound-249237.mp3",
+   "duration": 61.47,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "u uep0ai84mb bird sound 249237",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "9e1c25b1d39e8b51": {
+   "path": "Tiếng đặc trưng của từng loài\\Chim\\yuliana-yurukova-bird-333090.mp3",
+   "duration": 16.82,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "yuliana yurukova bird 333090",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "99849e2c6e7a0a33": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (1).mp3",
+   "duration": 28.66,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "8c2f797f651e8c80": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (3).mp3",
+   "duration": 138.03,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "cd6ab7fb553ae51b": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (4).mp3",
+   "duration": 2.12,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "f195296c03ffb8a1": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (5).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (5)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "71941b46dc1e9543": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (6).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (6)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "c4b56924be9cee07": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (7).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (7)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "030e1679cc27b778": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (8).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (8)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "7aa6e25d2cbafbc1": {
+   "path": "Tiếng đặc trưng của từng loài\\Cá sấu crocodile\\Tiếng cá sấu (9).mp3",
+   "duration": 53.08,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng cá sấu (9)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "924ec058bef0accb": {
+   "path": "Tiếng đặc trưng của từng loài\\Hà mã\\Tiếng hà mã (1).mp3",
+   "duration": 5.15,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Tiếng hà mã (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "ac8643dc3add170e": {
+   "path": "Tiếng đặc trưng của từng loài\\Hà mã\\Tiếng hà mã (2).mp3",
+   "duration": 49.94,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng hà mã (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "0e7f277042652fce": {
+   "path": "Tiếng đặc trưng của từng loài\\Hà mã\\Tiếng hà mã (3).mp3",
+   "duration": 25.82,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng hà mã (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "e2789c69f0df9e9b": {
+   "path": "Tiếng đặc trưng của từng loài\\Hà mã\\Tiếng hà mã (4).mp3",
+   "duration": 16.42,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng hà mã (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "d875926f1c423589": {
+   "path": "Tiếng đặc trưng của từng loài\\Hà mã\\Tiếng hà mã (5).mp3",
+   "duration": 26.21,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "Tiếng hà mã (5)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "4f584484a82cc659": {
+   "path": "Tiếng đặc trưng của từng loài\\Hươu cao cổ\\Tiếng Hươu cao cổ (1).mp3",
+   "duration": 83.21,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng Hươu cao cổ (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "6a5493e0aa4dee25": {
+   "path": "Tiếng đặc trưng của từng loài\\Hươu cao cổ\\Tiếng Hươu cao cổ (2).mp3",
+   "duration": 10.06,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Tiếng Hươu cao cổ (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "58f92be92eadc352": {
+   "path": "Tiếng đặc trưng của từng loài\\Kền kền\\Tiếng Kền Kền.mp3",
+   "duration": 1.23,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "Tiếng Kền Kền",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "913eacfff93be5af": {
+   "path": "Tiếng đặc trưng của từng loài\\Leopard (Báo hoa mai)\\Thu san moi tan cong (1).mp3",
+   "duration": 3.72,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Thu san moi tan cong (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "6cf907ca6da92658": {
+   "path": "Tiếng đặc trưng của từng loài\\Leopard (Báo hoa mai)\\Thu san moi tan cong (2).mp3",
+   "duration": 1.06,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Thu san moi tan cong (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "8e516d47989a2228": {
+   "path": "Tiếng đặc trưng của từng loài\\Leopard (Báo hoa mai)\\Thu san moi tan cong (3).mp3",
+   "duration": 18.72,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Thu san moi tan cong (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "c4cb5a115e2de12d": {
+   "path": "Tiếng đặc trưng của từng loài\\Leopard (Báo hoa mai)\\Thu san moi tan cong (4).mp3",
+   "duration": 33.72,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Thu san moi tan cong (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "85ebf6bd20e06182": {
+   "path": "Tiếng đặc trưng của từng loài\\Linh cẩu\\Tiếng Linh Cẩu (1).mp3",
+   "duration": 4.03,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Linh Cẩu (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "2649418ce7234a10": {
+   "path": "Tiếng đặc trưng của từng loài\\Linh cẩu\\Tiếng Linh Cẩu (2).mp3",
+   "duration": 1.8,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Linh Cẩu (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "9772caab9e3f8703": {
+   "path": "Tiếng đặc trưng của từng loài\\Linh cẩu\\Tiếng Linh Cẩu (3).mp3",
+   "duration": 2.52,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Linh Cẩu (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "cfd960610c33734b": {
+   "path": "Tiếng đặc trưng của từng loài\\Linh cẩu\\Tiếng Linh Cẩu (4).mp3",
+   "duration": 4.03,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Linh Cẩu (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "fe986b805eb1e507": {
+   "path": "Tiếng đặc trưng của từng loài\\Linh cẩu\\Tiếng Linh Cẩu (5).mp3",
+   "duration": 4.03,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Linh Cẩu (5)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "2ab0caddbe8ec8d6": {
+   "path": "Tiếng đặc trưng của từng loài\\Linh dương (chung)\\sondangsirait419-antelop-220063.mp3",
+   "duration": 3.55,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "sondangsirait419 antelop 220063",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "1e9c8b53daf11072": {
+   "path": "Tiếng đặc trưng của từng loài\\Ngựa vằn\\Tiếng Ngựa (1).mp3",
+   "duration": 5.54,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Ngựa (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "5dc0c3dc39239712": {
+   "path": "Tiếng đặc trưng của từng loài\\Ngựa vằn\\Tiếng Ngựa (2).mp3",
+   "duration": 9.86,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Ngựa (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "94f9caf28ec34e74": {
+   "path": "Tiếng đặc trưng của từng loài\\Ngựa vằn\\Tiếng Ngựa (3).mp3",
+   "duration": 12.29,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Ngựa (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "2928318afe48d4ef": {
+   "path": "Tiếng đặc trưng của từng loài\\Ngựa vằn\\Tiếng Ngựa (4).mp3",
+   "duration": 2.52,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng Ngựa (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "7e1d5493486fdf9d": {
+   "path": "Tiếng đặc trưng của từng loài\\Rắn puff adder\\tiếng rắn di chuyển, + tiếng thè nọc (1).mp3",
+   "duration": 17.27,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "tiếng rắn di chuyển, + tiếng thè nọc (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "18d11cf489ea8b62": {
+   "path": "Tiếng đặc trưng của từng loài\\Rắn puff adder\\tiếng rắn di chuyển, + tiếng thè nọc (2).mp3",
+   "duration": 3.65,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "tiếng rắn di chuyển, + tiếng thè nọc (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "c70dff640c9a9ef5": {
+   "path": "Tiếng đặc trưng của từng loài\\Rắn puff adder\\tiếng rắn di chuyển, + tiếng thè nọc (3).mp3",
+   "duration": 2.98,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "tiếng rắn di chuyển, + tiếng thè nọc (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "75debfd4c52b1d3c": {
+   "path": "Tiếng đặc trưng của từng loài\\Rắn puff adder\\tiếng rắn di chuyển, + tiếng thè nọc (4).mp3",
+   "duration": 60.86,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "tiếng rắn di chuyển, + tiếng thè nọc (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "6a7a203eb42154ce": {
+   "path": "Tiếng đặc trưng của từng loài\\Rắn puff adder\\tiếng rắn di chuyển, + tiếng thè nọc (5).mp3",
+   "duration": 3.02,
+   "sample_rate": 48000,
+   "channels": 1,
+   "title_hint": "tiếng rắn di chuyển, + tiếng thè nọc (5)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "65a89627f69db1a9": {
+   "path": "Tiếng đặc trưng của từng loài\\Rắn puff adder\\tiếng rắn di chuyển, + tiếng thè nọc (6).mp3",
+   "duration": 1.91,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "tiếng rắn di chuyển, + tiếng thè nọc (6)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "49bd511256512ab2": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (1).mp3",
+   "duration": 9.31,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "69136c27808f13db": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (10).mp3",
+   "duration": 55.03,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (10)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "dd2f52a904d53c40": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (2).mp3",
+   "duration": 47.78,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "77731508e7075914": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (3).mp3",
+   "duration": 3.86,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "47aaba0ff245b765": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (4).mp3",
+   "duration": 2.69,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "35d035b99888ccac": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (5).mp3",
+   "duration": 6.31,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (5)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "51ef5fcb6a07cf8f": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (8).mp3",
+   "duration": 3.43,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (8)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "e88afc88aea6ab67": {
+   "path": "Tiếng đặc trưng của từng loài\\Sư tử\\Tiếng sư tử (9).mp3",
+   "duration": 8.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng sư tử (9)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "080bed1104de6810": {
+   "path": "Tiếng đặc trưng của từng loài\\Voi\\Tiếng voi  (1).mp3",
+   "duration": 2.11,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng voi  (1)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "9472489fe0c893c6": {
+   "path": "Tiếng đặc trưng của từng loài\\Voi\\Tiếng voi  (2).mp3",
+   "duration": 119.76,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng voi  (2)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "0f398eca83f78c31": {
+   "path": "Tiếng đặc trưng của từng loài\\Voi\\Tiếng voi  (3).mp3",
+   "duration": 1.9,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "Tiếng voi  (3)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "2cffdc6aa9c78a64": {
+   "path": "Tiếng đặc trưng của từng loài\\Voi\\Tiếng voi  (4).mp3",
+   "duration": 8.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "Tiếng voi  (4)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "b8a300d53497a393": {
+   "path": "Tiếng đặc trưng của từng loài\\Voi\\Tiếng voi  (5).mp3",
+   "duration": 5.04,
+   "sample_rate": 48000,
+   "channels": 2,
+   "title_hint": "Tiếng voi  (5)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "b012fe8a638edab4": {
+   "path": "Tiếng đặc trưng của từng loài\\Voi\\Tiếng voi  (6).mp3",
+   "duration": 2.66,
+   "sample_rate": 11025,
+   "channels": 1,
+   "title_hint": "Tiếng voi  (6)",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "af2c7336f3eef91f": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\dragon-studio-eagle-cry-339725.mp3",
+   "duration": 8.1,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "dragon studio eagle cry 339725",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "56efa43f8a075029": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\dragon-studio-eagle-sound-382725.mp3",
+   "duration": 0.57,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "dragon studio eagle sound 382725",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "eeeb6f4a6efa8135": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\freesound_community-bald-eagle-31640.mp3",
+   "duration": 16.39,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community bald eagle 31640",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "1d27b6a96f7ac7dd": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\freesound_community-eagle-owl-61266.mp3",
+   "duration": 15.26,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community eagle owl 61266",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "c82dcf8806383677": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\freesound_community-eagle-owl-75483.mp3",
+   "duration": 15.34,
+   "sample_rate": 24000,
+   "channels": 2,
+   "title_hint": "freesound community eagle owl 75483",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "46ef3e97786382f8": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\koiroylers-eagle-355831.mp3",
+   "duration": 2.12,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "koiroylers eagle 355831",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "0e94863f78e17ceb": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\magiaz-aguia_emitindo_som_alto-1-363537.mp3",
+   "duration": 5.09,
+   "sample_rate": 44100,
+   "channels": 1,
+   "title_hint": "magiaz aguia emitindo som alto 1 363537",
+   "category": "Tiếng đặc trưng của từng loài"
+  },
+  "e0afb0279d04b476": {
+   "path": "Tiếng đặc trưng của từng loài\\Đại bàng\\u_jfkxueyart-eagle-281163.mp3",
+   "duration": 1.8,
+   "sample_rate": 44100,
+   "channels": 2,
+   "title_hint": "u jfkxueyart eagle 281163",
+   "category": "Tiếng đặc trưng của từng loài"
+  }
+ },
+ "kind": "audio",
+ "root": "Z:\\Unseen\\Sound Animal V1",
+ "updated": "2026-10-10",
+ "layout": {
+  "<category>/": "folder name as given by the user (ambience_sound, Nature_sound, tense_music...)",
+  "fields": "category from folder; title_hint = stock file name"
+ },
+ "stats": {
+  "files": 142,
+  "minutes": 101.2,
+  "category": {
+   "Hiện tượng tự nhiên": 7,
+   "Tiếng dùng chung": 59,
+   "Tiếng đặc trưng của từng loài": 76
+  }
+ }
+}
