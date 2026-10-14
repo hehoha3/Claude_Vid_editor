@@ -36,3 +36,9 @@ color_pushed = "Pink"
 work_dir = ".work"
 models_dir = ".models"
 ai_video = 'D:\AI_video'      # AI-generated clips root on THIS machine (Z:\Unseen is the shared read-only drive)
+
+[workspaces]
+# Channel folders, one sub folder per video (D:\Chann_shadowCanopy\demo_4\audios ...). Every folder matching a glob is
+# a workspace with its own clip ledger (.work/doc_edit/ledgers/<workspace>.json): a new channel = create the folder.
+globs = ['D:\Chann_*']
+recent = 4                    # a new video never reuses clips on Edit/Open of the last N videos of its workspace

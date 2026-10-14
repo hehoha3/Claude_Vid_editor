@@ -1,13 +1,15 @@
 ---
 name: process-ai-video
-description: Grade every AI-generated clip in D:\AI_video so it looks like real camera footage (lift crushed blacks, tame AI over-saturation, remove teal/blue AI casts, soften plastic micro-detail, fill 1920x1080, add fine grain) and cut the character-sheet frames AI generators put at the head of a clip, overwriting the files in place. Use for /process-ai-video, or when the user asks to make AI clips look less fake / more real or to remove character sheets from AI clips.
+description: Make AI clips in D:\AI_video look like real camera footage (blacks, saturation, casts, detail, 1920x1080, grain) and cut character-sheet head frames, overwriting in place. Use for /process-ai-video, "AI clip trông giả / less fake", or removing character sheets.
 ---
 
 # Process AI video
 
 Overwrites the originals in `D:\AI_video` (the user's explicit choice: no copies are kept). Clips already
 processed carry the metadata marker `comment=ai_look_v3cs` and are skipped, so re-running only handles new clips
-and never grades a clip twice. Clips marked `ai_look_v3` (graded before the sheet cut existed) only get the
+and never grades a clip twice. Clips found done/skipped are recorded in `.work/process_ai_video/done_index.json`
+(path -> size + mtime): on the next run unchanged clips are skipped without even an ffprobe; new, moved or
+replaced files (other path/size/mtime) are checked by marker as before. Clips marked `ai_look_v3` (graded before the sheet cut existed) only get the
 character-sheet cut (step 0), re-encoded only if a sheet is found. Clips marked `ai_look_v2` (earlier version)
 only get the v3 colour stage (step 6) + step 0, not a second base grade / softening / grain.
 

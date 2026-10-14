@@ -28,6 +28,8 @@ MARK = "ai_look_v3cs"   # graded + character sheet cut
 V3 = "ai_look_v3"        # graded earlier, not checked for a character sheet: sheet cut only
 OLD = "ai_look_v2"       # base grade done earlier: only the v3 colour stage is added (+ sheet cut)
 LOG = Path(__file__).resolve().parents[4] / ".work" / "process_ai_video" / "log.jsonl"
+# path -> [size, mtime_ns] of clips known to need nothing: unchanged files are skipped without ffprobe
+INDEX = LOG.parent / "done_index.json"
 EXTS = {".mp4", ".mov", ".m4v", ".mkv"}
 W, H = 640, 360
 # targets measured on 20 random clips of Z:\Unseen\Amazona\video
@@ -253,6 +255,11 @@ def process(src, compare_dir=None):
         return {"file": str(src), "status": "failed", "error": repr(e)[-200:]}
 
 
+def stamp(p):
+    s = p.stat()
+    return [s.st_size, s.st_mtime_ns]
+
+
 def targets(args):
     out = []
     for a in args or [str(ROOT)]:
@@ -273,16 +280,30 @@ if __name__ == "__main__":
         argv = argv[:i] + argv[i + 2:]
     files = targets(argv)
     for leftover in ROOT.rglob("*.processing.*"):   # from an interrupted run
-        leftover.unlink()
+        try:
+            leftover.unlink()
+        except PermissionError:   # locked = another run is rendering it right now
+            pass
     LOG.parent.mkdir(parents=True, exist_ok=True)
-    with ThreadPoolExecutor(JOBS) as pool, open(LOG, "a", encoding="utf-8") as log:
-        res = []
-        for r in pool.map(lambda p: process(p, compare_dir), files):
-            res.append(r)
-            log.write(json.dumps(r, ensure_ascii=False) + "\n")
-            log.flush()
+    index = json.loads(INDEX.read_text("utf-8")) if INDEX.exists() else {}
+    cached = 0
+    if compare_dir is None:
+        todo = [f for f in files if index.get(str(f)) != stamp(f)]
+        cached, files = len(files) - len(todo), todo
+    res = []
+    try:
+        with ThreadPoolExecutor(JOBS) as pool, open(LOG, "a", encoding="utf-8") as log:
+            for r in pool.map(lambda p: process(p, compare_dir), files):
+                res.append(r)
+                log.write(json.dumps(r, ensure_ascii=False) + "\n")
+                log.flush()
+                if compare_dir is None and r["status"] in ("done", "skipped") and Path(r["file"]).exists():
+                    index[r["file"]] = stamp(Path(r["file"]))
+    finally:   # keep what was learned even if the run is interrupted
+        if compare_dir is None:
+            INDEX.write_text(json.dumps(index, ensure_ascii=False), "utf-8")
     count = {s: sum(1 for r in res if r["status"] == s) for s in ("done", "skipped", "compare", "failed")}
-    print(" | ".join(f"{k} {v}" for k, v in count.items() if v) + f" | of {len(res)}")
+    print(" | ".join(f"{k} {v}" for k, v in count.items() if v) + f" | of {len(res)} | unchanged (index) {cached}")
     strong = [f"{Path(r['file']).parent.name}/{Path(r['file']).name} (wb {r['wb_r']:+.2f})"
               for r in res if r["status"] in ("done", "compare") and abs(r.get("wb_r", 0)) >= 0.08]
     if strong:

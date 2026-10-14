@@ -1,32 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Edit(/.claude/skills/hide-logo/**)",
+      "Edit(/.claude/skills/**)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
-      "mcp__plugin_context-mode_context-mode__ctx_execute",
-      "Edit(/.claude/skills/doc-edit/**)",
-      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
-      "Edit(/.claude/skills/resolve-api/**)",
-      "Edit(/.claude/skills/audio-expert/**)",
-      "Edit(/.claude/skills/colorist/**)",
-      "Bash(.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest)",
-      "Bash(PYTHONIOENCODING=utf8 .venv/Scripts/python -c ' *)"
-    ],
-    "deny": [
-      "Bash(*SendKeys*)",
-      "Bash(*SendWait*)"
-    ],
-    "ask": [
-      "Bash(*--replace*)",
-      "Bash(*place.py*)",
-      "Bash(*apply.py*)",
-      "Bash(*DeleteClips*)",
-      "Bash(*DeleteTimelines*)",
-      "Bash(*ClearTrack*)",
-      "Bash(*reframe.py*--apply*)",
-      "Bash(*grade.py apply*)"
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "ClaudeInChromeDomain(chatgpt.com)",
+      "ClaudeInChromeDomain(www.youtube.com)",
+      "ClaudeInChromeDomain(flow.google.com)",
+      "Read(//tmp/**)",
+      "Bash(.venv/Scripts/python.exe*)",
+      "Bash(PYTHONIOENCODING=utf8 .venv/Scripts/python*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\ADMIN\\Claude_editor\\.claude\\skills"

@@ -1,6 +1,6 @@
 ---
 name: audio-expert
-description: Audio storytelling for the nature documentary on timeline "Edit" - builds a sound map from the story and narrator, picks music / natural sounds / SXF from the user's audio library, places them on A5-A9 with frame-exact timing, readback and rollback. Modes learn, index, analyze, plan, execute, review, learn_from_current. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", or when the music bed or SXF of an edit feels thin. Never touches V1, A1-A4 or the narrator on A2; no EQ/ducking/loudness work (that is a later mix phase).
+description: Sound design on timeline "Edit" - sound map from story + narrator, picks music / natural sound / SXF from the library, places them frame-exact on A5-A9 with backup and rollback. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", or a thin music bed. Never touches V1 or A1-A4; no EQ/ducking/loudness.
 ---
 
 # Audio expert (V1: selection + placement)

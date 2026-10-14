@@ -1,6 +1,6 @@
 ---
 name: tag-source
-description: Vision-tag the clips of the source indexes (D:\AI_video AI clips, Z:\Unseen\Amazona\video real footage) once per clip with Sonnet subagents - species, action, shot size, angle, light/time of day, setting, mood, direction, best in/out, issues - so doc-edit can find footage without looking at video again. Use for /tag-source, after scan-source reports NEW clips, or when the user asks to tag/analyse/describe the footage library.
+description: Vision-tag new clips in the AI and real footage indexes once each with Sonnet subagents (species, action, shot size, light, mood, best in/out, issues) so doc-edit finds footage without re-watching. Use for /tag-source, after scan-source reports NEW clips, or to tag/describe the footage library.
 ---
 
 # Tag source
@@ -27,16 +27,13 @@ first (hashes must be current: `process-ai-video` rewrites files).
    `.work/tag_source/review.md` before tagging the rest. Do not open the sheets yourself except to settle
    a disputed tag (max ~6 images).
 
-5. After the last `apply` (and `organize.py --apply` if run), measure the new clips with YOLO-World (local GPU,
-   0 tokens, ~1.5-2 s per uncached clip, already-measured clips are skipped) so `/doc-edit plan` never waits on it.
-   Run it with `run_in_background`; it saves per 8 clips, safe to stop and re-run:
+5. `apply` also YOLO-measures the clips it just tagged (local GPU, 0 tokens, ~1.5-2 s per clip, cached by content
+   hash so the organize move keeps it): `/doc-edit plan` never waits on them. Applying many batches at once takes
+   minutes: run `apply` with `run_in_background`. `--no-yolo` = tags only. The old backlog of unmeasured clips is
+   left alone (`doc-edit/scripts/yolo.py --warm` measures all of it, only when the user asks).
+   Never commit or run any git command: the user handles git (rule 2026-10-11).
 
-       .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/yolo.py --warm
-
-   Then commit only the cache so the team shares it: `git add .work/library/yolo.json` and commit
-   "yolo cache: +N clips" (N from the `yolo warm:` line; nothing else in that commit).
-
-Reply (Vietnamese): batches applied, clips tagged / total (`status`), MISSING and off-vocab notes, the `yolo warm:` line.
+Reply (Vietnamese): batches applied, clips tagged / total (`status`), MISSING and off-vocab notes, the `yolo:` line.
 
 ## File the new AI clips (after apply)
 `D:\AI_video\_check` is the user's holding folder (never a species). To rename the tagged `shot_*` clips there

@@ -1,6 +1,6 @@
 ---
 name: scan-source
-description: Re-scan the source libraries Z:\Unseen\Amazona\video (real stock footage), D:\AI_video (AI-generated clips) and Z:\Unseen\Amazona\audio (music, ambience, nature sound) after the user added, moved, renamed or deleted files, and update their _library.json indexes. Use for /scan-source, or when the user says they added/sorted/moved footage or audio, or asks to refresh/check the source index.
+description: Re-index the source libraries (real footage, AI clips, audio) after files were added, moved, renamed or deleted. Use for /scan-source, when the user added/sorted/moved footage or audio, or to refresh/check the source index.
 ---
 
 # Scan source

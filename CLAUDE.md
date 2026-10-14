@@ -8,7 +8,9 @@ or generate footage; AI video prompts only via `/doc-edit missing-prompts` (THI�
 
 ## Tools
 `.venv/Scripts/python.exe -m dvr_cowork <cmd>` from the workspace root: `doctor`, `info` (cheap context first),
-`frames --at 01:10 02:05 --stats` (stills + scope numbers), `vo-sync run AUDIO TIMESTAMPS` (or apply/verify/analyze).
+`frames --at 01:10 02:05 --stats` (stills + scope numbers),
+`at 21:09 [--tl Open] [--audio] [--near 1]` (items + file + src_in at a time), `find <path fragment>` (where a file
+sits on Edit + Open), `offline [--relink OLD NEW [--apply]]` (offline media; prefix relink keeps timeline edits), `vo-sync run AUDIO TIMESTAMPS` (or apply/verify/analyze).
 DaVinci MCP: general ops (render, clip properties, grades, markers). Skills are listed by the harness: load on demand.
 
 ## Rules
@@ -24,8 +26,9 @@ DaVinci MCP: general ops (render, clip properties, grades, markers). Skills are 
    on it (scripts refuse Z: writes). Something on Z: should go -> list the full paths for the user, who deletes them.
    All library indexes live in `.work/library/` (in git, shared with the team); music licenses `.work/audio_licenses.md`.
 5. Files on other media drives (D:): dry-run, Python `Path`, verify after; `rmdir` never `rm -rf`. Deletes are blocked for
-   Claude: write the script into `.work/` and let the user run it. Exception: `hide_logo.py --overwrite-all` at `/doc-edit
-   done` after the user answers "có" to overwriting the originals with logos (user rule 2026-10-11).
+   Claude: write the script into `.work/` and let the user run it. Exception: `hide_logo.py --overwrite-all` when the
+   video is finished, after the user answers "có" to overwriting the originals with logos (user rule 2026-10-11). And `ledger.py done <video>`
+   at `/doc-edit done` (moves the video folder into `<workspace>\_done`, quits/relaunches Resolve, relinks).
 6. Tokens: never open audio, transcripts, plan.json, `_library.json`, caches; read stdout summaries, open report.md
    only for flagged rows; prefer `--stats` numbers, max ~6 images per pass.
 7. Advice: observation (numbers/frames) -> Resolve action with starting values -> why -> 1-2 alternatives +
@@ -33,9 +36,14 @@ DaVinci MCP: general ops (render, clip properties, grades, markers). Skills are 
 8. LUT/look/grade work (also inside doc-edit): load `colorist` first, follow `luts/README.md`, compare numbers
    with the ungraded frame before installing a LUT.
 9. Anything unclear (intent, scope, which file/video/timeline) -> ask the user before acting; never guess.
+10. Preflight every task (user rule 2026-10-13): before acting, check only what that task needs, in ONE call; anything
+   missing -> stop and tell the user what to open/connect, run nothing else. After: verify the result.
+   Resolve work -> `dvr_cowork info` (Resolve up, project = the video, timeline Edit/Open exists); library/audio ->
+   `Z:\Unseen\Amazona` reachable; AI clips -> `D:\AI_video`; a video -> its folder `D:\Chann_*\<video>` (+ spec/audios
+   the step needs); delete -> blocked, see the memory blocked-actions log.
 
 ## Past incidents -> fix (do not repeat)
 - 2026-10-10 `place.py --replace` to swap 1 clip wiped V1, A1, A3-A9 + grade -> restored from `Edit_bak_*`; rule 2.
 - `rm -rf` on media lost 104 audio files -> rule 5.
-- `frames --out` relative path exported nothing -> fixed (path resolved); pass absolute paths to Resolve.
+- Pass absolute paths to Resolve (relative `--out` once exported nothing).
 - Bash heredocs mangle `\\` and `\n` in Python -> edit .py files with the Edit tool.

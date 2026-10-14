@@ -1,10 +1,9 @@
 """doc-edit step 2: spec.txt -> footage + audio match (no tokens) -> plan.json + <video>/plan.md.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py <audios-folder>
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --done <video>   (user said the video is Done)
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest
 
-Clips used by the last RECENT_N videos marked done (ledger RECENT, clip id = library content hash) are never matched.
+Clips on timelines Edit/Open of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never matched.
 
 spec.txt lives in .work/doc_edit/<video>/ (video = parent of the audios folder). Format:
     # END 29:50                optional timeline end; default = end of last sentence + 2 s
@@ -16,7 +15,7 @@ filter: k=v1,v2 tokens, '_' = space. sp (species, hard; sp=none = no animal) act
 audio:  A3=forest,day A6=bird A8=branch,snap A7=off   (keywords matched against file paths; A2 forbidden)
 '*' = rest of the sentence slot (sentence start -> next sentence start, pause included); exactly one per sentence.
 """
-import json, re, sys
+import json, os, re, sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -26,16 +25,17 @@ sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/scan-source/scripts")]
 from dvr_cowork.timestamps import parse_timestamp_file  # noqa: E402
 from dvr_cowork.timecode import parse_clock  # noqa: E402
 from scan_source import ROOTS, index_of  # noqa: E402
+import ledger  # noqa: E402
 
 SRC = {"real", "ai", "any", "GFX"}
-KEYS = {"sp", "act", "size", "light", "set", "mood", "cam", "dir", "count", "kw", "no", "pin"}
-TAG = {"act": "action", "size": "shot_size", "set": "setting", "cam": "camera", "dir": "direction"}
+KEYS = {"sp", "act", "size", "light", "set", "mood", "cam", "ang", "dir", "count", "kw", "no", "pin"}
+TAG = {"act": "action", "size": "shot_size", "set": "setting", "cam": "camera", "ang": "angle", "dir": "direction"}
 SIZES = ["extreme_close", "close_up", "medium", "wide", "aerial"]
 OK_FIT, WEAK_FIT = 0.6, 0.35
 FALLBACK_T = 300.0  # first 5 min: strict matches only; later THIẾU shots may use related/neutral clips
 FALLBACK_FIT = 0.2
-# action shots are hard (user rule 2026-10-11): a strike/chase shot takes only a clip that shows action, else it
-# stays THIẾU (red marker -> missing-prompts) instead of a walking or resting animal; no FALLBACK for them either
+# action shots (user rule 2026-10-12): a strike/chase shot prefers a clip that shows action; a same-species clip
+# without it is capped at WEAK (yellow, below OK_FIT) instead of looking like a match; none at all -> THIẾU
 STRIKE = {"attack", "hunt", "fight", "run", "stalk", "jump"}
 NEUTRAL = {"landscape", "bird", "birds", "insects", "butterfly", "frog", "hummingbird", "toucan-bird", "spider",
            "supplementary_shots", "others"}  # folders of side shots: scenery, insects, birds, frogs
@@ -47,9 +47,9 @@ SHOT_MIN, SHOT_MAX = 1.2, 6.0  # footage shot length bounds (s); longer = split 
 FLAT = 4         # this many shots in a row whose lengths differ by < FLAT_SPAN s = flat, metronome rhythm
 FLAT_SPAN = 0.4
 SHORT_T, LONG_T = 2.0, 3.5  # rhythm needs both: >= 25% shots <= 2.0 s and >= 10% shots >= 3.5 s
+OPEN_MIN, OPEN_MAX = 3.0, 4.0  # user rule 2026-10-13: the first shot of "Edit" is a landscape (sp=none, wide/aerial)
+# of 3-4 s, longer than every other intro shot
 AI_TRIM = 0.3  # AI clips often morph in the first/last frames
-RECENT = ROOT / ".work" / "doc_edit" / "recent_clips.json"  # {"keep": 3, "videos": [{"video", "done", "clips": [id]}]}, newest first
-RECENT_N = 3
 YOLO_SEEN = 0.3  # YOLO saw the subject in >= 30% of samples: its window and size are trusted
 REUSE_MAX, REUSE_GAP, REUSE_PEN, SRC_MARGIN = 3, 120.0, 0.1, 1.0  # one clip <= 3 slots per video, 2 min apart,
 # different part of the clip each time (1 s apart), a fresh clip wins over a reused one of similar fit
@@ -186,6 +186,19 @@ def check_rhythm(slots):
     return short, long_
 
 
+def check_opening(slots):
+    """Spec check: the film opens on a landscape held a little longer than the shots after it."""
+    sh = [s for s in slots if s["src"] != "GFX"]
+    if not sh:
+        return
+    o, f = sh[0], sh[0]["filter"]
+    longest = max((s["dur"] for s in sh[1:] if s.get("intro")), default=0.0)
+    assert f.get("sp") == ["none"] and set(f.get("size", [])) & {"wide", "aerial"} and not set(f.get("size", [])) - {"wide", "aerial"} \
+        and OPEN_MIN <= o["dur"] <= OPEN_MAX and o["dur"] > longest, (
+        f"## {o['line']}: first shot must be a landscape (sp=none size=wide/aerial) of {OPEN_MIN:.0f}-{OPEN_MAX:.0f}s, "
+        f"longer than every other intro shot ({longest:.1f}s); now {o['dur']:.1f}s, filter {f}")
+
+
 # ------------------------------------------------------------------ footage match
 def load_clips():
     clips = []
@@ -193,33 +206,12 @@ def load_clips():
         if kind != "video":
             continue
         for cid, c in json.loads(index_of(root).read_text("utf-8"))["clips"].items():
-            if c.get("tags", {}).get("caption"):
+            # _check = holding folder: clips left there failed organize (morph/blur/dark/unsure), never planned
+            if c.get("tags", {}).get("caption") and not c["path"].replace("\\", "/").startswith("_check/"):
                 c["abs"] = str(root / c["path"]); c["source"] = source; c["id"] = cid  # id = content hash, survives moves
                 c["tags"]["species"] = [x.replace("_", " ") for x in c["tags"].get("species", [])]  # folder names
                 clips.append(c)
     return clips
-
-
-def recent_ids(video):
-    """Clip ids of the last RECENT_N videos marked done, minus this video (a re-plan keeps its own clips)."""
-    vids = json.loads(RECENT.read_text("utf-8"))["videos"][:RECENT_N] if RECENT.exists() else []
-    vids = [v for v in vids if v["video"] != video]
-    return {i for v in vids for i in v["clips"]}, [v["video"] for v in vids]
-
-
-def done(video):
-    """User said <video> is Done: its clips go to the top of the ledger, the oldest video beyond RECENT_N drops off."""
-    # ponytail: reads plan.json, not the timeline; a clip swapped by hand in Resolve after the plan is not recorded
-    slots = json.loads((ROOT / ".work" / "doc_edit" / video / "plan.json").read_text("utf-8"))["slots"]
-    by_path = {c["abs"].lower(): c["id"] for c in load_clips()}
-    got = [s.get("id") or by_path.get(s["path"].lower()) for s in slots if "path" in s]
-    ids = sorted(set(got) - {None})
-    old = json.loads(RECENT.read_text("utf-8"))["videos"] if RECENT.exists() else []
-    vids = ([{"video": video, "done": str(date.today()), "clips": ids}] + [v for v in old if v["video"] != video])[:RECENT_N]
-    RECENT.write_text(json.dumps({"keep": RECENT_N, "videos": vids}, indent=1), "utf-8")
-    print(f"{video}: {len(ids)} clips recorded ({got.count(None)} clips not in the library index, not recorded)")
-    print("ledger (newest first):", ", ".join(f"{v['video']} {v['done']} {len(v['clips'])}" for v in vids))
-    print(f"-> {RECENT}")
 
 
 def usable(c):
@@ -262,10 +254,8 @@ def fit(c, f, prev_size):
         return None
     if "light" in f and ("night" in f["light"]) != (t.get("light") == "night"):
         return None
-    if set(f.get("act", [])) & STRIKE and not set(t.get("action") or []) & STRIKE:
-        return None
     pts = mx = 0
-    for k, w in (("act", 3), ("set", 2), ("size", 2), ("light", 1), ("mood", 1), ("cam", 1), ("dir", 1), ("count", 1)):
+    for k, w in (("act", 3), ("set", 2), ("size", 2), ("light", 1), ("mood", 1), ("cam", 1), ("ang", 1), ("dir", 1), ("count", 1)):
         if k not in f:
             continue
         mx += w
@@ -284,6 +274,8 @@ def fit(c, f, prev_size):
         pts += sum(k.lower() in t["caption"].lower() for k in f["kw"])
     s = pts / mx if mx else 1.0
     s -= 0.15 * len(t.get("issues", [])) + (0.1 if not t.get("sure", True) else 0)
+    if set(f.get("act", [])) & STRIKE and not set(t.get("action") or []) & STRIKE:
+        s = min(s, OK_FIT - 0.05)   # no action in the clip: never OK
     s -= 0.1 if prev_size and t.get("shot_size") == prev_size else 0
     return s
 
@@ -392,9 +384,9 @@ def match(slots, clips):
 
     for i, s in enumerate(slots):
         f = s["filter"]
-        if s["status"] != "THIEU" or s["start"] < FALLBACK_T or f.get("pin") == ["none"] or set(f.get("act", [])) & STRIKE:
+        if s["status"] != "THIEU" or s["start"] < FALLBACK_T or f.get("pin") == ["none"]:
             continue
-        soft = {k: v for k, v in f.items() if k in ("size", "light", "set", "mood", "cam", "no")}
+        soft = {k: v for k, v in f.items() if k in ("size", "light", "set", "mood", "cam", "ang", "no")}
         want = set(f.get("sp", [])) - {"none"}
         side_ok = not s.get("vo") and s["dur"] <= budget and run_len(i) <= 2  # never a cutaway over a narrated character line
         best = None
@@ -552,16 +544,20 @@ def main(folder):
         short, long_ = check_rhythm(slots)
     except AssertionError as e:
         errs.append(str(e))
+    try:
+        check_opening(slots)
+    except AssertionError as e:
+        errs.append(str(e))
     species = Counter(x for c in clips for x in c["tags"].get("species", []))
     vocab = {k: {x for c in clips for x in (lambda v: v if isinstance(v, list) else [v])(c["tags"].get(TAG.get(k, k)))}
-             for k in ("act", "size", "light", "set", "mood", "cam", "dir", "count")}
+             for k in ("act", "size", "light", "set", "mood", "cam", "ang", "dir", "count")}
     for s in slots:
         for k, vals in s["filter"].items():
             if bad := [v for v in vals if k in vocab and v not in vocab[k]]:
                 errs.append(f"slot {s['slot']} (## {s['line']}): {k}={bad} not in tag vocab {sorted(vocab[k])}")
     if errs:  # every problem at once: fix them all in one edit, then re-run
         raise SystemExit(f"{len(errs)} spec errors:\n" + "\n".join(errs))
-    recent, rvids = recent_ids(video.name)
+    recent, rvids = ledger.banned(video.name, video)  # last N other videos of this workspace
     old = [c for c in clips if c["id"] in recent]
     pool = [c for c in clips if c["id"] not in recent]
     want = {x for s in slots for x in s["filter"].get("sp", []) if x != "none"}
@@ -631,10 +627,10 @@ def selftest():
     assert sl[1]["path"] == "j_close" and sl[1]["status"] == "WEAK"  # adjacent size, no reuse
     assert sl[2]["status"] == "THIEU" and sl[3]["status"] == "THIEU"  # used up / too short
     assert sl[1]["src_in"] == 3.5  # centred in the AI-trimmed range 0.3..9.7
-    # a strike shot never takes a walking animal, not even as FALLBACK after 5 min; a lunging one is fine
+    # a strike shot takes a walking animal only as WEAK (never OK); a lunging one is fine
     st = [{"slot": 1, "dur": 3, "src": "any", "need": "[J]", "filter": {"sp": ["jaguar"], "act": ["attack"]}, "start": 400.0}]
     match(st, clips[:2])
-    assert st[0]["status"] == "THIEU", st
+    assert st[0]["status"] in ("WEAK", "FALLBACK"), st
     st = [{"slot": 1, "dur": 3, "src": "any", "need": "[J]", "filter": {"sp": ["jaguar"], "act": ["attack"]}, "start": 400.0}]
     match(st, clips[:2] + [mk("j_lunge", "real", species=["jaguar"], action=["run"], shot_size="medium")])
     assert st[0]["path"] == "j_lunge", st
@@ -688,6 +684,16 @@ def selftest():
         except AssertionError:
             pass
     check_rhythm(rs(1.6, 2.4, 4.2, 1.8, 2.2, 3.0, 1.4, 5.0))
+    # opening: landscape wide/aerial, >= 4 s, longer than the other intro shots; a GFX title before it is fine
+    op = lambda d, sp="none", size="wide", src="real": {"line": 1, "dur": d, "src": src, "intro": True,
+                                                       "filter": {"sp": [sp], "size": [size]}}
+    check_opening([op(3, src="GFX"), op(3.5, size="aerial"), op(2.5), op(2, "jaguar")])
+    for bad in ([op(3.5, "jaguar"), op(2)], [op(3.5, size="close_up"), op(2)], [op(2.5), op(2)], [op(5), op(2)],
+                [op(3.5), op(3.5)]):
+        try:
+            check_opening(bad); raise SystemExit(f"opening check passed {bad}")
+        except AssertionError:
+            pass
     # no= rejects a clip that also shows the excluded species
     mixed = [mk("cb_j", "ai", species=["capybara", "jaguar"])]
     nj = [{"slot": 1, "dur": 3, "src": "any", "filter": {"sp": ["capybara"], "no": ["jaguar"]}, "start": 0.0}]
@@ -749,7 +755,5 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     if sys.argv[1:] == ["--selftest"]:
         selftest()
-    elif sys.argv[1] == "--done":
-        done(sys.argv[2])
     else:
         main(sys.argv[1])

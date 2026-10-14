@@ -25,8 +25,8 @@ TIMELINE = "Edit"
 CACHE = ROOT / ".work" / "hide_logo" / "scan.json"
 EXTS = {".mp4", ".mov", ".mkv", ".mxf", ".avi", ".m4v"}
 # every logo-free copy (D: and read-only Z: sources) waits here until the project is Done; scan-source and
-# process-ai-video skip it. MANIFEST maps copy -> original for the overwrite question at /doc-edit done.
-NOLOGO = Path(load_config()["paths"]["ai_video"]) / "_check" / "_nologo"
+# process-ai-video skip it. MANIFEST maps copy -> original for the overwrite question when the video is finished.
+NOLOGO = Path(load_config()["paths"]["ai_video"]) / "_nologo"  # was _check/_nologo until 2026-10-13
 MANIFEST = ROOT / ".work" / "hide_logo" / "nologo.json"
 OVERWRITTEN = ROOT / ".work" / "hide_logo" / "overwritten.json"  # replaced copies to relink back after a Resolve quit
 
@@ -51,7 +51,9 @@ W, H, N = 640, 360, 8          # analysis size, frames sampled per file
 HI, LO = 0.45, 0.33            # NCC: >= HI logo, LO..HI suspect (vid_3: logos 0.47-0.66, clean <= ~0.35)
 SHIFT, PAD = 8, 6              # template search radius, template margin (px at 640x360)
 EDGE_PAD = 3                   # extra px around the logo for delogo, at source resolution
-FPS_END = 8                    # decode rate for --end (logo that appears late in the clip)
+FEATHER, SOFT = 12, 1.5        # clone-patch edge fade (px) and blur sigma: raise SOFT if the patch still looks glossy
+HAZE = 9                      # blur sigma of the soft haze over patch + margin: raise if seams show, lower if it smears
+FPS_END = 8                   # decode rate for --end (logo that appears late in the clip)
 BUSY = 4                     # texture level from which a delogo patch can be noticed -> listed for review
 
 
@@ -187,35 +189,76 @@ def mark(files_out):
     return n
 
 
-def delogo(src, box, start=0.0, end=None):
-    w, h, _ = probe(src)
-    x0, y0 = max(1, int(box[0] * w) - EDGE_PAD), max(1, int(box[1] * h) - EDGE_PAD)
-    x1, y1 = min(w - 2, int(np.ceil(box[2] * w)) + EDGE_PAD), min(h - 2, int(np.ceil(box[3] * h)) + EDGE_PAD)
-    x0, y0 = x0 + x0 % 2, y0 + y0 % 2                          # yuv420 crops snap to even values
-    bw, bh = (x1 - x0) // 2 * 2 + 2, (y1 - y0) // 2 * 2 + 2
-    bw, bh = min(bw, (w - 2 - x0) // 2 * 2), min(bh, (h - 2 - y0) // 2 * 2)
-    # delogo leaves a smooth patch; re-grain it with the texture level of the band right below the logo
-    _, _, dur = probe(src)
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur / 2:.3f}", "-i", src, "-frames:v", "1", "-vf",
-                          f"crop={bw}:{bh}:{x0}:{min(h - bh, y1 + 2)}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-                         capture_output=True).stdout
-    grain = 0
-    if len(raw) >= bw * bh:
-        a = np.frombuffer(raw[:bw * bh], np.uint8).reshape(bh, bw).astype(np.float32)
-        hf = a[1:-1, 1:-1] - (a[:-2, 1:-1] + a[2:, 1:-1] + a[1:-1, :-2] + a[1:-1, 2:]) / 4
-        grain = int(np.clip(hf.std() * 2.0, 0, 15))
+def delogo(src, box, start=0.0, end=None, side=False, fill="clone"):
+    """side=True: clone from the same rows beside the logo (inward), not above/below - over moving water the
+    vertical neighbour is foam/sky of another brightness and the patch glows (user 2026-10-14)."""
+    w, h, dur = probe(src)
     en = (f":enable='between(t,{start:.3f},{end:.3f})'" if end is not None
           else f":enable='gte(t,{start:.3f})'" if start > 0 else "")
-    vf = f"[0:v]delogo=x={x0}:y={y0}:w={bw}:h={bh}{en}"
-    if grain >= 2:
-        vf += f",split[a][b];[b]crop={bw}:{bh}:{x0}:{y0},noise=alls={grain}:allf=t[n];[a][n]overlay={x0}:{y0}{en}"
+    chain, cur, grain = [], "0:v", 0
+    for i, bb in enumerate(box if isinstance(box[0], (list, tuple)) else [box]):   # several logos: one patch each
+        x0, y0 = max(1, int(bb[0] * w) - EDGE_PAD), max(1, int(bb[1] * h) - EDGE_PAD)
+        x1, y1 = min(w - 2, int(np.ceil(bb[2] * w)) + EDGE_PAD), min(h - 2, int(np.ceil(bb[3] * h)) + EDGE_PAD)
+        x0, y0 = x0 + x0 % 2, y0 + y0 % 2                          # yuv420 crops snap to even values
+        bw, bh = (x1 - x0) // 2 * 2 + 2, (y1 - y0) // 2 * 2 + 2
+        bw, bh = min(bw, (w - 2 - x0) // 2 * 2), min(bh, (h - 2 - y0) // 2 * 2)
+        # Clone patch (user pick 2026-10-13, over plain delogo): copy the real texture right below the logo (above it
+        # when the logo sits at the bottom), feathered edge, slightly blurred (SOFT) so it is not glossy, + grain.
+        px, py = max(0, x0 - FEATHER), max(0, y0 - FEATHER)
+        pw, ph = min(w - px, bw + 2 * FEATHER) // 2 * 2, min(h - py, bh + 2 * FEATHER) // 2 * 2
+        sy = py + ph + 2 if py + 2 * ph + 2 <= h else py - ph - 2
+        sy = max(0, min(sy, h - ph))
+        sx = px
+        if side:
+            sx, sy = (px - pw - 2 if px > w / 2 else px + pw + 2), py
+            sx = max(0, min(sx, w - pw))
+        # delogo leaves a smooth patch; re-grain it with the texture level of the clone source (not a letterbox bar)
+        raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur / 2:.3f}", "-i", src, "-frames:v", "1", "-vf",
+                              f"crop={bw}:{bh}:{max(0, min(w - bw, sx + FEATHER))}:{max(0, min(h - bh, sy + FEATHER))}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+                             capture_output=True).stdout
+        g, shift = 0, 0
+        if len(raw) >= bw * bh:
+            a = np.frombuffer(raw[:bw * bh], np.uint8).reshape(bh, bw).astype(np.float32)
+            hf = a[1:-1, 1:-1] - (a[:-2, 1:-1] + a[2:, 1:-1] + a[1:-1, :-2] + a[1:-1, 2:]) / 4
+            g = int(np.clip(hf.std() * 2.0, 0, 15))
+            grain = max(grain, g)
+            # brightness match (user 2026-10-14: patch "bóng lên" = brighter than its surroundings): shift the patch
+            # luma to the band left of the logo, same rows (logos sit at the right edge)
+            lx = max(0, x0 - bw - FEATHER)
+            ref = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur / 2:.3f}", "-i", src, "-frames:v", "1", "-vf",
+                                  f"crop={bw}:{bh}:{lx}:{y0}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+                                 capture_output=True).stdout
+            if len(ref) >= bw * bh:
+                shift = int(np.clip(np.frombuffer(ref[:bw * bh], np.uint8).mean() - a.mean(), -40, 40))
+        if fill == "interp":   # big logo over a fast pan: any copied block shows; interpolate from all 4 edges
+            chain.append(f"[{cur}]delogo=x={x0}:y={y0}:w={bw}:h={bh}{en}[m{i}]")
+        else:
+            chain.append(f"[{cur}]split[a{i}][b{i}];[b{i}]crop={pw}:{ph}:{sx}:{sy},lutyuv=y='clip(val+{shift},16,235)',"
+                         f"gblur=sigma={SOFT},noise=c0s={max(g, 3)}:allf=t,"
+                         f"format=yuva420p,geq=lum='lum(X,Y)':cb='cb(X,Y)':cr='cr(X,Y)':"
+                         f"a='255*min(1,min(X,W-1-X)/{FEATHER})*min(1,min(Y,H-1-Y)/{FEATHER})'[p{i}];"
+                         f"[a{i}][p{i}]overlay={px}:{py}:format=auto{en}[m{i}]")
+        # Haze pass (user 2026-10-14: patch edges + brightness step showed): blur the patched area plus a FEATHER
+        # margin, faded over 2*FEATHER, so seams and the brightness step melt into the surroundings. No fade on a
+        # side that touches the frame edge (a fade there leaves a sharp line along the edge).
+        qx, qy = max(0, px - FEATHER), max(0, py - FEATHER)
+        qw, qh = min(w - qx, pw + 2 * FEATHER) // 2 * 2, min(h - qy, ph + 2 * FEATHER) // 2 * 2
+        f2 = 2 * FEATHER
+        fx = [f"min(1,X/{f2})" if qx > 0 else "1", f"min(1,(W-1-X)/{f2})" if qx + qw < w - 2 else "1"]
+        fy = [f"min(1,Y/{f2})" if qy > 0 else "1", f"min(1,(H-1-Y)/{f2})" if qy + qh < h - 2 else "1"]
+        chain.append(f"[m{i}]split[c{i}][d{i}];[d{i}]crop={qw}:{qh}:{qx}:{qy},gblur=sigma={HAZE},"
+                     f"noise=c0s={max(g // 2, 2)}:allf=t,format=yuva420p,geq=lum='lum(X,Y)':cb='cb(X,Y)':cr='cr(X,Y)':"
+                     f"a='255*{'*'.join(fx + fy)}'[q{i}];"
+                     f"[c{i}][q{i}]overlay={qx}:{qy}:format=auto{en}[o{i}]")
+        cur = f"o{i}"
+    vf = ";".join(chain)
     # one flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name
     dst = NOLOGO / Path(src).name
     if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
         dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
     assert dst.drive.upper() != "Z:", dst
     dst.parent.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", vf + "[v]", "-map", "[v]",
+    r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", vf, "-map", f"[{cur}]",
                         "-map", "0:a?", "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p",
                         "-fps_mode", "passthrough", "-c:a", "copy", "-map_metadata", "0", "-movflags", "+faststart",
                         str(dst)], capture_output=True, text=True)
@@ -309,7 +352,7 @@ def late_logo(src, quads, h2, w2, head=False):
     return best   # (share, corner, box@640x360, start_s | end_s when head) or None
 
 
-def one_clip(name, corner=None, endpart=False, head=False):
+def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="clone"):
     """One shot name or video path: find its static logo in a corner (persistent edges over 8 frames), delogo,
     relink the V1 clip using it (if any). endpart=True: logo appears late in the clip; head=True: logo only at
     the start of the clip, gone later."""
@@ -328,7 +371,9 @@ def one_clip(name, corner=None, endpart=False, head=False):
     h2, w2 = H // 2, W // 2
     quads = {"tl": (0, 0), "tr": (0, w2), "bl": (h2, 0), "br": (h2, w2)}
     start, end = 0.0, None
-    if endpart or head:
+    if manual:   # --box x0,y0,x1,y1 [x0,y0,x1,y1 ...] at 640x360: semi-transparent logos the edge detector misses
+        bx, corner = manual[0], "manual"
+    elif endpart or head:
         bh, bw = H // 5, W * 3 // 10    # channel logos hug the frame edge: search a corner band, not a quadrant
         bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
         found = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
@@ -348,7 +393,9 @@ def one_clip(name, corner=None, endpart=False, head=False):
         k = (abs(xs - np.median(xs)) < 80) & (abs(ys - np.median(ys)) < 40)   # densest cluster, drops stray edges
         bx = (ox + xs[k].min() - 2, oy + ys[k].min() - 2, ox + xs[k].max() + 3, oy + ys[k].max() + 3)
     box = [bx[0] / W, bx[1] / H, bx[2] / W, bx[3] / H]
-    _, dst, err, grain = delogo(src, box, start, end)
+    if manual:
+        box = [[b[0] / W, b[1] / H, b[2] / W, b[3] / H] for b in manual]
+    _, dst, err, grain = delogo(src, box, start, end, side=bool(manual), fill=fill)
     if not dst or (mpi and not mpi.ReplaceClip(dst)):
         sys.exit(f"failed: {err or 'ReplaceClip failed'}")
     record(src, dst)
@@ -379,8 +426,11 @@ def at_clip(tc, corner=None):
         score = max(int(np.count_nonzero(per[y:y + h2, x:x + w2])) for c, (y, x) in quads.items() if c in (corner or quads))
         span = f"{(it.GetStart() - t0) / fps:.1f}-{(it.GetEnd() - t0) / fps:.1f}s"
         print(f"  candidate {span} {Path(src).name}: static edges {score}")
-        if best is None or score > best[0]:
-            best = (score, src)
+        # a reported time is usually where the shot starts: a clip starting at/after it wins any logo, a neighbour
+        # that ended there only if it alone shows one (2026-10-12 shot_068 / landscape were picked by mistake)
+        rank = (score >= 20 and it.GetStart() >= fr - pad, score)
+        if best is None or rank > best[2]:
+            best = (score, src, rank)
         srcs.append(src)
     if best and best[0] >= 20:
         return one_clip(best[1], corner)
@@ -405,14 +455,16 @@ def frame_info(p):
     return json.loads(r.stdout)["streams"][0]
 
 
-def _relink(project, names, target):
-    """Media pool items whose file name is one of `names` -> `target` (all bins of the project)."""
+def _relink(project, paths, target):
+    """Media pool items whose FULL path is one of `paths` -> `target` (all bins of the project). Never match by file
+    name: shot_NNN.mp4 exists in many folders (2026-10-12 a name match relinked a different clip)."""
+    paths = {os.path.normcase(str(x)) for x in paths}
     def walk(f):
         yield from f.GetClipList() or []
         for s in f.GetSubFolderList() or []:
             yield from walk(s)
     hits = [c for c in walk(project.GetMediaPool().GetRootFolder())
-            if Path(c.GetClipProperty("File Path") or "").name in names
+            if os.path.normcase(c.GetClipProperty("File Path") or "") in paths
             and os.path.normcase(c.GetClipProperty("File Path")) != os.path.normcase(str(target))]
     return sum(bool(c.ReplaceClip(str(target))) for c in hits)
 
@@ -435,15 +487,15 @@ def _move_id(ss, orig, old_id):
             cache[new_id] = cache.pop(old_id)
             p.write_text(json.dumps(cache, separators=(",", ":")), "utf-8")
             moved.append("yolo cache")
-    led = ROOT / ".work" / "doc_edit" / "recent_clips.json"
-    if led.exists() and old_id in led.read_text("utf-8"):
-        led.write_text(led.read_text("utf-8").replace(old_id, new_id), "utf-8")
-        moved.append("clip ledger")
+    for led in (ROOT / ".work" / "doc_edit" / "ledgers").glob("*.json"):  # one clip ledger per workspace
+        if old_id in led.read_text("utf-8"):
+            led.write_text(led.read_text("utf-8").replace(old_id, new_id), "utf-8")
+            moved.append(f"ledger {led.stem}")
     return f"id {old_id} -> {new_id} ({', '.join(moved) or 'not indexed'})"
 
 
 def pending():
-    """Logo-free copies waiting for the overwrite question at /doc-edit done."""
+    """Logo-free copies waiting for the overwrite question when the video is finished."""
     m = manifest()
     for clean, orig in m.items():
         z = " (Z: read-only, copy stays)" if Path(orig).drive.upper() == "Z:" else ""
@@ -456,8 +508,8 @@ def relink_pending():
     original again (after an overwrite that had to quit Resolve)."""
     project = connect().GetProjectManager().GetCurrentProject()
     m, back = manifest(), (json.loads(OVERWRITTEN.read_text("utf-8")) if OVERWRITTEN.exists() else {})
-    n = sum(_relink(project, {Path(c).name, Path(o).name}, c) for c, o in m.items() if Path(c).exists())
-    k = sum(_relink(project, {Path(c).name, Path(o).name}, o) for c, o in back.items() if Path(o).exists())
+    n = sum(_relink(project, {c, o}, c) for c, o in m.items() if Path(c).exists())
+    k = sum(_relink(project, {c, o}, o) for c, o in back.items() if Path(o).exists())
     OVERWRITTEN.unlink(missing_ok=True)
     print(f"relinked {n} item(s) to {len(m)} logo-free copies, {k} item(s) back to {len(back)} overwritten originals")
 
@@ -479,7 +531,7 @@ def _replace_all(jobs):
 
 
 def overwrite_all():
-    """User said yes at /doc-edit done (video already exported): each copy in NOLOGO replaces its original (Z:
+    """User said yes when the video is finished (video already exported): each copy in NOLOGO replaces its original (Z:
     originals stay, read-only), Resolve is relinked to the original paths, tags / YOLO cache / ledger move to the
     new content hash. Resolve keeps the files open (Windows refuses the replace): the project is saved and closed
     around the replaces and reopened on the same timeline; if a file is still locked Resolve is quit, the rest is
@@ -493,7 +545,8 @@ def overwrite_all():
         c, o = Path(clean), Path(orig)
         if o.drive.upper() == "Z:":
             kept.append(o.name)
-        elif not (c.is_file() and o.is_file()) or frame_info(c) != frame_info(o):
+        # frame count only: a copy later graded by process-ai-video is 1920x1080 on purpose (user 2026-10-14)
+        elif not (c.is_file() and o.is_file()) or frame_info(c)["nb_read_packets"] != frame_info(o)["nb_read_packets"]:
             bad.append(f"{o.name}: missing file or frame count differs")
         else:
             jobs.append((c, o, ss.fast_hash(o)))
@@ -535,7 +588,7 @@ def overwrite_all():
                if t.GetName() == cur), None)
     if tl:
         project.SetCurrentTimeline(tl)
-    n = sum(_relink(project, {c.name, o.name}, o) for c, o, _ in done)
+    n = sum(_relink(project, {c, o}, o) for c, o, _ in done)
     print(f"overwritten {len(done)}/{len(jobs)} originals | relinked {n} media pool item(s) | "
           f"project '{name}' reopened on '{cur}'" + tail)
 
@@ -566,7 +619,15 @@ if __name__ == "__main__":
         scan(sys.argv[1])
     elif len(sys.argv) > 1:
         endpart = "--end" in sys.argv
-        args = [a for a in sys.argv[1:] if a != "--end"]
-        one_clip(args[0], args[1] if len(args) > 1 else None, endpart)
+        boxes = [a for a in sys.argv[1:] if a.count(",") == 3]   # --box 584,302,607,324 619,346,638,355
+        manual = [[int(v) for v in a.split(",")] for a in boxes] or None
+        haze = []
+        if "--haze" in sys.argv:   # --haze 16: softer patch for this run (user: "bóng bẩy" -> blurrier)
+            haze = [sys.argv[sys.argv.index("--haze") + 1]]
+            HAZE = float(haze[0])
+            SOFT = max(SOFT, HAZE / 3)
+        fill = "interp" if "interp" in sys.argv else "clone"   # --fill interp: big logo over a fast pan
+        args = [a for a in sys.argv[1:] if a not in ("--end", "--box", "--haze", "--fill", "interp") and a not in boxes and a not in haze]
+        one_clip(args[0], args[1] if len(args) > 1 else None, endpart, manual=manual, fill=fill)
     else:
         sys.exit("usage: hide_logo.py <folder> | --execute | <shot_NNN|video path> [tl|tr|bl|br] [--end] | --at <mm:ss> [corner] | --pending | --overwrite-all | --relink")

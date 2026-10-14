@@ -5,7 +5,7 @@
     .venv/Scripts/python .claude/skills/tag-source/scripts/organize.py --rename-stay [--apply]   # rename the clips that stay in _check
     .venv/Scripts/python .claude/skills/tag-source/scripts/organize.py --selftest
 
-Only untitled clips (shot_*.*) in _check are handled. A clip stays in _check when it cannot be filed: no tags,
+Only untitled clips (shot_*.*) in _check are handled; --all = every clip in _check (generator names like amazon-007). A clip stays in _check when it cannot be filed: no tags,
 sure=false, a blocking issue (morph, unnatural, logo, watermark, text, dark, blur) or no folder for its species.
 Name: <species>_<caption keywords>-<shot size>.mp4 (same style as the existing files).
 Same drive -> Path.rename (atomic); never deletes. Run scan-source afterwards (hash keys keep the tags).
@@ -20,7 +20,7 @@ CHECK = ROOT / "_check"
 BLOCK = {"morph", "unnatural", "logo", "watermark", "text", "dark", "blur"}
 ALIAS = {"caiman": "crocodile_caiman", "crocodile": "crocodile_caiman", "howler monkey": "howler",
          "toucan": "toucan-bird", "giant otter": "otter", "river otter": "otter", "antelope": "deer",
-         "muntjac": "deer", "giant anteater": "anteater", "tapir calf": "tapir", "hippo calf": "hippo",
+         "muntjac": "deer", "red brocket deer": "brocket_deer", "brocket deer": "brocket_deer", "giant anteater": "anteater", "tapir calf": "tapir", "hippo calf": "hippo",
          "harpy eagle chick": "eagle", "python": "snake", "viper": "snake", "parrot": "bird", "macaw": "bird",
          "hornbill": "bird", "kingfisher": "bird", "songbird": "bird", "heron": "bird", "owl": "bird",
          "beetle": "insects", "termite": "insects", "ladybug": "insects", "bee": "insects", "wasp": "insects",
@@ -56,11 +56,11 @@ def name_for(sp, t):
     return f"{head}_{'-'.join(words)}-{t.get('shot_size', 'medium').replace('_', '-')}"
 
 
-def plan(clips, folders):
+def plan(clips, folders, every=False):
     moves, stay, taken = [], [], set()
     for c in clips:
         p = Path(c["path"])
-        if p.parts[0] != "_check" or len(p.parts) != 2 or not p.stem.startswith("shot_"):
+        if p.parts[0] != "_check" or len(p.parts) != 2 or not (every or p.stem.startswith("shot_")):
             continue
         t = c.get("tags") or {}
         why = ("no tags" if not t.get("caption") else "sure=false" if not t.get("sure", True)
@@ -78,10 +78,10 @@ def plan(clips, folders):
     return moves, stay
 
 
-def main(apply):
+def main(apply, every=False):
     d = json.loads(index_of(ROOT).read_text("utf-8"))["clips"]
     folders = {p.name for p in ROOT.iterdir() if p.is_dir() and not p.name.startswith("_")}
-    moves, stay = plan(d.values() if isinstance(d, dict) else d, folders)
+    moves, stay = plan(d.values() if isinstance(d, dict) else d, folders, every)
     by = {}
     for _, dst in moves:
         by[dst.parent.relative_to(ROOT).as_posix()] = by.get(dst.parent.relative_to(ROOT).as_posix(), 0) + 1
@@ -146,9 +146,11 @@ def selftest():
           {"path": "_check\\named_clip.mp4", "tags": {"caption": "x", "sure": True, "species": ["caiman"]}}]
     m, s = plan(cl, folders)
     assert not m and [w for _, w in s] == ["sure=false", "morph"]
+    m, s = plan(cl, folders, every=True)
+    assert [d.parent.name for _, d in m] == ["crocodile_caiman"] and len(s) == 2
     print("selftest ok")
 
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    selftest() if "--selftest" in sys.argv else rename_stay("--apply" in sys.argv) if "--rename-stay" in sys.argv         else main("--apply" in sys.argv)
+    selftest() if "--selftest" in sys.argv else rename_stay("--apply" in sys.argv) if "--rename-stay" in sys.argv         else main("--apply" in sys.argv, "--all" in sys.argv)
