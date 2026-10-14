@@ -66,9 +66,8 @@ questions, no overwrite question.
 Corner optional after each time. For each time it scores the V1 clip there and its neighbours within 1 s (a
 reported time often lands just before the cut), delogoes the one with the logo into `AI_video\_nologo\` and
 relinks it in the open project; a failed shot does not stop the others. No logo through the whole clip ->
-it tries a logo shown only at the start (removed 0-Ns) and one popping in late (removed from Ns), best share wins;
-shares are close between neighbours, so check the chosen clip's corner yourself (ffmpeg crop of the original at
-its `src_in`, not a timeline still) before replying. Reply in Vietnamese: per time the clip
+it tries a logo shown only at the start (removed 0-Ns) and one popping in late (removed from Ns), best share wins.
+No crops or stills afterwards (user rule 2026-10-13): the user checks in Resolve and reports a wrong pick. Reply in Vietnamese: per time the clip
 (time range, file), REVIEW flag, FAILED lines.
 
 ## Overwrite at Done (user rule 2026-10-11)

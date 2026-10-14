@@ -288,8 +288,24 @@ def done(video, ws=None, proj=None):
     if not moved:
         raise SystemExit(f"relinked {ok}/{len(jobs)} but NOT moved ({err}): {dest} is a link to {vdir} for now; close "
                          f"whatever holds files there (Explorer, player), then run: ledger.py move {vdir.name}")
+    handoff(f"done {vdir.name} ({ws_of(dest)}): moved into {DONE}, relinked {ok}/{len(jobs)} media, Resolve closed")
     print(f"done {vdir.name}: relinked {ok}/{len(jobs)} media to {dest} | moved {vdir} -> {dest} | "
           f"Resolve closed")
+
+
+HANDOFF = ROOT / ".work" / "knowledge" / "handoffs" / "current.md"  # memory gateway: project state
+
+
+def handoff(line, path=None):
+    """Newest-first bullet under "Last completed:" of the gateway handoff + Updated date; no handoff -> skip."""
+    import re
+    p = Path(path or HANDOFF)
+    if not p.is_file():
+        return
+    s = p.read_text("utf-8")
+    s = re.sub(r"(?m)^Updated: .*$", f"Updated: {date.today()}", s, count=1)
+    s = s.replace("Last completed:\n\n", f"Last completed:\n\n- {date.today()} {line}\n", 1)
+    p.write_text(s, "utf-8")
 
 
 def move(video, ws=None):
@@ -303,6 +319,7 @@ def move(video, ws=None):
     except OSError as e:
         _junction(dest, vdir)
         raise SystemExit(f"still NOT moved ({e}); link restored")
+    handoff(f"done {vdir.name} ({ws_of(dest)}): moved into {DONE} (ledger.py move)")
     print(f"moved {vdir} -> {dest}")
 
 
@@ -339,6 +356,10 @@ def selftest():
     assert (tmp / DONE / "v" / "audios" / "a.mp3").read_text() == "x" and not (tmp / "v").exists()
     rows = license_rows("| file | license |\n|---|---|\n| Z:\\S\\a.wav | Z:\\S\\1.pdf | x |\n| head | not a pdf |")
     assert rows == {norm(r"Z:\S\a.wav"): [r"Z:\S\a.wav", r"Z:\S\1.pdf", "x"]}, rows
+    h = tmp / "current.md"
+    h.write_text("# H\n\nUpdated: 2000-01-01\n\nLast completed:\n\n- old\n", "utf-8")
+    handoff("done v (W)", h)
+    assert h.read_text("utf-8") == f"# H\n\nUpdated: {date.today()}\n\nLast completed:\n\n- {date.today()} done v (W)\n- old\n"
     print("selftest ok")
 
 
