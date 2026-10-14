@@ -70,6 +70,8 @@ Write-Host "Set your AI clips folder in config.toml -> [paths] ai_video (now: $(
 if (-not $SkipModel) {
     Write-Host "Downloading Whisper model (about 0.5 GB, one time)..." -ForegroundColor Cyan
     & $venvPy -m dvr_cowork prefetch
+    Write-Host "Downloading multilingual-e5-small (about 0.5 GB, one time; memory search + plan) + gateway self-test..." -ForegroundColor Cyan
+    & $venvPy .work\tools\memory_gateway.py selftest
 }
 
 Write-Host ""

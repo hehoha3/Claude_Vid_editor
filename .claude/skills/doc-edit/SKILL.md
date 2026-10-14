@@ -45,6 +45,9 @@ Timeline untouched. Folder = step 1's (unknown -> ask); `<video>` = its parent f
    - Prints ALL spec errors grouped with `##` numbers: fix them in one pass with targeted edits, re-run.
    - YOLO-World on unmeasured clips of the spec's species (cache `.work/library/yolo.json`, normally warm via
      tag-source); many measured now -> run in background. Read only the `yolo:` line.
+   - Semantic tie-break (default; `--no-sem` = tags only): multilingual-e5-small compares the shot text with each
+     clip caption and picks among clips of the same band; status OK / WEAK / THIẾU stays the tags'. Caption vectors
+     cached in `.work/doc_edit/caption_emb_e5small.npz` (new captions ~15 s). Read only the `semantic:` line.
    - A shot no clip is long enough for -> 2-3 parts from different clips (⧉); audio stays on part 1.
    - Ledger: clips of the last 4 checked videos of the workspace are never matched; `recent ledger` line = slots
      lost, by character. Inside one video a clip may serve 3 slots (edit-grammar Source).

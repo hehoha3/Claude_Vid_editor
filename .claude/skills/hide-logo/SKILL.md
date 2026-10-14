@@ -1,6 +1,6 @@
 ---
 name: hide-logo
-description: Find video files with a broadcast logo (BBC, BBC EARTH...) in a folder, mark their clips on timeline "Edit" for review, then remove the logo with ffmpeg delogo and relink the clips. Use for /hide-logo or any request to find/remove channel logos in shots, including "remove the logo on shot_NNN" / Object Removal of a logo on one clip.
+description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from shots - clone-patch copies into D:\AI_video\_nologo, relinked in Resolve; find logos in a folder; overwrite originals when a video is done. Use for /hide-logo, "shot ở 21:38 có logo góc trên trái", "remove the logo on shot_NNN", Object Removal of a logo.
 ---
 
 # Hide logo

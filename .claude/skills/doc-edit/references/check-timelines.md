@@ -24,8 +24,8 @@ Resolve will be closed (it stays closed: reopening is the user's call). Several 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <name>]
 
 `--project` (also on `check`) when the Resolve project is not named like the folder (amazon_1 = "build_agent").
-Before it, relink the project's old paths (`dvr_cowork offline --relink D:\Job_vid\<video> <ws>\<video> --apply`)
-so every file under the video folder moves with it.
+Media still linked to an old location of the video folder (renamed drive/folder) -> first
+`dvr_cowork offline --relink <old folder> <ws>\<video> --apply`, so every file under the video folder moves with it.
 
 The render makes it long (a 30 min 4K timeline): run it with `run_in_background`, never a foreground timeout.
 

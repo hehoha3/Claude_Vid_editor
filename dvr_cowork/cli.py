@@ -6,7 +6,7 @@
   dvr prefetch
   dvr at 21:09 05:12 [--tl Open] [--audio] [--near 1]
   dvr find shot_028 capybara
-  dvr offline [--relink D:/Job_vid D:/Chann_shadowCanopy [--apply]]
+  dvr offline [--relink D:/old_folder D:/new_folder [--apply]]
   dvr vo-sync run     AUDIO TIMESTAMPS [--dry-run] [--on-overlap push|trim|abort] [--markers] [--force-clear] [--no-backup]
   dvr vo-sync analyze AUDIO TIMESTAMPS
   dvr vo-sync apply   [PLAN] [...]

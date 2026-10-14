@@ -20,7 +20,7 @@ default. Each section picks the move that fits what the music does there.
 other animals less; ends on a still shot (sky, an animal looking at the camera...).
 
 ## Reference intros (measured, not listened)
-**amazon_1** (`D:\Job_vid\amazon_1\Done_EN.mov` 0:00-1:34; music `openning/sigmamusicart-cinematic-tense-trailer`, 110 BPM,
+**amazon_1** (`D:\Chann_darkAmazona\_done\amazon_1\Done_EN.mov` 0:00-1:34; music `openning/sigmamusicart-cinematic-tense-trailer`, 110 BPM,
 D minor, drop 44.69 s, one piece, whole track):
 - 1.0 s, first hit: sunset over the river, wide, held 3.8 s (world first, then the cast).
 - Build 4.8-35 s: one shot per bar (2.18 s), cuts on the beat (+-0.02 s), mostly one beat before the measured bar line

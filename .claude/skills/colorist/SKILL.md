@@ -1,6 +1,6 @@
 ---
 name: colorist
-description: Senior colorist knowledge for DaVinci Resolve - color management, scopes, node trees, primaries and secondaries, shot matching, looks, film emulation, and specifically grading AI-generated wildlife footage (Veo/Kling clips) into a consistent BBC-style documentary. Use for any question about color, grading, LUTs, exposure, white balance, skin/fur tones, skies, greens, night scenes, contrast, look development, matching clips, banding, noise or "why does this shot look wrong/cheap/fake".
+description: Colorist for Resolve - scopes, nodes, primaries/secondaries, shot matching, LUTs and looks, grading AI wildlife clips (Veo/Kling) into one consistent BBC-style film (grade.py). Use for any color, grade, LUT, exposure, white balance, fur/sky/greens, night, contrast, banding, noise question or "shot looks wrong/cheap/fake".
 ---
 
 # Colorist

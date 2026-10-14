@@ -1,6 +1,6 @@
 ---
 name: resolve-api
-description: Facts and gotchas of the DaVinci Resolve Python scripting API for writing ad-hoc automation (timeline items, media pool, tracks, markers, grades, render) from this workspace. Use whenever you are about to write or debug Python that talks to Resolve, or decide whether something is possible by script.
+description: Gotchas of the Resolve Python scripting API (timeline items, media pool, tracks, markers, grades, render). Use before writing or debugging Python that talks to Resolve, or to decide if something is scriptable.
 ---
 
 # Resolve scripting API - working notes

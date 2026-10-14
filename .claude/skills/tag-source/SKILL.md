@@ -5,7 +5,7 @@ description: Vision-tag new clips in the AI and real footage indexes once each w
 
 # Tag source
 
-Phase 1 of LIBRARY_PLAN.md. Tags are stored per content hash in the root's index (`scan_source.index_of`: Z: roots in `.work/library/`)
+Tags are stored per content hash in the root's index (`scan_source.index_of`: Z: roots in `.work/library/`)
 (`clip.tags`, `"v": 2`), so renaming/moving keeps them; a clip is never tagged twice. Run `scan-source`
 first (hashes must be current: `process-ai-video` rewrites files).
 
@@ -46,11 +46,11 @@ Clips stay in `_check` when sure=false, they have a blocking issue (morph, unnat
 blur), or no folder exists for the species (never create one unasked). Then `scan_source.py ai`: must report
 "moved N", never removed.
 
-## Tagger prompt (fill BATCH)
+## Tagger prompt (fill BATCH and ROOT = this workspace's absolute path)
 
 ```
 You tag wildlife documentary clips for an editor. Read the file .work/tag_source/BATCH.json (cwd
-C:\Users\ADMIN\Claude_editor). For EVERY row, open its "image" with the Read tool and look at it before
+ROOT). For EVERY row, open its "image" with the Read tool and look at it before
 writing anything: a 2x2 contact sheet of 4 frames from one clip, numbered 1-4 (top-left, top-right,
 bottom-left, bottom-right) in time order. Tag only what you SEE. "folder" is the user's sorting (usually
 the main animal) - use it to name the species when the image agrees; never tag from title_hint or the

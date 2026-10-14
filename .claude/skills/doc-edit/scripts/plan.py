@@ -242,6 +242,54 @@ def yolo_pass(clips):
     return f"yolo: {len(clips)} candidate clips, {new} measured now ({sec}s), {n} with subject window + measured size"
 
 
+# Meaning of the shot text (Vietnamese) vs the clip caption (English): multilingual-e5-small of the memory gateway
+# captions embedded once (cache keyed by clip id + caption). Ranking only (+-SEM_W/2 inside a band, rank_key);
+# fit, the status and the hard filters are the tags' alone.
+SEM_W = 0.04
+SEM_LO, SEM_HI = 0.731, 0.805  # e5 cosine sim -> 0..1: demo_5 candidates p10 / p90 (2026-10-14)
+SEM_CACHE = ROOT / ".work" / "doc_edit" / "caption_emb_e5small.npz"
+SEM = {"need": {}, "clip": {}}  # need text -> unit vector, clip id -> unit vector; empty = semantic off
+
+
+def need_text(need):
+    return re.sub(r"\[[^\]]+\]\s*", "", need).strip()
+
+
+def semantic(slots, clips):
+    """Fill SEM for the slots' shot texts and the clips' captions. Any failure -> off (tags only)."""
+    try:
+        import numpy as np
+        sys.path.insert(0, str(ROOT / ".work" / "tools"))
+        from memory_gateway import embed
+        old = dict(np.load(SEM_CACHE, allow_pickle=False)) if SEM_CACHE.exists() else {}
+        keys = {c["id"]: f"{c['id']}|{c['tags']['caption']}" for c in clips}
+        hit = {k: old[k] for k in keys.values() if k in old}
+        todo = [c for c in clips if keys[c["id"]] not in hit]
+        for i in range(0, len(todo), 256):
+            part = todo[i:i + 256]
+            for c, v in zip(part, embed([c["tags"]["caption"] for c in part], "passage")):
+                hit[keys[c["id"]]] = np.asarray(v, dtype=np.float32)
+        if todo:
+            SEM_CACHE.parent.mkdir(parents=True, exist_ok=True)
+            np.savez(SEM_CACHE, **hit)
+        unit = lambda v: v / (np.linalg.norm(v) or 1.0)  # noqa: E731
+        SEM["clip"] = {cid: unit(hit[k]) for cid, k in keys.items()}
+        needs = sorted({need_text(s["need"]) for s in slots if s["src"] != "GFX"} - {""})
+        SEM["need"] = {n: unit(np.asarray(v, dtype=np.float32)) for n, v in zip(needs, embed(needs, "query"))}
+        return f"semantic: {len(needs)} shot texts vs {len(clips)} captions ({len(todo)} embedded now), +-{SEM_W / 2}"
+    except Exception as e:  # noqa: BLE001
+        SEM["need"], SEM["clip"] = {}, {}
+        return f"semantic: off ({type(e).__name__}: {e}); tags only"
+
+
+def sem_bonus(c, need):
+    q, e = SEM["need"].get(need_text(need)), SEM["clip"].get(c.get("id"))
+    if q is None or e is None:
+        return 0.0
+    x = min(1.0, max(0.0, (float(q @ e) - SEM_LO) / (SEM_HI - SEM_LO)))
+    return SEM_W * (x - 0.5)
+
+
 def fit(c, f, prev_size):
     t = c["tags"]
     if "sp" in f:
@@ -293,10 +341,12 @@ def window(c, s, uses):
     return round(lo + (hi - lo - s["dur"]) / 2, 2) if hi - lo >= s["dur"] else None
 
 
-def rank_key(x):
-    """Real footage first whenever it fits OK; AI where real footage cannot fill the shot."""
+def rank_key(x, need=None):
+    """Real footage first whenever it fits OK; AI where real footage cannot fill the shot. The semantic bonus only
+    reorders clips inside the same band (OK / not OK): the status (OK, WEAK, THIẾU) stays the tags' verdict."""
     v, c = x[0], x[1]
-    return v >= OK_FIT, c["source"] == "real" and v >= OK_FIT, v + (0.05 if c["source"] == "real" else 0)
+    b = sem_bonus(c, need) if need else 0.0
+    return v >= OK_FIT, c["source"] == "real" and v >= OK_FIT, v + (0.05 if c["source"] == "real" else 0) + b
 
 
 def match(slots, clips):
@@ -309,15 +359,19 @@ def match(slots, clips):
 
     def rank(s, prev, skip=()):
         f = s["filter"]
-        pool = [(c, w) for c in clips if s["src"] in ("any", c["source"]) and c["abs"] not in skip
-                and (w := window(c, s, uses.get(c["abs"], ()))) is not None]
+        cands = [c for c in clips if s["src"] in ("any", c["source"]) and c["abs"] not in skip]
         if "pin" in f:
-            hits = [(c, w) for c, w in pool if f["pin"][0].lower() in c["abs"].lower()]
+            hits = [(c, w) for c in cands if f["pin"][0].lower() in c["abs"].lower()
+                    and (w := window(c, s, uses.get(c["abs"], ()))) is not None]
             assert len(hits) == 1, f"slot {s['slot']}: pin {f['pin'][0]!r} -> {len(hits)} usable clips"
             return [(1.0, *hits[0])]
+        # fit first (cheap, rejects most clips on species), window only for the survivors: same result, ~10x fewer calls
         # ponytail: greedy in timeline order; a later slot may lose a clip it fits better
-        return sorted(((v - REUSE_PEN * len(uses.get(c["abs"], ())), c, w) for c, w in pool
-                       if (v := fit(c, f, prev)) is not None), key=rank_key, reverse=True)
+        out = []
+        for c in cands:
+            if (v := fit(c, f, prev)) is not None and (w := window(c, s, uses.get(c["abs"], ()))) is not None:
+                out.append((v - REUSE_PEN * len(uses.get(c["abs"], ())), c, w))
+        return sorted(out, key=lambda x: rank_key(x, s.get("need")), reverse=True)
 
     def split(s, prev):
         """No single clip is long enough: 2, then 3 parts of >= SHOT_MIN, each from a different clip."""
@@ -512,7 +566,7 @@ def write_md(path, title, slots):
     path.write_text("\n".join(md) + "\n", "utf-8")
 
 
-def main(folder):
+def main(folder, sem=True):
     folder = Path(folder)
     ts = [p for p in folder.glob("*.md") if "timestamp" in p.name.lower()]
     assert len(ts) == 1, f"need exactly one *timestamp*.md in {folder}, found {[p.name for p in ts]}"
@@ -562,6 +616,7 @@ def main(folder):
     pool = [c for c in clips if c["id"] not in recent]
     want = {x for s in slots for x in s["filter"].get("sp", []) if x != "none"}
     ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))])
+    smsg = semantic(slots, pool) if sem else "semantic: off (--no-sem); tags only"
     match(slots, pool)
     match_audio(slots, load_audio(), end)
     (work / "plan.json").write_text(json.dumps({"video": video.name, "video_dir": str(video), "end": end, "slots": slots},
@@ -576,6 +631,7 @@ def main(folder):
     print(f"side shots after intro: spec {side_share:.0%} + fallback {fb:.0f}s (max {SIDE_MAX:.0%}, {SIDE_RUN} in a row)")
     print(f"rhythm: {short:.0%} shots <= {SHORT_T}s, {long_:.0%} >= {LONG_T}s")
     print(ymsg)
+    print(smsg)
     print(audio_stats(slots, end))
     print(f"clip reuse in this video: {sum(s.get('reuse', 1) > 1 for s in slots)} slots (other part of the clip, >= {REUSE_GAP:.0f} s apart); "
           f"real footage {sum(s.get('source') == 'real' for s in slots)}, AI {sum(s.get('source') == 'ai' for s in slots)}; "
@@ -756,4 +812,4 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]:
         selftest()
     else:
-        main(sys.argv[1])
+        main(sys.argv[1], "--no-sem" not in sys.argv)
