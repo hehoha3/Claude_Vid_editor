@@ -4,7 +4,8 @@
     tag_source.py status                         tagged / untagged per root
     tag_source.py prepare [video|ai] [--limit N] [--sample N]
                                                  contact sheets + batch files of 20 for the Sonnet taggers
-    tag_source.py apply <batch_NN>               validate the tagger's result file, merge into _library.json
+    tag_source.py apply <batch_NN>... [--no-yolo] validate the tagger's result file, merge into _library.json,
+                                                 then YOLO-measure the clips just tagged (doc-edit/scripts/yolo.py)
     tag_source.py review <batch_NN>...           markdown table for the user to check
 
 A contact sheet = 4 frames at 15/40/65/90 % of the clip (AI clips morph at the very start/end), 2x2,
@@ -158,16 +159,32 @@ def apply(batch):
         tags["v"] = V
         by_root.setdefault(r["root"], []).append((r["id"], tags))
         dropped += [f"{r['id'][:6]}:{b}" for b in bad]
+    done = []
     for name, items in by_root.items():
         root, kind, _ = ROOTS[name]
         idx = load(root)
         for k, tags in items:
             if k in idx["clips"]:
                 idx["clips"][k]["tags"] = tags
+                done.append({"id": k, "abs": str(root / idx["clips"][k]["path"]), "tags": tags})
         save(root, kind, idx)
     print(f"{batch}: applied {sum(len(v) for v in by_root.values())}/{len(rows)}"
           + (f" | MISSING {len(missing)}: {', '.join(m[:8] for m in missing)}" if missing else "")
           + (f" | dropped off-vocab: {', '.join(dropped[:12])}" if dropped else ""))
+    return done
+
+
+def measure(clips):
+    """YOLO-World subject window + shot size for the clips just tagged (local GPU, cached by content hash, so a
+    later organize move/rename keeps it); /doc-edit plan then never waits on them. The old backlog is not touched."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "doc-edit" / "scripts"))
+    try:
+        import yolo
+    except ImportError as e:
+        print(f"yolo: skipped ({e})")
+        return
+    new, sec = yolo.measure(clips)
+    print(f"yolo: {new} new clips measured ({sec}s) -> {yolo.CACHE}")
 
 
 def review(batches):
@@ -200,9 +217,10 @@ if __name__ == "__main__":
     if cmd == "prepare":
         names = [x for x in a[1:] if x in ROOTS and ROOTS[x][1] == "video"] or ["video", "ai"]
         prepare(names, opt("--limit"), opt("--sample"))
-    elif cmd == "apply":
-        for b in a[1:]:
-            apply(b)
+    elif cmd == "apply":   # --no-yolo: tags only
+        done = [c for b in a[1:] if not b.startswith("--") for c in apply(b)]
+        if done and "--no-yolo" not in a:
+            measure(done)
     elif cmd == "review":
         review(a[1:])
     else:

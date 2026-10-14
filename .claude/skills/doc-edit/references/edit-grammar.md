@@ -1,6 +1,9 @@
 # Edit grammar (doc-edit step 2)
 
 ## Shots
+- Opening shot (user rule 2026-10-13): the first footage shot of "Edit" is a landscape (`sp=none size=wide` or
+  `aerial`, `real` preferred), held only 3-4 s, a little longer than every other intro shot (e.g. 3.5 s, then
+  1.8-3 s). plan.py rejects anything else. A GFX title before it is allowed.
 - Continuity from the screenplay: same individuals, positions, travel direction, setting across a story.
 - Order inside a beat: establishing -> subject -> object/reaction -> atmosphere -> payoff.
 - Change shot size between adjacent shots; keep screen direction; day/night and light progression match the
@@ -16,6 +19,28 @@
   reacts -> strike -> outcome, never the outcome first.
 - Missing the right clip: THIẾU (red marker, user generates it) beats a wrong animal; plan.py never puts a side
   shot fallback under narration.
+
+## Visual thinking (learned from WILD JAVARÍ, Nature's Tether, 2026-10-13)
+Before writing a sentence's shots decide, in this order: emotional tone (calm / tense / urgent) -> focal point
+(what the eye must land on: the eyes, a paw on a branch, the water surface, the coil) -> light. The shot text and
+filter follow from these three, not from the nouns of the sentence alone.
+- Scale ladder per beat: establish (`size=aerial,wide`: where, how hostile) -> context (`medium`: the animal in
+  its place) -> tension (`close_up`: eye, step, breath) -> impact (`extreme_close`: claws, teeth, scales, the bite)
+  on the strike. Not every beat climbs all four, but a strike without its close/extreme_close detail feels empty.
+- Angle carries meaning (`ang`): `low` = power, menace, the hero ruling its place; `top_down` (or `aerial`) =
+  vastness, loneliness, the animal small in its world; `high` = vulnerability (prey, the ambushed hero);
+  `eye` = intimacy, the animal's point of view.
+- The viewer knows first: when danger comes for the hero, show the hidden threat (snake in the foliage above,
+  dark shape under the water) before the hero notices it: threat -> hero resting, unaware -> strike. The gap
+  between the two is the suspense.
+- Stillness before the strike: one held shot 2.5-4 s (eyes locked, crouch, coiled body, `cam=static`), then the
+  burst of short cuts. The hold is what makes the burst hit.
+- Standoff without a fight (two apex predators meet): alternating eye close-ups held 2.5-4 s, then the one
+  backing off in a readable medium. Nothing strikes -> no hit SXF, tension comes from length and silence.
+- Reversal (hunter becomes hunted): the hero's power shots (`ang=low`) earlier in the film pay off when the
+  same animal is shot `ang=high` / tight and trapped; then `ang=low` again when it fights back.
+- Dark animals (black jaguar, panther): prefer dappled light and shade where the body emerges from shadow
+  (`kw=shadow` / `kw=sunlight` when the captions use them); never a flat, evenly lit frame for the hero's intro.
 
 ## Rhythm - shot length follows the story's emotion, never a metronome
 Lengths 1.2-6 s. Decide each length from what the moment feels like, then mix:
@@ -50,7 +75,7 @@ Side shot = any footage shot whose `need` has no `[tag]` of a main character.
   only when an AI look would hurt (hero wide, aerial).
 - Real next to AI is fine: the grade makes them one place and moment. Keep the same individual's look
   (size, markings, setting) consistent across the cut.
-- Reuse: clips of the last 3 Done videos are never used. Inside one video a clip may serve up to 3 slots,
+- Reuse: clips on "Edit" + "Open" of the last 4 checked videos of the same workspace are never used. Inside one video a clip may serve up to 3 slots,
   >= 2 min apart, each from a different part of the clip (plan.md marks it ↻2 / ↻3); fresh clips win first.
 - `GFX` = black / title / map, no footage.
 
@@ -72,6 +97,7 @@ carries the tag: plan.py counts untagged footage shots as side shots.
 - `set`: forest forest_floor canopy river undergrowth riverbank sky swamp grassland rock underwater lake
   mountain waterfall cave village
 - `mood`: calm majestic dramatic eerie playful tense · `cam`: static moving · `dir`: left right toward away none
+- `ang`: eye low high top_down (meaning: see Visual thinking)
 - `count`: one two few many none · `kw`: words expected in the English caption (`kw=fallen_log,mist`)
 - `no=<species or caption word>` hard-excludes clips (e.g. `no=jaguar,caiman` so multi-species AI clips don't leak
   one story thread into another; `no=autumn,conifer` keeps temperate scenery out). Pin fragments: no `_` (= space).

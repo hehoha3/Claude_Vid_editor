@@ -4,6 +4,9 @@
   dvr info
   dvr frames --at 01:10 02:05 [--stats]
   dvr prefetch
+  dvr at 21:09 05:12 [--tl Open] [--audio] [--near 1]
+  dvr find shot_028 capybara
+  dvr offline [--relink D:/Job_vid D:/Chann_shadowCanopy [--apply]]
   dvr vo-sync run     AUDIO TIMESTAMPS [--dry-run] [--on-overlap push|trim|abort] [--markers] [--force-clear] [--no-backup]
   dvr vo-sync analyze AUDIO TIMESTAMPS
   dvr vo-sync apply   [PLAN] [...]
@@ -107,6 +110,95 @@ def cmd_info(args, cfg):
     return EXIT_OK
 
 
+def _project(cfg):
+    return _connect(cfg).GetProjectManager().GetCurrentProject()
+
+
+def _timelines(project, names):
+    """Yield the named timelines, each made current (items load only then); restores the user's timeline."""
+    cur = project.GetCurrentTimeline()
+    try:
+        for i in range(1, project.GetTimelineCount() + 1):
+            t = project.GetTimelineByIndex(i)
+            if t.GetName().lower() in names:
+                project.SetCurrentTimeline(t)
+                yield t
+    finally:
+        if cur:
+            project.SetCurrentTimeline(cur)
+
+
+def _items(tl, kinds=("video", "audio")):
+    """(track label, start s, end s, src_in s, file path) of every item on the timeline."""
+    fps, t0 = float(tl.GetSetting("timelineFrameRate")), tl.GetStartFrame()
+    for kind in kinds:
+        for n in range(1, int(tl.GetTrackCount(kind)) + 1):
+            for it in tl.GetItemListInTrack(kind, n) or []:
+                mp = it.GetMediaPoolItem()
+                yield (f"{kind[0].upper()}{n}", (it.GetStart() - t0) / fps, (it.GetEnd() - t0) / fps,
+                       it.GetLeftOffset() / fps, (mp.GetClipProperty("File Path") if mp else "") or it.GetName())
+
+
+def cmd_at(args, cfg):
+    from .timecode import fmt_seconds, parse_clock
+    times = [parse_clock(t) for t in args.times]
+    kinds = ("video", "audio") if args.audio else ("video",)
+    for tl in _timelines(_project(cfg), {args.tl.lower()}):
+        for tr, s, e, src, p in _items(tl, kinds):
+            for t in times:
+                if s - args.near <= t < e + args.near:
+                    log(f"{fmt_seconds(t)}  {tr:<3} {fmt_seconds(s)}-{fmt_seconds(e)}  src_in {src:.2f}s  {p}")
+    return EXIT_OK
+
+
+def cmd_find(args, cfg):
+    import os
+    from .timecode import fmt_seconds
+    keys = [k.lower() for k in args.fragments]
+    hits = 0
+    for tl in _timelines(_project(cfg), {"edit", "open"}):
+        for tr, s, e, _src, p in _items(tl):
+            if any(k in p.lower() for k in keys):
+                hits += 1
+                log(f"{tl.GetName():<5} {tr:<3} {fmt_seconds(s)}-{fmt_seconds(e)}  {'' if os.path.exists(p) else 'OFFLINE '}{p}")
+    log(f"{hits} items")
+    return EXIT_OK
+
+
+def cmd_offline(args, cfg):
+    """Media pool clips whose file is gone; --relink OLD NEW swaps a path prefix (ReplaceClip keeps timeline edits)."""
+    import os
+    from collections import Counter
+
+    def walk(f):
+        yield from f.GetClipList() or []
+        for s in f.GetSubFolderList() or []:
+            yield from walk(s)
+
+    project = _project(cfg)
+    clips = [(c, c.GetClipProperty("File Path") or "") for c in walk(project.GetMediaPool().GetRootFolder())]
+    gone = [(c, p) for c, p in clips if p and not os.path.exists(p)]
+    log(f"project {project.GetName()} | pool {len(clips)} | offline {len(gone)} "
+        f"{dict(Counter(os.path.splitdrive(p)[0] or '?' for _c, p in gone))}")
+    if not args.relink:
+        for _c, p in gone[: args.show]:
+            log(f"  {p}")
+        return EXIT_OK
+    old, new = (os.path.join(os.path.normpath(x), "") for x in args.relink)  # D:/a == D:\a\
+    todo = [(c, p, new + p[len(old):]) for c, p in gone if p.lower().startswith(old.lower())]
+    found = [x for x in todo if os.path.exists(x[2])]
+    log(f"relink {old} -> {new}: {len(todo)} offline under it, {len(found)} found at the new path")
+    for _c, p, n in [x for x in todo if x not in found][: args.show]:
+        log(f"  NOT FOUND {n}")
+    if not args.apply:
+        log("dry run: add --apply to relink")
+        return EXIT_OK
+    ok = sum(bool(c.ReplaceClip(n)) for c, _p, n in found)
+    _connect(cfg).GetProjectManager().SaveProject()
+    log(f"relinked {ok}/{len(found)}, project saved")
+    return EXIT_OK if ok == len(found) else EXIT_ERR
+
+
 def cmd_frames(args, cfg):
     from .resolve_ops import export_frames
     out = Path(args.out) if args.out else work_root(cfg) / "stills" / time.strftime("%Y%m%d_%H%M%S")
@@ -181,6 +273,20 @@ def build_parser():
     f.add_argument("--out", help="output folder")
     f.add_argument("--stats", action="store_true", help="add luma/saturation/colour-cast numbers")
     f.set_defaults(fn=cmd_frames)
+    a = sub.add_parser("at", help="items under timeline positions (file, src_in)")
+    a.add_argument("times", nargs="+", help="mm:ss[.s] | hh:mm:ss")
+    a.add_argument("--tl", default="Edit", help="timeline name (default Edit)")
+    a.add_argument("--audio", action="store_true", help="audio tracks too")
+    a.add_argument("--near", type=float, default=0.0, help="also items within N s (neighbours of a cut)")
+    a.set_defaults(fn=cmd_at)
+    fd = sub.add_parser("find", help="where files matching path fragments sit on Edit + Open")
+    fd.add_argument("fragments", nargs="+")
+    fd.set_defaults(fn=cmd_find)
+    o = sub.add_parser("offline", help="offline media of the open project; --relink OLD NEW swaps a path prefix")
+    o.add_argument("--relink", nargs=2, metavar=("OLD", "NEW"))
+    o.add_argument("--apply", action="store_true", help="really relink (default dry run)")
+    o.add_argument("--show", type=int, default=15, help="max paths listed")
+    o.set_defaults(fn=cmd_offline)
 
     vo = sub.add_parser("vo-sync", help="sync narration to a [mm:ss] timestamp file on the VO track")
     vsub = vo.add_subparsers(dest="vo_cmd", required=True)

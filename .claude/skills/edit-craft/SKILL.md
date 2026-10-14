@@ -1,6 +1,6 @@
 ---
 name: edit-craft
-description: Documentary editing craft in DaVinci Resolve - narration-led cutting, pacing and rhythm, shot length, cut points, J/L cuts, transitions, sequence building for predator/survival stories, YouTube retention, Resolve Edit-page tools (blade, ripple, roll, slip, slide, trim mode, compound and adjustment clips), and render/delivery settings for YouTube. Use whenever the user asks how to cut, order, time or improve a sequence, whether something feels slow/fast/confusing, which transition to use, or how to export.
+description: Documentary editing craft in Resolve - narration-led pacing, cut points, J/L cuts, transitions, predator/survival sequences, YouTube retention, Edit-page trim tools, YouTube render settings. Use when the user asks how to cut, order, time or improve a sequence, whether it feels slow/fast/confusing, which transition, or how to export.
 ---
 
 # Edit craft (natural-history documentary)
@@ -32,6 +32,20 @@ stalk (alternate POVs, tightening framing, slower cutting, sound drops) -> trigg
 twitch, a snapped twig) -> strike/chase (fast cutting, screen direction consistent) -> outcome
 (clear, readable shot) -> aftermath (long hold, quiet). Cross-cutting predator <-> prey builds
 suspense; keep each side's screen direction consistent (predator always moving left-to-right, say).
+
+## Reference film: WILD JAVARÍ (Nature's Tether, 2.8M views in 7 days)
+Shape worth copying for a ~30 min single-hero film:
+1. Cold open on the climax image (black jaguar caught in the anaconda's coil) with the title card, no outcome
+   shown: the question is planted in the first seconds. Here this belongs to timeline "Open"
+   (intro-music-visualization), never to "Edit".
+2. Place + hero: aerial over the valley, then the hero emerging from shade; narration claims his power in three
+   realms (ground, water, trees) and foreshadows "another hunter is waiting".
+3. Skill showcase: a hunt in his strongest place (canopy), stillness before the spring, fast burst, prey scatters.
+4. Limit: a standoff with an equal (caiman) that ends without a fight; held eye-to-eye shots, he backs away.
+5. Reversal: back in his safe place the viewer sees the threat above him first; ambush; hunter becomes hunted.
+6. Turn + lesson: he fights back face to face, escapes, long hold over the canopy; the closing line is the theme.
+Each act is a mini-climax; the visual grammar for each beat is in doc-edit `references/edit-grammar.md`
+("Visual thinking").
 
 ## Cut points
 - Cut on action: start a movement in shot A, finish it in shot B; the motion hides the cut.

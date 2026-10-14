@@ -1,19 +1,23 @@
 """doc-edit: prompts for the THIẾU slots of plan.json, to generate the missing footage.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>                 # list groups
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --write         # render prompts
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --check         # QC gates + preview
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --write         # QC, render prompts
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py --selftest
 
 List mode groups THIẾU slots by character tag + species + action + setting + light and suggests how many
-clips to generate (one generated clip ~CLIP_YIELD s of usable footage, cut into several shots).
-Claude writes .work/doc_edit/<video>/prompts.txt:
+clips to generate (one generated clip ~CLIP_YIELD s of usable footage, cut into several shots), with the story
+sentences of the group and the other characters' footage status in them (coverage: a chase whose hunter is
+already OK needs only the prey clips). Claude writes .work/doc_edit/<video>/prompts.txt:
     ## G3
-    <shot_content, one species, English>      <- one line per clip to generate
+    prey_escape L>R | <shot_content, one species, English>   <- one line per clip: shot role, travel vector | prompt
     ## +harpy_eagle                           <- extra group (not a THIẾU slot, e.g. daily life): saved to D:/AI_video/<name>
-Write mode prepends PREFIX to every line and writes <video>/missing_prompts.md.
+Lines without 'role vec |' (old files) still render, without the direction gate. --check / --write run the QC
+gates (references/missing-prompts.md); --write refuses on errors, prepends PREFIX, writes <video>/missing_prompts.txt
+(prompt lines only) and .work/doc_edit/<video>/shot_manifest.csv (one row per prompt line, same order).
 """
-import json, math, re, sys
-from collections import defaultdict
+import csv, difflib, json, math, re, sys
+from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -24,6 +28,20 @@ PREFIX = ("Cinematic nature documentary, BBC Earth style, 4k ultra-realistic, na
           "high speed phantom camera, detailed animal textures, No text, no logo, No voiceover, "
           "no background music, natural sound, normal motion - ")
 CLIP_YIELD = 6.0  # usable seconds per generated clip (8-10 s clip minus morphing ends, cut into 2-3 shots)
+# QC gates (PLAN missing-prompt V2, user 2026-10-13)
+ROLES = {"predator_burst", "prey_escape", "relationship_wide", "reaction", "obstacle", "reacquisition", "aftermath",
+         "environmental_speed", "action", "establishing", "detail"}
+VECS = {"L>R": "left to right", "R>L": "right to left", "away_UR": "away", "away_UL": "away", "toward": "toward",
+        "static": None}
+OPPOSITE = {"L>R": "right to left", "R>L": "left to right"}
+BAD_MOVE = ("reverse", "backward", "turns around", "turning around", "u-turn", "mirrored", "flipped", "teleport",
+            "orbit", "slow motion", "slow-motion")
+BAD_ENV = ("snow", "alpine", "conifer", "pine", "autumn", "desert", "dust cloud", "dusty")
+NO_GAIT = {"sloth": ("run", "sprint", "gallop", "charge"), "snake": ("run", "sprint", "leg", "gallop"),
+           "python": ("run", "sprint", "leg", "gallop"), "anaconda": ("run", "sprint", "leg", "gallop"),
+           "fish": ("run", "walk", "sprint")}
+NEG = re.compile(r"\b(?:no|not|never|without|avoid)\b[^,.;]*", re.I)  # "no reversing, no snow" are fine
+DUP = 0.9  # two prompts of one group this similar = the same shot twice
 
 
 def groups(slots):
@@ -39,13 +57,61 @@ def groups(slots):
         key = (tag[1] if tag else "-", ",".join(f.get("sp", ["none"])), (f.get("act") or ["-"])[0],
                "" if animal else (f.get("set") or ["-"])[0], "" if animal else (f.get("light") or ["-"])[0])
         g[key].append(s)
+    tag_of = lambda s: (re.match(r"\[([^\]]+)\]", s.get("need", "")) or [None, "-"])[1]  # noqa: E731
     out = []
     for i, (k, ss) in enumerate(sorted(g.items(), key=lambda kv: (kv[0][0] == "-", -len(kv[1]))), 1):
         sec = sum(s["dur"] for s in ss)
+        lines = sorted({s["line"] for s in ss if "line" in s})
+        # coverage: the other characters' footage in the same sentences (hunter OK -> only the prey is missing)
+        others = Counter(f"{tag_of(s)}:{s['status']}" for s in slots
+                         if s.get("line") in lines and tag_of(s) not in ("-", k[0]))
         out.append({"id": f"G{i}", "key": k, "slots": [s["slot"] for s in ss], "sec": round(sec, 1),
-                    "clips": max(1, math.ceil(sec / CLIP_YIELD)),
+                    "clips": max(1, math.ceil(sec / CLIP_YIELD)), "lines": lines, "others": dict(others),
                     "needs": list(dict.fromkeys(s["need"] for s in ss))})
     return out
+
+
+def lint(species, role, vec, text):
+    """QC gates of one prompt line; returns the problems (empty = pass)."""
+    errs, low = [], text.lower()
+    pos = NEG.sub("", low)  # what the prompt asks for, without its "no ..." clauses
+    if role != "-":  # legacy lines have no role/vector
+        if role not in ROLES:
+            errs.append(f"role {role!r} not in {sorted(ROLES)}")
+        if vec not in VECS:
+            errs.append(f"travel vector {vec!r} not in {sorted(VECS)}")
+        elif VECS[vec] and VECS[vec] not in low:
+            errs.append(f"vector {vec} but the text never says '{VECS[vec]}'")
+        if vec in OPPOSITE and OPPOSITE[vec] in pos:
+            errs.append(f"vector {vec} contradicted by '{OPPOSITE[vec]}'")
+    errs += [f"motion: '{w}'" for w in BAD_MOVE if w in pos]
+    errs += [f"biome: '{w}'" for w in BAD_ENV if re.search(rf"\b{w}", pos)]
+    for animal, gaits in NO_GAIT.items():
+        if animal in species:
+            errs += [f"biology: a {animal} does not '{w}'" for w in gaits if re.search(rf"\b{w}", pos)]
+    name = species.split(",")[0].replace("_", " ")
+    if name not in ("none", "-", "") and name not in low:
+        errs.append(f"species '{name}' not named")
+    return errs
+
+
+def check(p, gs):
+    """QC every line of prompts.txt; returns (errors, warnings)."""
+    errs, warns, by = [], [], {g["id"]: g for g in gs}
+    for gid, rows in p.items():
+        g = by.get(gid)
+        sp = gid[1:] if gid.startswith("+") else g["key"][1]
+        for n, (role, vec, text) in enumerate(rows, 1):
+            errs += [f"{gid}#{n}: {e}" for e in lint(sp, role, vec, text)]
+        for a in range(len(rows)):
+            for b in range(a + 1, len(rows)):
+                if difflib.SequenceMatcher(None, rows[a][2], rows[b][2]).ratio() >= DUP:
+                    errs.append(f"{gid}#{a + 1} and #{b + 1}: near-duplicate prompts, give each a distinct role/framing")
+        if g and len(rows) > g["clips"] + 2:
+            warns.append(f"{gid}: {len(rows)} prompts for {g['clips']} suggested clips (budget)")
+        if sum(r[0] == "relationship_wide" for r in rows) > 1:
+            warns.append(f"{gid}: more than one two-species relationship_wide clip")
+    return errs, warns
 
 
 def parse_prompts(text):
@@ -56,27 +122,42 @@ def parse_prompts(text):
             cur = s[3:].strip()
         elif s and not s.startswith("#"):
             assert cur, f"prompts line {n}: text before any '## G<n>' header"
-            assert not s.lower().startswith("cinematic nature documentary"), f"prompts line {n}: write only the shot content, the prefix is added"
-            p[cur].append(s)
+            m = re.match(r"(\w+)\s+(\S+)\s*\|\s*(.+)", s)  # 'role vec | prompt'; old files: prompt only
+            role, vec, text = m.groups() if m else ("-", "-", s)
+            assert not text.lower().startswith("cinematic nature documentary"), f"prompts line {n}: write only the shot content, the prefix is added"
+            p[cur].append((role, vec, text.strip()))
     return p
 
 
-def main(video, write):
+def main(video, mode):
     work = ROOT / ".work" / "doc_edit" / video
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     gs = groups(plan["slots"])
-    if not write:
+    if mode == "list":
         print(f"{sum(len(g['slots']) for g in gs)} THIẾU slots, {sum(g['sec'] for g in gs):.0f}s -> "
               f"{len(gs)} groups, {sum(g['clips'] for g in gs)} clips suggested")
         for g in gs:
             tag, sp, act, st, li = g["key"]
             print(f"{g['id']} [{tag}] sp={sp} act={act or '-'} set={st or '-'} light={li or '-'} | "
-                  f"{len(g['slots'])} slots {g['sec']}s -> {g['clips']} clips | " + " / ".join(g["needs"][:4]))
+                  f"{len(g['slots'])} slots {g['sec']}s -> {g['clips']} clips | ## {','.join(map(str, g['lines']))} | "
+                  f"others there: {g['others'] or '-'} | " + " / ".join(g["needs"][:4]))
         return
     p = parse_prompts((work / "prompts.txt").read_text("utf-8"))
     ids = {g["id"] for g in gs}
     extra = [k for k in p if k.startswith("+")]
     assert set(p) - set(extra) <= ids, f"unknown groups in prompts.txt: {sorted(set(p) - set(extra) - ids)}"
+    errs, warns = check(p, gs)
+    by = {g["id"]: g for g in gs}
+    for gid, rows in p.items():  # preview for the user's review, grouped by event
+        g = by.get(gid)
+        print(f"{gid} " + (f"[{g['key'][0]}] {g['key'][1]} ## {','.join(map(str, g['lines']))}" if g else gid[1:])
+              + f" — {len(rows)} prompts: " + ", ".join(f"{r} {v}" for r, v, _ in rows))
+    print("\n".join(["QC warnings:"] + warns) if warns else "QC warnings: none")
+    if errs:
+        raise SystemExit(f"{len(errs)} QC errors (fix prompts.txt, re-run):\n" + "\n".join(errs))
+    print("QC: pass")
+    if mode == "check":
+        return
     md = [f"# Prompt cho footage THIẾU — {video}\n",
           f"{sum(len(v) for v in p.values())} clip cần generate (mỗi clip chỉ 1 loài, cắt thành nhiều shot). "
           "Generate xong: lưu đúng thư mục ghi ở từng nhóm (tên thư mục = tên loài khi tag), chạy "
@@ -89,13 +170,31 @@ def main(video, write):
         md += [f"## {g['id']} · [{tag}] {sp} · {act or '-'} · {st or '-'} · {li or '-'} — {len(g['slots'])} shot, {g['sec']}s",
                f"Lưu vào: `{AI}\\{folder}` · Slot: {', '.join(map(str, g['slots']))}",
                f"Cần: {' / '.join(g['needs'][:6])}", "", "```"]
-        md += [PREFIX + x for x in p[g["id"]]] + ["```", ""]
+        md += [PREFIX + x[2] for x in p[g["id"]]] + ["```", ""]
     for k in extra:
-        md += [PREFIX + x for x in p[k]]
+        md += [PREFIX + x[2] for x in p[k]]
     missing = [g["id"] for g in gs if g["id"] not in p]
-    out = Path(plan["video_dir"]) / "missing_prompts.txt"  # user wants prompt lines only (2026-10-09)
-    out.write_text("\n".join(l for l in md if l.startswith(PREFIX)) + "\n", "utf-8")
-    print(f"{sum(len(v) for v in p.values())} prompts in {len(p)} groups -> {out}")
+    sys.path.insert(0, str(Path(__file__).parent))
+    import ledger  # video folder looked up in the workspaces (plan.json may hold a path from before a rename)
+    vdir = Path(plan.get("video_dir", ""))  # plan.json knows the exact folder (same video name in two workspaces)
+    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing_prompts.txt"  # prompt lines only (2026-10-09)
+    lines = [l for l in md if l.startswith(PREFIX)]
+    out.write_text("\n".join(lines) + "\n", "utf-8")
+    # manifest: row n = prompt line n of missing_prompts.txt (same order as the loop above)
+    rows = [(gid, r) for g in gs if g["id"] in p for gid, r in [(g["id"], x) for x in p[g["id"]]]] \
+        + [(k, x) for k in extra for x in p[k]]
+    assert len(rows) == len(lines)
+    with open(work / "shot_manifest.csv", "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["line", "group", "shot_role", "travel_vector", "species", "save_folder", "slots", "sentences",
+                    "seconds_needed", "needs", "prompt"])
+        for n, (gid, (role, vec, text)) in enumerate(rows, 1):
+            g = by.get(gid)
+            sp = g["key"][1] if g else gid[1:]
+            w.writerow([n, gid, role, vec, sp, "landscape" if sp == "none" else sp.split(",")[0].replace(" ", "_"),
+                        " ".join(map(str, g["slots"])) if g else "", " ".join(map(str, g["lines"])) if g else "",
+                        g["sec"] if g else "", " / ".join(g["needs"][:6]) if g else "", text])
+    print(f"{len(lines)} prompts in {len(p)} groups -> {out}\nmanifest -> {work / 'shot_manifest.csv'}")
     for g in gs:
         if g["id"] in p:
             sp = g["key"][1]
@@ -113,16 +212,35 @@ def selftest():
           {"slot": 4, "status": "THIEU", "dur": 2.5, "need": "Tán rừng", "filter": {"sp": ["none"], "set": ["canopy"]}}]
     g = groups(sl)
     assert [x["slots"] for x in g] == [[1, 2], [4]] and g[0]["clips"] == 2 and g[1]["key"][0] == "-"
-    p = parse_prompts("## G1\nA golden cat sprints\nA golden cat pauses\n## G2\nCanopy at dawn\n")
-    assert len(p["G1"]) == 2 and p["G2"] == ["Canopy at dawn"]
+    p = parse_prompts("## G1\nA golden cat sprints\nA golden cat pauses\n## G2\nCanopy at dawn\n")  # legacy lines
+    assert len(p["G1"]) == 2 and p["G2"] == [("-", "-", "Canopy at dawn")]
     try:
         parse_prompts("## G1\nCinematic nature documentary, BBC Earth style - x\n"); raise SystemExit("prefix accepted")
     except AssertionError:
         pass
+    # coverage: the other character's status in the same sentence
+    cov = groups([{"slot": 1, "line": 5, "status": "THIEU", "dur": 3, "need": "[P] heo chạy", "filter": {"sp": ["peccary"], "act": ["run"]}},
+                  {"slot": 2, "line": 5, "status": "OK", "dur": 3, "need": "[J] báo lao", "filter": {"sp": ["jaguar"]}}])
+    assert cov[0]["lines"] == [5] and cov[0]["others"] == {"J:OK": 1}
+    good = ("A single jaguar explodes into a full-speed sprint along a muddy rainforest corridor, running left to right; "
+            "distant high-oblique telephoto camera pans hard, no reversing, no snow, no slow motion")
+    assert lint("jaguar", "predator_burst", "L>R", good) == []
+    bad = [("jaguar", "predator_burst", "L>R", "A single jaguar runs right to left"),           # vector never stated / contradicted
+           ("jaguar", "chase", "L>R", good),                                                    # unknown role
+           ("jaguar", "predator_burst", "L>R", good + ", then turns around"),                   # reversal
+           ("jaguar", "predator_burst", "L>R", good + ", snow on the ground"),                  # biome
+           ("sloth", "action", "L>R", "A single sloth sprints left to right along a branch"),   # biology
+           ("jaguar", "predator_burst", "L>R", "A single ocelot runs left to right")]           # wrong species
+    for a in bad:
+        assert lint(*a), f"lint passed {a}"
+    e, _ = check({"G1": [("predator_burst", "L>R", good), ("predator_burst", "L>R", good + ".")]},
+                 [{"id": "G1", "key": ("J", "jaguar", "run", "", ""), "clips": 2, "lines": [1], "slots": [1]}])
+    assert any("near-duplicate" in x for x in e)
     print("selftest ok")
 
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
-    selftest() if "--selftest" in sys.argv else main(a[0], "--write" in sys.argv)
+    selftest() if "--selftest" in sys.argv else main(
+        a[0], "write" if "--write" in sys.argv else "check" if "--check" in sys.argv else "list")
