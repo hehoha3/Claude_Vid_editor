@@ -13,6 +13,8 @@ a timeline with anything on it is never edited (a new name _2, _3... is used). "
 Times are intro-timeline seconds (= music_map times). Time not covered by a line = black.
 Clip lookup: unique match in bin "7. Open" first, then anywhere in the media pool, then the tagged library (imported
 into "7. Open"). --check validates everything and changes nothing.
+Reuse (shared with doc-edit plan.py): one clip <= REUSE_MAX parts over Edit + this intro, never a part already on Edit
+(SRC_MARGIN apart), once per REUSE_GAP s of the intro; 'auto' picks the largest free part.
 """
 import json, os, sys
 from pathlib import Path
@@ -112,13 +114,36 @@ def find(frag, scopes):
     return f"'{frag}' not found in bin 7. Open, the media pool or the library"
 
 
+def place_src(s, c, full, u):
+    """Set s["src"] (auto = centre of the largest free part) and record it in u [(intro t, src_in, src_out)] (Edit
+    parts first, t = -1e9); -> error text or None. Same reuse rule as doc-edit plan.py."""
+    from plan import REUSE_GAP, REUSE_MAX, SRC_MARGIN, usable, window
+    dur = s["out"] - s["in"]
+    if len(u) >= REUSE_MAX:
+        return f"already used {len(u)}x on Edit + intro (max {REUSE_MAX})"
+    if any(abs(s["in"] - t) < REUSE_GAP for t, _, _ in u):
+        return f"again within {REUSE_GAP:.0f} s of the intro"
+    if s["src"] is None and c and u:
+        s["src"] = window(c, {"start": s["in"], "dur": dur}, u)
+        if s["src"] is None:
+            return f"has no free {dur:.2f} s part left (used on Edit/intro)"
+    if s["src"] is None:
+        a, z = usable(c) if c else (0.0, full)
+        s["src"] = round(max(0.0, a + (z - a - dur) / 2) if z - a >= dur else max(0.0, (full - dur) / 2), 2)
+    if any(s["src"] < o + SRC_MARGIN and i < s["src"] + dur + SRC_MARGIN for _, i, o in u):
+        return f"source {s['src']}+{dur:.2f} s overlaps a part on Edit/intro {[(i, o) for _, i, o in u]}"
+    u.append((s["in"], s["src"], s["src"] + dur))
+    return None
+
+
 def load(name):
     """cuts.txt + music_map.json -> (pm, project, mp, top bin, music map, header, shots resolved to clips and source
     in-points, files to import). Shared by build.py and storyboard.py so both show the same frames."""
     from dvr_cowork.config import load_config
     from dvr_cowork.resolve_conn import connect
     from dvr_cowork.resolve_ops import get_project
-    from plan import load_clips, usable
+    from ledger import timeline_uses
+    from plan import load_clips
     from pool import bin_clips, bin_tree, norm
 
     work = WORK / name
@@ -132,6 +157,7 @@ def load(name):
     scopes = [("bin 7. Open", [(norm(it.GetClipProperty("File Path")), it) for _, it in bin_clips(top)]),
               ("the media pool", [(norm(it.GetClipProperty("File Path")), it) for _, it in bin_clips(mp.GetRootFolder())]),
               ("the library", list(lib.items()))]
+    uses = {p: [(-1e9, a, b) for a, b in u] for p, u in timeline_uses(project, "Edit").items()}  # -1e9: other timeline
     err, imports = [], []
     for s in shots:
         hit = find(s["clip"], scopes)
@@ -146,9 +172,9 @@ def load(name):
             full = x["duration"]
         else:
             full = c["duration"] if c else float(x.GetClipProperty("Frames") or 0) / float(x.GetClipProperty("FPS") or 24)
-        a, z = usable(c) if c else (0.0, full)
-        if s["src"] is None:
-            s["src"] = round(max(0.0, a + (z - a - dur) / 2) if z - a >= dur else max(0.0, (full - dur) / 2), 2)
+        if e := place_src(s, c, full, uses.setdefault(path, [])):
+            err.append(f"line {s['line']}: {Path(path).name} {e}")
+            continue
         if s["src"] + dur > full + 1e-3:
             err.append(f"line {s['line']}: source {s['src']}+{dur:.2f} s runs past the clip end {full:.2f} s")
         s.update(item=None if isinstance(x, dict) else x, path=path,
@@ -158,7 +184,9 @@ def load(name):
     return pm, project, mp, top, mmap, head, shots, imports
 
 
-def main(name, check):
+def main(name, check, append=False, at=None, no_music=False):
+    """append (--append, user 2026-10-16): add the intro AFTER what is already on the named timeline (user's own clip,
+    e.g. open.mp4 first); nothing on it is removed or moved, the intro starts where V1 / A1 / A7 end."""
     from dvr_cowork.resolve_ops import ensure_audio_track, find_bin, find_clip, list_timelines, timeline_fps
     from pool import norm
 
@@ -185,8 +213,9 @@ def main(name, check):
     base = head.get("TIMELINE", "Open")
     assert base.lower() not in ("edit", "master"), f'timeline "{base}" is never touched'
     tl = tls.get(base)
-    if tl and any(tl.GetItemListInTrack(k, i) for k in ("video", "audio") for i in range(1, int(tl.GetTrackCount(k)) + 1)):
+    if tl and not append and any(tl.GetItemListInTrack(k, i) for k in ("video", "audio") for i in range(1, int(tl.GetTrackCount(k)) + 1)):
         tl = None  # not empty: never edited, a new name is used instead
+    assert tl or not append, f'--append needs the existing timeline "{base}"'
     tname = base if tl or base not in tls else next(f"{base}_{k}" for k in range(2, 99) if f"{base}_{k}" not in tls)
     orig = project.GetCurrentTimeline()
     mp.SetCurrentFolder(top)
@@ -201,9 +230,16 @@ def main(name, check):
         tl.SetTrackName("audio", i, n)
     fps = timeline_fps(tl, project)
     t0 = int(tl.GetStartFrame())
-    f = lambda sec: round(sec * fps)  # noqa: E731  intro seconds -> frames from the timeline start
+    off = 0.0
+    if at is not None:  # --at=SEC: intro seconds start at SEC on this timeline (the user already placed music / first shot)
+        off = at
+    elif append:  # the intro starts where the user's clips end (all tracks), never over them
+        off = max([int(i.GetEnd()) - t0 for k in ("video", "audio") for n in range(1, int(tl.GetTrackCount(k)) + 1)
+                   for i in tl.GetItemListInTrack(k, n) or []] or [0]) / fps
+        print(f'--append: intro starts at {off:.2f} s, after the existing clips of "{tl.GetName()}"')
+    f = lambda sec: round((sec + off) * fps)  # noqa: E731  intro seconds -> frames from the timeline start
     failed, a1 = [], 0
-    for p in mmap["pieces"]:
+    for p in [] if no_music else mmap["pieces"]:  # --no-music: the user's music is already on A7
         it = find_clip(root, p["path"])
         if not it:
             b = find_bin(root, "4. Audio") or mp.AddSubFolder(root, "4. Audio")
@@ -251,6 +287,15 @@ def main(name, check):
 
 
 def selftest():
+    # reuse shared with Edit: <= 3 parts in all, never a part already on Edit, auto takes the largest free part
+    c = {"duration": 30.0, "source": "real", "tags": {"best": [0, 30]}}
+    u = [(-1e9, 13.0, 17.0)]
+    s = {"in": 2.0, "out": 6.0, "src": None}
+    assert place_src(s, c, 30.0, u) is None and (s["src"] + 4 + 1 <= 13 or s["src"] >= 18), s
+    assert "overlaps" in place_src({"in": 200.0, "out": 202.0, "src": 14.0}, c, 30.0, u)
+    assert "within" in place_src({"in": 10.0, "out": 12.0, "src": 25.0}, c, 30.0, u)
+    assert place_src({"in": 200.0, "out": 202.0, "src": 26.0}, c, 30.0, u) is None and len(u) == 3
+    assert "max 3" in place_src({"in": 400.0, "out": 402.0, "src": None}, c, 30.0, u)
     h, s = parse("# TIMELINE Open\n## OPEN\n0.86 | 2.9 | eyes | 0.25 | B5\n4.33 | 6.3 | eagle/shot_049 | auto |\n", 20)
     assert h["TIMELINE"] == "Open" and len(s) == 2 and s[1]["src"] is None
     for bad in ("1 | 2 | a\n", "1 | 1.1 | a | 0 |\n", "1 | 3 | a | 0 |\n2 | 4 | b | 0 |\n", "18 | 21 | a | 0 |\n"):
@@ -270,4 +315,4 @@ def selftest():
 
 if __name__ == "__main__":
     a = sys.argv[1:]
-    selftest() if a == ["--selftest"] else main(a[0], "--check" in a) if a else print(__doc__)
+    selftest() if a == ["--selftest"] else main(a[0], "--check" in a, "--append" in a or any(x.startswith("--at=") for x in a), next((float(x[5:]) for x in a if x.startswith("--at=")), None), "--no-music" in a) if a else print(__doc__)

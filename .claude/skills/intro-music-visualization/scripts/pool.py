@@ -2,6 +2,7 @@
 
     .venv/Scripts/python.exe .claude/skills/intro-music-visualization/scripts/pool.py list
     .venv/Scripts/python.exe .claude/skills/intro-music-visualization/scripts/pool.py add --need 22 [--extra 20] [--cast jaguar,harpy_eagle] [--video <name>] [--dry-run]
+    (--world-only = just the landscape / insect / bird inserts, other categories untouched)
     (--cast = the film's characters, library species names, '_' = space: ranked first in every category)
     .venv/Scripts/python.exe .claude/skills/intro-music-visualization/scripts/pool.py --selftest
 
@@ -30,6 +31,7 @@ PREDATORS = {"jaguar", "leopard", "lion", "tiger", "wild cat", "golden cat", "ca
 QUOTA = {"eyes": 0.25, "attack": 0.25, "run": 0.20, "other": 0.15, "scenic": 0.15}
 BIN_OF = {"attack": "attack", "run": "run"}  # other categories live in the root bin
 MIN_LEN = 1.5      # s of usable picture
+WORLD = {"landscape": 4, "insects": 3, "birds": 3}  # world / forest / insect / bird inserts, always added (user 2026-10-15)
 SPECIES_MAX = 0.3  # share of one species inside a category: keeps the montage from being all jaguar
 
 
@@ -66,6 +68,31 @@ def score(c, cat):
     s += 0.3 if (c.get("yolo") or {}).get("seen", 0) >= 0.6 else 0.0
     s -= 0.4 * len(t.get("issues") or []) + (0.2 if not t.get("sure", True) else 0.0)
     return s
+
+
+def world_kind(c):
+    """'landscape' / 'insects' / 'birds' by library folder (supplementary_shots/insects), else None."""
+    p = Path(c["path"].replace("\\", "/")).parts
+    k = p[1] if p[0].lower() == "supplementary_shots" and len(p) > 1 else p[0]
+    return k.lower() if k.lower() in WORLD else None
+
+
+def pick_world(lib, in_bin, banned):
+    """WORLD quota of clips not in the bin yet: real first, no issues, at most 2 per subfolder (spread of places)."""
+    out = {}
+    for c in lib:
+        k = world_kind(c)
+        if k and norm(c["abs"]) not in in_bin and c["id"] not in banned and (lambda u: u[1] - u[0] >= MIN_LEN)(usable(c)):
+            out.setdefault(k, []).append(c)
+    add = []
+    for k, n in WORLD.items():
+        seen = Counter()
+        for c in sorted(out.get(k, []), key=lambda c: (c["source"] != "real", len(c["tags"].get("issues") or []))):
+            sub = Path(c["path"].replace("\\", "/")).parts[:-1]
+            if len(add) < sum(list(WORLD.values())[:list(WORLD).index(k) + 1]) and seen[sub] < 2:
+                add.append(c)
+                seen[sub] += 1
+    return add
 
 
 def pick(clips, n, have=()):
@@ -151,16 +178,19 @@ def plan_add(lib, in_bin, need, extra, banned=frozenset(), cast=frozenset()):
     for cat, q in QUOTA.items():
         want = max(6 if cat == "scenic" else 0, round(q * total)) - len(have[cat])
         add[cat] = pick(pools[cat], max(0, want), have[cat])
+    add["world"] = pick_world(lib, in_bin, banned)
     return add, have
 
 
-def cmd_add(need, extra, dry, video=None, cast=frozenset()):
+def cmd_add(need, extra, dry, video=None, cast=frozenset(), world_only=False):
     pm, project, mp = connect_mp()
     video = video or project.GetName()
     top, subs = bin_tree(mp)
     in_bin = {norm(it.GetClipProperty("File Path")) for _, it in bin_clips(top)}
     banned, vids = ledger.banned(video)
     add, have = plan_add(load_clips(), in_bin, need, extra, banned, cast)
+    if world_only:  # bin already built / hand-edited: only the world inserts
+        add = {"world": add["world"]}
     print(f"target {need} used + {extra} spare = {need + extra}; already in bin {len(in_bin)}; "
           f"banned {len(banned)} clips (Open + Edit of {', '.join(vids) or 'no checked video'} in this workspace)")
     for cat, cs in add.items():
@@ -183,6 +213,8 @@ def cmd_add(need, extra, dry, video=None, cast=frozenset()):
 
 
 def selftest():
+    assert world_kind({"path": "supplementary_shots/insects/a.mp4"}) == "insects" and world_kind({"path": "landscape/river/a.mp4"}) == "landscape"
+    assert world_kind({"path": "jaguar/a.mp4"}) is None and world_kind({"path": "birds/a.mp4"}) == "birds"
     def clip(i, sp, act, size, **kw):
         t = {"species": [sp] if sp else [], "action": act, "shot_size": size, "count": "one" if sp else "none",
              "mood": "tense", "caption": "x", "camera": "static", **kw}
@@ -221,6 +253,7 @@ if __name__ == "__main__":
     elif a[:1] == ["add"]:
         cmd_add(int(a[a.index("--need") + 1]), int(a[a.index("--extra") + 1]) if "--extra" in a else 20, "--dry-run" in a,
                 a[a.index("--video") + 1] if "--video" in a else None,
-                {x.strip().replace("_", " ") for x in a[a.index("--cast") + 1].split(",")} if "--cast" in a else set())
+                {x.strip().replace("_", " ") for x in a[a.index("--cast") + 1].split(",")} if "--cast" in a else set(),
+                "--world-only" in a)
     else:
         print(__doc__)

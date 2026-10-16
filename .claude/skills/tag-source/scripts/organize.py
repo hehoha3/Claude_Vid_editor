@@ -18,7 +18,7 @@ from scan_source import ROOTS, index_of  # noqa: E402
 ROOT = ROOTS["ai"][0]  # config.toml paths.ai_video
 CHECK = ROOT / "_check"
 BLOCK = {"morph", "unnatural", "logo", "watermark", "text", "dark", "blur"}
-ALIAS = {"caiman": "crocodile_caiman", "crocodile": "crocodile_caiman", "howler monkey": "howler",
+ALIAS = {"arapaima": "fish", "scarlet macaw": "bird", "buffalo": "forest_buffalo", "caiman": "crocodile_caiman", "crocodile": "crocodile_caiman", "howler monkey": "howler",
          "toucan": "toucan-bird", "giant otter": "otter", "river otter": "otter", "antelope": "deer",
          "muntjac": "deer", "red brocket deer": "brocket_deer", "brocket deer": "brocket_deer", "giant anteater": "anteater", "tapir calf": "tapir", "hippo calf": "hippo",
          "harpy eagle chick": "eagle", "python": "snake", "viper": "snake", "parrot": "bird", "macaw": "bird",
@@ -53,7 +53,7 @@ def name_for(sp, t):
     spw = set(" ".join(sp).replace("_", " ").split())
     words = [w for w in words if w not in spw][:6]
     head = slug(sp[0]) if sp else "landscape"
-    return f"{head}_{'-'.join(words)}-{t.get('shot_size', 'medium').replace('_', '-')}"
+    return f"{head}_{'-'.join(words)}-{(t.get('shot_size') or 'medium').replace('_', '-')}"
 
 
 def plan(clips, folders, every=False):
@@ -65,7 +65,8 @@ def plan(clips, folders, every=False):
         t = c.get("tags") or {}
         why = ("no tags" if not t.get("caption") else "sure=false" if not t.get("sure", True)
                else ",".join(sorted(BLOCK & set(t.get("issues", [])))))
-        dest = None if why else folder_for(t.get("species", []), t.get("setting", []), folders)
+        cap = t.get("caption", "").strip().lower()  # bare-setting captions ("canopy") name the landscape folder
+        dest = None if why else folder_for(t.get("species", []), t.get("setting", []) + [{"undergrowth": "forest_floor"}.get(cap, cap)], folders)
         if not dest:
             stay.append((p.name, why or f"no folder for {t.get('species') or t.get('setting')}"))
             continue
@@ -105,14 +106,14 @@ def main(apply, every=False):
     print(f"moved {len(moves) - len(bad)}/{len(moves)}; failed: {bad}")
 
 
-def rename_stay(apply):
+def rename_stay(apply, every=False):
     """Rename leftover shot_* clips in _check in place (same name style, no species -> 'unknown')."""
     d = json.loads(index_of(ROOT).read_text("utf-8"))["clips"]
     ren, taken = [], set()
     for c in (d.values() if isinstance(d, dict) else d):
         p = Path(c["path"])
         t = c.get("tags") or {}
-        if p.parts[0] != "_check" or len(p.parts) != 2 or not p.stem.startswith("shot_") or not t.get("caption"):
+        if p.parts[0] != "_check" or len(p.parts) != 2 or not (every or p.stem.startswith("shot_")) or not t.get("caption"):
             continue
         base = name_for(t.get("species", []), t)
         n, i = f"{base}{p.suffix}", 2
@@ -153,4 +154,6 @@ def selftest():
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    selftest() if "--selftest" in sys.argv else rename_stay("--apply" in sys.argv) if "--rename-stay" in sys.argv         else main("--apply" in sys.argv, "--all" in sys.argv)
+    if "--allow-blur-dark" in sys.argv:  # file blur/dark clips too (issues stay in the tags)
+        BLOCK -= {"blur", "dark"}
+    selftest() if "--selftest" in sys.argv else rename_stay("--apply" in sys.argv, "--all" in sys.argv) if "--rename-stay" in sys.argv         else main("--apply" in sys.argv, "--all" in sys.argv)

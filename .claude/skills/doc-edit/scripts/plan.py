@@ -4,6 +4,8 @@
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest
 
 Clips on timelines Edit/Open of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never matched.
+Edit + Open of this video share one reuse budget: parts already on "Open" (read from Resolve when the open project is
+this video) count toward REUSE_MAX and are never shown again on Edit.
 
 spec.txt lives in .work/doc_edit/<video>/ (video = parent of the audios folder). Format:
     # END 29:50                optional timeline end; default = end of last sentence + 2 s
@@ -24,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/scan-source/scripts")]
 from dvr_cowork.timestamps import parse_timestamp_file  # noqa: E402
 from dvr_cowork.timecode import parse_clock  # noqa: E402
-from scan_source import ROOTS, index_of  # noqa: E402
+from scan_source import ROOTS, audio_blocked, index_of  # noqa: E402
 import ledger  # noqa: E402
 
 SRC = {"real", "ai", "any", "GFX"}
@@ -34,6 +36,10 @@ SIZES = ["extreme_close", "close_up", "medium", "wide", "aerial"]
 OK_FIT, WEAK_FIT = 0.6, 0.35
 FALLBACK_T = 300.0  # first 5 min: strict matches only; later THIẾU shots may use related/neutral clips
 FALLBACK_FIT = 0.2
+LATE_SUB = "--late-sub" in sys.argv or "--sub-all" in sys.argv  # best substitute for THIẾU slots from LATE_SUB_T s on (user 2026-10-16, demo_3)
+LATE_SUB_T = 0.0 if "--sub-all" in sys.argv else 600.0  # --sub-all: every THIẾU slot, not only after 10:00
+LATE_COMPANION = {"chimpanzee": ("gorilla",), "gorilla": ("chimpanzee",), "spotted hyena": ("forest buffalo",),
+                  "forest buffalo": ("spotted hyena",)}
 # action shots (user rule 2026-10-12): a strike/chase shot prefers a clip that shows action; a same-species clip
 # without it is capped at WEAK (yellow, below OK_FIT) instead of looking like a match; none at all -> THIẾU
 STRIKE = {"attack", "hunt", "fight", "run", "stalk", "jump"}
@@ -349,8 +355,12 @@ def rank_key(x, need=None):
     return v >= OK_FIT, c["source"] == "real" and v >= OK_FIT, v + (0.05 if c["source"] == "real" else 0) + b
 
 
-def match(slots, clips):
+def match(slots, clips, taken=None):
+    """taken: {lower-case path: [(src_in, src_out)]} already on timeline Open: same budget, never the same part."""
     uses, prev_size = {}, None  # clip path -> [(timeline start, src_in, src_out)]
+    for c in clips:  # start -1e9: another timeline, so the REUSE_GAP check never applies to these
+        if u := (taken or {}).get(c["abs"].lower()):
+            uses[c["abs"]] = [(-1e9, a, b) for a, b in u]
 
     def take(s, c, cin, **kw):
         uses.setdefault(c["abs"], []).append((s["start"], cin, cin + s["dur"]))
@@ -463,6 +473,36 @@ def match(slots, clips):
                 side[i] = True; budget -= s["dur"]
             take(s, c, cin, status="FALLBACK", fit=round(v, 2),
                  why="same species, other action" if related else "side shot")
+    if LATE_SUB:  # --late-sub: still THIẾU after LATE_SUB_T -> best substitute, tiers: same species (any look) >
+        # companion species of the same scene > neutral scenery; user-requested, marked FALLBACK "late substitute"
+        for s in slots:
+            f = s["filter"]
+            if s["status"] != "THIEU" or s["start"] < LATE_SUB_T or s["src"] == "GFX" or f.get("pin") == ["none"]:
+                continue
+            want = set(f.get("sp", [])) - {"none"}
+            tiers = [want, {x for w in want for x in LATE_COMPANION.get(w, ())}, None]
+            light = {"light": f["light"]} if "light" in f else {}
+            for tier in tiers:
+                best = None
+                for c in clips:
+                    if s["src"] not in ("any", c["source"]) or (w := window(c, s, uses.get(c["abs"], ()))) is None:
+                        continue
+                    sp = set(c["tags"].get("species", []))
+                    if tier is None:
+                        if not ((c.get("subject") or "").lower() in NEUTRAL or c["tags"].get("count") == "none"):
+                            continue
+                    elif not tier or not tier & sp:
+                        continue
+                    if (v := fit(c, {**{k: x for k, x in f.items() if k in ("size", "set", "mood", "cam", "ang")},
+                                     **light}, None)) is None:
+                        continue
+                    v -= REUSE_PEN * len(uses.get(c["abs"], ()))
+                    if best is None or v > best[0]:
+                        best = (v, c, w)
+                if best:
+                    v, c, cin = best
+                    take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute")
+                    break
 
 # ------------------------------------------------------------------ audio match
 # English keywords for folders of the read-only roots (Vietnamese names, mood folders); matched on the lowercase path
@@ -503,6 +543,8 @@ def load_audio():
         if kind != "audio":
             continue
         for a in json.loads(index_of(root).read_text("utf-8"))["clips"].values():
+            if audio_blocked(a["path"]):
+                continue
             low = a["path"].lower()
             a["abs"] = str(root / a["path"])
             a["category"] = CATEGORY.get(name, a.get("category"))
@@ -566,6 +608,20 @@ def write_md(path, title, slots):
     path.write_text("\n".join(md) + "\n", "utf-8")
 
 
+def open_uses(video):
+    """Parts of clips on timeline Open of Resolve project <video> (must be the open one; nothing is switched)."""
+    try:
+        from dvr_cowork.config import load_config
+        from dvr_cowork.resolve_conn import connect
+        pr = connect(load_config()).GetProjectManager().GetCurrentProject()
+        if not pr or pr.GetName().lower() != video.lower():
+            return {}, f"open: not read (Resolve project {pr and pr.GetName()!r} is not {video!r}); Open parts not reserved"
+        u = ledger.timeline_uses(pr, "Open")
+    except Exception as e:  # noqa: BLE001  Resolve closed: plan still works, says so
+        return {}, f"open: not read ({e}); Open parts not reserved"
+    return u, f"open: {sum(map(len, u.values()))} parts of {len(u)} clips on timeline Open reserved (same reuse budget)"
+
+
 def main(folder, sem=True):
     folder = Path(folder)
     ts = [p for p in folder.glob("*.md") if "timestamp" in p.name.lower()]
@@ -617,7 +673,8 @@ def main(folder, sem=True):
     want = {x for s in slots for x in s["filter"].get("sp", []) if x != "none"}
     ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))])
     smsg = semantic(slots, pool) if sem else "semantic: off (--no-sem); tags only"
-    match(slots, pool)
+    taken, omsg = open_uses(video.name)
+    match(slots, pool, taken)
     match_audio(slots, load_audio(), end)
     (work / "plan.json").write_text(json.dumps({"video": video.name, "video_dir": str(video), "end": end, "slots": slots},
                                                ensure_ascii=False, indent=1), "utf-8")
@@ -631,6 +688,7 @@ def main(folder, sem=True):
     print(f"side shots after intro: spec {side_share:.0%} + fallback {fb:.0f}s (max {SIDE_MAX:.0%}, {SIDE_RUN} in a row)")
     print(f"rhythm: {short:.0%} shots <= {SHORT_T}s, {long_:.0%} >= {LONG_T}s")
     print(ymsg)
+    print(omsg)
     print(smsg)
     print(audio_stats(slots, end))
     print(f"clip reuse in this video: {sum(s.get('reuse', 1) > 1 for s in slots)} slots (other part of the clip, >= {REUSE_GAP:.0f} s apart); "
@@ -772,6 +830,11 @@ def selftest():
     assert o[0]["path"] == "real_ok" and o[0]["status"] == "OK", o[0]
     o = one(); match(o, [ra[0], ra[2]])
     assert o[0]["path"] == "ai_best"  # real footage only weak -> AI
+    # a part already on timeline Open counts toward REUSE_MAX and is never shown again
+    rv = [{"slot": k, "dur": 4, "src": "any", "filter": {"sp": ["none"]}, "start": t} for k, t in enumerate((0, 130, 260))]
+    match(rv, long_, taken={"river": [(13.0, 17.0)]})
+    assert [x["status"] for x in rv] == ["OK", "OK", "THIEU"], [x["status"] for x in rv]
+    assert all(x["src_out"] + 1.0 <= 13.0 or x["src_in"] >= 18.0 for x in rv if "path" in x), rv
     # YOLO window: cut only where the subject is in frame; an unreliable measurement (seen < YOLO_SEEN) is ignored
     yc = dict(mk("yj", "real", species=["jaguar"]), yolo={"in": [2.0, 6.0], "seen": 0.8})
     assert usable(yc) == (2.0, 6.0) and usable(dict(yc, yolo={"in": [2.0, 6.0], "seen": 0.1})) == (0, 10)

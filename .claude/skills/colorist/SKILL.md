@@ -24,15 +24,27 @@ Read the reference that fits the question; do not load all of them:
 7. Protect natural references: fur, feathers, foliage, water and sky have expected hues; viewers
    notice when a lion turns orange or a canopy turns neon.
 
-## Match a whole edit (one place, clean look): `scripts/grade.py`
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py plan --sheet   # Resolve untouched; run in background
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py apply          # only after the user's "yes"
-`plan` balances every V1 shot of "Edit" toward one target per light group (Day / Golden / Dusk, from the library
-light tag) with a CDL, simulates CDL + AMZ LUT and nudges until the house limits pass (clean blacks, whites ~0.95,
-no neon, no clip). Read only its stdout: per group the shot-to-shot spread of p50 / sat (lower = more one place),
-mean p1 / p99 / sat before -> after, flagged count. View `sheet.jpg` once (6 shots, ungraded top / graded bottom).
-`apply`: backup `Edit_bak_grade_*`, Color Group per light with its LUT on the group post-clip node 1, CDL on clip
-node 1 (overwrites node 1: destructive, ask first). Re-run `plan` after any V1 change.
+## Match a whole edit (same place, same time): `scripts/match.py` (default since 2026-10-16)
+User priority: every shot of a scene must look like one place and time, reviewable at once, few fixes. Claude runs
+the whole loop itself; the user only reviews heroes once and the green markers after.
+
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py plan     # Resolve untouched; background (~5-10 min first run)
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py apply    # only after the user's "yes" (overwrites node 1)
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py verify   # ExportLUT per shot -> real numbers + markers
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py note 02:41 group=Day warm=-0.01 "note=..."
+
+Clip node 1 = CDL (balance, grade.py solver) + a per-shot match LUT (Resolve runs the node CDL before the node LUT);
+the AMZ look LUT stays on the Color Group post-clip node. Scenes are cut from the measured look; one hero per scene
+(real footage first); every shot is pulled to its hero per hue band (neutral, fur/earth, foliage, sky/water) and in
+lightness, heroes half-way to the group, so scenes differ but the film is one place. Light group = tag corrected by the
+image. Read only stdout: whole-group and in-scene spread (L, colour) balance-only -> matched, flagged list, heroes.
+View `heroes.jpg` (all heroes) and `scenes.jpg` (6 scenes: left balance only, right matched; col 1 = hero) once.
+Flow per video: plan -> show the user heroes.jpg (swap: `note <tc> hero=1`) -> "yes" -> apply -> verify -> report
+spreads + marker count. User notes ("02:41 lá vàng chanh") -> `note` (group / hero / strength 0-1 / skip / exp / warm /
+sat), re-plan, apply, verify. Notes live in `.work/grade/<project>/overrides.json` and survive re-plans.
+Not scriptable (API): curves, qualifiers, windows, Hue vs Sat, Color Warper -> tell the user node + values.
+
+`grade.py` (balance only, CDL per light group) stays as the solver match.py builds on; use it alone only if asked.
 
 ## Fast diagnosis -> first move
 | symptom (stats/scopes) | first move |

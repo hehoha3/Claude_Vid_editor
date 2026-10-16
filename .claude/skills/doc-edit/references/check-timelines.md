@@ -33,6 +33,8 @@ The render makes it long (a 30 min 4K timeline): run it with `run_in_background`
    `.work/audio_licenses.md`; prints each licensed file + its license pdf path, and files under `Z:\Unseen\Sound`
    with no row (warn the user: no license recorded). Same list (full rows + missing) written to
    `<video folder>\audio_licenses.md`, so it moves into `_done` with the video. Envato licenses are per project: remind the user to register them.
+   The license pdfs themselves are copied (from Z:, read only) into `<video folder>\licenses\` as
+   `<folder>_<pdf> - <title>.pdf` (user rule 2026-10-16); `licenses folder:` line in stdout.
    Export (user rule 2026-10-13): timeline "Master" rendered (read only) as H.264 mp4 `Done_<project>.mp4` into the
    video folder, waits for it; already there -> not rendered again. Render failed -> stops, nothing moved.
 1. Final check-timelines (ledger), then Change Source Folder: every media pool item under `<ws>\<video>` (narration,

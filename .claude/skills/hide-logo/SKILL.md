@@ -1,6 +1,6 @@
 ---
 name: hide-logo
-description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from shots - clone-patch copies into D:\AI_video\_nologo, relinked in Resolve; find logos in a folder; overwrite originals when a video is done. Use for /hide-logo, "shot ở 21:38 có logo góc trên trái", "remove the logo on shot_NNN", Object Removal of a logo.
+description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from shots - MiniMax-Remover inpainted copies into D:\AI_video\_nologo, relinked in Resolve; find logos in a folder; overwrite originals when a video is done. Use for /hide-logo, "shot ở 21:38 có logo góc trên trái", "remove the logo on shot_NNN", Object Removal of a logo.
 ---
 
 # Hide logo
@@ -34,27 +34,33 @@ Undo one clip: Replace Clip back to the original.
     .venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py "<shot_NNN or path>" tr
 
 Corner from the user's words: top-left `tl`, top-right `tr`, bottom-left `bl`, bottom-right `br` (none given
--> omit it, the script picks the corner with most static edges). No scan, no markers, ~20s. Finds the static
+-> omit it, the script picks the corner with most static edges). No scan, no markers, ~30 s. Finds the static
 logo in that corner, delogoes into `AI_video\_nologo\`, relinks the V1 clip that uses it (a path not on the
-timeline -> file only). Logo only near the end / appears partway ("gần cuối", "giữa video") -> add `--end`:
-finds the frame where the logo pops in and delogoes only from there. Reply with the one output line; if it says
-REVIEW, ask the user to check that corner. "Object Removal" requests for a logo -> use this.
+timeline -> file only). The user names the video + the logo's place, never the time (user 2026-10-15): no logo
+through the whole clip -> it finds one shown only at the start or popping in late (verified as static edges in
+that span; logo-free water/animals give "no logo found") and fills only that span (~15 s). `--end` forces the
+late search. Reply with the one output line; "Object Removal" requests for a logo -> use this.
 
 Auto-detect misses semi-transparent logos over bright moving water (finds a letterbox edge instead): look at the
 corner crop of the original, then give the boxes yourself at 640x360, one small box per logo (never one big box over
-two logos: the clone patch shows):
+two logos):
 `hide_logo.py "<path>" --box 583,301,608,325 616,344,639,357` (Gemini star, Veo text).
 
-Every patch (auto or `--box`) = clone texture, luma matched to the band left of the logo, + a soft haze on top
-(user 2026-10-14: seams showed, patch "bóng lên"): blur sigma `HAZE` (9) over the patch plus a FEATHER margin, faded
-over 2*FEATHER, light luma grain. `--box` clones from the same rows beside the logo (inward), not above/below: over
-moving water the vertical neighbour is foam of another brightness and glows. Seams still visible -> raise `HAZE`;
-area looks smeared -> lower it. `--haze N` sets it per run (user 2026-10-14: toonkit logo "bóng bẩy" at 9 -> 18 fixed it;
-also lifts the clone blur to N/3).
-Big logo (wordmark ~200x60 px at 1280, e.g. "Made with Toonkit") over a fast pan: every copied block reads as a
-rectangle (clone from below or beside both failed, 2026-10-14) -> `--fill interp --haze 10`: ffmpeg delogo
-interpolates from all 4 edges, then the haze; no fade on a side touching the frame edge. Blends from the first
-motion-blurred frame; on sharp, detailed frames a soft smudge stays (limit: ProPainter, or crop it out). Check a 2x corner crop of the `_nologo` copy at 3 times before replying.
+**"logo Gemini" (user 2026-10-16, verified on 4 clips 1280x720 8 s)**: a semi-transparent white/grey 4-point star
+(diamond, concave sides), bottom-right, NOT in the corner itself: centre ~(580,300) at 640x360 (~90.6% x, 83.3% y),
+~22x22 px, the whole clip from 0 s. Auto-detect misses it or picks a wrong static edge (x~450, or mid-frame), so
+skip auto: `hide_logo.py "<path>" --box 566,286,594,314`. Other resolution -> scale the box by the same ratios;
+unsure -> one corner crop (`crop=160:90:480:270` of the 640x360 frame, x4) to confirm, then check the same crop of
+the `_nologo` copy once.
+
+Every fill (auto, `--box`, `--at`, `--execute`) = MiniMax-Remover (user 2026-10-15: clone patch blurred / glowed;
+Netflix VOID tested: 64 min/clip on 8 GB, dropped). `scripts/minimax_worker.py` runs in its own venv
+`D:\tools\minimax_remover\venv`: native-res crop around the logo (min 336x192, +48 px context), 3 steps (A/B vs
+ground truth: as good as 6), fewest windows of <= 65 frames crossfaded, mask latent encoded once, model pixels
+only on the logo (feathered), rest of the frame untouched. ~30 s per 10 s clip on the RTX 5060 with Resolve open
+(stdout has the per-phase timing); clips run one at a time (GPU). Weights (2.6 GB) + repo in that folder.
+Knobs (env): `MM_STEPS` (2 also passed the A/B), `MM_CROP` (256x160 = 30% faster, less faithful).
+Fallback without GPU: `--fill clone` (clone texture + haze, `--haze N`) or `--fill interp` (ffmpeg delogo + haze).
 
 ## Logo reported at timeline positions ("shot ở 21:38 và 05:12 có logo góc trên trái")
 
@@ -90,5 +96,6 @@ original again.
 
 ## Limits
 
-delogo is soft on foliage (upgrade: ProPainter). One logo position per folder. Fusion Object Removal is not
+MiniMax windows hit an attention cliff above ~4300 tokens (17 latent frames x 21x12 patches): bigger crops get
+shorter windows automatically. One logo position per folder. Fusion Object Removal is not
 usable: Scene Analysis cannot be triggered from the API (Resolve 21.1).

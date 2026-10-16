@@ -51,6 +51,7 @@ W, H, N = 640, 360, 8          # analysis size, frames sampled per file
 HI, LO = 0.45, 0.33            # NCC: >= HI logo, LO..HI suspect (vid_3: logos 0.47-0.66, clean <= ~0.35)
 SHIFT, PAD = 8, 6              # template search radius, template margin (px at 640x360)
 EDGE_PAD = 3                   # extra px around the logo for delogo, at source resolution
+MINIMAX_PY = Path(r"D:\tools\minimax_remover\venv\Scripts\python.exe")   # MiniMax-Remover venv (minimax_worker.py)
 FEATHER, SOFT = 12, 1.5        # clone-patch edge fade (px) and blur sigma: raise SOFT if the patch still looks glossy
 HAZE = 9                      # blur sigma of the soft haze over patch + margin: raise if seams show, lower if it smears
 FPS_END = 8                   # decode rate for --end (logo that appears late in the clip)
@@ -68,13 +69,12 @@ def probe(path):
 def sample(path):
     """Temporal median + persistent-edge mask of N frames spread over the whole file."""
     _, _, dur = probe(path)
-    fr = []
-    for k in range(N):
-        raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur * (k + 0.5) / N:.3f}", "-i", path, "-frames:v", "1",
-                              "-vf", f"scale={W}:{H}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-                             capture_output=True).stdout
-        if len(raw) >= W * H:
-            fr.append(np.frombuffer(raw[:W * H], np.uint8).reshape(H, W).astype(np.float32))
+    grab = lambda k: subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur * (k + 0.5) / N:.3f}", "-i", path, "-frames:v", "1",
+                                     "-vf", f"scale={W}:{H}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+                                    capture_output=True).stdout
+    with ThreadPoolExecutor(N) as pool:   # the N seeks in parallel (~2.4 s -> ~0.5 s)
+        raws = list(pool.map(grab, range(N)))
+    fr = [np.frombuffer(raw[:W * H], np.uint8).reshape(H, W).astype(np.float32) for raw in raws if len(raw) >= W * H]
     if len(fr) < 3:
         return None, None
     f = np.stack(fr)
@@ -123,9 +123,8 @@ def scan(folder):
     files = sorted(str(p) for p in Path(folder).iterdir() if p.suffix.lower() in EXTS and p.is_file())
     if not files:
         sys.exit(f"No video files in {folder}")
-    with ThreadPoolExecutor(8) as pool:
-        res = list(pool.map(sample, files))
-    ok = [(f, med, per) for f, (med, per) in zip(files, res) if med is not None]
+    res = [sample(f) for f in files]   # sample() already runs its N seeks in parallel
+    ok =[(f, med, per) for f, (med, per) in zip(files, res) if med is not None]
     acc = sum(per.astype(np.int32) for _, _, per in ok)
     ys, xs = np.nonzero(acc >= max(3, acc.max() * 0.3))
     if len(xs) < 20:
@@ -189,10 +188,39 @@ def mark(files_out):
     return n
 
 
-def delogo(src, box, start=0.0, end=None, side=False, fill="clone"):
-    """side=True: clone from the same rows beside the logo (inward), not above/below - over moving water the
+def nologo_path(src):
+    """One flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name."""
+    dst = NOLOGO / Path(src).name
+    if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
+        dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
+    assert dst.drive.upper() != "Z:", dst
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    return dst
+
+
+def frames(p):
+    return subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
+                           "stream=nb_read_packets", "-of", "csv=p=0", p], capture_output=True, text=True).stdout.strip()
+
+
+def delogo(src, box, start=0.0, end=None, side=False, fill="minimax"):
+    """fill="minimax" (default, user 2026-10-15: clone patch blurred / glowed): MiniMax-Remover video inpainting of a
+    crop around the logo, minimax_worker.py in its own venv. "clone" / "interp": the older ffmpeg patches below.
+    side=True: clone from the same rows beside the logo (inward), not above/below - over moving water the
     vertical neighbour is foam/sky of another brightness and the patch glows (user 2026-10-14)."""
     w, h, dur = probe(src)
+    if fill == "minimax":
+        dst = nologo_path(src)
+        bxs = [f"{max(0, int(b[0] * w) - EDGE_PAD)},{max(0, int(b[1] * h) - EDGE_PAD)},"
+               f"{min(w, int(np.ceil(b[2] * w)) + EDGE_PAD)},{min(h, int(np.ceil(b[3] * h)) + EDGE_PAD)}"
+               for b in (box if isinstance(box[0], (list, tuple)) else [box])]
+        r = subprocess.run([str(MINIMAX_PY), str(Path(__file__).with_name("minimax_worker.py")), src, str(dst),
+                            f"{start:.3f}", f"{-1 if end is None else end:.3f}", *bxs], capture_output=True, text=True)
+        if r.returncode:
+            return src, None, (r.stderr.strip() or r.stdout.strip())[-200:], 0
+        if frames(src) != frames(str(dst)):
+            return src, None, "frame count changed", 0
+        return src, str(dst), None, 0
     en = (f":enable='between(t,{start:.3f},{end:.3f})'" if end is not None
           else f":enable='gte(t,{start:.3f})'" if start > 0 else "")
     chain, cur, grain = [], "0:v", 0
@@ -252,21 +280,14 @@ def delogo(src, box, start=0.0, end=None, side=False, fill="clone"):
                      f"[c{i}][q{i}]overlay={qx}:{qy}:format=auto{en}[o{i}]")
         cur = f"o{i}"
     vf = ";".join(chain)
-    # one flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name
-    dst = NOLOGO / Path(src).name
-    if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
-        dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
-    assert dst.drive.upper() != "Z:", dst
-    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst = nologo_path(src)
     r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", vf, "-map", f"[{cur}]",
                         "-map", "0:a?", "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p",
                         "-fps_mode", "passthrough", "-c:a", "copy", "-map_metadata", "0", "-movflags", "+faststart",
                         str(dst)], capture_output=True, text=True)
     if r.returncode:
         return src, None, r.stderr.strip()[-200:], grain
-    count = lambda p: subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
-                                      "stream=nb_read_packets", "-of", "csv=p=0", p], capture_output=True, text=True).stdout.strip()
-    if count(src) != count(str(dst)):
+    if frames(src) != frames(str(dst)):
         return src, None, "frame count changed", grain
     return src, str(dst), None, grain
 
@@ -288,8 +309,7 @@ def execute():
     if not todo:
         sys.exit("No markers on V1 clips.")
     jobs = [(p, cache["files"].get(p, {}).get("box", cache["default_box"])) for p in todo]
-    with ThreadPoolExecutor(4) as pool:
-        results = list(pool.map(lambda j: delogo(*j), jobs))
+    results = [delogo(*j) for j in jobs]   # one at a time: MiniMax needs the whole GPU
     done, failed, busy = 0, [], []
     for src, dst, err, grain in results:
         if dst and todo[src].ReplaceClip(dst):
@@ -346,13 +366,49 @@ def late_logo(src, quads, h2, w2, head=False):
                 # tight box: longest run of dense rows, then dense columns inside it (stray pixels make delogo streak)
                 r0, r1 = _run(np.nonzero(m.sum(1) >= 3)[0], 2)
                 c0, c1 = _run(np.nonzero(m[r0:r1 + 1].sum(0) >= 2)[0], 8)
-                bx = (ox + c0 - 2, oy + r0 - 2, ox + c1 + 3, oy + r1 + 3)
+                if r1 - r0 < 3 or c1 - c0 < 6:   # no dense rows/columns = empty box at the corner, not a logo
+                    continue
+                bx =(ox + c0 - 2, oy + r0 - 2, ox + c1 + 3, oy + r1 + 3)
                 tt = (len(f) - t + 2) / FPS_END if head else max(0.0, (t - 2) / FPS_END)
                 best = (share, corner, bx, tt)
     return best   # (share, corner, box@640x360, start_s | end_s when head) or None
 
 
-def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="clone"):
+def static_edges(src, bx, t0, t1):
+    """Pixels of box bx (640x360) that are an edge in every frame of [t0, t1] and do not change (sample()'s test)."""
+    x0, y0, x1, y1 = (int(v) for v in bx)
+    x0, y0 = max(x0, 0), max(y0, 0)
+    span = ["-ss", f"{t0:.3f}"] + (["-to", f"{t1:.3f}"] if t1 is not None else [])
+    raw = subprocess.run(["ffmpeg", "-v", "error", *span, "-i", src, "-vf", f"fps={FPS_END},scale={W}:{H}",
+                          "-pix_fmt", "gray", "-f", "rawvideo", "-"], capture_output=True).stdout
+    f = np.frombuffer(raw, np.uint8)[:len(raw) // (W * H) * W * H].reshape(-1, H, W)[:, y0:y1, x0:x1].astype(np.float32)
+    if len(f) < 3 or f.shape[1] < 2 or f.shape[2] < 2:
+        return 0
+    g = np.abs(np.diff(f, axis=2))[:, :-1, :] + np.abs(np.diff(f, axis=1))[:, :, :-1]
+    return int(((g.min(axis=0) > 20) & (f.std(axis=0)[:-1, :-1] < 6)).sum())
+
+
+def part_logo(src, corner, heads):
+    """Logo on part of the clip only: head=True shown at the start then gone, False popping in late. Tries each
+    mode in `heads`, best share wins -> (corner, box@640x360, start_s, end_s | None) or None."""
+    bh, bw = H // 5, W * 3 // 10    # channel logos hug the frame edge: search a corner band, not a quadrant
+    bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
+    best = None
+    for head in heads:
+        f = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
+        # late_logo also fires on water / animals moving (2026-10-15, logo-free otter, leaf litter): keep it only if
+        # the box holds persistent edges while the logo is supposed to be there, the whole-clip rule of sample()
+        # (span pulled 0.5 s inward: late_logo pads the pop-in time, and logo-free frames there break the test)
+        if f and static_edges(src, f[2], *((0.0, f[3] - 0.5) if head else (f[3] + 0.5, None))) >= 20 \
+                and (best is None or f[0] > best[0][0]):
+            best = (f, head)
+    if not best:
+        return None
+    (_, c, bx, t), head = best
+    return (c, bx, 0.0, t) if head else (c, bx, t, None)
+
+
+def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="minimax"):
     """One shot name or video path: find its static logo in a corner (persistent edges over 8 frames), delogo,
     relink the V1 clip using it (if any). endpart=True: logo appears late in the clip; head=True: logo only at
     the start of the clip, gone later."""
@@ -374,24 +430,26 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="cl
     if manual:   # --box x0,y0,x1,y1 [x0,y0,x1,y1 ...] at 640x360: semi-transparent logos the edge detector misses
         bx, corner = manual[0], "manual"
     elif endpart or head:
-        bh, bw = H // 5, W * 3 // 10    # channel logos hug the frame edge: search a corner band, not a quadrant
-        bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
-        found = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
+        found = part_logo(src, corner, [head])
         if not found:
             sys.exit(f"no logo {'leaving' if head else 'appearing late'} found in corner {corner or 'any'}")
-        _, corner, bx, t = found
-        start, end = (0.0, t) if head else (t, None)
+        corner, bx, start, end = found
     else:
         _, per = sample(src)
         if per is None:
             sys.exit("could not decode " + src)
+        want = corner
         corner = corner or max(quads, key=lambda c: per[quads[c][0]:quads[c][0] + h2, quads[c][1]:quads[c][1] + w2].sum())
         oy, ox = quads[corner]
         ys, xs = np.nonzero(per[oy:oy + h2, ox:ox + w2])
-        if len(xs) < 20:
-            sys.exit(f"no static logo found in corner {corner}")
-        k = (abs(xs - np.median(xs)) < 80) & (abs(ys - np.median(ys)) < 40)   # densest cluster, drops stray edges
-        bx = (ox + xs[k].min() - 2, oy + ys[k].min() - 2, ox + xs[k].max() + 3, oy + ys[k].max() + 3)
+        if len(xs) >= 20:
+            k = (abs(xs - np.median(xs)) < 80) & (abs(ys - np.median(ys)) < 40)   # densest cluster, drops stray edges
+            bx = (ox + xs[k].min() - 2, oy + ys[k].min() - 2, ox + xs[k].max() + 3, oy + ys[k].max() + 3)
+        else:   # user gives the corner, not the time (2026-10-15): logo only at the start, or popping in late
+            found = part_logo(src, want, [True, False])
+            if not found:
+                sys.exit(f"no logo found in corner {want or 'any'} (whole clip, start or late)")
+            corner, bx, start, end = found
     box = [bx[0] / W, bx[1] / H, bx[2] / W, bx[3] / H]
     if manual:
         box = [[b[0] / W, b[1] / H, b[2] / W, b[3] / H] for b in manual]
@@ -626,8 +684,9 @@ if __name__ == "__main__":
             haze = [sys.argv[sys.argv.index("--haze") + 1]]
             HAZE = float(haze[0])
             SOFT = max(SOFT, HAZE / 3)
-        fill = "interp" if "interp" in sys.argv else "clone"   # --fill interp: big logo over a fast pan
-        args = [a for a in sys.argv[1:] if a not in ("--end", "--box", "--haze", "--fill", "interp") and a not in boxes and a not in haze]
+        # --fill clone | interp: the older ffmpeg patches (no GPU); default MiniMax-Remover
+        fill = next((f for f in ("interp", "clone") if f in sys.argv), "minimax")
+        args = [a for a in sys.argv[1:] if a not in ("--end", "--box", "--haze", "--fill", "interp", "clone") and a not in boxes and a not in haze]
         one_clip(args[0], args[1] if len(args) > 1 else None, endpart, manual=manual, fill=fill)
     else:
         sys.exit("usage: hide_logo.py <folder> | --execute | <shot_NNN|video path> [tl|tr|bl|br] [--end] | --at <mm:ss> [corner] | --pending | --overwrite-all | --relink")

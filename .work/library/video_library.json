@@ -1240,6 +1240,123 @@
     "v": 2
    }
   },
+  "c20bce69087be4b2": {
+   "path": "_check\\110804-689510447_medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 25.0,
+   "duration": 30.06,
+   "has_audio": true,
+   "title_hint": "110804 689510447 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "5fcccacfe89e69b0": {
+   "path": "_check\\129989-746164374_medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 29.97,
+   "duration": 30.03,
+   "has_audio": false,
+   "title_hint": "129989 746164374 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "b64bcf00702ec3d5": {
+   "path": "_check\\129993-746164388.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 30.0,
+   "duration": 14.73,
+   "has_audio": false,
+   "title_hint": "129993 746164388",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "dfe9e6ac89c466ae": {
+   "path": "_check\\140768-776026627_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 29.97,
+   "duration": 18.39,
+   "has_audio": true,
+   "title_hint": "140768 776026627 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "f110d50c0aab0c03": {
+   "path": "_check\\166720-835224068_medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 23.976,
+   "duration": 27.11,
+   "has_audio": true,
+   "title_hint": "166720 835224068 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "e668310b75daccc8": {
+   "path": "_check\\176597-855868668_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 29.97,
+   "duration": 18.2,
+   "has_audio": true,
+   "title_hint": "176597 855868668 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "31bc0f8d33ba0576": {
+   "path": "_check\\208295_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 29.97,
+   "duration": 12.28,
+   "has_audio": false,
+   "title_hint": "208295 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "a08d65634eb1c94e": {
+   "path": "_check\\21723-320725678_medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 59.94,
+   "duration": 21.17,
+   "has_audio": false,
+   "title_hint": "21723 320725678 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "dc65e82aa6149d66": {
+   "path": "_check\\94009-641778604_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 25.0,
+   "duration": 15.62,
+   "has_audio": true,
+   "title_hint": "94009 641778604 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
   "ab4c8d09721abb6c": {
    "path": "birds\\a-tree-kingfisher-and-one-of-the-most-beautiful-bi-2026-10-02-04-37-09-utc.mp4",
    "width": 1920,
@@ -4763,6 +4880,19 @@
     "v": 2
    }
   },
+  "829743e7faf28bb1": {
+   "path": "gorilla\\128698-742053479_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 25.0,
+   "duration": 14.57,
+   "has_audio": true,
+   "title_hint": "128698 742053479 medium",
+   "subject": "gorilla",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
   "164d133819bfa914": {
    "path": "jaguar\\111240-690770607.mp4",
    "width": 1920,
@@ -4806,6 +4936,32 @@
     ],
     "v": 2
    }
+  },
+  "ad25106e71b6af1b": {
+   "path": "jaguar\\111240-690770607_medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 29.97,
+   "duration": 12.01,
+   "has_audio": false,
+   "title_hint": "111240 690770607 medium",
+   "subject": "jaguar",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "9f8fd1602d4b66e2": {
+   "path": "jaguar\\180817-865216780_medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 30.0,
+   "duration": 10.0,
+   "has_audio": false,
+   "title_hint": "180817 865216780 medium",
+   "subject": "jaguar",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
   },
   "eb6a75f2541583ff": {
    "path": "jaguar\\a-focused-leopard-SBV-354275070-HD.mp4",
@@ -22714,6 +22870,45 @@
     "v": 2
    }
   },
+  "074e7548dbc8b812": {
+   "path": "tiger\\141631-777930604_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 30.0,
+   "duration": 30.8,
+   "has_audio": true,
+   "title_hint": "141631 777930604 medium",
+   "subject": "tiger",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "a870a5cc87c27e50": {
+   "path": "tiger\\143892-784164228_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 30.0,
+   "duration": 30.72,
+   "has_audio": true,
+   "title_hint": "143892 784164228 medium",
+   "subject": "tiger",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "a0f603254b185bba": {
+   "path": "tiger\\244418_medium.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 60.0,
+   "duration": 5.3,
+   "has_audio": false,
+   "title_hint": "244418 medium",
+   "subject": "tiger",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
   "ec8599b26ee1662b": {
    "path": "tiger\\4k120-fps-super-slow-motion-video-of-big-male-sibe-2026-10-02-20-04-50-utc.mov",
    "width": 1920,
@@ -23236,7 +23431,7 @@
   }
  },
  "root": "Z:\\Unseen\\Amazona\\video",
- "updated": "2026-10-10",
+ "updated": "2026-10-16",
  "layout": {
   "<subject>/": "animal does nothing: rests, sleeps, looks around",
   "<subject>/action/": "animal does something: walks, runs, stalks, hunts, eats, flies, swims",
@@ -23246,11 +23441,12 @@
   "fields": "subject/action/setting_folder from folders (user's decision); tags = older vision tags where present; title_hint = stock file name"
  },
  "stats": {
-  "files": 502,
-  "minutes": 143.7,
+  "files": 517,
+  "minutes": 148.6,
   "subject": {
    "(root)": 1,
    "Eagle": 27,
+   "_check": 9,
    "birds": 40,
    "capybara": 6,
    "crocodile_caiman": 21,
@@ -23258,8 +23454,9 @@
    "flowers": 2,
    "frogs": 26,
    "gecko": 3,
+   "gorilla": 1,
    "insects": 38,
-   "jaguar": 26,
+   "jaguar": 28,
    "landscape": 226,
    "monkey": 30,
    "owl": 4,
@@ -23268,7 +23465,7 @@
    "sloth": 14,
    "snake": 2,
    "tapir": 1,
-   "tiger": 11
+   "tiger": 14
   }
  },
  "kind": "video"

@@ -4096,86 +4096,6 @@
    "title_hint": "01 main",
    "category": "ambience_sound"
   },
-  "ac6728f34ef0019b": {
-   "path": "ambience_sound\\Amazon Rainforest - 60 Sec..mp3",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 60.32,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   60 Sec.",
-   "category": "ambience_sound"
-  },
-  "5cb2777fbb14692d": {
-   "path": "ambience_sound\\Amazon Rainforest - 60 Sec..wav",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 60.25,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   60 Sec.",
-   "category": "ambience_sound"
-  },
-  "0ffa821b3b62216c": {
-   "path": "ambience_sound\\Amazon Rainforest - Alternative.mp3",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 195.76,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   Alternative",
-   "category": "ambience_sound"
-  },
-  "3f4718b0756f8895": {
-   "path": "ambience_sound\\Amazon Rainforest - Alternative.wav",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 195.71,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   Alternative",
-   "category": "ambience_sound"
-  },
-  "f09b821035300018": {
-   "path": "ambience_sound\\Amazon Rainforest - Full.mp3",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 195.76,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   Full",
-   "category": "ambience_sound"
-  },
-  "c0d6203f7d2844ff": {
-   "path": "ambience_sound\\Amazon Rainforest - Full.wav",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 195.7,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   Full",
-   "category": "ambience_sound"
-  },
-  "6f0d1a00b47f60ed": {
-   "path": "ambience_sound\\Amazon Rainforest - Loop.mp3",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 162.54,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   Loop",
-   "category": "ambience_sound"
-  },
-  "c6fd6a7e682b93b0": {
-   "path": "ambience_sound\\Amazon Rainforest - Loop.wav",
-   "width": 1400,
-   "height": 1400,
-   "fps": 90000.0,
-   "duration": 162.46,
-   "has_audio": true,
-   "title_hint": "Amazon Rainforest   Loop",
-   "category": "ambience_sound"
-  },
   "9a532e108399f222": {
    "path": "ambience_sound\\Jungle 2.mp3",
    "duration": 115.97,
@@ -4296,22 +4216,6 @@
    "title_hint": "Realm of Fantastic Ambience",
    "category": "ambience_sound"
   },
-  "f3bccfb299d79b4c": {
-   "path": "ambience_sound\\Woodland Atmosphere.wav",
-   "duration": 132.0,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "Woodland Atmosphere",
-   "category": "ambience_sound"
-  },
-  "f51b99ee63303e84": {
-   "path": "ambience_sound\\alien-rainforest-SBA-349122372.mp3",
-   "duration": 92.5,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "alien rainforest",
-   "category": "ambience_sound"
-  },
   "0c9b4d1fcf94efc5": {
    "path": "ambience_sound\\amazon-rainforest-SBA-347359793.mp3",
    "duration": 55.58,
@@ -4326,54 +4230,6 @@
    "sample_rate": 44100,
    "channels": 2,
    "title_hint": "birds ambient",
-   "category": "ambience_sound"
-  },
-  "ab930a873654dcae": {
-   "path": "ambience_sound\\enchanted-forest-SBA-349009630.mp3",
-   "duration": 55.26,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "enchanted forest",
-   "category": "ambience_sound"
-  },
-  "165f6b08f191b749": {
-   "path": "ambience_sound\\forest-ambient-SBA-300541254.mp3",
-   "duration": 40.42,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "forest ambient",
-   "category": "ambience_sound"
-  },
-  "2b75094ecb6efd99": {
-   "path": "ambience_sound\\hypnotic-nature-journey-SBA-355051685.mp3",
-   "duration": 143.88,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "hypnotic nature journey",
-   "category": "ambience_sound"
-  },
-  "25d93216d8f13431": {
-   "path": "ambience_sound\\hypnotic-nature-journey-extended-version-five-minutes-SBA-355051803.mp3",
-   "duration": 300.37,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "hypnotic nature journey extended version five minutes",
-   "category": "ambience_sound"
-  },
-  "0b83e6a091eead77": {
-   "path": "ambience_sound\\nature-wildlife-soundscape-SBA-353341320.mp3",
-   "duration": 404.21,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "nature wildlife soundscape",
-   "category": "ambience_sound"
-  },
-  "809c7ba735c4bf7a": {
-   "path": "ambience_sound\\paranoia-shadows-SBA-353299734.mp3",
-   "duration": 173.4,
-   "sample_rate": 44100,
-   "channels": 2,
-   "title_hint": "paranoia shadows",
    "category": "ambience_sound"
   },
   "ade418bf89e86ca5": {
@@ -4436,22 +4292,6 @@
    "title_hint": "leberch airium tense 610770",
    "category": "tense_music"
   },
-  "b10355f36184c315": {
-   "path": "tense_music\\suspicions-SBA-348626989.mp3",
-   "duration": 45.41,
-   "sample_rate": 48000,
-   "channels": 2,
-   "title_hint": "suspicions",
-   "category": "tense_music"
-  },
-  "b251faf37253d682": {
-   "path": "tense_music\\tense-disturbance-SBA-348793138.mp3",
-   "duration": 162.58,
-   "sample_rate": 48000,
-   "channels": 2,
-   "title_hint": "tense disturbance",
-   "category": "tense_music"
-  },
   "6237d75fd069e3d7": {
    "path": "tense_music\\tense_2.mp3",
    "duration": 69.14,
@@ -4467,40 +4307,24 @@
    "channels": 2,
    "title_hint": "tense 3",
    "category": "tense_music"
-  },
-  "52f68c8ce85dde98": {
-   "path": "tense_music\\the-arrival-SBA-354589217.mp3",
-   "duration": 85.77,
-   "sample_rate": 48000,
-   "channels": 2,
-   "title_hint": "the arrival",
-   "category": "tense_music"
-  },
-  "f2501fbef89371b1": {
-   "path": "tense_music\\the-ticking-clock-strings-horn-SBA-354276883.mp3",
-   "duration": 105.95,
-   "sample_rate": 48000,
-   "channels": 2,
-   "title_hint": "the ticking clock strings horn",
-   "category": "tense_music"
   }
  },
  "kind": "audio",
  "root": "Z:\\Unseen\\Amazona\\audio",
- "updated": "2026-10-11",
+ "updated": "2026-10-16",
  "layout": {
   "<category>/": "folder name as given by the user (ambience_sound, Nature_sound, tense_music...)",
   "fields": "category from folder; title_hint = stock file name"
  },
  "stats": {
-  "files": 555,
-  "minutes": 212.6,
+  "files": 535,
+  "minutes": 163.1,
   "category": {
    "Nature_sound": 51,
    "SXF": 456,
-   "ambience_sound": 35,
+   "ambience_sound": 19,
    "openning": 4,
-   "tense_music": 9
+   "tense_music": 5
   }
  }
 }

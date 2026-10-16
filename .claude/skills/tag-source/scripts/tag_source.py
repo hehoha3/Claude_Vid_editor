@@ -112,7 +112,7 @@ def clean(t):
         if k in LISTS:
             v = [v] if isinstance(v, str) else v   # a single value instead of a list
             v = [x for x in (v or []) if x in allowed or bad.append(f"{k}={x}")]
-        elif v not in allowed:
+        elif isinstance(v, list) or v not in allowed:
             if v is not None:
                 bad.append(f"{k}={v}")
             v = None

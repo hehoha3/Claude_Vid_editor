@@ -50,8 +50,10 @@ Timeline untouched. Folder = step 1's (unknown -> ask); `<video>` = its parent f
      cached in `.work/doc_edit/caption_emb_e5small.npz` (new captions ~15 s). Read only the `semantic:` line.
    - A shot no clip is long enough for -> 2-3 parts from different clips (⧉); audio stays on part 1.
    - Ledger: clips of the last 4 checked videos of the workspace are never matched; `recent ledger` line = slots
-     lost, by character. Inside one video a clip may serve 3 slots (edit-grammar Source).
+     lost, by character. Inside one video a clip may serve 3 slots over Edit + Open together, each a different part,
+     >= 2 min apart (edit-grammar Source); parts already on "Open" are read from Resolve (`open:` line).
    - stdout lists character WEAK slots with top 3 candidates: keep, `pin=<fragment>`, or `pin=none` (THIẾU); re-run.
+   - Audio files listed in `.work/library/audio_blocked.txt` (claimed tracks) are never picked; add a path fragment per line.
    - Check the `audio:` line against edit-grammar (music coverage, early-ending cues, SXF count), fix in the same pass.
    - Outputs `.work/doc_edit/<video>/plan.json` (step 3 input) and `<video>/plan.md` (user table; VO ● = narration).
 4. Reply: shots, OK / WEAK / THIẾU / GFX, species missing, THIẾU and ledger-lost by character, the audio line,

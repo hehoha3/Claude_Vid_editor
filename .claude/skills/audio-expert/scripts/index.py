@@ -17,7 +17,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
-from scan_source import ROOTS, index_of  # noqa: E402
+from scan_source import ROOTS, audio_blocked, index_of  # noqa: E402
 CATEGORY = {"sfx": "nature_sound", "animal": "nature_sound", "sound": "tense_music"}  # read-only root -> folder rule
 AUDIO = Path(r"Z:\Unseen\Amazona\audio")
 OUT = ROOT / ".work" / "audio_expert" / "audio_index.jsonl"
@@ -76,6 +76,8 @@ def files():
             continue
         lib = json.loads(index_of(root).read_text("utf-8"))["clips"]
         for c in (lib.values() if isinstance(lib, dict) else lib):
+            if audio_blocked(c["path"]):
+                continue
             out[c["path"] if root == AUDIO else str(root / c["path"])] = (
                 c["path"] if root == AUDIO else f"{CATEGORY[key]}/{c['path']}", c)
     return out

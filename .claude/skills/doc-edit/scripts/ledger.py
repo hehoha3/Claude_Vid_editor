@@ -17,7 +17,7 @@ done (= /doc-edit done): licensed music of Edit + Open (license paths), render M
 (H.264), final check, relink the project's media to <workspace>/_done/<video> (temporary junction),
 quit Resolve, move the folder into _done. Resolve stays closed (the user reopens it). Videos in _done keep their workspace.
 """
-import json, os, sys
+import json, os, re, shutil, sys
 from datetime import date
 from glob import glob
 from pathlib import Path
@@ -120,6 +120,28 @@ def timeline_files(video):
     return out
 
 
+def timeline_uses(project, name):
+    """{lower-case file path: [(src_in, src_out) s]} of the video items on timeline <name> of the open project; the
+    current timeline is restored. Edit + Open of one video share the reuse budget (plan.py REUSE_MAX, other parts)."""
+    from dvr_cowork.resolve_ops import clip_fps, timeline_fps
+    t = next((project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)
+              if project.GetTimelineByIndex(i).GetName().lower() == name.lower()), None)
+    if not t:
+        return {}
+    cur, out = project.GetCurrentTimeline(), {}
+    project.SetCurrentTimeline(t)  # a timeline not loaded yet returns no items
+    fps = timeline_fps(t, project)
+    for k in range(1, int(t.GetTrackCount("video")) + 1):
+        for ti in t.GetItemListInTrack("video", k) or []:
+            if mp := ti.GetMediaPoolItem():
+                a = ti.GetLeftOffset() / clip_fps(mp, fps)
+                out.setdefault(str(Path(mp.GetClipProperty("File Path"))).lower(), []).append(
+                    (round(a, 2), round(a + ti.GetDuration() / fps, 2)))
+    if cur:
+        project.SetCurrentTimeline(cur)
+    return out
+
+
 def check(video, ws=None, proj=None):  # proj: Resolve project name when it differs from the folder
     vdir = find_video(video, ws)
     files = timeline_files(proj or vdir.name)
@@ -200,6 +222,22 @@ def licenses(project, vdir):
         print(f"  {p}\n    license: {c[1]}")
     if nolic:
         print(f"  NO LICENSE ROW (in {LICENSED_ROOT.rstrip(os.sep)}, missing from {LICENSES.name}): " + "; ".join(nolic))
+    # copies of the license pdfs in <video folder>\licenses (user order 2026-10-16): read from Z:, written on D: only
+    ldir, copied, bad = Path(vdir) / "licenses", {}, []
+    for _, c in lic:
+        src = Path(c[1])
+        if norm(str(src)) in copied:
+            continue
+        if not src.is_file():
+            bad.append(str(src))
+            continue
+        ldir.mkdir(exist_ok=True)
+        title = c[2] if len(c) > 2 else ""
+        dst = ldir / (re.sub(r'[\\/:*?"<>|]', "_", f"{src.parent.name}_{src.stem} - {title}".strip(" -")) + src.suffix)
+        if not dst.exists():
+            shutil.copy2(src, dst)
+        copied[norm(str(src))] = dst
+    print(f"licenses folder: {len(copied)} pdf(s) -> {ldir}" + (f" | pdf not found: {bad}" if bad else ""))
 
 
 def render_done(project, out_dir, timeline="Master"):
@@ -213,6 +251,8 @@ def render_done(project, out_dir, timeline="Master"):
                if project.GetTimelineByIndex(i).GetName() == timeline), None)
     if not tl:
         raise SystemExit(f'no timeline "{timeline}" to render: nothing changed')
+    if not any(tl.GetItemListInTrack("video", i) for i in range(1, int(tl.GetTrackCount("video")) + 1)):
+        raise SystemExit(f'timeline "{timeline}" is empty (no video): assemble it first, nothing rendered or moved')
     cur = project.GetCurrentTimeline()
     project.SetCurrentTimeline(tl)
     assert project.SetCurrentRenderFormatAndCodec("mp4", "H264"), "H.264 mp4 render format not available"

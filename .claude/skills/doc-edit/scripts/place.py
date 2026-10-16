@@ -92,12 +92,14 @@ def audio_events(slots, end):
     return sorted((e for e in out if e[0]), key=lambda e: (e[1], e[0]))
 
 
-def main(video, replace=False, dry=False, video_only=False, a1_only=False):
+def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False):
     work = ROOT / ".work" / "doc_edit" / video
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     slots, end = plan["slots"], plan["end"]
     events = [] if (video_only or a1_only) else audio_events(slots, end)
     vids = [s for s in slots if s["status"] in ("OK", "WEAK", "FALLBACK")]
+    if audio_only:  # --audio-only: A3-A9 only; V1, A1, A2 and the markers stay as they are
+        vids = []
     print(f"plan: {len(vids)} video clips, {len(events)} audio pieces, "
           f"{sum(s['status'] in MARK for s in slots)} markers")
 
@@ -113,7 +115,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False):
     rate = round(fps) if cfg["align"].get("timestamp_clock", "timecode") == "timecode" else fps
     t0 = int(tl.GetStartFrame())
     f = lambda sec: round(sec * rate)  # noqa: E731
-    tracks = [("audio", 1)] if a1_only else [("video", 1), ("audio", 1)] + ([] if video_only else [("audio", n) for n in range(3, 10)])
+    tracks = [("audio", n) for n in range(3, 10)] if audio_only else [("audio", 1)] if a1_only else [("video", 1), ("audio", 1)] + ([] if video_only else [("audio", n) for n in range(3, 10)])
     have = {f"{k[0].upper()}{n}": tl.GetItemListInTrack(k, n) or [] for k, n in tracks
             if n <= int(tl.GetTrackCount(k) or 0)}
     full = {k: len(v) for k, v in have.items() if v}
@@ -216,10 +218,10 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False):
             vol_fail += 1
     cache_p.write_text(json.dumps(cache, indent=0), "utf-8")
 
-    for frame, m in list((tl.GetMarkers() or {}).items()):
+    for frame, m in list((tl.GetMarkers() or {}).items()) if not audio_only else []:
         if str(m.get("customData", "")).startswith("doc_edit"):
             tl.DeleteMarkerAtFrame(frame)
-    for s in slots:
+    for s in slots if not audio_only else []:
         if s["status"] in MARK:
             a, b = f(s["start"]), f(s["start"] + s["dur"])
             tl.AddMarker(a, MARK[s["status"]], f"{s['status']} #{s['slot']}", s["need"][:240], b - a,
@@ -259,4 +261,4 @@ def selftest():
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
-    selftest() if "--selftest" in sys.argv else main(a[0], "--replace" in sys.argv, "--dry-run" in sys.argv, "--video-only" in sys.argv, "--a1-only" in sys.argv)
+    selftest() if "--selftest" in sys.argv else main(a[0], "--replace" in sys.argv, "--dry-run" in sys.argv, "--video-only" in sys.argv, "--a1-only" in sys.argv, "--audio-only" in sys.argv)

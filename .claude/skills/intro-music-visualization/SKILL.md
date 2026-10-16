@@ -59,6 +59,8 @@ Tokens: read script stdout only; images only as storyboards (2 per pass, max ~6 
 ## Ledger (clips used by recent videos)
 `/doc-edit check-timelines` (doc-edit `ledger.py check <video>`) records the clips on timelines "Edit" and "Open" in
 the ledger of the video's workspace; `pool.py add` bans "Open" + "Edit" of the last 4 checked videos of that workspace.
+Inside this video, Edit + intro share one reuse budget (`build.py` / `storyboard.py` check it): a clip <= 3 parts in all,
+never a part already on "Edit", once per intro; `auto` takes the largest free part. Errors name the line: pick another clip.
 
 ## Changes and learning
 - One shot swap on a built timeline = `ReplaceClip` / `SetProperty` on that item only (CLAUDE.md rule 2), or edit the line

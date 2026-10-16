@@ -43,6 +43,13 @@ def index_of(root):
     return WORK / (root.name.replace(" ", "_") + INDEX)
 
 
+def audio_blocked(path):
+    """True if an audio path matches a line of .work/library/audio_blocked.txt (claimed tracks: never picked)."""
+    f = WORK / "audio_blocked.txt"
+    frags = [l.strip().lower() for l in f.read_text("utf-8").splitlines() if l.strip() and not l.startswith("#")] if f.exists() else []
+    return any(x in str(path).lower().replace("\\", "/") for x in frags)
+
+
 def fast_hash(p):
     """size + first/last MiB: stable across rename/move, ~1 ms per file even on a NAS."""
     size = p.stat().st_size
