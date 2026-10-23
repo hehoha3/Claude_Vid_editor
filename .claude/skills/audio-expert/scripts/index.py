@@ -1,5 +1,5 @@
 """audio-expert index: every audio root of scan-source -> .work/audio_expert/audio_index.jsonl (incremental).
-Amazona audio paths are relative to AUDIO; the read-only roots (Z:\\Unseen\\SFX, Sound, Sound Animal V1) are stored as
+Amazona audio paths are relative to AUDIO; the read-only roots (Z:\\Unseen\\SFX, Sound) are stored as
 absolute paths (AUDIO / abs == abs). Files gone from the library indexes are dropped.
 
     .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/index.py          # add new files, profile music
@@ -18,7 +18,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
 from scan_source import ROOTS, audio_blocked, index_of  # noqa: E402
-CATEGORY = {"sfx": "nature_sound", "animal": "nature_sound", "sound": "tense_music"}  # read-only root -> folder rule
+CATEGORY = {"sfx": "nature_sound", "sound": "tense_music"}  # read-only root -> folder rule ("animal" root dropped 2026-10-20)
 AUDIO = Path(r"Z:\Unseen\Amazona\audio")
 OUT = ROOT / ".work" / "audio_expert" / "audio_index.jsonl"
 SR, STEP = 8000, 5

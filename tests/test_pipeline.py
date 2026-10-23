@@ -24,6 +24,7 @@ from dvr_cowork.layout import layout  # noqa: E402
 from dvr_cowork.resolve_ops import OpsError, OverlapError, apply_plan  # noqa: E402
 from dvr_cowork.timestamps import TimestampError, parse_timestamp_file  # noqa: E402
 from dvr_cowork.transcribe import load_audio  # noqa: E402
+from dvr_cowork.vosync import clips_segments  # noqa: E402
 
 SR = 16000
 LINES = [
@@ -287,6 +288,7 @@ def test_apply_mock(cfg, plan, tight_plan):
     vo_items = tl.GetItemListInTrack("audio", vo)
     assert tl.GetTrackCount("audio") >= vo, "VO track should exist"
     assert proj.pool.root.subs[0].GetName() == "4. Audio" and proj.imports == 1
+    assert [f.GetName() for f in proj.pool.root.subs[0].subs] == ["Narrator"]
     assert len(vo_items) == len(plan["segments"]) and res["placed"] == len(vo_items)
     assert all(ti.GetMediaPoolItem() is vo_items[0].GetMediaPoolItem() for ti in vo_items), "one source clip"
     assert res["max_start_dev"] == 0 and res["max_in_dev"] == 0
@@ -320,6 +322,34 @@ def test_apply_mock(cfg, plan, tight_plan):
           f"guards ok, {len(colored)} pushed items coloured")
 
 
+def test_clips_mode(cfg, tmp):
+    """audios/mp3/1.wav ... one file per sentence: no Whisper, one A2 item per file, onset on its stamp."""
+    audio, truth = synth()
+    d = Path(tmp) / "mp3"
+    d.mkdir()
+    for k, (s, e) in enumerate(truth, 1):  # each sentence with 0.2 s of near-silence around it
+        write_wav(d / f"{k}.wav", audio[int((s - 0.2) * SR):int((e + 0.2) * SR)])
+    ts = Path(tmp) / "ts.txt"
+    write_ts(ts, [3 + 6 * k for k in range(len(LINES))])
+    cues = parse_timestamp_file(ts)
+    segs, _ = clips_segments(str(d), cues, cfg["align"])
+    assert all(abs(s["onset"] - 0.2) <= 0.03 for s in segs), [s["onset"] for s in segs]
+    plan = {"audio": str(d), "timestamps": str(ts), "segments": segs}
+    r = FakeResolve()
+    res = apply_plan(r, plan, cfg, log=lambda m: None)
+    proj = r.pm.project
+    vo_items = proj.timelines[1].GetItemListInTrack("audio", cfg["resolve"]["audio_track"])
+    assert res["placed"] == len(LINES) == proj.imports == len({id(ti.GetMediaPoolItem()) for ti in vo_items})
+    assert proj.pool.root.subs[0].subs[0].GetName() == "Narrator" and res["max_start_dev"] == 0
+    (d / "3.wav").unlink()
+    try:
+        clips_segments(str(d), cues, cfg["align"])
+        raise AssertionError("should refuse a missing sentence file")
+    except ValueError as e:
+        assert "missing [3]" in str(e)
+    print(f"  per-sentence files: {len(LINES)} files -> {res['placed']} A2 items, own source each, bin 4. Audio/Narrator")
+
+
 def test_timestamp_errors(tmp):
     p = Path(tmp) / "bad.txt"
     p.write_text("[00:10] a\n[00:09] b\nno stamp here\n[00:75] c\n", encoding="utf-8")
@@ -331,7 +361,15 @@ def test_timestamp_errors(tmp):
     p.write_text("\ufeff[01:02.5] \u201cQuoted line\u201d\n  wrapped continuation\n[1:05:00] later\n", encoding="utf-8")
     cues = parse_timestamp_file(p)
     assert cues[0].t == 62.5 and cues[0].text == "Quoted line wrapped continuation" and cues[1].t == 3900
-    print("  timestamp parser: errors reported with line numbers, BOM/quotes/wrapping/hh:mm:ss ok")
+    p.write_text("## English\n[00:01] one\n[00:05] two\n## Vietnamese\n[00:01] mot\n[00:05] hai\n", encoding="utf-8")
+    assert [c.text for c in parse_timestamp_file(p)] == ["one", "two"]
+    assert [c.text for c in parse_timestamp_file(p, "vietnamese")] == ["mot", "hai"]
+    # africa_1 layout: English cues before any heading, Vietnamese as `###### 001 · [mm:ss] text`
+    p.write_text("# Title\n[00:01] one\n[00:05] two\n## Vietnamese\n###### 001 · [00:01] mot\n"
+                 "###### 002 · [00:05] hai\n", encoding="utf-8")
+    assert [c.text for c in parse_timestamp_file(p)] == ["one", "two"]
+    assert [c.text for c in parse_timestamp_file(p, "vietnamese")] == ["mot", "hai"]
+    print("  timestamp parser: errors reported with line numbers, BOM/quotes/wrapping/hh:mm:ss/EN+VI sections ok")
 
 
 def test_scale():
@@ -366,6 +404,8 @@ def main():
         with tempfile.TemporaryDirectory() as tmp2:
             print("overlap");          tight = test_overlap(cfg, tmp2)
             print("apply (mock)");     test_apply_mock(cfg, plan, tight)
+        with tempfile.TemporaryDirectory() as tmp3:
+            print("per-sentence files"); test_clips_mode(cfg, tmp3)
         print("timestamp parser");     test_timestamp_errors(tmp)
         print("scale");                test_scale()
     print("\nALL TESTS PASSED")

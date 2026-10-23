@@ -106,7 +106,21 @@ def cmd_doctor(args, cfg):
 
 def cmd_info(args, cfg):
     from .resolve_ops import project_info
-    log(json.dumps(project_info(_connect(cfg), cfg), ensure_ascii=False, indent=1))
+    i = project_info(_connect(cfg), cfg)
+    if args.json:
+        log(json.dumps(i, ensure_ascii=False, indent=1))
+        return EXIT_OK
+    # 3 lines instead of ~50 lines of indented JSON (read every session: tokens)
+    names = i["timelines"]
+    bak = [n for n in names if "_bak" in n]
+    log(f"project {i['project']} | Resolve {i.get('resolve_version', '?')} | current {i['current_timeline']} | "
+        f"timelines {len(names)} ({len(bak)} backups{': prune -> dvr_cowork backups' if len(bak) > 6 else ''}): "
+        + ", ".join(n for n in names if "_bak" not in n))
+    t = i.get("timeline")
+    if t:
+        tr = " ".join(f"{k[0].upper()}{x['n']}:{x['items']}" for k, v in t["tracks"].items() for x in v)
+        log(f"{t['name']} {t['fps']:g} fps {t['resolution']} start {t['start_tc']} dur {t['duration_tc']} | {tr} | "
+            f"audio bin {'ok' if i.get('audio_bin_exists') else 'MISSING'}")
     return EXIT_OK
 
 
@@ -208,8 +222,40 @@ def cmd_frames(args, cfg):
         for r in res:
             if r["ok"]:
                 r["stats"] = still_stats(r["path"])
-    log(json.dumps(res, ensure_ascii=False, indent=1))
+    log(f"stills in {out}")  # one compact line per still (was ~25 indented JSON lines each: tokens)
+    for r in res:
+        st = json.dumps(r.get("stats"), ensure_ascii=False, separators=(",", ":")) if r.get("stats") else ""
+        log(f"{r['at']} {r['tc']} {'ok' if r['ok'] else 'FAILED'} {Path(r['path']).name} {st}")
     return EXIT_OK if all(r["ok"] for r in res) else EXIT_ERR
+
+
+def cmd_backups(args, cfg):
+    """Backup timelines (<name>_bak_*) of the open project: many of them make Resolve slow. --keep N --apply deletes
+    all but the newest N per kind (place / light / match / vo-sync...); destructive: only after the user's yes."""
+    import re
+    from collections import defaultdict
+    project = _project(cfg)
+    tls = [project.GetTimelineByIndex(i + 1) for i in range(int(project.GetTimelineCount() or 0))]
+    bak = [t for t in tls if "_bak" in t.GetName()]
+    kinds = defaultdict(list)
+    for t in bak:
+        kinds[re.sub(r"_?\d{8}_\d{6}$|_\d{6}$", "", t.GetName())].append(t)
+    old = [t for ts in kinds.values() for t in sorted(ts, key=lambda t: t.GetName())[:-args.keep or None]] \
+        if args.keep else []
+    cur = project.GetCurrentTimeline()
+    log(f"project {project.GetName()} | timelines {len(tls)} | backups {len(bak)}: "
+        + ", ".join(f"{k} {len(v)}" for k, v in kinds.items()))
+    if not args.keep:
+        return EXIT_OK
+    log(f"keep newest {args.keep} per kind -> delete {len(old)}: " + " ".join(t.GetName() for t in old[:30]))
+    if not args.apply:
+        log("dry run: add --apply to delete (user yes first)")
+        return EXIT_OK
+    assert cur is None or cur not in old, "the open timeline is a backup: open Edit first"
+    ok = project.GetMediaPool().DeleteTimelines(old) if old else True
+    _connect(cfg).GetProjectManager().SaveProject()
+    log(f"deleted {len(old) if ok else 0}/{len(old)}, project saved")
+    return EXIT_OK if ok else EXIT_ERR
 
 
 def cmd_prefetch(args, cfg):
@@ -266,7 +312,9 @@ def build_parser():
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("doctor", help="check Python deps, Whisper model and the Resolve connection").set_defaults(fn=cmd_doctor)
-    sub.add_parser("info", help="project / timeline / track summary as JSON").set_defaults(fn=cmd_info)
+    inf = sub.add_parser("info", help="project / timeline / track summary (3 lines; --json = full JSON)")
+    inf.add_argument("--json", action="store_true")
+    inf.set_defaults(fn=cmd_info)
     sub.add_parser("prefetch", help="download the Whisper model now").set_defaults(fn=cmd_prefetch)
     f = sub.add_parser("frames", help="export graded stills at timeline positions")
     f.add_argument("--at", nargs="+", required=True, help="mm:ss | hh:mm:ss | hh:mm:ss:ff (absolute TC)")
@@ -287,6 +335,10 @@ def build_parser():
     o.add_argument("--apply", action="store_true", help="really relink (default dry run)")
     o.add_argument("--show", type=int, default=15, help="max paths listed")
     o.set_defaults(fn=cmd_offline)
+    b = sub.add_parser("backups", help="backup timelines of the open project; --keep N --apply prunes the rest")
+    b.add_argument("--keep", type=int, default=0, help="newest backups kept per kind")
+    b.add_argument("--apply", action="store_true", help="really delete (default dry run)")
+    b.set_defaults(fn=cmd_backups)
 
     vo = sub.add_parser("vo-sync", help="sync narration to a [mm:ss] timestamp file on the VO track")
     vsub = vo.add_subparsers(dest="vo_cmd", required=True)

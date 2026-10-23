@@ -26,9 +26,11 @@ CACHE = ROOT / ".work" / "hide_logo" / "scan.json"
 EXTS = {".mp4", ".mov", ".mkv", ".mxf", ".avi", ".m4v"}
 # every logo-free copy (D: and read-only Z: sources) waits here until the project is Done; scan-source and
 # process-ai-video skip it. MANIFEST maps copy -> original for the overwrite question when the video is finished.
-NOLOGO = Path(load_config()["paths"]["ai_video"]) / "_nologo"  # was _check/_nologo until 2026-10-13
+NOLOGO = Path(os.environ.get("NOLOGO_DIR") or Path(load_config()["paths"]["ai_video"]) / "_nologo")  # NOLOGO_DIR = per-run override (africa)  # was _check/_nologo until 2026-10-13
 MANIFEST = ROOT / ".work" / "hide_logo" / "nologo.json"
 OVERWRITTEN = ROOT / ".work" / "hide_logo" / "overwritten.json"  # replaced copies to relink back after a Resolve quit
+QUICK = ROOT / ".work" / "hide_logo" / "quick_fix.txt"  # originals fixed with the fast ffmpeg fill, redo with MiniMax later
+LIST = ROOT / ".work" / "hide_logo" / "check_list.txt"  # scan's path list for the user's review, input of --list
 
 
 def manifest():
@@ -119,8 +121,44 @@ def logo_box(g, x, y, w, h):
     return lx0, ly0, lx1, ly1
 
 
-def scan(folder):
-    files = sorted(str(p) for p in Path(folder).iterdir() if p.suffix.lower() in EXTS and p.is_file())
+def timeline_files(name=None):
+    """Read only: [(file path, start s, end s)] of every V1 item of timeline <name> (default the current one)."""
+    project = connect().GetProjectManager().GetCurrentProject()
+    tl = project.GetCurrentTimeline() if not name else next(
+        t for t in (project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)) if t.GetName() == name)
+    fps, t0 = float(tl.GetSetting("timelineFrameRate")), tl.GetStartFrame()
+    out = []
+    for it in tl.GetItemListInTrack("video", 1) or []:
+        if mp := it.GetMediaPoolItem():
+            out.append((mp.GetClipProperty("File Path"), (it.GetStart() - t0) / fps, (it.GetEnd() - t0) / fps))
+    return tl.GetName(), out
+
+
+def report_timeline(name=None):
+    """--timeline [name]: which V1 shots of a timeline carry the logo (user 2026-10-17). Nothing is written: no
+    scan.json, no list, no markers. The logo template comes from the files of that timeline (self-calibrating), so
+    a timeline where almost no shot has the logo may name a wrong recurring edge: look at the top hits."""
+    tname, items = timeline_files(name)
+    files = sorted({p for p, _, _ in items if Path(p).is_file()})
+    print(f"timeline '{tname}': {len(items)} V1 shots, {len(files)} files")
+    scan(None, files=files, report=lambda fo, side: _print_hits(fo, items, side, tname))
+
+
+def _print_hits(files_out, items, side, tname):
+    def tc(s):
+        return f"{int(s // 3600):02d}:{int(s % 3600 // 60):02d}:{s % 60:04.1f}" if s >= 3600 else f"{int(s // 60):02d}:{s % 60:04.1f}"
+    rows = []
+    for p, a, b in items:
+        v = files_out.get(os.path.normcase(p))
+        if v and v["score"] >= LO:
+            rows.append((a, b, v["score"], Path(p).name))
+    print(f"logo template at {side}; shots with score >= {LO} (>= {HI} = logo, below = suspect), {len(rows)} shots:")
+    for a, b, s, n in rows:
+        print(f"  {tc(a)}-{tc(b)}  {s:.2f} {'LOGO' if s >= HI else 'suspect'}  {n[:60]}")
+
+
+def scan(folder, files=None, report=None):
+    files = files or sorted(str(p) for p in Path(folder).iterdir() if p.suffix.lower() in EXTS and p.is_file())
     if not files:
         sys.exit(f"No video files in {folder}")
     res = [sample(f) for f in files]   # sample() already runs its N seeks in parallel
@@ -141,17 +179,71 @@ def scan(folder):
         bx = logo_box(g, x, y, x1 - x0, y1 - y0)
         files_out[os.path.normcase(f)] = {"score": round(s, 3), "box": [v / (W if i % 2 == 0 else H) for i, v in enumerate(bx)]}
     default = [(x0 + PAD) / W, (y0 + PAD) / H, (x1 - PAD) / W, (y1 - PAD) / H]
+    if report:  # --timeline: print only, write nothing
+        return report(files_out, ("top" if y0 < H / 2 else "bottom") + "-" + ("left" if x0 < W / 2 else "right"))
     CACHE.parent.mkdir(parents=True, exist_ok=True)
     CACHE.write_text(json.dumps({"folder": str(Path(folder).resolve()), "default_box": default, "files": files_out}))
 
     hit = sorted(Path(f).name for f, v in files_out.items() if v["score"] >= HI)
     sus = sorted((Path(f).name, v["score"]) for f, v in files_out.items() if LO <= v["score"] < HI)
-    marked = mark(files_out)
+    # reviewed path list for --list (clips not on a timeline, e.g. _check; user 2026-10-17): LOGO lines active,
+    # SUSPECT lines commented out ('#? ', user 2026-10-17: '#' = skip, no '#' = run): the user's review removes / adds lines, then --list runs on it
+    score = {f: files_out[os.path.normcase(f)]["score"] for f, *_ in ok}
+    # a LOGO clip the user already skipped in the previous list stays skipped (amazon_2: same 2 clips twice)
+    old = LIST.read_text("utf-8") if LIST.exists() else ""
+    skipped = set(map(os.path.normcase, skipped_paths(old)))
+    LIST.write_text("# LOGO (delete a line = keep that clip as is; '#' = skipped in your last review)\n"
+                    + "".join(f"{'#' if os.path.normcase(f) in skipped else ''}{f}  # {s:.2f}\n"
+                              for f, s in sorted(score.items()) if s >= HI)
+                    + "# SUSPECT (#? = skipped; delete '#? ' to delogo it)\n"
+                    + "".join(f"#? {f}  # {s:.2f}\n" for f, s in sorted(score.items()) if LO <= s < HI), "utf-8")
+    try:
+        marked = mark(files_out)
+    except (SystemExit, Exception):  # noqa: BLE001  no Resolve / no "Edit": the list file is the review
+        marked = 0
     side = ("top" if y0 < H / 2 else "bottom") + "-" + ("left" if x0 < W / 2 else "right")
     print(f"{len(ok)} files scanned | logo at {side} | {len(hit)} with logo, {len(sus)} suspect | "
           f"{marked} markers on '{TIMELINE}' (Purple = logo, Yellow = suspect)")
     print("LOGO: " + ", ".join(n.rsplit(".", 1)[0] for n in hit))
     print("SUSPECT: " + (", ".join(f"{n.rsplit('.', 1)[0]}({s:.2f})" for n, s in sus) or "none"))
+    print(f"list: {LIST}")
+
+
+def skipped_paths(text):
+    """Paths of a review list's commented lines ('#D:\\x.mp4', '#? D:\\x.mp4'): clips the user chose to skip."""
+    return [p for p in (ln.lstrip("#? ").split("  #")[0].strip() for ln in text.splitlines()
+                        if ln.startswith("#") and ":\\" in ln) if p]
+
+
+def list_paths(text):
+    """Active path lines of a review list ('#' lines and '  # score' tails ignored)."""
+    return [p for p in (ln.split("  #")[0].strip() for ln in text.splitlines() if not ln.lstrip().startswith("#")) if p]
+
+
+def run_list(path):
+    """Delogo every path of the reviewed list with its scan box -> _nologo copy (recorded for --overwrite-all).
+    A listed file that is gone (the user deleted it from _check) is skipped and named."""
+    cache = json.loads(CACHE.read_text()) if CACHE.exists() else {"files": {}, "default_box": None}
+    paths = list_paths(Path(path).read_text("utf-8"))
+    gone = [p for p in paths if not Path(p).is_file()]
+    done, failed, busy = 0, [], []
+    for p in (p for p in paths if Path(p).is_file()):  # one at a time: MiniMax needs the whole GPU
+        box = cache["files"].get(os.path.normcase(p), {}).get("box") or cache["default_box"]
+        if box is None:
+            failed.append(f"{Path(p).name}: not in the last scan")
+            continue
+        src, dst, err, grain = delogo(original_of(p), box)
+        if dst:
+            record(src, dst)
+            done += 1
+            if grain >= BUSY:
+                busy.append(Path(src).stem)
+        else:
+            failed.append(f"{Path(p).name}: {err}")
+    print(f"delogo {done}/{len(paths) - len(gone)} listed clips -> {NOLOGO}")
+    print("REVIEW FIRST (detailed background, patch may show): " + (", ".join(sorted(busy)) or "none"))
+    print("FAILED: " + ("; ".join(failed) or "none") + " | gone (deleted by the user, skipped): "
+          + (", ".join(Path(p).name for p in gone) or "none"))
 
 
 def edit_timeline():
@@ -457,13 +549,16 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="mi
     if not dst or (mpi and not mpi.ReplaceClip(dst)):
         sys.exit(f"failed: {err or 'ReplaceClip failed'}")
     record(src, dst)
+    if fill != "minimax":  # quick pass (user 2026-10-17): remember the originals to redo with MiniMax after Done
+        with QUICK.open("a", encoding="utf-8") as q:
+            q.write(f"{src}  # {corner} {fill}\n")
     when = f"0.0-{end:.1f}s" if end is not None else f"from {start:.1f}s"
     print(f"{Path(src).stem}: logo {corner} {[int(v) for v in bx]}@640x360 {when} removed -> {dst} | "
           + ("relinked" if mpi else "not on V1, file only") + f" | grain {grain}"
           + (" REVIEW (detailed background)" if grain >= BUSY else ""))
 
 
-def at_clip(tc, corner=None):
+def at_clip(tc, corner=None, fill="minimax"):
     """Timeline position the user saw the logo at (mm:ss or hh:mm:ss) -> the V1 clip there, or a neighbour within
     1 s (a reported time often lands just before the cut), whichever shows the most static edges in the corner."""
     project, tl = edit_timeline()
@@ -491,7 +586,7 @@ def at_clip(tc, corner=None):
             best = (score, src, rank)
         srcs.append(src)
     if best and best[0] >= 20:
-        return one_clip(best[1], corner)
+        return one_clip(best[1], corner, fill=fill)
     # no logo through the whole clip: one shown only at the start (head) or popping in late (end)
     bh, bw = H // 5, W * 3 // 10
     bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
@@ -504,7 +599,7 @@ def at_clip(tc, corner=None):
                 part = (f[0], src, head)
     if not part:
         sys.exit(f"no logo found near {tc}")
-    one_clip(part[1], corner, endpart=not part[2], head=part[2])
+    one_clip(part[1], corner, endpart=not part[2], head=part[2], fill=fill)
 
 
 def frame_info(p):
@@ -655,18 +750,32 @@ if __name__ == "__main__":
     if "--execute" in sys.argv:
         execute()
     elif "--at" in sys.argv:   # --at 21:38 tl 05:12 tr 07:40   (corner optional after each time)
-        jobs = []
+        jobs, fill = [], ("interp" if "--fill" in sys.argv and "interp" in sys.argv else "minimax")  # --fill interp = fast
         for a in sys.argv[sys.argv.index("--at") + 1:]:
+            if a in ("--fill", "interp", "clone"):
+                continue
             if a in ("tl", "tr", "bl", "br") and jobs:
                 jobs[-1][1] = a
             else:
                 jobs.append([a, None])
         for tc, corner in jobs:
-            print(f"{tc} {corner or 'any corner'}:")
+            print(f"{tc} {corner or 'any corner'}:", flush=True)
             try:
-                at_clip(tc, corner)
+                at_clip(tc, corner, fill)
             except SystemExit as e:   # one shot failing must not stop the others
                 print(f"  FAILED: {e}")
+    elif "--timeline" in sys.argv:   # --timeline [name]: read-only report of the V1 shots that carry the logo
+        i = sys.argv.index("--timeline")
+        report_timeline(sys.argv[i + 1] if len(sys.argv) > i + 1 else None)
+    elif "--selftest" in sys.argv:
+        assert list_paths("# LOGO\nD:\\a\\x 1.mp4  # 0.52\n# D:\\a\\y.mp4  # 0.40\n\n  D:\\a\\z.mp4\n") == \
+            ["D:\\a\\x 1.mp4", "D:\\a\\z.mp4"]
+        assert skipped_paths("# LOGO\n#D:\\a\\x.mp4  # 0.52\nD:\\a\\y.mp4  # 0.5\n#? D:\\a\\z.mp4  # 0.4\n") == \
+            ["D:\\a\\x.mp4", "D:\\a\\z.mp4"]
+        print("selftest ok")
+    elif "--list" in sys.argv:   # --list [file]: delogo the reviewed scan list (default .work/hide_logo/check_list.txt)
+        i = sys.argv.index("--list")
+        run_list(sys.argv[i + 1] if len(sys.argv) > i + 1 else LIST)
     elif "--pending" in sys.argv:
         pending()
     elif "--overwrite-all" in sys.argv:

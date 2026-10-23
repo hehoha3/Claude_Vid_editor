@@ -2,9 +2,11 @@
 """Content tags for every clip of the scan-source video indexes (one vision pass per clip, kept by hash).
 
     tag_source.py status                         tagged / untagged per root
-    tag_source.py prepare [video|ai] [--limit N] [--sample N]
+    tag_source.py prepare [<video root>...] [--limit N] [--sample N] [--subject lion,hyena]
+                                                 default: every video root; --sample = per root, or per root and
+                                                 subject with --subject (folder species, scan-source `subject`)
                                                  contact sheets + batch files of 20 for the Sonnet taggers
-    tag_source.py apply <batch_NN>... [--no-yolo] validate the tagger's result file, merge into _library.json,
+    tag_source.py apply <batch_NN>... [--no-yolo] validate the tagger's result file, merge into the root's index,
                                                  then YOLO-measure the clips just tagged (doc-edit/scripts/yolo.py)
     tag_source.py review <batch_NN>...           markdown table for the user to check
 
@@ -23,6 +25,7 @@ WORK = Path(__file__).resolve().parents[4] / ".work" / "tag_source"
 POS = (0.15, 0.40, 0.65, 0.90)
 BATCH = 20
 V = 2
+LONG = 600.0  # s: longer files are whole films (AI_copyright\bản quyền: 40 min-3 h), not clips: never tagged, so never planned
 VOCAB = {
     "count": {"none", "one", "two", "few", "many"},
     "action": {"rest", "sleep", "look", "walk", "run", "stalk", "hunt", "attack", "eat", "feed", "drink", "swim", "fly",
@@ -32,7 +35,8 @@ VOCAB = {
     "camera": {"static", "moving"},
     "light": {"day", "golden", "dusk", "night", "moon"},
     "setting": {"canopy", "forest", "forest_floor", "undergrowth", "river", "riverbank", "lake", "swamp",
-                "waterfall", "underwater", "grassland", "rock", "cave", "sky", "moon", "mountain", "village"},
+                "waterfall", "underwater", "grassland", "rock", "cave", "sky", "moon", "mountain", "village",
+                "savanna", "waterhole", "desert"},   # last three: Africa (2026-10-20)
     "weather": {"clear", "mist", "rain", "storm", "none"},
     "mood": {"calm", "tense", "dramatic", "playful", "majestic", "eerie"},
     "direction": {"left", "right", "toward", "away", "none"},
@@ -63,25 +67,37 @@ def untagged(idx):
 
 def sheet(src, dur, dst):
     ins = sum((["-ss", f"{dur * t:.2f}", "-i", str(src)] for t in POS), [])
-    fc = "".join(f"[{i}:v]scale=480:270:force_original_aspect_ratio=decrease,pad=480:270:-1:-1,"
+    # setparams: some ProRes .mov carry no transfer tag and swscale then refuses them (rhino/warthog/ostrich clips)
+    fc = "".join(f"[{i}:v]setparams=color_trc=bt709,scale=480:270:force_original_aspect_ratio=decrease,pad=480:270:-1:-1,"
                  f"drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':text={i + 1}:x=8:y=6:fontsize=30:"
                  f"fontcolor=yellow:box=1:boxcolor=black@0.7:boxborderw=6[f{i}];" for i in range(4))
     fc += "[f0][f1][f2][f3]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[v]"
     r = subprocess.run(["ffmpeg", "-v", "error", "-y", *ins, "-filter_complex", fc, "-map", "[v]",
-                        "-frames:v", "1", "-q:v", "4", str(dst)], capture_output=True, text=True)
+                        "-frames:v", "1", "-q:v", "4", "-strict", "unofficial", str(dst)],
+                       capture_output=True, text=True)  # unofficial: mjpeg refuses limited-range YUV otherwise
     return r.returncode == 0 and dst.exists()
 
 
-def prepare(names, limit, sample):
+def prepare(names, limit, sample, subjects=None):
     WORK.mkdir(parents=True, exist_ok=True)
     (WORK / "sheets").mkdir(exist_ok=True)
-    todo = []
+    todo, long_ = [], 0
+    # resume-safe: a clip already waiting in a batch file (prepare stopped, batch not applied yet) is never batched twice
+    queued = {r["id"] for p in WORK.glob("batch_*.json") if "result" not in p.stem
+              for r in json.loads(p.read_text(encoding="utf-8"))}
     for name in names:
         root = ROOTS[name][0]
+        if not index_of(root).exists():
+            continue
         items = sorted(untagged(load(root)).items(), key=lambda kv: kv[1]["path"])
-        if sample:   # spread over subjects: every k-th clip
-            items = items[::max(1, len(items) // sample)][:sample]
-        todo += [(name, k, c) for k, c in items]
+        long_ += sum(c["duration"] > LONG for _, c in items)
+        items = [(k, c) for k, c in items if c["duration"] <= LONG and k not in queued]
+        # tag by species (user 2026-10-20: cheap, only what a film needs): one group per folder species
+        groups = [[kv for kv in items if kv[1].get("subject") == s] for s in subjects] if subjects else [items]
+        for g in groups:
+            if sample:   # spread over the folder (sorted by path): every k-th clip
+                g = g[::max(1, len(g) // sample)][:sample]
+            todo += [(name, k, c) for k, c in g]
     todo = todo[:limit] if limit else todo
     nums = [int(p.stem.split("_")[1]) for p in WORK.glob("batch_*.json") if "result" not in p.stem]
     n0, made, failed = max(nums, default=0) + 1, [], []
@@ -99,7 +115,8 @@ def prepare(names, limit, sample):
             bp = WORK / f"batch_{n0 + len(made):02d}.json"
             bp.write_text(json.dumps(rows, indent=1, ensure_ascii=False), encoding="utf-8")
             made.append(bp.stem)
-    print(f"{len(todo) - len(failed)} clips in {len(made)} batches: {', '.join(made)}")
+    print(f"{len(todo) - len(failed)} clips in {len(made)} batches: {', '.join(made)}"
+          + (f" | {long_} files > {LONG:.0f} s skipped (films, not clips)" if long_ else ""))
     for f in failed:
         print("FAILED sheet:", f)
 
@@ -152,8 +169,9 @@ def apply(batch):
             tags["good"] = tags["good"] or [1, 2, 3, 4]
         # the user's folder is the truth for the main animal; a different vision guess is kept for review
         fs = folder_species(r.get("folder"))
-        if fs and not any(fs in sp or sp in fs for sp in tags["species"]):
-            tags["vision_species"] = tags["species"]
+        if fs and fs not in tags["species"]:  # always searchable by the folder name ("lioness" alone missed sp=lion)
+            if not any(fs in sp or sp in fs for sp in tags["species"]):
+                tags["vision_species"] = tags["species"]
             tags["species"] = [fs] + tags["species"]
         tags["best"] = best_range(tags["good"], r["duration"])
         tags["v"] = V
@@ -205,7 +223,7 @@ def review(batches):
 
 def status():
     for name, (root, kind, _) in ROOTS.items():
-        if kind == "video":
+        if kind == "video" and index_of(root).exists():
             idx = load(root)
             print(f"{name}: {len(idx['clips']) - len(untagged(idx))}/{len(idx['clips'])} tagged v{V}")
 
@@ -215,8 +233,9 @@ if __name__ == "__main__":
     cmd = a[0] if a else "status"
     opt = lambda f: int(a[a.index(f) + 1]) if f in a else 0  # noqa: E731
     if cmd == "prepare":
-        names = [x for x in a[1:] if x in ROOTS and ROOTS[x][1] == "video"] or ["video", "ai"]
-        prepare(names, opt("--limit"), opt("--sample"))
+        names = [x for x in a[1:] if x in ROOTS and ROOTS[x][1] == "video"] or [n for n, r in ROOTS.items() if r[1] == "video"]
+        subj = a[a.index("--subject") + 1].lower().replace("_", " ").split(",") if "--subject" in a else None
+        prepare(names, opt("--limit"), opt("--sample"), subj)
     elif cmd == "apply":   # --no-yolo: tags only
         done = [c for b in a[1:] if not b.startswith("--") for c in apply(b)]
         if done and "--no-yolo" not in a:

@@ -1,11 +1,11 @@
-"""Rename + file the tagged AI clips of D:\\AI_video\\_check into species folders (dry-run by default).
+"""Rename + file the tagged AI clips of D:\\AI_video\\_check (--africa: D:\\AI_video\\_africa\\_check) into species folders (dry-run by default).
 
     .venv/Scripts/python .claude/skills/tag-source/scripts/organize.py            # dry-run: print the plan
     .venv/Scripts/python .claude/skills/tag-source/scripts/organize.py --apply    # move, verify every file
     .venv/Scripts/python .claude/skills/tag-source/scripts/organize.py --rename-stay [--apply]   # rename the clips that stay in _check
     .venv/Scripts/python .claude/skills/tag-source/scripts/organize.py --selftest
 
-Only untitled clips (shot_*.*) in _check are handled; --all = every clip in _check (generator names like amazon-007). A clip stays in _check when it cannot be filed: no tags,
+Every clip in _check is handled (shot_*, generator names like media-generation-anteater-007); --shot-only = only shot_*.*. A clip stays in _check when it cannot be filed: no tags,
 sure=false, a blocking issue (morph, unnatural, logo, watermark, text, dark, blur) or no folder for its species.
 Name: <species>_<caption keywords>-<shot size>.mp4 (same style as the existing files).
 Same drive -> Path.rename (atomic); never deletes. Run scan-source afterwards (hash keys keep the tags).
@@ -19,13 +19,27 @@ ROOT = ROOTS["ai"][0]  # config.toml paths.ai_video
 CHECK = ROOT / "_check"
 BLOCK = {"morph", "unnatural", "logo", "watermark", "text", "dark", "blur"}
 ALIAS = {"arapaima": "fish", "scarlet macaw": "bird", "buffalo": "forest_buffalo", "caiman": "crocodile_caiman", "crocodile": "crocodile_caiman", "howler monkey": "howler",
-         "toucan": "toucan-bird", "giant otter": "otter", "river otter": "otter", "antelope": "deer",
+         "african buffalo": "forest_buffalo", "piglet": "red_river_hog", "pink river dolphin": "dolphin", "red squirrel": "squirrel",
+         "dung beetle": "insects", "egret": "bird", "swallow": "bird",
+         "toucan": "toucan-bird","giant otter": "otter", "river otter": "otter", "antelope": "deer",
          "muntjac": "deer", "red brocket deer": "brocket_deer", "brocket deer": "brocket_deer", "giant anteater": "anteater", "tapir calf": "tapir", "hippo calf": "hippo",
          "harpy eagle chick": "eagle", "python": "snake", "viper": "snake", "parrot": "bird", "macaw": "bird",
          "hornbill": "bird", "kingfisher": "bird", "songbird": "bird", "heron": "bird", "owl": "bird",
          "beetle": "insects", "termite": "insects", "ladybug": "insects", "bee": "insects", "wasp": "insects",
          "millipede": "insects", "praying mantis": "insects", "grasshopper": "insects", "tarantula": "spider",
          "piranha": "fish", "caracal": "wild_cat", "duiker": "red_duiker", "golden cat": "wild_cat", "wild cat": "wild_cat", "macaque": "monkey", "tamarin": "monkey"}
+# --africa (user 2026-10-22): D:\AI_video\_africa\_check -> D:\AI_video\_africa\<species>; tag names -> those folders
+ALIAS_AFRICA = {"african wild dog": "wild_dog", "lioness": "lion", "cape buffalo": "buffalo", "african buffalo": "buffalo",
+                "water buffalo": "buffalo", "spotted hyena": "hyena", "brown hyena": "hyena", "thomson's gazelle": "gazelle",
+                "gemsbok": "oryx", "lechwe": "red_lechwe", "banded mongoose": "mongoose", "yellow mongoose": "mongoose",
+                "dwarf mongoose": "mongoose", "puff adder": "snake", "black mamba": "snake", "python": "snake",
+                "dung beetle": "insects", "grasshopper": "insects", "termite": "insects",
+                **{a: "antelope" for a in ("dik-dik", "klipspringer", "bushbuck", "kob", "puku", "waterbuck", "sitatunga",
+                                           "reedbuck", "sable antelope", "roan antelope", "steenbok", "duiker")},
+                **{b: "bird" for b in ("guineafowl", "guinea fowl", "oxpecker", "weaver", "egret", "cattle egret", "dove",
+                                       "hawk", "heron", "kori bustard", "sacred ibis", "ibis", "lapwing", "goose",
+                                       "egyptian goose", "crow", "pigeon", "stork", "yellow-billed stork", "hornbill",
+                                       "kingfisher", "bee-eater", "roller")}}
 LAST = {"monkey", "eagle", "frog", "snake", "ant", "butterfly", "bird", "fish", "spider"}  # "spider monkey" -> monkey
 LAST_TO = {"ant": "insects"}
 STOP = set("a an the of on in at to and with its it is from into over under by for as near while then "
@@ -56,6 +70,9 @@ def name_for(sp, t):
     return f"{head}_{'-'.join(words)}-{(t.get('shot_size') or 'medium').replace('_', '-')}"
 
 
+ALLOW_UNSURE = False
+
+
 def plan(clips, folders, every=False):
     moves, stay, taken = [], [], set()
     for c in clips:
@@ -63,7 +80,7 @@ def plan(clips, folders, every=False):
         if p.parts[0] != "_check" or len(p.parts) != 2 or not (every or p.stem.startswith("shot_")):
             continue
         t = c.get("tags") or {}
-        why = ("no tags" if not t.get("caption") else "sure=false" if not t.get("sure", True)
+        why = ("no tags" if not t.get("caption") else "sure=false" if not t.get("sure", True) and not ALLOW_UNSURE
                else ",".join(sorted(BLOCK & set(t.get("issues", [])))))
         cap = t.get("caption", "").strip().lower()  # bare-setting captions ("canopy") name the landscape folder
         dest = None if why else folder_for(t.get("species", []), t.get("setting", []) + [{"undergrowth": "forest_floor"}.get(cap, cap)], folders)
@@ -154,6 +171,11 @@ def selftest():
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
+    if "--africa" in sys.argv:  # same rules, Africa AI root (its own index, africa_ai_check)
+        ROOT = ROOTS["africa_ai_check"][0]
+        CHECK = ROOT / "_check"
+        ALIAS = {**ALIAS, **ALIAS_AFRICA}
     if "--allow-blur-dark" in sys.argv:  # file blur/dark clips too (issues stay in the tags)
         BLOCK -= {"blur", "dark"}
-    selftest() if "--selftest" in sys.argv else rename_stay("--apply" in sys.argv, "--all" in sys.argv) if "--rename-stay" in sys.argv         else main("--apply" in sys.argv, "--all" in sys.argv)
+    ALLOW_UNSURE = "--allow-unsure" in sys.argv  # tiny subjects (ants) are always sure=false: file them if no blocking issue
+    selftest() if "--selftest" in sys.argv else rename_stay("--apply" in sys.argv, "--shot-only" not in sys.argv) if "--rename-stay" in sys.argv         else main("--apply" in sys.argv, "--shot-only" not in sys.argv)  # every clip in _check by default (user 2026-10-18)

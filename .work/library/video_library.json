@@ -1292,6 +1292,19 @@
    "setting_folder": null,
    "source": "real"
   },
+  "5661b26e8da4a105": {
+   "path": "_check\\15740829_3840_2160_25fps.mp4",
+   "width": 3840,
+   "height": 2160,
+   "fps": 25.0,
+   "duration": 21.68,
+   "has_audio": false,
+   "title_hint": "15740829 3840 2160 25fps",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
   "f110d50c0aab0c03": {
    "path": "_check\\166720-835224068_medium.mp4",
    "width": 1280,
@@ -1313,6 +1326,32 @@
    "duration": 18.2,
    "has_audio": true,
    "title_hint": "176597 855868668 medium",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "0aa560b94919ea0e": {
+   "path": "_check\\19210129-hd_1920_1080_30fps.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 29.97,
+   "duration": 30.14,
+   "has_audio": true,
+   "title_hint": "19210129 hd 1920 1080 30fps",
+   "subject": "_check",
+   "action": false,
+   "setting_folder": null,
+   "source": "real"
+  },
+  "d4426b1564c98143": {
+   "path": "_check\\20078400-uhd_2560_1440_30fps.mp4",
+   "width": 2560,
+   "height": 1440,
+   "fps": 30.0,
+   "duration": 19.75,
+   "has_audio": true,
+   "title_hint": "20078400 uhd 2560 1440 30fps",
    "subject": "_check",
    "action": false,
    "setting_folder": null,
@@ -23431,22 +23470,23 @@
   }
  },
  "root": "Z:\\Unseen\\Amazona\\video",
- "updated": "2026-10-16",
+ "updated": "2026-10-21",
  "layout": {
   "<subject>/": "animal does nothing: rests, sleeps, looks around",
   "<subject>/action/": "animal does something: walks, runs, stalks, hunts, eats, flies, swims",
   "birds/, insects/": "all clips flat (action = null)",
   "landscape/<setting>/": "forest, water, sky_weather, detail, other",
   "supplementary_shots/<subject>/": "cutaway subjects (frogs, insects, gecko, flowers): subject = subfolder, supplementary = true",
-  "fields": "subject/action/setting_folder from folders (user's decision); tags = older vision tags where present; title_hint = stock file name"
+  "fields": "subject/action/setting_folder from folders (user's decision); tags = older vision tags where present; title_hint = stock file name",
+  "africa": "subject = English species of the deepest species folder (AFRICA_FOLDERS), action = under Chạy/Rình/Đi bộ tới mồi/Hunting; savannah: subject = landscape"
  },
  "stats": {
-  "files": 517,
-  "minutes": 148.6,
+  "files": 520,
+  "minutes": 149.8,
   "subject": {
    "(root)": 1,
    "Eagle": 27,
-   "_check": 9,
+   "_check": 12,
    "birds": 40,
    "capybara": 6,
    "crocodile_caiman": 21,

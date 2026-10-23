@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import os
+import time
 from pathlib import Path
 
 from .layout import layout
@@ -48,10 +49,31 @@ def find_timeline(project, name):
 
 
 def find_bin(root, name):
-    for f in root.GetSubFolderList() or []:
-        if f.GetName() == name:
-            return f
-    return None
+    """Bin by name or path ("4. Audio/Narrator") under root; None if any level is missing."""
+    for part in name.split("/"):
+        root = next((f for f in root.GetSubFolderList() or [] if f.GetName() == part), None)
+        if not root:
+            return None
+    return root
+
+
+def ensure_bin(media_pool, name):
+    """find_bin from the media pool root, creating the missing levels."""
+    b = media_pool.GetRootFolder()
+    for part in name.split("/"):
+        b = find_bin(b, part) or media_pool.AddSubFolder(b, part)
+        if not b:
+            raise OpsError(f'Could not create bin "{name}"')
+    return b
+
+
+# Sub-bins of "4. Audio" (user 2026-10-16): narration, music, SFX; beds/environment/natural (A3-A6) -> Ambience.
+AUDIO_TOP = "4. Audio"
+AUDIO_SUB = {2: "Narrator", 7: "Music", 8: "SFX", 9: "SFX"}
+
+
+def audio_bin(track):
+    return f"{AUDIO_TOP}/{AUDIO_SUB.get(track, 'Ambience')}"
 
 
 def _norm(p):
@@ -128,9 +150,12 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
     track = int(rc["audio_track"])
     markers = ac.get("markers", False) if markers is None else markers
     backup = rc.get("backup_timeline", True) if backup is None else backup
-    audio = plan["audio"]
-    if not os.path.isfile(audio):
-        raise OpsError(f"Audio file not found: {audio}")
+    # one narration file bladed per sentence, or one file per sentence (segment "audio", vo-sync on a folder)
+    seg_audio = [s.get("audio") or plan["audio"] for s in plan["segments"]]
+    files = sorted(set(seg_audio))
+    if missing := [f for f in files if not os.path.isfile(f)]:
+        raise OpsError(f"Audio file not found: {missing[0]}" + (f" (+{len(missing) - 1})" if len(missing) > 1 else ""))
+    keys = {_norm(f) for f in files}
 
     pm, project = get_project(resolve)
     tl = find_timeline(project, rc["timeline_name"])
@@ -147,8 +172,9 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
     tl_start = int(tl.GetStartFrame())
     media_pool = project.GetMediaPool()
     root = media_pool.GetRootFolder()
-    bin_ = find_bin(root, rc["audio_bin"])
-    item = find_clip(bin_, audio) if bin_ else None
+    pool = find_bin(root, rc["audio_bin"].split("/")[0])  # search all of "4. Audio": no duplicate imports
+    found = {_norm(f): find_clip(pool, f) if pool else None for f in files}
+    item = next((v for v in found.values() if v), None)  # fps / channels reference (all narration files alike)
     fps_clip = clip_fps(item, fps_tl) if item else fps_tl
 
     items, conflicts = layout(plan["segments"], fps_tl, fps_clip, ac, on_overlap)
@@ -163,7 +189,7 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
     existing = []
     if int(tl.GetTrackCount("audio") or 0) >= track:
         existing = tl.GetItemListInTrack("audio", track) or []
-    ours = [ti for ti in existing if _norm(_item_path(ti)) == _norm(audio)]
+    ours = [ti for ti in existing if _norm(_item_path(ti)) in keys]
     others = [ti for ti in existing if ti not in ours]
     if others and not force_clear:
         raise OpsError(f"Track A{track} already holds {len(others)} clip(s) from other media. "
@@ -186,20 +212,18 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
             log(f"warning: backup failed ({e}); continuing")
         project.SetCurrentTimeline(tl)
 
-    if not bin_:
-        bin_ = media_pool.AddSubFolder(root, rc["audio_bin"])
-        if not bin_:
-            raise OpsError(f'Could not create bin "{rc["audio_bin"]}"')
-        result["bin_created"] = True
-        log(f'created bin "{rc["audio_bin"]}"')
-    if not item:
-        media_pool.SetCurrentFolder(bin_)
-        imported = media_pool.ImportMedia([os.path.normpath(audio)])
-        if not imported:
-            raise OpsError(f"Resolve could not import {audio}")
-        item = imported[0]
-        result["imported"] = True
-        log(f'imported "{os.path.basename(audio)}" into bin "{rc["audio_bin"]}"')
+    new = [f for f in files if not found[_norm(f)]]
+    if new:
+        result["bin_created"] = not find_bin(root, rc["audio_bin"])
+        media_pool.SetCurrentFolder(ensure_bin(media_pool, rc["audio_bin"]))
+        for it in media_pool.ImportMedia([os.path.normpath(f) for f in new]) or []:
+            found[_norm(it.GetClipProperty("File Path"))] = it
+        if bad := [f for f in new if not found[_norm(f)]]:
+            raise OpsError(f"Resolve could not import {bad[0]}" + (f" (+{len(bad) - 1})" if len(bad) > 1 else ""))
+        result["imported"] = len(new)
+        log(f'imported {len(new)} file(s) into bin "{rc["audio_bin"]}"')
+    if item is None:  # nothing was in the pool: fps of the first import
+        item = found[_norm(files[0])]
         new_fps = clip_fps(item, fps_tl)
         if abs(new_fps - fps_clip) > 1e-3:  # recompute with the real clip rate
             fps_clip = new_fps
@@ -217,9 +241,9 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
 
     # one AppendToTimeline per segment -> exact item <-> segment mapping
     placed = []
-    for it in items:
+    for it, src in zip(items, seg_audio):  # layout keeps the segment order
         info = {
-            "mediaPoolItem": item,
+            "mediaPoolItem": found[_norm(src)],
             "startFrame": int(it["src_in_f"]),
             # endFrame passed as last frame; whether Resolve treats it inclusive or exclusive,
             # the item is at most 1 frame of tail-silence shorter. verify() reports the result.
@@ -248,6 +272,10 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
     log(f"placed {len(placed)}/{len(items)} segments on A{track}")
 
     _verify(placed, tl_start, result)
+    try:  # a bilingual timestamp file also gives the subtitles; never fails the A2 placement
+        place_subtitles(project, tl, plan, items, fps_tl, fps_clip, log)
+    except Exception as e:  # noqa: BLE001
+        log(f"subtitles: failed ({e})")
     if markers:
         _write_markers(tl, items, ac, fps_tl)
     if rc.get("save_project", True):
@@ -256,6 +284,52 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
         except Exception:  # noqa: BLE001
             pass
     return result
+
+
+def _srt_time(sec):
+    ms = round(sec * 1000)
+    return f"{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
+
+
+def place_subtitles(project, tl, plan, items, fps_tl, fps_clip, log=print, section="vietnamese"):
+    """`## Vietnamese` part of a bilingual timestamp file -> <video>\\subtitles_vi.srt (sentence n shown while
+    A2 item n speaks) -> Subtitle 1. Skipped when the file has no such part or Subtitle 1 is not empty."""
+    from .timestamps import parse_timestamp_file
+    ts = Path(plan["timestamps"])
+    if f"## {section}" not in ts.read_text(encoding="utf-8-sig").lower():
+        return None
+    subs = parse_timestamp_file(ts, section)
+    if len(subs) != len(items):
+        log(f"subtitles: skipped, {len(subs)} {section} lines vs {len(items)} narration lines")
+        return None
+    ratio = fps_tl / fps_clip  # speech_*_f / src_in_f are source frames, rec_f timeline frames
+    spans = [(it["rec_f"] + (it["speech_in_f"] - it["src_in_f"]) * ratio,
+              it["rec_f"] + (it["speech_out_f"] - it["src_in_f"]) * ratio) for it in items]
+    rows = []
+    for k, ((a, b), c) in enumerate(zip(spans, subs)):
+        if k + 1 < len(spans):
+            b = min(b, spans[k + 1][0] - 1)
+        rows.append(f"{k + 1}\n{_srt_time(a / fps_tl)} --> {_srt_time(b / fps_tl)}\n{c.text}\n")
+    srt = ts.parent.parent / f"subtitles_{section[:2]}.srt"
+    srt.write_text("\n".join(rows), encoding="utf-8")
+    log(f"subtitles: {len(rows)} lines -> {srt}")
+
+    n = int(tl.GetTrackCount("subtitle") or 0)
+    if n and tl.GetItemListInTrack("subtitle", 1):
+        log("subtitles: Subtitle 1 is not empty, not placed (the .srt is written)")
+        return srt
+    if not n:
+        tl.AddTrack("subtitle")
+    media_pool = project.GetMediaPool()
+    media_pool.SetCurrentFolder(ensure_bin(media_pool, "5. Subtitles"))
+    clip = (media_pool.ImportMedia([str(srt)]) or [None])[0]
+    if not clip or not media_pool.AppendToTimeline([{"mediaPoolItem": clip, "recordFrame": int(tl.GetStartFrame())}]):
+        log("subtitles: import/append failed, drag the .srt onto the timeline by hand")
+        return srt
+    got = tl.GetItemListInTrack("subtitle", 1) or []
+    log(f"subtitles: {len(got)} item(s) on Subtitle 1, first at frame "
+        f"{got[0].GetStart() - int(tl.GetStartFrame()) if got else '-'} (expected {round(spans[0][0])})")
+    return srt
 
 
 def _verify(placed, tl_start, result):
@@ -361,7 +435,18 @@ def export_frames(resolve, cfg, times, out_dir):
         page = resolve.GetCurrentPage()
     except Exception:  # noqa: BLE001
         page = None
-    results = []
+    results, last = [], None
+
+    def grab(tc, path):
+        # africa_1 2026-10-22: exported right after the jump, the 2nd still was the 1st frame again -> wait until the
+        # playhead is there, and re-export once when the file is byte-identical to the previous still
+        tl.SetCurrentTimecode(tc)
+        for _ in range(20):
+            if tl.GetCurrentTimecode() == tc:
+                break
+            time.sleep(0.05)
+        time.sleep(0.15)
+        return project.ExportCurrentFrameAsStill(str(path))
     for t in times:
         if t.count(":") == 3:
             frame = tc_to_frames(t, fps)
@@ -369,12 +454,14 @@ def export_frames(resolve, cfg, times, out_dir):
             frame = start + round(parse_clock(t) * round(fps))
         tc = frames_to_tc(frame, fps)
         path = out_dir / f"frame_{tc.replace(':', '-')}.png"
-        tl.SetCurrentTimecode(tc)
-        ok = project.ExportCurrentFrameAsStill(str(path))
+        ok = grab(tc, path)
         if not ok and page != "color":
             resolve.OpenPage("color")
-            tl.SetCurrentTimecode(tc)
-            ok = project.ExportCurrentFrameAsStill(str(path))
+            ok = grab(tc, path)
+        if ok and path.exists() and last is not None and path.read_bytes() == last:
+            time.sleep(0.5)
+            ok = grab(tc, path)
+        last = path.read_bytes() if path.exists() else None
         results.append({"at": t, "tc": tc, "path": str(path), "ok": bool(ok) and path.exists()})
     if page:
         try:

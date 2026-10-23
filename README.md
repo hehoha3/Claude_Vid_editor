@@ -38,7 +38,7 @@ Sau đó:
 | Nhận riêng | Đặt vào | Để làm gì |
 |---|---|---|
 | Ghi chú memory dự án | `.work\knowledge\` | Claude nhớ quyết định, sự cố, trạng thái video |
-| Ledger clip của kênh bạn dựng | `.work\doc_edit\ledgers\` | Video mới không lặp clip của 4 video gần nhất |
+| Ledger clip của kênh bạn dựng | `.work\doc_edit\ledgers\` | Video mới không lặp clip của 6 video gần nhất |
 | `audio_licenses.md` | `.work\` | License nhạc Envato |
 | Clip AI | `D:\AI_video\` | Footage AI |
 
@@ -53,26 +53,26 @@ D:\Chann_<tên kênh>\           <- một "workspace" = một kênh
     _done\<video>\             <- video đã xong (do /doc-edit done chuyển vào)
 ```
 Tên project trong Resolve = tên thư mục video. Mỗi project có timeline **Edit** (phim) và **Open** (intro).
-Một video mới **không dùng lại clip** của 4 video gần nhất cùng kênh.
+Một video mới **không dùng lại clip** của 6 video gần nhất cùng kênh.
 
 ## 4. Quy trình làm một video
 
-Mở Claude trong thư mục repo (`claude`), mở project video trong Resolve, rồi gõ lần lượt. **Sau mỗi bước Claude
-dừng lại để bạn duyệt**; bạn nói "ok" thì mới sang bước sau.
+Mở Claude trong thư mục repo (`claude`), mở project video trong Resolve, rồi **bạn tự gọi từng bước**; Claude làm xong
+bước đó thì dừng, không tự chuyển sang bước sau.
 
 | # | Gõ | Kết quả |
 |---|---|---|
-| 1 | `/doc-edit D:\Chann_X\video\audios` | Narration lên A2, cắt đúng từng câu theo timestamp |
-| 2 | `/doc-edit plan` | Danh sách shot + clip chọn sẵn + âm thanh → `plan.md` để bạn duyệt |
-| 3 | `/doc-edit place` | Đặt V1, âm thanh A3-A9, marker đỏ ở chỗ THIẾU footage (có backup timeline) |
-| 4 | `/doc-edit missing-prompts` | Prompt để bạn tự tạo clip AI cho các shot THIẾU |
-| 5 | Lưu clip AI mới vào `D:\AI_video\_check` → `/process-ai-video` → `/scan-source ai` → `/tag-source` | Clip mới được xử lý, gắn tag, xếp vào thư mục loài |
-| 6 | Lặp lại 2 → 3 | Lấp chỗ THIẾU |
-| 7 | `/doc-edit reframe` | Lấp viền đen, vài cú punch-in có chủ đích |
-| 8 | `/intro-music-visualization` | Dựng intro theo nhạc trên timeline Open |
-| 9 | `/audio-expert` | Nhạc, SFX, âm thanh tự nhiên A5-A9 |
-| 10 | "chỉnh màu cho đồng bộ" | `colorist` (grade.py): cả phim như cùng một nơi |
-| 11 | `/doc-edit done <video>` | Ghi ledger, chuyển thư mục vào `_done`, đóng Resolve |
+| 1 | `/doc-edit D:\Chann_X\video\audios amazon` (hoặc `africa`) | Narration lên A2 + plan + prompt shot THIẾU + đặt V1, A3-A9, marker (có backup) |
+| 2 | Tạo clip AI theo `missing_prompts.txt`, lưu vào `D:\AI_video\_check` (Africa: `D:\AI_video\_africa\_check`) | |
+| 3 | `/doc-edit logo` → `/doc-edit delogo` | Tìm và xoá logo trên clip mới |
+| 4 | `/doc-edit ingest --fill` | Scan + tag + xếp clip mới vào thư mục loài, lấp các slot THIẾU |
+| 5 | `/doc-edit reframe` | Lấp viền đen, vài cú punch-in có chủ đích |
+| 6 | `/audio-expert` | Nhạc, SFX, âm thanh tự nhiên A5-A9 |
+| 7 | `/doc-edit color` | Chỉnh màu nhẹ, tươi sáng; cỏ vàng chỉ trong đoạn cỏ cháy (xem trước rồi mới áp) |
+| 8 | `/doc-edit done <video>` | Render file Done, license, ledger, chuyển thư mục vào `_done`, đóng Resolve |
+
+Lệnh rời: `/doc-edit plan` (lên lại plan), `/doc-edit missing-prompts [mm:ss-mm:ss]`, `/doc-edit place`,
+`/doc-edit fill`, `/doc-edit status` (mọi video đang ở bước nào).
 
 Sửa nhỏ bất cứ lúc nào, nói tự nhiên:
 - "shot ở 21:38 có logo góc trên trái" → xoá logo, relink (bản sạch nằm ở `D:\AI_video\_nologo`)
@@ -89,6 +89,7 @@ Sửa nhỏ bất cứ lúc nào, nói tự nhiên:
 | `/doc-edit check-timelines` | Ghi lại clip đang dùng trên Edit + Open vào ledger |
 | `/memory-find <từ khoá>` / `/memory-save <điều cần nhớ>` | Tìm / lưu memory dự án |
 | `.\dvr.cmd info` · `at 21:09` · `find shot_028` · `offline` | Xem nhanh không cần Claude |
+| `.\dvr.cmd backups` | Đếm timeline backup (nhiều quá làm Resolve lag); `--keep 3 --apply` dọn bớt |
 
 ## 6. Luật an toàn (Claude luôn tuân theo)
 

@@ -5,46 +5,55 @@ description: Colorist for Resolve - scopes, nodes, primaries/secondaries, shot m
 
 # Colorist
 
-Read the reference that fits the question; do not load all of them:
+Read only the reference that fits the question:
 - `references/pipeline.md` - color management, scopes, node tree template, primaries/secondaries tools
 - `references/looks.md` - aesthetic principles, story color scripting, wildlife/environment recipes
 - `references/ai-footage.md` - problems specific to generated clips and how to fix them
-- `luts/README.md` (workspace root) - the channel's AMZ LUT library, its design rules and how to rebuild/install it
+- `luts/README.md` (workspace root) - the channel's AMZ LUT library, its design rules, rebuild/install
 
 ## Non-negotiables
-1. Balance before look. Every shot gets a neutral, matched base (exposure, white balance, contrast)
-   on its own nodes before any creative node. A look on an unbalanced shot multiplies the error.
-2. Judge on scopes, confirm with eyes. Waveform/parade for levels and balance, vectorscope for hue
-   and saturation; the image for intent. Viewer brightness and room light lie.
-3. Match to a hero shot per scene, not to the previous shot (prevents drift across a sequence).
+1. Balance before look: neutral, matched base (exposure, white balance, contrast) on its own nodes before any creative
+   node; a look on an unbalanced shot multiplies the error.
+2. Judge on scopes, confirm with eyes: waveform/parade for levels and balance, vectorscope for hue and saturation, the
+   image for intent. Viewer brightness and room light lie.
+3. Match to a hero shot per scene, not to the previous shot (no drift across a sequence).
 4. Subtractive before additive: remove casts and excess saturation first, then add.
-5. Keep the hierarchy: brightest + most saturated + sharpest area = where the eye should go
-   (usually the animal's eye/face). Background must not out-shout the subject.
+5. Hierarchy: brightest + most saturated + sharpest area = where the eye should go (usually the animal's eye/face);
+   the background never out-shouts the subject.
 6. One look per story chapter, varied deliberately (color script), consistent within the chapter.
-7. Protect natural references: fur, feathers, foliage, water and sky have expected hues; viewers
-   notice when a lion turns orange or a canopy turns neon.
+7. Protect natural references: fur, feathers, foliage, water and sky have expected hues (a lion turning orange or a
+   neon canopy is noticed).
 
-## Match a whole edit (same place, same time): `scripts/match.py` (default since 2026-10-16)
-User priority: every shot of a scene must look like one place and time, reviewable at once, few fixes. Claude runs
-the whole loop itself; the user only reviews heroes once and the green markers after.
+## `/doc-edit color` = light pass `scripts/light.py` (user 2026-10-22: "không cần đồng bộ quá đà", vivid + bright)
 
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py plan     # Resolve untouched; background (~5-10 min first run)
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py apply    # only after the user's "yes" (overwrites node 1)
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py verify   # ExportLUT per shot -> real numbers + markers
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py note 02:41 group=Day warm=-0.01 "note=..."
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py plan    # Resolve untouched
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/dry_preview.py <project>   # golden-grass before/after
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply   # backup Edit_bak_light_<stamp>, CDL node 1
 
-Clip node 1 = CDL (balance, grade.py solver) + a per-shot match LUT (Resolve runs the node CDL before the node LUT);
-the AMZ look LUT stays on the Color Group post-clip node. Scenes are cut from the measured look; one hero per scene
-(real footage first); every shot is pulled to its hero per hue band (neutral, fur/earth, foliage, sky/water) and in
-lightness, heroes half-way to the group, so scenes differ but the film is one place. Light group = tag corrected by the
-image. Read only stdout: whole-group and in-scene spread (L, colour) balance-only -> matched, flagged list, heroes.
-View `heroes.jpg` (all heroes) and `scenes.jpg` (6 scenes: left balance only, right matched; col 1 = hero) once.
-Flow per video: plan -> show the user heroes.jpg (swap: `note <tc> hero=1`) -> "yes" -> apply -> verify -> report
-spreads + marker count. User notes ("02:41 lá vàng chanh") -> `note` (group / hero / strength 0-1 / skip / exp / warm /
-sat), re-plan, apply, verify. Notes live in `.work/grade/<project>/overrides.json` and survive re-plans.
-Not scriptable (API): curves, qualifiers, windows, Hue vs Sat, Color Warper -> tell the user node + values.
+**Per shot: one small CDL on node 1** (~1 min for 1000 shots, frame cache; no group look LUT):
+- exposure toward the film median x0.35; cast from near-grey pixels x0.4; slope 0.93-1.07 +-3 % per channel; power
+  <= 1.04 on flat shots; sat 0.80-1.25;
+- "màu tươi" (user 2026-10-22): every day shot below SAT_HI gets sat >= x1.10, dull ones sqrt(0.42 / sat), never past
+  SAT_HI; night stays muted; over-saturated AI clips come down;
+- intro shots (spec `# INTRO`) get 30 %; a correction that adds clip / crush / neon is halved until it does not.
 
-`grade.py` (balance only, CDL per light group) stays as the solver match.py builds on; use it alone only if asked.
+**Golden grass** (user 2026-10-22, 02:25 impala pair; `dry_pass`), ONLY inside a daytime stretch of burnt / golden
+grass (same story, +-5 shots, >= 60 % of the day shots golden):
+- a shot whose grass is greener (+8 deg hue) or paler (gold sat < 75 %) gets the stretch's golden grass as its own
+  LUT on node 1 (`dry_auto_<frame>.cube`, match.dry, strength 1);
+- never: intro, night / dusk / golden light, water settings, fog / dust / grey shots (sat < 0.16);
+- match.dry keeps saturated leaves, greys and haze, never lifts sat past the gold or the hue > 3 deg under it; a result
+  that adds neon orange, clip or sat95 is halved, then dropped;
+- before apply view every sheet `.work/grade/<project>/dry_preview_N.jpg`.
+
+**After apply** ALWAYS look at >= 12 real frames spread over the film + any shot the user named before reporting
+(africa_1: match.py broke shots the numbers called fine). A shot still off: tell the user, fix that one shot.
+
+## Heavy scene match `scripts/match.py` (ONLY when the user names it; africa_1 2026-10-22 it broke shots)
+Per-shot CDL + match LUT toward one hero per scene (scenes never cross a `# STORY`). Commands and flow in the match.py
+docstring: `plan` (background) -> show heroes.jpg -> user "yes" -> `apply` -> `verify`; `note <tc> k=v` overrides
+survive re-plans. `grade.py` (balance only, CDL per light group) is the solver match.py builds on; alone only if asked.
+Not scriptable: curves, qualifiers, windows, Hue vs Sat, Color Warper -> tell the user node + values.
 
 ## Fast diagnosis -> first move
 | symptom (stats/scopes) | first move |
@@ -57,6 +66,6 @@ Not scriptable (API): curves, qualifiers, windows, Hue vs Sat, Color Warper -> t
 | sat_p95 > 0.75 | global saturation down, then Hue vs Sat on the offending hue |
 | flat, lifeless (contrast < 0.5) | contrast + pivot, or Custom curve S; add local contrast via Midtone Detail sparingly |
 
-## Answer format for grading advice
-Observation (numbers/what you see) -> action in Resolve (palette, control, starting value, node) ->
-why -> alternative (different look) and trade-off -> what to check on neighbouring shots.
+## Grading advice format
+Observation (numbers / what you see) -> action in Resolve (palette, control, starting value, node) -> why ->
+alternative (different look) + trade-off -> what to check on neighbouring shots.

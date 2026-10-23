@@ -1,9 +1,11 @@
-# Edit grammar (doc-edit step 2)
+# Edit grammar (doc-edit plan)
 
 ## Shots
-- Opening shot (user rule 2026-10-13): the first footage shot of "Edit" is a landscape (`sp=none size=wide` or
-  `aerial`, `real` preferred), held only 3-4 s, a little longer than every other intro shot (e.g. 3.5 s, then
-  1.8-3 s). plan.py rejects anything else. A GFX title before it is allowed.
+- Opening shot, two forms (spec header `# OPENING landscape|action`, default landscape = every video before):
+  `landscape` (user rule 2026-10-13): `sp=none size=wide|aerial`, `real` preferred, held 3-4 s, a little longer than
+  every other intro shot. `action`: the first shot is a real event on screen (`sp=<animal>` + `act=run|fight|attack|
+  hunt|stalk|jump`), and a wide / medium / aerial shot with an animal that says who is where starts within 20 s.
+  plan.py rejects anything else. A GFX title before either is allowed.
 - Continuity from the screenplay: same individuals, positions, travel direction, setting across a story.
 - Order inside a beat: establishing -> subject -> object/reaction -> atmosphere -> payoff.
 - Change shot size between adjacent shots; keep screen direction; day/night and light progression match the
@@ -20,13 +22,75 @@
 - Missing the right clip: THIẾU (red marker, user generates it) beats a wrong animal; plan.py never puts a side
   shot fallback under narration.
 
+## Opening 0:00-1:30 and story 1: the hook (user 2026-10-17, widened 2026-10-21)
+Biome tuning (savanna / rainforest, ordering of beats, pauses, 2-3 small examples): `references/biome-story-pacing.md`.
+Spec headers (all optional): `# INTRO 1:30` (0:15-2:00; > 0:30 needs >= 50% of the intro on `[tag]` character shots),
+`# OPENING action`, `# BIOME savanna|rainforest`, `# FAST_UNTIL m:ss` (story cue for the hook + first two stories, no
+cut-rate rule), `# STORY n m:ss` (chapter starts, rising, inside END, STORY 1 at/after INTRO, never inside a voice cue),
+`# TURN` under a `## N` where the advantage really changes (counted in the chapter report).
+The first 90 s decide whether the viewer stays, story 1 whether they finish. Plan the opening as ONE micro-story with
+cause and effect, not a reel of unrelated attacks: place + threat -> one animal with a concrete cost -> a change of
+advantage -> a consequence that hands an open question to story 1. Find these beats in the screenplay's opening;
+the clock is a frame, the screenplay's events win (a contact written at 0:38 stays at 0:38, cause before effect).
+
+| ~time | function | picture | narrator |
+|---|---|---|---|
+| 0:00-0:12 | the disturbance has begun | (`landscape` form: after the 3-4 s landscape; `action` form: from frame 1) prey turns, predator accelerates, an alarm with a visible reaction, a standoff already open | one line of risk, then the action shows itself |
+| 0:12-0:30 | geography of the encounter | medium / wide with both sides, the obstacle, the way out | only what cannot be seen |
+| 0:30-0:55 | escalation | one continuous action: stalk -> spot -> lunge / run, or holding prey -> rival closes in | silent on the clearest lunge / contact |
+| 0:55-1:12 | reversal / near result | prey escapes, hunter misses, short struggle, the weaker one takes the place | names what changed |
+| 1:12-1:30 | consequence + bridge | reaction, lost prey, a new path, a danger still open | the big question, into story 1 |
+
+- `# INTRO` (beat cuts) is the micro-story's first beat, not a scenery reel: landscape opening shot, then the threat
+  on tagged character shots by ~0:10-0:15; at most 1-2 other side shots inside it. Its A7 cue sits on the first shot
+  (tense / epic with hits); plan.py snaps every intro cut onto it (hit B3+ within 0.45 s, else bar, else beat within
+  0.25 s; `intro beat:` line): write varied durations (short on the build, the bigger image on the bigger hit). `action` opening: if it starts at
+  the point of conflict, step back in time with a clear transition (never pretend one continuous take), and show the
+  placing wide by 10-20 s. Slow motion only when the real clip has the frames and it helps read the action; show it
+  once at normal speed too.
+- Intro footage = highlights of the later stories (user 2026-10-22, africa_1): plan.py `highlights()` gives every
+  intro shot with an animal the frames of a later OK story shot of the same species (chase / fight first, >= 5 min
+  later, the line's `no=` + no carcass / meal, same-frame cap 3), played at 136-150 %; scenery intro shots keep their
+  own clip. plan.md marks them `★#<slot>`. Re-cut only the intro: delete V1/A1 items before 1:30 (user yes, backup),
+  then `place.py <video> --fill --until 90`. Epic intro, no empty slot (user 2026-10-22): `split_intro()` cuts every
+  animal intro shot into 1.0-2.2 s pieces on music hits / bars / beats; a species without later footage takes a
+  related species' chase (KIN class), then any chase / fight. Lines with a calm act (look / rest) keep calm footage.
+- Intro ends with its music (user 2026-10-22): `intro_outro()` makes the last 4 s before the intro music's end one
+  landscape fading to black (1.5 s, place.py `SetFades`); story 1's first shot (write it as a landscape, sp=none)
+  starts at the music end and fades in from black (2.5 s). Intro shots after that point are dropped (their A7 'off'
+  too); the A7 intro music must play from its file start (africa_1 had a 34-frame head trim: beats + end were off).
+- Leave one stretch without narration so the viewer hears real movement. Test the hook muted (geography is clear)
+  and with eyes closed (the sound means something). plan.py prints a hook hypothesis, not a retention KPI: measure
+  retention after publishing.
+- One event, one place: same individuals and count, same site, time of day, light and screen direction for the 90 s
+  (same `dir` / `light` tokens on its shots). Never cut two hunts, species or sites into one claimed event; a
+  clip whose action exists only in the caption is not the action.
+- Clip picks here are stricter (the viewer must read who does what to whom; strikes read from medium / wide, see
+  Visual thinking). Hard reject: wrong species / forest, action not visible, facing
+  directions that cannot cut together, count changes without a bridge, AI anatomy errors or bodies passing through
+  things. Violence is no bonus without a story role; no gore, don't hold on biting.
+- No chase / fight footage of the species -> a credible approach, alarm, retreat or contested resource on screen,
+  the missing action as THIẾU (the user generates it); never another animal standing in.
+- VO-free windows (VO ● empty in the opening) carry the decisive movement on character shots, never side shots.
+  One quiet reaction / aftermath shot (3.5-5 s) after each result makes the next escalation hit.
+- Sound: music curve per beat (Sound that moves the viewer): A6 natural first, music rises when a choice turns
+  dangerous, drops out only where hearing the contact helps; A8/A9 on changes of advantage, never on every cut.
+- Mute test, from plan.md's shot texts alone: at 0:30, 1:00 and 1:30 a stranger can name the subject, the obstacle,
+  the event, the outcome and what is still open. "Many animals fighting" -> reorder, add a positioning wide, or drop
+  an encounter.
+- Story 1 (the main emotional entry, often ~6 min): protagonist, goal, obstacle, place, action, result, consequence
+  each visible in some shot; side shots only as cutaways in its pauses; a quiet beat before every escalation; it ends
+  on a meaningful visible result (catch, escape, loss, the young safe) held on a long aftermath shot, never on a
+  scenery fade.
+
 ## Visual thinking (learned from WILD JAVARÍ, Nature's Tether, 2026-10-13)
 Before writing a sentence's shots decide, in this order: emotional tone (calm / tense / urgent) -> focal point
 (what the eye must land on: the eyes, a paw on a branch, the water surface, the coil) -> light. The shot text and
 filter follow from these three, not from the nouns of the sentence alone.
 - Scale ladder per beat: establish (`size=aerial,wide`: where, how hostile) -> context (`medium`: the animal in
-  its place) -> tension (`close_up`: eye, step, breath) -> impact (`extreme_close`: claws, teeth, scales, the bite)
-  on the strike. Not every beat climbs all four, but a strike without its close/extreme_close detail feels empty.
+  its place) -> tension (`close_up`: eye, step, breath) -> impact. Not every beat climbs all four. A strike reads from
+  medium / wide (distance, direction, rival, way out); `extreme_close` (claws, teeth) is an accent only when the
+  footage has it, never a requirement.
 - Angle carries meaning (`ang`): `low` = power, menace, the hero ruling its place; `top_down` (or `aerial`) =
   vastness, loneliness, the animal small in its world; `high` = vulnerability (prey, the ambushed hero);
   `eye` = intimacy, the animal's point of view.
@@ -43,7 +107,8 @@ filter follow from these three, not from the nouns of the sentence alone.
   (`kw=shadow` / `kw=sunlight` when the captions use them); never a flat, evenly lit frame for the hero's intro.
 
 ## Rhythm - shot length follows the story's emotion, never a metronome
-Lengths 1.2-6 s. Decide each length from what the moment feels like, then mix:
+Lengths mostly 1.2-6 s (a hold longer or a flash shorter is a story choice: only < 0.8 s or > 10 s is an error).
+Decide each length from what the moment feels like, then mix:
 - Short 1.2-2 s: tension, danger, chase, fight, quick reactions, a list of things ("ăn quả, bắt côn trùng...").
   Cut shorter and shorter as tension rises (3.0 -> 2.2 -> 1.6 -> 1.3), then release.
 - Medium 2-3 s: ordinary narration, showing what the sentence names.
@@ -51,14 +116,13 @@ Lengths 1.2-6 s. Decide each length from what the moment feels like, then mix:
   rest after the chase), a reveal, the payoff of a sequence. The shot right after a climax is long: let it breathe.
 - A long sentence is not split evenly: e.g. 3.8 + 1.7 + 2.3, not 2.6 + 2.6 + 2.6. A pause > 6 s is a short
   sequence (e.g. 1.6 + 2.0 + 4.0), not one held shot.
-- plan.py checks: no shot outside 1.2-6 s, no 4 shots in a row within 0.4 s of each other, >= 25% shots <= 2 s
-  and >= 10% shots >= 3.5 s. Aim higher than the minimum where the story allows.
+- plan.py: errors only for shots < 0.8 s or > 10 s; warnings for shots outside 1.2-6 s and 4 shots in a row within
+  0.4 s; no film-wide quota. The reply gives per-chapter numbers (HOOK / STORY n: shots, <=2 s and >=3.5 s share,
+  side time, THIẾU, marked `# TURN`s); judge each chapter by its job: action cuts fast, waiting and consequence hold.
 
 ## Side shots (scenery, birds, insects, butterfly, frog, others, a friendly non-main species) - seasoning
 Side shot = any footage shot whose `need` has no `[tag]` of a main character.
-- Intro: free, scenery and diversity open the film. Short: 15-30 s, set per video in the spec header
-  `# INTRO m:ss` (0:15-0:30, default 0:15); end it where the first story / main character starts.
-- After the intro the main characters carry every story: side shots <= 30% of footage time per video and
+- Side shots inside the intro are not counted (rules in the Opening section). After the intro the main characters carry every story: side shots <= 30% of footage time per video and
   clearly less than the characters' screen time in each story.
 - Runs: 1 side shot = a cutaway that lets a moment breathe (most common); 2 = a short diversity beat or a
   pause (~4-7 s); 3 = only at a story/location transition or a long pause (> ~7 s), at most once per ~5 min.
@@ -75,8 +139,14 @@ Side shot = any footage shot whose `need` has no `[tag]` of a main character.
   only when an AI look would hurt (hero wide, aerial).
 - Real next to AI is fine: the grade makes them one place and moment. Keep the same individual's look
   (size, markings, setting) consistent across the cut.
-- Reuse: clips on "Edit" + "Open" of the last 4 checked videos of the same workspace are never used. Inside one video a clip may serve up to 3 slots,
-  >= 2 min apart, each from a different part of the clip (plan.md marks it ↻2 / ↻3); fresh clips win first.
+- Reuse: clips on "Edit" + "Open" of the last 6 checked videos of the same workspace are never used. Inside one video
+  (user 2026-10-22: save source, not too often, not too rarely) a clip may serve up to 6 slots, >= 90 s apart: another
+  part of the clip first, else the same frames again, but no frame on screen more than 3 times and those repeats >= 5
+  min apart (plan.md ↻n, `=frame`); fresh clips still win at similar fit. Parts already on "Open" never come back.
+- Zoom + speed (user 2026-10-22, plan.py `vary`, place.py applies, plan.md ⏱ / 🔍): real clips shot above 25 fps
+  play frame-exact at 24/fps (30 fps = 80 %) except on strikes and in the hook; true slow motion (<= 50 %, 50/60 fps
+  sources) only on calm holds >= 3 s, one per 20 s; aerial scenery every 2nd at 120 %. Punch-in 1.12-1.25 on 4K
+  sources, never on close-ups: every other reuse, every same-frame repeat, every 5th fresh shot.
 - `GFX` = black / title / map, no footage.
 
 ## Shot text (`need`)

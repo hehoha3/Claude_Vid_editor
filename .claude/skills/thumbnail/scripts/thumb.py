@@ -6,7 +6,7 @@ folder), never overwrites.
   thumb.py --selftest
 
 finish -> <out-dir>/<stem>/ (source moved in) with <stem>[_vN].psd (layered), <stem>_clean.png 3840x2160
-(no text/logo), <stem>_final.jpg 1280x720. Brightness/saturation auto-target the look of references/look-ref.png.
+(no text/logo), <stem>_final.jpg 3840x2160 (< 2 MB). Brightness/saturation auto-target the look of references/look-ref.png.
 """
 import argparse, filecmp, json, math, os, shutil, subprocess, sys
 from pathlib import Path
@@ -25,18 +25,24 @@ LAYOUT = {
 }
 # Look target = still_stats of references/look-ref.png (user's reference, 2026-10-15): bright daylight, vivid colour.
 TARGET = {"p50": 0.34, "sat": 0.50}
+# *_africa_N images (user 2026-10-22): golden-hour savannah ADN of his reference frame (bright luminous lime-gold grass,
+# lifted shadows, warm light, p50 .58 / sat .59 / midtone RGB .72 .53 .29), NOT the earlier muddy-olive v2/v3 looks.
+AFRICA = {"warm": 20, "bg_ev": 0.0, "yellow_sat": 8, "green_sat": 10, "gamma": 1.3, "curve": 3}
+AFRICA_TARGET = {"p50": 0.58, "sat": 0.59}
 
 
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
-def auto_wb(st):
+def auto_wb(st, keep_warm=False):
     """colorBalance midtones [cyan-red, magenta-green, yellow-blue] that pull R/B toward neutral; green is left
-    alone (foliage, and look-ref itself is +G). thumb_1 (-B 0.076) -> [-5, 0, 8], what was hand-picked."""
+    alone (foliage, and look-ref itself is +G). thumb_1 (-B 0.076) -> [-5, 0, 8], what was hand-picked.
+    keep_warm (africa): only fix a cool cast, never remove red/yellow."""
     rgb = st["midtone_rgb"] or [0.5, 0.5, 0.5]
     m = sum(rgb) / 3
-    return [int(clamp(round(-(rgb[0] - m) * 80), -15, 15)), 0, int(clamp(round(-(rgb[2] - m) * 105), -15, 15))]
+    r, b = int(clamp(round(-(rgb[0] - m) * 80), -15, 15)), int(clamp(round(-(rgb[2] - m) * 105), -15, 15))
+    return [max(r, 0), 0, min(b, 0)] if keep_warm else [r, 0, b]
 
 
 def look_delta(st):
@@ -70,6 +76,16 @@ def edit_psd(psd, cmds):
     res = run(psd, cmds, tmp)
     os.replace(tmp, psd)
     return res
+
+
+def render_final(psd, final):
+    """PSD -> 3840x2160 JPG (user 2026-10-21, was 1280x720), quality stepped down until under YouTube's 2 MB."""
+    for q in (90, 85, 80, 75, 70):
+        tmp = final.with_name(final.stem + "_tmp.jpg")
+        run(psd, [], tmp, "--quality", str(q))
+        if tmp.stat().st_size < 2_000_000 or q == 70:
+            os.replace(tmp, final)
+            return q
 
 
 def crop_169(w, h):
@@ -124,16 +140,26 @@ def cmd_finish(a):
     elif src != work / src.name and not filecmp.cmp(src, work / src.name, shallow=False):
         sys.exit(f"different image already named {work / src.name}; rename the source")
     src = work / src.name
-    stem = free_stem(work, src.stem)
+    stem = free_stem(work, a.prefix + src.stem + getattr(a, "suffix", ""))
     psd, clean, final = work / f"{stem}.psd", work / f"{stem}_clean.png", work / f"{stem}_final.jpg"
     assert src not in (psd, clean, final)
 
     d = info(src)
     src_st = still_stats(src)
+    africa = "_africa_" in src.stem.lower()
+    if africa:
+        TARGET.update(AFRICA_TARGET)
     ev0, vib0 = look_delta(src_st)
-    wb = auto_wb(src_st) if a.wb == "auto" else [int(v) for v in a.wb.split(",")]
+    wb = auto_wb(src_st, keep_warm=africa) if a.wb == "auto" else [int(v) for v in a.wb.split(",")]
     ev = round(clamp(ev0, -0.3, 0.9), 2) if a.exposure is None else a.exposure
     vib = int(clamp(vib0, 0, 60)) if a.vibrance is None else a.vibrance
+    warm = a.warm if a.warm is not None else (AFRICA["warm"] if africa else 0)
+    a.bg_ev = a.bg_ev if a.bg_ev is not None else (AFRICA["bg_ev"] if africa else 0.0)
+    a.yellow_sat = a.yellow_sat if a.yellow_sat is not None else (AFRICA["yellow_sat"] if africa else -5)
+    if africa:
+        for k, dflt in (("green_sat", 0), ("gamma", 1.1), ("curve", 6)):
+            if getattr(a, k) == dflt:
+                setattr(a, k, AFRICA[k])
     x, y, cw, ch = [int(v) for v in a.crop.split(",")] if a.crop else crop_169(d["width"], d["height"])
     lay = LAYOUT[a.layout]
     lines = a.text.replace("\\n", "\n").split("\n")
@@ -163,18 +189,21 @@ def cmd_finish(a):
             ("select.deselect", None),
             *named("layer.newAdjustmentLayer.colorBalance", {"midtones": wb},
                    "WB_NEUTRAL"),
+            *(named("layer.newAdjustmentLayer.photoFilter", {"filter": "warming85", "density": warm}, "WARM")
+              if warm else []),
             *named("layer.newAdjustmentLayer.exposure", {"exposure": ev, "gamma": a.gamma}, "BRIGHTNESS"),
             *named("layer.newAdjustmentLayer.curves", {"points": [[0, 0], [64, 64 - c], [192, 192 + c], [255, 255]]},
                    "CURVE_GLOBAL"),
             *named("layer.newAdjustmentLayer.hueSaturation",
                    {"yellows": {"saturation": a.yellow_sat}, "greens": {"saturation": a.green_sat}}, "HSL_YELLOW_GREEN"),
-            *named("layer.newAdjustmentLayer.vibrance", {"vibrance": vib, "saturation": vib // 2}, "VIBRANCE"),
-            *subject, *named("layer.newAdjustmentLayer.exposure", {"exposure": a.subject_ev}, "SUBJECT_POP"),
-            *subject, ("select.inverse", None),
-            *named("layer.newAdjustmentLayer.exposure", {"exposure": a.bg_ev}, "BG_DARKEN"),
-            *subject, ("select.inverse", None),
-            *named("layer.newAdjustmentLayer.hueSaturation", {"saturation": a.bg_sat}, "BG_DESAT"),
-            ("select.deselect", None),
+            *named("layer.newAdjustmentLayer.vibrance", {"vibrance": vib, "saturation": vib // 2}, "VIBRANCE")]
+    pop = [*subject, *named("layer.newAdjustmentLayer.exposure", {"exposure": a.subject_ev}, "SUBJECT_POP"),
+           *subject, ("select.inverse", None),
+           *named("layer.newAdjustmentLayer.exposure", {"exposure": a.bg_ev}, "BG_DARKEN"),
+           *subject, ("select.inverse", None),
+           *named("layer.newAdjustmentLayer.hueSaturation", {"saturation": a.bg_sat}, "BG_DESAT"),
+           ("select.deselect", None)]
+    post = [
             ("layer.newFillLayer.gradient", {"from": "#ffffff", "to": "#000000", "style": "radial"}),
             ("layer.setProps", {"name": "VIGNETTE", "blend": "Multiply", "opacity": a.vignette}),
             ("file.placeEmbedded", {"path": str(ASSETS / f"layout-{a.layout}-guide.png"), "scale": 100,
@@ -188,8 +217,16 @@ def cmd_finish(a):
             *([("layer.layerStyle.stroke", {"size": a.stroke, "position": "outside", "color": "#000000"})]
               if a.stroke > 0 else []),
             shadow]
-    res = run(src, cmds, psd)
-    warns = sorted({w for r in res for w in r.get("warnings", [])})
+    warns = []
+    try:
+        res = run(src, cmds + pop + post, psd)
+    except SystemExit as e:
+        if "no selection" not in str(e):
+            raise
+        # select.subject found no animal (thumb_6_1, 2026-10-19) -> global grade only, no SUBJECT_POP/BG_* layers
+        res = run(src, cmds[:3] + cmds[6:] + post, psd)
+        warns.append("select.subject found no subject: SUBJECT_POP/BG_DARKEN/BG_DESAT skipped")
+    warns = sorted({*warns, *(w for r in res for w in r.get("warnings", []))})
     tb = next((r["result"].get("bounds") for r in res if r.get("command") == "type.create"), None)
     if tb and (tb[2] > tx1 or tb[3] + (gap + thick if a.line != "none" else 0) > ty1 + 8):  # run results give x0,y0,x1,y1 (info gives x,y,w,h)
         warns.append(f"headline overflows title box {lay['title']}: bounds {tb} -> lower --size")
@@ -199,8 +236,7 @@ def cmd_finish(a):
                        ("select.deselect", None)])
 
     ids = {l["name"]: l["id"] for l in info(psd)["layers"]}
-    to_final = [("image.imageSize", {"width": 1280, "height": 720, "resample": "bicubic"})]
-    run(psd, to_final, final, "--quality", "90")
+    q = render_final(psd, final)
     if a.exposure is None and a.vibrance is None:  # one measured correction toward TARGET
         dev, dvib = look_delta(still_stats(final))
         if abs(dev) > 0.1 or abs(dvib) > 6:
@@ -209,14 +245,13 @@ def cmd_finish(a):
                            ("layer.setAdjustment", {"layer": ids["VIBRANCE"], "vibrance": vib,
                                                     "saturation": vib // 2})])
             ids = {l["name"]: l["id"] for l in info(psd)["layers"]}
-            os.remove(final)  # this run's own output, re-rendered next line
-            run(psd, to_final, final, "--quality", "90")
+            q = render_final(psd, final)  # replaces this run's own output
     run(psd, [("layer.setProps", {"layer": ids[n], "visible": False})
               for n in ("LOGO", "HEADLINE", "RED_LINE") if n in ids], clean)
     fs = still_stats(final)
     print(json.dumps({"folder": str(work), "psd": psd.name, "clean": clean.name, "final": final.name,
-                      "crop": [x, y, cw, ch], "layout": a.layout, "size_pt": size, "logo_scale": scale,
-                      "wb": wb, "exposure": ev, "vibrance": vib, "headline_bounds": tb, "warnings": warns,
+                      "final_quality": q, "final_mb": round(final.stat().st_size / 1e6, 2), "crop": [x, y, cw, ch], "layout": a.layout, "size_pt": size, "logo_scale": scale,
+                      "wb": wb, "warm": warm, "exposure": ev, "vibrance": vib, "headline_bounds": tb, "warnings": warns,
                       "final_vs_target": {"p50": [fs["luma_p1_p10_p50_p90_p99"][2], TARGET["p50"]],
                                           "sat": [fs["sat_mean"], TARGET["sat"]]},
                       "final_stats": fs}, ensure_ascii=False))
@@ -244,6 +279,8 @@ def selftest():
     assert auto_wb({"midtone_rgb": [0.441, 0.392, 0.303]}) == [-5, 0, 8]  # thumb_1 yellow cast
     assert auto_wb({"midtone_rgb": [0.4, 0.4, 0.4]}) == [0, 0, 0]
     assert auto_wb({"midtone_rgb": [0.37, 0.45, 0.34]}) == [1, 0, 5]  # look-ref: green kept
+    assert auto_wb({"midtone_rgb": [0.661, 0.532, 0.307]}, keep_warm=True) == [0, 0, 0]  # thumb_africa_1: stays golden
+    assert auto_wb({"midtone_rgb": [0.35, 0.40, 0.50]}, keep_warm=True)[2] < 0  # cool cast still fixed
     assert look_delta(st(0.5, 0.7))[0] < 0 and look_delta(st(0.5, 0.7))[1] < 0  # brighter/more vivid -> pull back
     print("selftest ok")
 
@@ -261,6 +298,7 @@ def main():
     f.add_argument("image")
     f.add_argument("--text", required=True, help=r"headline; \n = line break")
     f.add_argument("--logo", required=True)
+    f.add_argument("--prefix", default="", help="output name prefix, e.g. chann1_ (logo ava1)")
     f.add_argument("--layout", choices=["A", "B"], default="A")
     f.add_argument("--out-dir", default=r"D:\Thumbs")
     f.add_argument("--crop", help="x,y,w,h in source px (16:9); default centred")
@@ -276,14 +314,16 @@ def main():
     # Defaults: user 2026-10-15 wants bright, vivid colour like references/look-ref.png -> no background darkening
     # or desaturation, light vignette; BRIGHTNESS/VIBRANCE auto-target TARGET unless given.
     f.add_argument("--wb", default="auto", help="colorBalance midtones c-r,m-g,y-b; auto = neutralise R/B cast")
+    f.add_argument("--warm", type=int, help="WARM photo filter (warming85) density 0-100; default 26 when the "
+                                            "file name has _africa_, else 0")
     f.add_argument("--exposure", type=float, help="BRIGHTNESS EV; default auto toward look-ref")
     f.add_argument("--gamma", type=float, default=1.1, help="BRIGHTNESS gamma (>1 lifts shadows)")
     f.add_argument("--vibrance", type=int, help="VIBRANCE (saturation = half); default auto toward look-ref")
     f.add_argument("--curve", type=int, default=6, help="S-curve strength (0 = flat)")
-    f.add_argument("--yellow-sat", type=int, default=-5)
+    f.add_argument("--yellow-sat", type=int, help="HSL yellows saturation; default -5, africa +12")
     f.add_argument("--green-sat", type=int, default=0)
     f.add_argument("--subject-ev", type=float, default=0.15)
-    f.add_argument("--bg-ev", type=float, default=0.0)
+    f.add_argument("--bg-ev", type=float, help="BG_DARKEN EV; default 0, africa -0.15")
     f.add_argument("--bg-sat", type=int, default=0)
     f.add_argument("--sharpen", type=int, default=60, help="unsharp amount on subject")
     f.add_argument("--vignette", type=float, default=0.06, help="VIGNETTE layer opacity 0..1")

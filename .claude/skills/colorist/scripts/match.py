@@ -11,11 +11,14 @@ LUT, probed 2026-10-16); the AMZ look LUT stays on the Color Group post-clip nod
   - lightness curve through 5 quantiles, pulled toward the scene hero (partial: framing differs between shots),
   - colour per hue band (neutral, warm = fur/earth, foliage, cool = sky/water): band a/b shift + chroma scale toward the
     hero's same band, so greens, fur and greys each match without one dragging the others (02:41: green read as a cast).
-Scenes: consecutive shots, cut where the light group or the measured look jumps. Hero per scene: real footage first,
+Ground season (user 2026-10-22): in a scene whose ground is mostly golden grass, a green-grass shot gets its grass
+turned to the scene's golden grass inside its match LUT (dry(), strength DRY_K, note dry=0..1), canopy stays green-olive.
+Scenes: consecutive shots, never across a spec '# STORY' start, cut where the light group or the measured look jumps.
+Hero per scene: real footage first,
 clean balance, on-target levels. Heroes are pulled half-way to their group median, shots mostly to their hero, so
 scenes stay distinct but the film shares one space and time. Light group = library tag corrected by the image
 (golden without warm light -> Day, near-black Day -> Dusk).
-User notes: .work/grade/<project>/overrides.json via `note` (group, hero, strength, skip, exp, warm, sat, note);
+User notes: .work/grade/<project>/overrides.json via `note` (group, hero, strength, skip, exp, warm, sat, dry, note);
 they survive every re-plan. LUT files: ProgramData ...\\LUT\\Amazona\\match\\<project>\\ (17^3, ~100 KB each).
 """
 import datetime as dt
@@ -42,6 +45,47 @@ BANDS = ("neutral", "warm", "foliage", "cool")
 CENT = {"warm": (130, 30), "foliage": (215, 32), "cool": (305, 35)}  # YCbCr hue (atan2(Cr, Cb)) centre, width (deg)
 S_HERO, S_SHOT = dict(L=0.4, C=0.6), dict(L=0.6, C=0.85)  # pull of hero -> group, shot -> hero (+ group 25 %)
 CLAMP = dict(dab=0.06, cs=(0.75, 1.3), dL=0.12)
+# ground season (user 2026-10-22, africa_1 02:11 green grass next to 02:15 golden grass): a green-grass shot in a scene
+# whose ground is golden gets its grass turned to the scene's golden grass (dry()), so neighbours read as one place.
+# Ground hue = median HSV hue of the bright vegetation (green grass ~48, golden ~30, measured on those two shots).
+CONTRAST = 0.10  # user 2026-10-22: no flat contrast; S-curve on the target lightness, slope 1.24 at mid-grey, shifts <= 0.05
+
+
+# user 2026-10-22 (africa_1: stormy gazelle clip went blue-black, hippo / lion crushed): the balance solver pegs its
+# limits on bright Africa footage (power 1.45, slope 1.9, offset -0.19 on 977 of 1052 shots). Its CDL is cut back to
+# SOFT of the way from identity and clamped; the per-shot match LUT then does the rest within its own clamps.
+SOFT = 0.4
+# Africa (user 2026-10-22: lion at 00:43 muddy brown, saturation and contrast too low): the house targets were set for
+# the Amazon look; an Africa project (name contains 'africa') lands on richer colour: sat targets +SAT_PLUS, limits up,
+# and the match LUT lifts chroma by SAT_LIFT on top (the guard backs it off where a shot would go neon).
+SAT_PLUS, SAT_LIFT = 0.07, 1.12
+
+
+def africa_targets():
+    for g, f in list(G.TGT.items()):
+        G.TGT[g] = (lambda f: lambda m: {**f(m), "sat": min(f(m)["sat"] + SAT_PLUS, 0.5)})(f)
+    G.LIM["sat"] = (G.LIM["sat"][0], 0.50)
+    G.LIM["sat95"] = (G.LIM["sat95"][0], 0.82)
+CDL_LIM = dict(slope=(0.8, 1.25), offset=(-0.05, 0.05), power=(0.9, 1.15), sat=(0.8, 1.2), spread=0.04)
+
+
+def soften(c):
+    sl = 1 + SOFT * (np.asarray(c["slope"], float) - 1)
+    sl = np.clip(sl, *CDL_LIM["slope"])
+    m = sl.mean()
+    sl = np.clip(sl, m * (1 - CDL_LIM["spread"]), m * (1 + CDL_LIM["spread"]))  # channels stay together: no colour cast from the gain
+    return dict(slope=sl, offset=np.clip(SOFT * np.asarray(c["offset"], float), *CDL_LIM["offset"]),
+                power=float(np.clip(1 + SOFT * (c["power"] - 1), *CDL_LIM["power"])),
+                sat=float(np.clip(1 + SOFT * (c["sat"] - 1), *CDL_LIM["sat"])))
+
+
+def scurve(L, k=CONTRAST):
+    """Gentle S around mid-grey: darks a little darker, lights a little lighter, ends fixed, monotone."""
+    L = np.asarray(L, np.float64)
+    return L + 2 * k * (L - 0.5) * (1 - (2 * L - 1) ** 2)
+
+
+DRY_K, DRY_HUE, DRY_GAP = 0.7, 40.0, 8.0  # strength (note dry=0..1), scene is golden at <= 40 deg, shot is off at +8 deg
 
 # Rec.709 Y'CbCr on display values: linear, so a 17^3 LUT reproduces the match (Oklab's gamma round trip did not:
 # p99 error 0.027 on real frames, mostly in the dark greens)
@@ -84,8 +128,59 @@ def ident():
                 exp=0.0, warm=0.0, sat=1.0)
 
 
+def rgb2hsv(x):
+    mx, mn = x.max(-1), x.min(-1)
+    d = mx - mn
+    h = np.zeros_like(mx)
+    r, g, b = x[..., 0], x[..., 1], x[..., 2]
+    m = d > 1e-6
+    i = m & (mx == r); h[i] = ((g - b)[i] / d[i]) % 6
+    i = m & (mx == g) & (mx != r); h[i] = (b - r)[i] / d[i] + 2
+    i = m & (mx == b) & (mx != r) & (mx != g); h[i] = (r - g)[i] / d[i] + 4
+    return np.stack([h * 60, np.where(mx > 0, d / np.maximum(mx, 1e-6), 0), mx], -1)
+
+
+def hsv2rgb(x):
+    h, s, v = x[..., 0] % 360 / 60, x[..., 1], x[..., 2]
+    i, f = np.floor(h).astype(int) % 6, h - np.floor(h)
+    p, q, t = v * (1 - s), v * (1 - s * f), v * (1 - s * (1 - f))
+    return np.choose(i[..., None] * np.ones(3, int), [np.stack(c, -1) for c in
+                     ((v, t, p), (q, v, p), (p, v, t), (p, q, v), (t, p, v), (v, p, q))])
+
+
+def ground(c):
+    """Pixels -> dict(hue = ground hue or None, grass = HSV median of bright yellow-green / green (h 40-140, v > 0.4),
+    gold = HSV median of golden grass (h 28-60, s > 0.25)); None where < 300 pixels."""
+    h = rgb2hsv(np.clip(c, 0, 1))
+    med = lambda k: [float(x) for x in np.median(h[k], 0)] if k.sum() >= 300 else None  # noqa: E731
+    veg = (h[:, 0] >= 18) & (h[:, 0] <= 140) & (h[:, 1] > 0.12) & (h[:, 2] > 0.35)
+    return dict(hue=float(np.median(h[veg, 0])) if veg.sum() >= 300 else None,
+                grass=med((h[:, 0] >= 40) & (h[:, 0] <= 140) & (h[:, 1] > 0.06) & (h[:, 2] > 0.4)),
+                gold=med((h[:, 0] >= 28) & (h[:, 0] < 60) & (h[:, 1] > 0.25) & (h[:, 2] > 0.3) & (h[:, 2] < 0.97)))
+
+
+def dry(c, d):
+    """Green grass -> the scene's golden grass. d = dict(src = grass HSV of the shot, ref = gold HSV of the scene, k).
+    Weighted by brightness (grass bright, canopy dark keeps its green, olive at most) and hue (fur / soil < 36 deg stay)."""
+    hsv = rgb2hsv(np.clip(c, 0, 1))
+    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+    (sh, ss, sv), (th, ts, tv) = d["src"], d["ref"]
+    # africa_1 2026-10-22 preview: sat x2.2 and hues 10-20 deg under the gold turned bushes / tree lines neon orange ->
+    # sat never past the gold's (x1.15), hue never > 3 deg under it, deep saturated leaves (s > 0.55) mostly kept
+    # greys / haze (s < 0.08) untouched: a 0.03-0.08 ramp left blotches in hazy trees and gold specks in fog
+    w = d["k"] * ml.smooth(h, 36, 46) * (1 - ml.smooth(h, 165, 185)) * ml.smooth(s, 0.08, 0.16) \
+        * (0.15 + 0.85 * ml.smooth(v, 0.3, 0.5)) * (1 - 0.7 * ml.smooth(s, 0.55, 0.8))
+    h2 = np.maximum(th + (h - sh) * 0.5, th - 3)
+    s2 = np.minimum(s * np.clip(ts / ss, 0.6, 1.6), np.maximum(s, ts * 1.15))
+    v2 = v * np.clip(tv / sv, 0.8, 1.35)
+    out = np.stack([h + w * (h2 - h), np.clip(s + w * (s2 - s), 0, 1), np.clip(v + w * (v2 - v), 0, 1)], -1)
+    return np.clip(hsv2rgb(out), 0, 1).astype(np.float32)
+
+
 def transform(c, p):
-    """The match: what the per-shot LUT does (input = CDL output)."""
+    """The match: what the per-shot LUT does (input = CDL output); dry grass first when the shot has it."""
+    if p.get("dry"):
+        c = dry(c, p["dry"])
     lab = to_lab(c)
     w = bands(lab)
     x = lab[:, 0]
@@ -116,9 +211,11 @@ def blend(m, t, s):
     return o
 
 
-def fit_match(img, P, tgt, keep_dark=False, it=6):
+def fit_match(img, P, tgt, keep_dark=False, it=6, k=CONTRAST):
     """Solve the match params so AMZ(transform(img)) lands on tgt (output space)."""
     p = ident()
+    if not keep_dark:  # low-key dusk shots keep their own darkness
+        tgt = dict(tgt, Lq=scurve(tgt["Lq"], k))
     p["xq"] = list(np.clip(np.percentile(to_lab(img)[:, 0], QS), 0.02, 0.98))
     p["xq"] = list(np.maximum.accumulate(np.array(p["xq"]) + np.arange(5) * 1e-3))
     m0 = measure(ml.grade(img, P))
@@ -188,9 +285,30 @@ def light_group(tag, st):
     return g, ""
 
 
-def scenes(rows):
+def story_cuts(project, rows):
+    """Start frames of the shots holding a '# STORY n m:ss' time of the video's spec (doc-edit): a scene never spans
+    two stories (user 2026-10-22: same space inside one story). No spec found -> no cuts."""
+    import re
+    import plan as P
+    spec = next((d / "spec.txt" for d in (ROOT / ".work" / "doc_edit").iterdir()
+                 if (d / "spec.txt").exists() and P.same_project(project, d.name)), None)
+    if not spec:
+        return set()
+    ts = [int(m[1]) * 60 + float(m[2]) for m in re.finditer(r"^#\s*STORY\s+\d+\s+(\d+):([\d.]+)", spec.read_text("utf-8"), re.M)]
+    return {max((r["start"] for r in rows if r["start"] <= t * 24), default=0) for t in ts}
+
+
+def scenes(rows, cuts=()):
     """Cut where the look (or light group) jumps vs the running scene for 2 shots in a row - a single cutaway stays in
-    its scene; >= 6 shots per scene (demo_5: per-shot cuts at >= 4 gave 126 scenes of ~4 shots, too small to unify)."""
+    its scene; >= 6 shots per scene (demo_5: per-shot cuts at >= 4 gave 126 scenes of ~4 shots, too small to unify).
+    cuts = start frames where a new scene must begin (story starts)."""
+    if cuts:
+        segs, cur = [], []
+        for r in rows:
+            if r["start"] in cuts and cur:
+                segs.append(cur); cur = []
+            cur.append(r)
+        return [s for seg in segs + [cur] if seg for s in scenes(seg)]
     out, cur = [], []
 
     def feat(r):
@@ -222,7 +340,27 @@ def scenes(rows):
 def hero_score(r, tgt):
     st, f = r["st"], r["f"]
     return (2.0 * r["path"].upper().startswith("Z:") - 3 * len(r["flags"]) + 4 * min(st["nfrac"], 0.2)
-            - 3 * abs(f["p50"] - tgt["p50"]) - 3 * abs(f["sat"] - tgt["sat"]) - 1.0 * (st["lowkey"] and r["group"] != "Dusk"))
+            - 3 * abs(f["p50"] - tgt["p50"]) - 3 * abs(f["sat"] - tgt["sat"]) - 1.0 * (st["lowkey"] and r["group"] != "Dusk")
+            - 3.0 * bool(r.get("dry")))  # a shot whose grass is off the scene's season never sets the scene's look
+
+
+def season(s, ov):
+    """Scene s: when most of its ground is golden (median ground hue <= DRY_HUE), every shot DRY_GAP+ greener gets
+    r['dry'] toward the scene's golden grass (median gold of its golden shots); note dry=0..1 = strength. -> count."""
+    hs = [r["gd"]["hue"] for r in s if r["gd"]["hue"] is not None]
+    if not hs or np.median(hs) > DRY_HUE:
+        return 0
+    golds = [r["gd"]["gold"] for r in s if r["gd"]["gold"] and r["gd"]["hue"] is not None and r["gd"]["hue"] <= DRY_HUE]
+    if not golds:
+        return 0
+    ref, n = [float(x) for x in np.median(golds, 0)], 0
+    for r in s:
+        k = float(ov.get(r["key"], {}).get("dry", DRY_K))
+        g = r["gd"]
+        if k > 0 and g["grass"] and g["hue"] is not None and g["hue"] >= np.median(hs) + DRY_GAP:
+            r["dry"] = dict(src=g["grass"], ref=ref, k=k)
+            n += 1
+    return n
 
 
 def lut_dir(project):
@@ -267,7 +405,10 @@ def overrides(project):
 def plan(sheet=True):
     import plan as P
     pm, project, tl, rows = G.timeline()
-    light = {c["abs"].lower(): c["tags"].get("light") for c in P.load_clips()}
+    africa = "africa" in project.GetName().lower()
+    if africa:
+        africa_targets()
+    light = {c["abs"].lower(): c["tags"].get("light") for r in P.REGIONS for c in P.load_clips(r)}  # every region: the timeline may hold either
     _, ov = overrides(project.GetName())
     FR.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(6) as ex:
@@ -287,12 +428,21 @@ def plan(sheet=True):
     def balance(r):
         Pm = ml.LUTS[G.GROUPS[r["group"]]]
         r["cdl"], r["f"], r["flags"] = G.fit(r["img"], r["st"], tg[r["group"]], Pm)
+        r["cdl"] = soften(r["cdl"])  # flags below are of the softened grade
+        r["f"] = G.stats(ml.grade(G.cdl(r["img"], r["cdl"]["slope"], r["cdl"]["offset"], r["cdl"]["power"], r["cdl"]["sat"]), Pm))
+        r["flags"] = G.check(r["f"], r["st"]["lowkey"] and r["group"] == "Dusk")
         r["base"] = G.cdl(r["img"], r["cdl"]["slope"], r["cdl"]["offset"], r["cdl"]["power"], r["cdl"]["sat"])
         r["m0"] = measure(ml.grade(r["base"], Pm))
+        r["gd"] = ground(r["base"])
     with ThreadPoolExecutor(6) as ex:
         list(ex.map(balance, rows))
-    # 2) scenes + heroes
-    sc = scenes(rows)
+    # 2) scenes (never across a story start) + ground season + heroes
+    sc = scenes(rows, story_cuts(project.GetName(), rows))
+    n_dry = sum(season(s, ov) for s in sc)
+    for r in rows:
+        if r.get("dry"):  # the scene match starts from the dried grass
+            r["m0"] = measure(ml.grade(dry(r["base"], r["dry"]), ml.LUTS[G.GROUPS[r["group"]]]))
+    moved[f"green grass -> scene's golden grass (dry {DRY_K})"] = n_dry
     gm = {}
     for g in tg:
         ms = [r["m0"] for r in rows if r["group"] == g]
@@ -314,8 +464,14 @@ def plan(sheet=True):
             r["p"] = ident()
         else:
             k = float(o.get("strength", 1.0))
-            r["p"] = fit_match(r["base"], Pm, blend(r["m0"], tgt, {q: v * k for q, v in s.items()}),
-                               keep_dark=r["group"] == "Dusk" and r["st"]["lowkey"])
+            img = dry(r["base"], r["dry"]) if r.get("dry") else r["base"]
+            r["p"] = fit_match(img, Pm, blend(r["m0"], tgt, {q: v * k for q, v in s.items()}),
+                               keep_dark=r["group"] == "Dusk" and r["st"]["lowkey"],
+                               k=CONTRAST * float(np.clip((0.72 - r["f"]["con"]) / 0.15, 0.0, 1.0)))  # flat shots get it, already contrasty ones none
+            if africa:
+                r["p"]["sat"] *= SAT_LIFT
+            if r.get("dry"):
+                r["p"]["dry"] = r["dry"]  # transform() = dry, then the match fitted on the dried image
         for f in ("exp", "warm", "sat"):
             if f in o:
                 r["p"][f] = float(o[f])
@@ -364,7 +520,7 @@ def spread(ms):
 def report(rows, sc, moved):
     tc = lambda f: f"{int(f / 24 // 60):02d}:{f / 24 % 60:04.1f}"  # noqa: E731
     print(f"V1 {len(rows)} shots | groups " + ", ".join(f"{g} {sum(r['group'] == g for r in rows)}" for g in G.GROUPS)
-          + (f" | light group corrected: {moved}" if moved else ""))
+          + (f" | corrected: {moved}" if moved else ""))
     w0, w1 = [], []
     for s in sc:
         if len(s) > 1:
@@ -450,6 +606,8 @@ def verify():
     from dvr_cowork.resolve_conn import connect
     res = connect(load_config())
     pm, project, tl, rows = G.timeline()
+    if "africa" in project.GetName().lower():
+        africa_targets()  # same house limits as plan
     d = ROOT / ".work" / "grade" / project.GetName()
     q = {(s["start"], s["path"].lower()): s for s in json.loads((d / "match_plan.json").read_text("utf-8"))["shots"]}
     page, tmp = res.GetCurrentPage(), d / "_export.cube"
@@ -506,7 +664,7 @@ def note(tc, kv):
     o = ov.setdefault(key(r), {})
     for a in kv:
         k, v = a.split("=", 1)
-        assert k in ("group", "hero", "strength", "skip", "exp", "warm", "sat", "note"), k
+        assert k in ("group", "hero", "strength", "skip", "exp", "warm", "sat", "dry", "note"), k
         o[k] = v if k in ("group", "note") else (v.lower() in ("1", "true", "yes")) if k in ("hero", "skip") else float(v)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(ov, ensure_ascii=False, indent=1), "utf-8")
@@ -538,6 +696,23 @@ def selftest():
         d1 = np.hypot(mm[k]["a"] - hm[k]["a"], mm[k]["b"] - hm[k]["b"])
         assert d1 < 0.35 * d0, (k, d0, d1)
     assert pm_["cs"][2] > 0.75 and np.hypot(mm["foliage"]["a"], mm["foliage"]["b"]) > 0.1  # foliage stays green, not grey
+    # ground season: bright green grass -> golden, dark canopy barely, fur untouched; k=0 = identity
+    hp = lambda h, s, v: hsv2rgb(np.array([[h, s, v]], np.float32))  # noqa: E731
+    d = dict(src=[50.0, 0.44, 0.6], ref=[31.0, 0.58, 0.76], k=1.0)
+    grass, leaf, fur = (rgb2hsv(dry(hp(*x), d))[0] for x in ((50, 0.44, 0.6), (69, 0.49, 0.25), (30, 0.5, 0.6)))
+    assert abs(grass[0] - 31) < 2 and grass[1] > 0.5, grass
+    assert leaf[0] > 69 - 0.3 * (69 - 31 - 9.5), leaf  # dark leaves move < 30 % of the grass's way
+    assert abs(fur[0] - 30) < 0.5 and abs(fur[2] - 0.6) < 0.01, fur
+    assert np.abs(dry(c, dict(d, k=0.0)) - c).max() < 1e-4
+    gd = lambda h, gold, grass: {"hue": h, "gold": gold, "grass": grass}  # noqa: E731
+    sc_ = [{"key": str(i), "gd": gd(h, [31, 0.58, 0.76] if h < 40 else None, [50, 0.44, 0.6] if h > 40 else None)}
+           for i, h in enumerate((30, 31, 48, 29))]
+    assert season(sc_, {}) == 1 and sc_[2]["dry"]["ref"] == [31.0, 0.58, 0.76] and "dry" not in sc_[0]
+    assert season([dict(x, key="a") for x in sc_[2:3]] * 3, {}) == 0  # a green scene stays green (Amazon, wet season)
+    assert season([dict(sc_[2], key="z")] + sc_[:2] + sc_[3:], {"z": {"dry": 0.0}}) == 0  # note dry=0 = off
+    assert [len(s) for s in scenes([{"start": i} for i in range(8)], {4})] == [4, 4]
+    x = np.linspace(0, 1, 101)
+    assert np.all(np.diff(scurve(x)) > 0) and abs(scurve(0.0)) < 1e-9 and abs(scurve(1.0) - 1) < 1e-9 and scurve(0.25) < 0.25 < scurve(0.75) - 0.5 + 0.25 + 1e-9
     print("selftest ok")
 
 

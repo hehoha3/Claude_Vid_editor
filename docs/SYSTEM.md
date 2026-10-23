@@ -34,7 +34,7 @@ Tài liệu này giải thích **bên trong** hệ thống. Cài đặt và dùn
 | `.claude/commands/` | Lệnh nhanh `/project-status`, `/review-frame`, `/sync-vo` | có |
 | `.claude/settings.json` | Quyền chung (hỏi trước `place.py`, `--replace`, `grade.py apply`...; cấm SendKeys) + hook in handoff lúc mở phiên | có |
 | `.claude/settings.local.json` | Quyền riêng từng người | không |
-| `dvr_cowork/` | Thư viện Python: kết nối Resolve, vo-sync, `info/at/find/offline/frames` | có |
+| `dvr_cowork/` | Thư viện Python: kết nối Resolve, vo-sync, `info/at/find/offline/frames/backups` | có |
 | `luts/` | 7 LUT AMZ + cách tạo (`make_luts.py`, README) | có |
 | `config.toml` | Đường dẫn, workspace, thông số Whisper/vo-sync | có |
 | `.work/library/` | Index thư viện + tag + cache YOLO (dùng chung để không phải tag lại) | có |
@@ -64,13 +64,13 @@ audios/ (timestamp + narration)
    │  3. /doc-edit place      place.py: backup → V1 + A1 + A3-A9 + marker THIẾU/WEAK/GFX
    ▼
  shot THIẾU → missing-prompts → bạn tạo clip AI → process → scan → tag → organize → plan lại
-   │  reframe · intro · audio-expert · colorist · sửa logo
+   │  reframe · audio-expert · colorist · sửa logo
    ▼
  4. /doc-edit done          ledger lần cuối → relink → đóng Resolve → chuyển thư mục vào _done
 ```
 
 **Cách plan chọn clip** (`plan.py`)
-1. **Lọc cứng**: đúng loài (`sp=`), đêm/ngày, `no=` loại trừ, không thuộc ledger (4 video gần nhất cùng kênh).
+1. **Lọc cứng**: đúng loài (`sp=`), đêm/ngày, `no=` loại trừ, không thuộc ledger (6 video gần nhất cùng kênh).
 2. **Chấm điểm theo tag**: hành động (nặng nhất), bối cảnh, cỡ cảnh, ánh sáng, mood, góc máy, hướng, `kw=`.
    Trừ điểm clip có lỗi (morph, mờ...). Shot tấn công mà clip không có hành động → tối đa WEAK.
 3. **Xếp hạng**: footage thật trước nếu đủ tốt; các clip cùng mức được phân định bằng **ngữ nghĩa** (mục 5).
@@ -128,7 +128,7 @@ mức. Trạng thái OK/WEAK/THIẾU vẫn do tag quyết định. Tắt: `--no-
 
 - **Workspace** = thư mục khớp `config.toml [workspaces] globs` (mặc định `D:\Chann_*`). Kênh mới = tạo thư mục.
 - **Ledger** (`.work/doc_edit/ledgers/<workspace>.json`): clip có trên timeline **Edit + Open** của từng video,
-  đọc từ Resolve (`/doc-edit check-timelines`). Plan cấm clip của `recent = 4` video mới nhất **cùng workspace**.
+  đọc từ Resolve (`/doc-edit check-timelines`). Plan cấm clip của `recent = 6` video mới nhất **cùng workspace**.
   Bản xoá logo tính như clip gốc. Ledger không lên git: người dựng cùng một kênh nhận file này riêng (sau mỗi `done`, gửi lại bản mới).
 - **`/doc-edit done <video>`**: ghi ledger lần cuối → relink media trong thư mục video sang `_done\<video>` (qua
   junction tạm) → lưu → đóng Resolve → đổi chỗ thư mục (một bước, không copy + xoá) → ghi handoff. Không tự mở lại Resolve.
@@ -138,14 +138,13 @@ mức. Trạng thái OK/WEAK/THIẾU vẫn do tag quyết định. Tắt: `--no-
 
 | Skill | Làm gì | Script chính | Ghi vào |
 |---|---|---|---|
-| `doc-edit` | Narration → plan → place, reframe, missing-prompts, check-timelines, done | `plan.py`, `place.py`, `reframe.py`, `missing.py`, `ledger.py`, `yolo.py` | Timeline Edit, `.work/doc_edit/` |
+| `doc-edit` | Narration → plan → place, missing-prompts, logo, ingest, fill, color, reframe, status, check-timelines, done | `plan.py`, `place.py`, `reframe.py`, `missing.py`, `ledger.py`, `yolo.py`, `beats.py`, `state.py` | Timeline Edit, `.work/doc_edit/` |
 | `tag-source` | Subagent Sonnet nhìn 4 frame/clip một lần → tag; xếp clip AI mới vào thư mục loài | `tag_source.py`, `organize.py` | `.work/library/` |
 | `scan-source` | Cập nhật index sau khi thêm/đổi/xoá file | `scan_source.py` | `.work/library/` |
 | `process-ai-video` | Làm clip AI trông như quay thật, cắt character sheet đầu clip | `process_ai_video.py` | Ghi đè clip trong `D:\AI_video` |
-| `hide-logo` | Xoá logo bằng clone-patch → `_nologo`, relink; ghi đè gốc khi xong video | `hide_logo.py` | `D:\AI_video\_nologo`, Resolve |
-| `colorist` | Kiến thức màu + `grade.py`: nhóm Day/Golden/Dusk (LUT AMZ) + CDL từng clip | `grade.py` | Grade trong Resolve |
+| `hide-logo` | Xoá logo bằng MiniMax-Remover → `_nologo`, relink; ghi đè gốc khi xong video | `hide_logo.py`, `minimax_worker.py` | `D:\AI_video\_nologo`, Resolve |
+| `colorist` | Kiến thức màu; `/doc-edit color` = light pass (CDL nhẹ, màu tươi, cỏ vàng chỉ trong đoạn cỏ cháy); match.py chỉ khi gọi tên | `light.py`, `dry_preview.py`, `match.py`, `grade.py` | Grade node 1 trong Resolve |
 | `audio-expert` | Bản đồ âm thanh, chọn nhạc/SFX/âm tự nhiên, đặt A5-A9, rollback | `index.py`, `plan.py`, `execute.py` | A5-A9 |
-| `intro-music-visualization` | Intro cắt theo nhạc trên timeline Open | `music_pick/map.py`, `pool.py`, `storyboard.py`, `build.py` | Timeline Open, bin "7. Open" |
 | `edit-craft` | Kiến thức dựng: nhịp, điểm cắt, J/L cut, xuất YouTube | — | — |
 | `resolve-api` | Lưu ý khi viết script cho Resolve | — | — |
 | `memory-find` / `memory-save` | Tìm / lưu memory dự án | `memory_gateway.py` | `.work/knowledge/` |

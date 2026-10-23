@@ -2,13 +2,20 @@
 """Keep the source indexes in sync with what the user sorted on disk. No vision, no file moves.
 
     scan_source.py            scan all roots
-    scan_source.py video|ai|audio
+    scan_source.py video|ai|audio|africa_video|africa_ai|africa_ai_check|savannah|sfx|sound
 
 video  Z:\\Unseen\\Amazona\\video  real stock footage  <subject>/ = still, <subject>/action/ = action,
                                                       birds/ insects/ flat, landscape/<setting>/
 ai     config.toml paths.ai_video  AI-generated clips  same folder rules as video (default D:\\AI_video)
+africa_video  Z:\\Unseen\\Động vật\\AAA Trên cạn      real footage, <species folder (Vietnamese/English)>/...
+africa_ai     ...\\AAA Trên cạn\\AI_copyright        AI clips, AI/<action>/<species>/, bản quyền/<channel>/
+africa_ai_check  <ai_video>\\_africa                 Africa AI clips (user 2026-10-22): _check/ = new generated clips,
+                                                      <species>/ = filed by organize.py --africa; excluded from `ai`
+savannah      Z:\\Unseen\\savannah                    real landscape footage (subject = landscape)
 audio  Z:\\Unseen\\Amazona\\audio  music / ambience    <category>/
-sfx / sound / animal  Z:\\Unseen\\SFX, Sound, Sound Animal V1
+sfx / sound  Z:\\Unseen\\SFX, Sound   (user 2026-10-20: the audio roots of every region; more will be added)
+Video roots belong to one region (REGION: amazon | africa, user 2026-10-20: /doc-edit <audios> <region> uses only
+that region's footage); audio roots are shared by every region.
 Drive Z: is READ + COPY only (user rule 2026-10-11). Every index lives in the workspace, .work/library/<name>_library.json
 (committed to git, so the team shares the tags; paths inside are relative to the root).
 Clips are keyed by a content hash, so moved/renamed files keep their entry (and any earlier tags)."""
@@ -17,30 +24,79 @@ import json
 import re
 import subprocess
 import sys
+import unicodedata
 from datetime import date
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from dvr_cowork.config import load_config  # noqa: E402
+AFRICA = Path(r"Z:\Unseen\Động vật\AAA Trên cạn")
+AI_VIDEO = Path(load_config()["paths"]["ai_video"])  # config.toml, per machine
 # name -> (root, media kind, source label stored on every clip)
 ROOTS = {"video": (Path(r"Z:\Unseen\Amazona\video"), "video", "real"),
-         "ai": (Path(load_config()["paths"]["ai_video"]), "video", "ai"),  # config.toml, per machine
+         "ai": (AI_VIDEO, "video", "ai"),                                 # _africa inside it = africa_ai_check
+         "africa_video": (AFRICA, "video", "real"),                       # AI_copyright inside it = africa_ai
+         "africa_ai": (AFRICA / "AI_copyright", "video", "ai"),
+         "africa_ai_check": (AI_VIDEO / "_africa", "video", "ai"),          # Africa AI: _check + species folders
+         "savannah": (Path(r"Z:\Unseen\savannah"), "video", "real"),
          "audio": (Path(r"Z:\Unseen\Amazona\audio"), "audio", None),
          "sfx": (Path(r"Z:\Unseen\SFX"), "audio", None),                 # animal foley + species calls (English names)
-         "sound": (Path(r"Z:\Unseen\Sound"), "audio", None),             # licensed music, <mood>/ folders
-         "animal": (Path(r"Z:\Unseen\Sound Animal V1"), "audio", None)}  # animal sounds (Vietnamese names)
+         "sound": (Path(r"Z:\Unseen\Sound"), "audio", None)}             # licensed music, <mood>/ folders
+# "animal" (Z:\Unseen\Sound Animal V1) dropped 2026-10-20: gone from Z:; its old index file is unused.
+# video root -> region (user 2026-10-20); everything used so far (Amazon, Congo...) = amazon. Audio roots: no region.
+REGION = {"video": "amazon", "ai": "amazon", "africa_video": "africa", "africa_ai": "africa",
+          "africa_ai_check": "africa", "savannah": "africa"}
+REGIONS = ("amazon", "africa")
 # user rule 2026-10-11: drive Z: is READ + COPY only - nothing is ever written, moved or deleted on it (save() refuses)
 WORK = Path(__file__).resolve().parents[4] / ".work" / "library"
 EXTS = {"video": {".mp4", ".mov", ".mxf", ".mkv", ".m4v"}, "audio": {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}}
 INDEX = "_library.json"
+INDEX_NAME = {AFRICA: "africa_video", AFRICA / "AI_copyright": "africa_ai",  # ASCII index names for accented roots
+              AI_VIDEO / "_africa": "africa_ai_check"}
 SHOW = 15
 FLAT = {"birds", "insects", "flowers"}
+SKIP_DIRS = {"_nologo", "_z_nologo", "__MACOSX"}  # logo-free copies (hide-logo); macOS zip leftovers ("._x.mov")
+# Africa folders (Vietnamese / English, user-named) -> species name the tags use. A folder already named like a
+# value ("lion") maps to itself; ambiguous ones (linh dương, báo, lợn rừng) and action folders map to nothing:
+# the tagger names what it sees.
+AFRICA_FOLDERS = {
+    "hươu cao cổ": "giraffe", "linh dương impala": "impala", "sử tử": "lion", "sư tử": "lion",
+    "báo săn - cheetah": "cheetah", "bọ lăn phân dung beetle": "dung beetle", "chim marabou stork": "marabou stork",
+    "chim oxpecker": "oxpecker", "chim weaver": "weaver", "chó hoang": "wild dog", "cá sấu": "crocodile",
+    "guinea fowl": "guineafowl", "hà mã": "hippo", "khỉ đầu chó": "baboon", "kền kền": "vulture", "linh cẩu": "hyena",
+    "linh dương blesbok": "blesbok", "linh dương dik-dik": "dik-dik", "linh dương hartebeest": "hartebeest",
+    "linh dương kudu": "kudu", "linh dương nyala": "nyala", "lửng mật": "honey badger", "ngựa vằn": "zebra",
+    "rắn puff adder": "puff adder", "serectary bird": "secretary bird", "tê giác": "rhino", "voi": "elephant",
+    "wildebeest linh dương đầu bò": "wildebeest", "đà điểu": "ostrich", "đại bàng": "eagle",
+    "đại bàng bateleur": "bateleur eagle",
+    # AI_copyright/AI/<action>/<species>
+    "cheetah dry earth": "cheetah", "cheetah dry straw": "cheetah", "gemsbok chạy": "gemsbok", "kudu chay": "kudu",
+    "linh cẩu chạy": "hyena", "linh duong impala chay": "impala", "lion dry earth": "lion", "lion dry straw": "lion",
+    "su tu cai chay": "lion", "sư tử đực chạy": "lion", "zebra chay": "zebra", "đà điểu chạy": "ostrich"}
+for _v in set(AFRICA_FOLDERS.values()) | {"leopard", "banded mongoose", "cape buffalo", "caracal", "eland", "jackal",
+                                          "serval", "springbok", "thomson's gazelle", "topi", "warthog", "wild dog",
+                                          # species folders of the Africa AI root (organize.py --africa, 2026-10-22)
+                                          "red lechwe", "buffalo", "gazelle", "oryx", "antelope", "mongoose", "meerkat",
+                                          "snake", "bird", "landscape"}:
+    AFRICA_FOLDERS.setdefault(_v, _v)
+AFRICA_ACTION = {"chạy", "rình", "đi bộ tới mồi", "hunting"}  # folders of clips where the animal does something
+
+
+def video_roots(region):
+    """{name: (root, kind, source)} of the video roots of one region."""
+    assert region in REGIONS, f"region {region!r} not in {REGIONS}"
+    return {n: ROOTS[n] for n, r in REGION.items() if r == region}
 
 
 def index_of(root):
     """Index file of a root: always in the workspace, .work/library/<name>_library.json."""
-    return WORK / (root.name.replace(" ", "_") + INDEX)
+    return WORK / (INDEX_NAME.get(root, root.name.replace(" ", "_")) + INDEX)
+
+
+def fold(name):
+    """Folder name -> lookup key: NFC (macOS copies may be NFD), lowercase, '_' = space."""
+    return unicodedata.normalize("NFC", name).lower().replace("_", " ").strip()
 
 
 def audio_blocked(path):
@@ -87,11 +143,17 @@ def title_hint(name):
     return s.replace("-", " ").replace("_", " ").strip()
 
 
-def folder_info(kind, rel):
+def folder_info(kind, rel, name=None):
     parts = rel.parts[:-1]
     top = parts[0] if parts else None
     if kind == "audio":
         return {"category": top}
+    if name == "savannah":   # scenery only, flat
+        return {"subject": "landscape", "action": None, "setting_folder": None}
+    if name in ("africa_video", "africa_ai", "africa_ai_check"):   # deepest folder that names a species wins
+        keys = [fold(x) for x in parts]
+        return {"subject": next((AFRICA_FOLDERS[k] for k in reversed(keys) if k in AFRICA_FOLDERS), None),
+                "action": bool(AFRICA_ACTION & set(keys)), "setting_folder": None}
     if top == "landscape":
         return {"subject": top, "action": None, "setting_folder": parts[1] if len(parts) > 1 else None}
     if top == "supplementary_shots":   # small subjects for cutaways: frogs, insects, gecko, flowers...
@@ -111,7 +173,9 @@ LAYOUT = {
               "supplementary_shots/<subject>/": "cutaway subjects (frogs, insects, gecko, flowers): "
                                                 "subject = subfolder, supplementary = true",
               "fields": "subject/action/setting_folder from folders (user's decision); tags = older vision "
-                        "tags where present; title_hint = stock file name"},
+                        "tags where present; title_hint = stock file name",
+              "africa": "subject = English species of the deepest species folder (AFRICA_FOLDERS), action = under "
+                        "Chạy/Rình/Đi bộ tới mồi/Hunting; savannah: subject = landscape"},
     "audio": {"<category>/": "folder name as given by the user (ambience_sound, Nature_sound, tense_music...)",
               "fields": "category from folder; title_hint = stock file name"},
 }
@@ -144,12 +208,17 @@ def listing(label, names):
 
 def scan(name):
     root, kind, source = ROOTS[name]
+    if not root.is_dir():   # NAS offline / drive not mapped: an empty walk would drop every entry and its tags
+        print(f"{name} ({root}): NOT REACHABLE, index left as is")
+        return
     p_idx = index_of(root)
     idx = json.loads(p_idx.read_text(encoding="utf-8")) if p_idx.exists() else {"clips": {}}
     clips = idx["clips"]
     seen, new, moved, dups = set(), [], [], []
+    inner = [r for r, _, _ in ROOTS.values() if root in r.parents]  # roots nested in this one have their own index
     for p in sorted(root.rglob("*")):
-        if p.suffix.lower() not in EXTS[kind] or not p.is_file() or {"_nologo", "_z_nologo"} & set(p.parts):  # logo-free copies (hide-logo)
+        if p.suffix.lower() not in EXTS[kind] or p.name.startswith("._") or SKIP_DIRS & set(p.parts) \
+                or any(r in p.parents for r in inner) or not p.is_file():
             continue
         rel = p.relative_to(root)
         cid = fast_hash(p)
@@ -170,7 +239,7 @@ def scan(name):
         c.pop("folder_sub", None)
         c.pop("supplementary", None)
         c["title_hint"] = title_hint(p.name)
-        c.update(folder_info(kind, rel))
+        c.update(folder_info(kind, rel, name))
         if source:
             c["source"] = source
     removed = [clips.pop(k)["path"] for k in [k for k in clips if k not in seen]]
@@ -183,6 +252,26 @@ def scan(name):
     listing("DUPLICATE (delete one)", dups)
 
 
+def selftest():
+    fi = lambda rel, n: folder_info("video", Path(rel), n)  # noqa: E731
+    assert fi("Sử tử/Hunting/a.mov", "africa_video") == {"subject": "lion", "action": True, "setting_folder": None}
+    assert fi(unicodedata.normalize("NFD", "hà mã") + "/a.mp4", "africa_video")["subject"] == "hippo"
+    assert fi("AI/Chạy/cheetah_dry_earth/a.mp4", "africa_ai")["subject"] == "cheetah"
+    assert fi("AI/Rình/Báo/a.mp4", "africa_ai") == {"subject": None, "action": True, "setting_folder": None}
+    assert fi("lion/a.mp4", "africa_ai")["subject"] == "lion" and fi("New folder/a.mp4", "africa_video")["subject"] is None
+    assert fi("Mist/a.mov", "savannah")["subject"] == "landscape"
+    assert fi("jaguar/action/a.mp4", "video") == {"subject": "jaguar", "action": True, "setting_folder": None}
+    assert not any(v.endswith("s") for v in AFRICA_FOLDERS.values()), "tag_source.folder_species strips a final s"
+    assert index_of(ROOTS["africa_ai"][0]).name == "africa_ai_library.json" and index_of(ROOTS["video"][0]).name == "video_library.json"
+    assert set(video_roots("africa")) == {"africa_video", "africa_ai", "africa_ai_check", "savannah"}
+    assert ROOTS["ai"][0] in ROOTS["africa_ai_check"][0].parents  # scan() keeps _africa out of the amazon index
+    assert set(REGION) == {n for n, (_, k, _) in ROOTS.items() if k == "video"}, "every video root needs a region"
+    print("selftest ok")
+
+
 if __name__ == "__main__":
-    for k in sys.argv[1:] or list(ROOTS):
-        scan(k)
+    if sys.argv[1:] == ["--selftest"]:
+        selftest()
+    else:
+        for k in sys.argv[1:] or list(ROOTS):
+            scan(k)
