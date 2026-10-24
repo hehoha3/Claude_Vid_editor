@@ -176,7 +176,8 @@ def main(video, apply):
         print("dry-run: nothing changed (--apply to set)")
         return
     bak = f"{tl.GetName()}_bak_reframe_{dt.datetime.now():%Y%m%d_%H%M%S}"
-    assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+    from dvr_cowork.resolve_ops import backup_timeline
+    assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)
     bad = 0
     for r, z, pan, tilt, why in fills + creative:

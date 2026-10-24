@@ -1,5 +1,925 @@
 {
  "clips": {
+  "f9ef28c439a3488f": {
+   "path": "_check\\hyena_runs-alongside-calf-adults-across-open-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "hyena runs alongside calf adults across open medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "hunt"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "hyena",
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Hyena runs alongside a wildebeest calf and adults across open plain",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "fa079df8d4fe7113": {
+   "path": "_check\\hyena_spotted-chases-calf-running-among-herd-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 5.99,
+   "has_audio": true,
+   "title_hint": "hyena spotted chases calf running among herd medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "hunt"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "hyena",
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     4
+    ],
+    "caption": "Spotted hyena chases a wildebeest calf running among the herd",
+    "sure": true,
+    "best": [
+     0.18,
+     3.14
+    ],
+    "v": 2
+   }
+  },
+  "445c270dcc09b298": {
+   "path": "_check\\hyena_watches-calf-herd-bull-s-head-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "hyena watches calf herd bull s head medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "look"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "tense",
+    "direction": "none",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "hyena",
+     "wildebeest"
+    ],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Hyena watches a wildebeest calf and herd, close on a bull's head",
+    "sure": false,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "cef6f8cfbb184c05": {
+   "path": "_check\\lion_lioness-chases-dirt-tracks-slope-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "lion lioness chases dirt tracks slope medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "two",
+    "action": [
+     "hunt"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "rock"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "lion",
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     3,
+     4
+    ],
+    "caption": "Lioness chases a wildebeest over dirt tracks and up a slope",
+    "sure": true,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "49dc430a45d02edf": {
+   "path": "_check\\lion_lioness-moves-among-dusty-herd-dry-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "lion lioness moves among dusty herd dry medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "stalk"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "tense",
+    "direction": "none",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "lion",
+     "wildebeest"
+    ],
+    "good": [
+     2,
+     3,
+     4
+    ],
+    "caption": "Lioness moves among a dusty wildebeest herd in dry grass",
+    "sure": true,
+    "best": [
+     2.75,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "17a5e952a27e155e": {
+   "path": "_check\\lion_lioness-runs-after-calf-mother-crouches-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "lion lioness runs after calf mother crouches medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "hunt"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "lion",
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2
+    ],
+    "caption": "Lioness runs after a wildebeest calf and its mother, then crouches in the dust",
+    "sure": true,
+    "best": [
+     0.3,
+     5.25
+    ],
+    "v": 2
+   }
+  },
+  "4158c79a45e4e573": {
+   "path": "_check\\shot_007.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": null,
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "run"
+    ],
+    "sex": "female",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "right",
+    "issues": [
+     "blur"
+    ],
+    "species": [
+     "lion"
+    ],
+    "good": [
+     2,
+     3,
+     4
+    ],
+    "caption": "Lioness sprints through dry grass and along a dirt track on the savanna",
+    "sure": true,
+    "phase": [
+     "run",
+     "run",
+     "run",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     2.75,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "4d4880a013723999": {
+   "path": "_check\\shot_011.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": null,
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "two",
+    "action": [
+     "fight",
+     "chase",
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "unknown",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "savanna",
+     "undergrowth"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "blur"
+    ],
+    "species": [
+     "baboon",
+     "impala",
+     "leopard"
+    ],
+    "good": [
+     1,
+     2,
+     3
+    ],
+    "caption": "Leopard and baboon clash over an impala carcass by a tree, then the baboon flees through thornbush",
+    "sure": false,
+    "phase": [
+     "fight",
+     "run",
+     "chase",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     7.75
+    ],
+    "v": 2
+   }
+  },
+  "0f3db1cfc2562a61": {
+   "path": "_check\\shot_015.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": null,
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "two",
+    "action": [
+     "chase",
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "unknown",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "dusk",
+    "setting": [
+     "savanna"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "right",
+    "issues": [
+     "blur"
+    ],
+    "species": [
+     "hyena",
+     "warthog"
+    ],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Spotted hyena chases a warthog across red dusty ground at dusk",
+    "sure": true,
+    "phase": [
+     "chase",
+     "chase",
+     "chase",
+     "chase"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "070bce807b08a294": {
+   "path": "_check\\tilapia_school-fish-swims-snag-rocks-underwater-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": false,
+   "title_hint": "tilapia school fish swims snag rocks underwater medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "underwater",
+     "river"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "left",
+    "issues": [],
+    "species": [
+     "tilapia"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "School of fish swims over a snag and rocks underwater in sunbeams",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "61320b2b26125633": {
+   "path": "_check\\tilapia_swims-past-animal-bones-murky-riverbed-close-up.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": false,
+   "title_hint": "tilapia swims past animal bones murky riverbed close up",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "close_up",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "underwater",
+     "river"
+    ],
+    "weather": "none",
+    "mood": "eerie",
+    "direction": "right",
+    "issues": [
+     "unnatural"
+    ],
+    "species": [
+     "tilapia"
+    ],
+    "good": [
+     1,
+     2,
+     3
+    ],
+    "caption": "Tilapia swims past animal bones on the murky riverbed, silt clouds up",
+    "sure": true,
+    "best": [
+     0.3,
+     7.75
+    ],
+    "v": 2
+   }
+  },
+  "94303cb069341b0e": {
+   "path": "_check\\wildebeest_cow-calf-run-dusty-herd-herd-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest cow calf run dusty herd herd medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "run"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     4
+    ],
+    "caption": "Wildebeest cow and calf run in a dusty herd, wide herd shot at the end",
+    "sure": true,
+    "best": [
+     0.3,
+     5.25
+    ],
+    "v": 2
+   }
+  },
+  "fc4b683c09c2a427": {
+   "path": "_check\\wildebeest_crowd-muddy-bank-plunge-down-river-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest crowd muddy bank plunge down river medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "jump"
+    ],
+    "shot_size": "medium",
+    "angle": "high",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "riverbank",
+     "river"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Wildebeest crowd the muddy bank and plunge down into the river crossing",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "1e75701cf0786ec2": {
+   "path": "_check\\wildebeest_herd-runs-stampedes-across-dry-savanna-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest herd runs stampedes across dry savanna medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "run"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     3,
+     4
+    ],
+    "caption": "Wildebeest herd runs and stampedes across dry savanna, dust rising",
+    "sure": true,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "dbb26fa23f60b870": {
+   "path": "_check\\wildebeest_herd-runs-through-dry-grassland-dust-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest herd runs through dry grassland dust medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "run"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Wildebeest herd runs through dry grassland in dust, long line to the horizon",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "9abdce3eb4b9a7f7": {
+   "path": "_check\\wildebeest_herd-swims-across-brown-churning-river-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest herd swims across brown churning river medium",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "river"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "left",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     3,
+     4
+    ],
+    "caption": "Wildebeest herd swims across a brown churning river",
+    "sure": true,
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "784337eef5a10900": {
+   "path": "_check\\wildebeest_queue-grassy-bank-swim-across-brown-wide.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest queue grassy bank swim across brown wide",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "shot_size": "wide",
+    "angle": "high",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "riverbank",
+     "river"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Wildebeest queue on a grassy bank then swim across a brown river",
+    "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "6001c00c721e4855": {
+   "path": "_check\\wildebeest_scramble-steep-red-mud-bank-out-close-up.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest scramble steep red mud bank out close up",
+   "subject": null,
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "climb"
+    ],
+    "shot_size": "close_up",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "riverbank"
+    ],
+    "weather": "clear",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [
+     "morph"
+    ],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     3
+    ],
+    "caption": "Wildebeest scramble up a steep red mud bank out of the river",
+    "sure": true,
+    "best": [
+     0.3,
+     2.75
+    ],
+    "v": 2
+   }
+  },
   "d8066cdd71d28982": {
    "path": "bird\\egret_drink-shallow-lake-storks-egrets-background-medium.mp4",
    "width": 1280,
@@ -45,6 +965,197 @@
     "best": [
      0.3,
      9.7
+    ],
+    "v": 2
+   }
+  },
+  "1e42a75341a732b5": {
+   "path": "cheetah\\cheetah_climbs-out-river-red-bank-trots-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "cheetah climbs out river red bank trots medium",
+   "subject": "cheetah",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "swim",
+     "climb",
+     "walk",
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "river",
+     "riverbank",
+     "savanna"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [
+     "frame_cut"
+    ],
+    "species": [
+     "cheetah"
+    ],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Cheetah climbs out of a river up a red bank and trots off across the savanna at golden hour",
+    "sure": true,
+    "phase": [
+     "swim",
+     "climb",
+     "walk",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "cd64dbf95e52e833": {
+   "path": "cheetah\\cheetah_three-cheetahs-swim-across-fast-brown-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "cheetah three cheetahs swim across fast brown medium",
+   "subject": "cheetah",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "swim"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "river"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "left",
+    "issues": [],
+    "species": [
+     "cheetah"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Three cheetahs swim across a fast brown river in golden light",
+    "sure": true,
+    "phase": [
+     "swim",
+     "swim",
+     "swim",
+     "swim"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "6838455d9539f8f8": {
+   "path": "crocodile\\crocodile_lunges-splashing-through-muddy-shallows-escapes-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "crocodile lunges splashing through muddy shallows escapes medium",
+   "subject": "crocodile",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "two",
+    "action": [
+     "run",
+     "attack"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "miss",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "river"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "left",
+    "issues": [],
+    "species": [
+     "crocodile",
+     "wildebeest"
+    ],
+    "good": [
+     2,
+     3
+    ],
+    "caption": "Crocodile lunges at a wildebeest splashing through muddy shallows, the wildebeest escapes",
+    "sure": true,
+    "phase": [
+     "run",
+     "run",
+     "run",
+     "swim"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     2.75,
+     7.75
     ],
     "v": 2
    }
@@ -136,6 +1247,69 @@
     ],
     "caption": "Elephant cow walks with her small calf across dry savanna, herd in the distance",
     "sure": true,
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "9ef9001f261140f2": {
+   "path": "elephant\\elephant_family-wades-through-brown-river-calf-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "elephant family wades through brown river calf medium",
+   "subject": "elephant",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "walk",
+     "swim"
+    ],
+    "sex": "unknown",
+    "age": "mixed",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "static",
+    "light": "day",
+    "setting": [
+     "river"
+    ],
+    "weather": "none",
+    "mood": "calm",
+    "direction": "left",
+    "issues": [],
+    "species": [
+     "elephant"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Elephant family wades through a brown river while a calf struggles in the water beside them",
+    "sure": true,
+    "phase": [
+     "walk",
+     "walk",
+     "walk",
+     "walk"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
     "best": [
      0.3,
      9.7
@@ -378,6 +1552,71 @@
     "sure": true,
     "best": [
      0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "471b9f201e4f98dc": {
+   "path": "impala\\impala_male-bounds-fallen-log-dashes-through-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "impala male bounds fallen log dashes through medium",
+   "subject": "impala",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "jump",
+     "run"
+    ],
+    "sex": "male",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "undergrowth"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "right",
+    "issues": [
+     "frame_cut"
+    ],
+    "species": [
+     "impala"
+    ],
+    "good": [
+     2,
+     3,
+     4
+    ],
+    "caption": "Male impala bounds over a fallen log and dashes through dry bush",
+    "sure": true,
+    "phase": [
+     "jump",
+     "jump",
+     "jump",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     2.75,
      9.7
     ],
     "v": 2
@@ -959,6 +2198,70 @@
     "v": 2
    }
   },
+  "1ed74d12a111f7b9": {
+   "path": "leopard\\leopard_prowls-past-thorn-bushes-warm-golden-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "leopard prowls past thorn bushes warm golden medium",
+   "subject": "leopard",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "walk",
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "savanna",
+     "undergrowth"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "right",
+    "issues": [
+     "frame_cut"
+    ],
+    "species": [
+     "leopard"
+    ],
+    "good": [
+     3,
+     4
+    ],
+    "caption": "Leopard prowls past thorn bushes in warm golden light, then breaks into a run",
+    "sure": true,
+    "phase": [
+     "walk",
+     "walk",
+     "walk",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "b109a9ca11362081": {
    "path": "lion\\lion_calf-cow-flee-run-across-green-medium.mp4",
    "width": 1280,
@@ -1192,6 +2495,70 @@
     "best": [
      0.3,
      7.75
+    ],
+    "v": 2
+   }
+  },
+  "4fa317b8d880d9c6": {
+   "path": "lion\\lion_lioness-chases-across-dusty-ground-golden-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "lion lioness chases across dusty ground golden medium",
+   "subject": "lion",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "two",
+    "action": [
+     "chase",
+     "run"
+    ],
+    "sex": "female",
+    "age": "adult",
+    "outcome": "unknown",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "savanna"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "lion",
+     "zebra"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Lioness chases a zebra across dusty ground at golden hour",
+    "sure": true,
+    "phase": [
+     "chase",
+     "chase",
+     "chase",
+     "chase"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     9.7
     ],
     "v": 2
    }
@@ -2153,6 +3520,132 @@
     "v": 2
    }
   },
+  "47862eb38dd71608": {
+   "path": "warthog\\warthog_family-piglets-runs-burrow-red-earth-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "warthog family piglets runs burrow red earth medium",
+   "subject": "warthog",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "run",
+     "walk"
+    ],
+    "sex": "unknown",
+    "age": "mixed",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "golden",
+    "setting": [
+     "savanna"
+    ],
+    "weather": "none",
+    "mood": "tense",
+    "direction": "left",
+    "issues": [
+     "frame_cut"
+    ],
+    "species": [
+     "warthog"
+    ],
+    "good": [
+     1,
+     2,
+     4
+    ],
+    "caption": "Warthog family with piglets runs to a burrow in red earth at golden hour",
+    "sure": true,
+    "phase": [
+     "run",
+     "run",
+     "run",
+     "walk"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     5.25
+    ],
+    "v": 2
+   }
+  },
+  "2da6d2775ace31f8": {
+   "path": "wild_dog\\wild-dog_pack-african-dogs-runs-through-dry-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wild dog pack african dogs runs through dry medium",
+   "subject": "wild dog",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "tense",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "wild dog"
+    ],
+    "good": [
+     1,
+     3,
+     4
+    ],
+    "caption": "Pack of African wild dogs runs through dry savanna scrub",
+    "sure": true,
+    "phase": [
+     "run",
+     "run",
+     "run",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "c0624f4b23c8b55b": {
    "path": "wildebeest\\wildebeest_adult-stand-together-dry-grass-sheet-medium.mp4",
    "width": 1280,
@@ -2481,6 +3974,70 @@
     "v": 2
    }
   },
+  "b9d9dd709fbff930": {
+   "path": "wildebeest\\wildebeest_herd-leaps-off-red-clay-bank-wide.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest herd leaps off red clay bank wide",
+   "subject": "wildebeest",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "jump",
+     "swim"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "wide",
+    "angle": "eye",
+    "camera": "static",
+    "light": "day",
+    "setting": [
+     "river",
+     "riverbank"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Herd of wildebeest leaps off a red clay bank into a brown river and swims across",
+    "sure": true,
+    "phase": [
+     "jump",
+     "jump",
+     "swim",
+     "swim"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "2c2d34a94d7800d2": {
    "path": "wildebeest\\wildebeest_herd-walks-closely-packed-tan-calf-medium.mp4",
    "width": 1280,
@@ -2760,6 +4317,135 @@
     "v": 2
    }
   },
+  "846cfb9f76c8b3f1": {
+   "path": "wildebeest\\wildebeest_struggle-through-brown-rapids-heads-bodies-close-up.mp4",
+   "width": 1920,
+   "height": 1080,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest struggle through brown rapids heads bodies close up",
+   "subject": "wildebeest",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "many",
+    "action": [
+     "swim"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "close_up",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "river"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Wildebeest struggle through brown rapids, close on heads and bodies, herd crossing behind",
+    "sure": true,
+    "phase": [
+     "swim",
+     "swim",
+     "swim",
+     "swim"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
+  "31705ba80a0e19b2": {
+   "path": "wildebeest\\wildebeest_swims-river-climbs-muddy-bank-gallops-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "wildebeest swims river climbs muddy bank gallops medium",
+   "subject": "wildebeest",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "one",
+    "action": [
+     "swim",
+     "climb",
+     "walk",
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "adult",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "river",
+     "riverbank",
+     "grassland"
+    ],
+    "weather": "none",
+    "mood": "dramatic",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "wildebeest"
+    ],
+    "good": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "caption": "Wildebeest swims a river, climbs the muddy bank and gallops off across green grass",
+    "sure": true,
+    "phase": [
+     "swim",
+     "climb",
+     "walk",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     0.3,
+     9.7
+    ],
+    "v": 2
+   }
+  },
   "144d57a3ee0018c7": {
    "path": "wildebeest\\wildebeest_young-calf-standing-beside-mother-nuzzling-medium.mp4",
    "width": 1280,
@@ -2851,11 +4537,73 @@
     ],
     "v": 2
    }
+  },
+  "8878da7ff61c02ba": {
+   "path": "zebra\\zebra_zebras-foal-gallop-past-termite-mound-medium.mp4",
+   "width": 1280,
+   "height": 720,
+   "fps": 24.0,
+   "duration": 10.0,
+   "has_audio": true,
+   "title_hint": "zebra zebras foal gallop past termite mound medium",
+   "subject": "zebra",
+   "action": false,
+   "setting_folder": null,
+   "source": "ai",
+   "tags": {
+    "count": "few",
+    "action": [
+     "run"
+    ],
+    "sex": "unknown",
+    "age": "mixed",
+    "outcome": "none",
+    "shot_size": "medium",
+    "angle": "eye",
+    "camera": "moving",
+    "light": "day",
+    "setting": [
+     "savanna",
+     "grassland"
+    ],
+    "weather": "clear",
+    "mood": "tense",
+    "direction": "right",
+    "issues": [],
+    "species": [
+     "zebra"
+    ],
+    "good": [
+     1,
+     3,
+     4
+    ],
+    "caption": "Zebras and a foal gallop past a termite mound in a cloud of dust",
+    "sure": true,
+    "phase": [
+     "run",
+     "run",
+     "run",
+     "run"
+    ],
+    "rt": [
+     "action",
+     "sex",
+     "age",
+     "outcome",
+     "phase"
+    ],
+    "best": [
+     5.25,
+     9.7
+    ],
+    "v": 2
+   }
   }
  },
  "kind": "video",
  "root": "D:\\AI_video\\_africa",
- "updated": "2026-10-22",
+ "updated": "2026-10-24",
  "layout": {
   "<subject>/": "animal does nothing: rests, sleeps, looks around",
   "<subject>/action/": "animal does something: walks, runs, stalks, hunts, eats, flies, swims",
@@ -2866,17 +4614,23 @@
   "africa": "subject = English species of the deepest species folder (AFRICA_FOLDERS), action = under Chạy/Rình/Đi bộ tới mồi/Hunting; savannah: subject = landscape"
  },
  "stats": {
-  "files": 60,
-  "minutes": 10.0,
+  "files": 91,
+  "minutes": 15.1,
   "subject": {
-   "(root)": 6,
+   "(root)": 24,
    "bird": 1,
-   "elephant": 4,
+   "cheetah": 2,
+   "crocodile": 1,
+   "elephant": 5,
    "hyena": 3,
-   "impala": 12,
-   "lion": 8,
+   "impala": 13,
+   "leopard": 1,
+   "lion": 9,
    "red lechwe": 11,
-   "wildebeest": 15
+   "warthog": 1,
+   "wild dog": 1,
+   "wildebeest": 18,
+   "zebra": 1
   }
  }
 }

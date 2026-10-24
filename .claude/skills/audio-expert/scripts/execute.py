@@ -73,7 +73,8 @@ def main(video, run, replace, rollback):
     mp.SetCurrentFolder(root)
     if not log_p.exists():
         bak = f"{tl.GetName()}_bak_audio_{stamp}"
-        assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+        from dvr_cowork.resolve_ops import backup_timeline
+        assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
         project.SetCurrentTimeline(tl)
         print("backup:", bak)
         if replace and busy:

@@ -26,7 +26,7 @@ Skills load on demand (listed by the harness).
    Never hand-edit plan.json (slot number != spec line).
 3. Never send keystrokes to other apps (SendKeys, Ctrl+Z). Recovery = backup timelines `Edit_bak_*`, ask first.
 4. Drive `Z:` (shared NAS): READ + COPY only. Never write, create, rename, move, extract or delete anything on it;
-   something should go -> list the full paths for the user. Library indexes live in `.work/library/` (in git).
+   something should go -> list the full paths for the user.
    Regions: `/doc-edit <audios> amazon|africa` uses only that region's video roots (scan_source.REGION, roots in
    doc-edit SKILL.md; Africa AI = `D:\AI_video\_africa`); audio roots shared.
 5. Other media drives (D:): dry-run, Python `Path`, verify after; `rmdir`, never `rm -rf`. Claude never deletes files:

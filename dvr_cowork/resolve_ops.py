@@ -57,6 +57,52 @@ def find_bin(root, name):
     return root
 
 
+TIMELINE_BIN = "6. Timeline"
+
+
+def tidy_timelines(project):
+    """Move every timeline of the project into bin "6. Timeline" (created if missing; user 2026-10-24: timelines always
+    live there). Timeline "Master" is never touched; sub-bins of "6. Timeline" are left as they are. -> moved count."""
+    mp = project.GetMediaPool()
+    dst = ensure_bin(mp, TIMELINE_BIN)
+    want = set()
+    for i in range(1, (project.GetTimelineCount() or 0) + 1):
+        t = project.GetTimelineByIndex(i)
+        it = t.GetMediaPoolItem() if t and t.GetName() != "Master" else None
+        if it:
+            want.add(it.GetUniqueId())
+    move, stack = [], [mp.GetRootFolder()]
+    while stack:
+        f = stack.pop()
+        if f.GetUniqueId() == dst.GetUniqueId():
+            continue
+        stack += f.GetSubFolderList() or []
+        move += [c for c in f.GetClipList() or [] if c.GetUniqueId() in want]
+    if move and not mp.MoveClips(move, dst):
+        raise OpsError(f'MoveClips of {len(move)} timeline(s) into "{TIMELINE_BIN}" failed')
+    return len(move)
+
+
+def backup_timeline(project, tl, name):
+    """Duplicate `tl` as `name` into bin "6. Timeline" (created if missing), then move any other timeline lying outside
+    it there too (tidy_timelines; a failure there never blocks the backup), restore the current bin, keep `tl`
+    current. -> True when the copy was made."""
+    mp = project.GetMediaPool()
+    root = mp.GetRootFolder()
+    prev = mp.GetCurrentFolder()
+    mp.SetCurrentFolder(ensure_bin(mp, TIMELINE_BIN))
+    try:
+        ok = bool(tl.DuplicateTimeline(name))
+        try:
+            tidy_timelines(project)
+        except Exception:  # noqa: BLE001  (bins are housekeeping; the backup is what matters)
+            pass
+        return ok
+    finally:
+        mp.SetCurrentFolder(prev or root)
+        project.SetCurrentTimeline(tl)
+
+
 def ensure_bin(media_pool, name):
     """find_bin from the media pool root, creating the missing levels."""
     b = media_pool.GetRootFolder()
@@ -204,8 +250,7 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
         stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
         name = f"{tl.GetName()}_bak_{stamp}"
         try:
-            media_pool.SetCurrentFolder(root)
-            if tl.DuplicateTimeline(name):
+            if backup_timeline(project, tl, name):
                 result["backup"] = name
                 log(f"backup timeline: {name}")
         except Exception as e:  # noqa: BLE001

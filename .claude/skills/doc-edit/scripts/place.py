@@ -7,6 +7,8 @@ Refuses if V1 or A3-A9 already hold clips; --replace clears those tracks (after 
 --fill (after a re-plan with new footage): keeps every existing item, places only the plan's clips whose V1 range
 is still empty (+ their A1 if free), removes the markers of those slots only; audio tracks untouched.
 --fill --until <s>: only slots starting before <s> (e.g. a re-cut opening, the rest of the film's empty slots wait).
+--skip-intro (default of a new video, user 2026-10-23): nothing before the plan's intro end; the user and Claude cut
+the intro by hand later.
 Audio rules: A3/A4 entry = bed change, the bed alternates A3/A4 with BED_OVERLAP crossfades until the next change;
 A5 / A7 run from their slot until the next entry on that track, 'off', or the timeline end (looped by
 re-placing the file); A1 = own audio of every AI clip on V1 at A1_DB (--a1-only adds just that, nothing else touched); A6 = its slot only; A8/A9 = one hit at the slot start (moves to the other SFX track if busy).
@@ -30,7 +32,7 @@ A1_DB = -12  # AI clips bring their own audio to A1, this much below the clip le
 FADE = {3: 4.0, 4: 4.0, 5: 2.0, 6: 0.5, 7: 3.0, 8: 0.0, 9: 0.0}
 # video bins by what the clip shows (user 2026-10-22): attack / run first, everything else Other. audio: audio_bin(track)
 BINS = {"other": "1. Other_roll", "attack": "2. Attack_roll", "run": "3. Run_roll"}
-ATTACK, RUN = {"attack", "hunt", "fight"}, {"run"}  # tag 'action' values
+ATTACK, RUN = {"attack", "hunt", "chase", "catch", "fight"}, {"run"}  # tag "action" values (chase / catch = old hunt)
 # untagged clips: the folder / file name (africa AI_copyright\AI\Chạy\...)
 ATTACK_RE, RUN_RE = r"attack|hunt|fight|kill|tấn công|săn", r"(?<![a-z])run|chase|chạy|đuổi"
 _ACTS = {}
@@ -169,10 +171,31 @@ def free(spans, a, b):
     return all(b <= x or y <= a for x, y in spans)
 
 
-def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False, fill=False, until=1e9):
+def skip_intro(slots, t):
+    """Slots from the intro end t on (user 2026-10-23: the intro is cut by hand with the user). A slot crossing t
+    (story 1's landscape that intro_outro() pulled under the intro music) is trimmed to start at t."""
+    out = []
+    for s in slots:
+        if s.get("intro") or s["start"] + s["dur"] <= t + 0.05:
+            continue
+        if s["start"] < t:
+            cut = t - s["start"]
+            s = dict(s, start=t, dur=s["dur"] - cut)
+            if "src_in" in s:
+                s["src_in"] += cut * s.get("speed", 1)
+        out.append(s)
+    return out
+
+
+def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False, fill=False, until=1e9,
+         no_intro=False):
     work = ROOT / ".work" / "doc_edit" / video
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     slots, end = plan["slots"], plan["end"]
+    if no_intro:
+        assert "intro" in plan, "plan.json has no intro end: re-run plan.py"
+        slots = skip_intro(slots, plan["intro"])
+        print(f"--skip-intro: V1/audio/markers from {plan['intro']:.1f}s on; 0:00-{plan['intro']:.1f}s left empty")
     events = [] if (video_only or a1_only or fill) else audio_events(slots, end)
     vids = [s for s in slots if s["status"] in ("OK", "WEAK", "FALLBACK")]
     if audio_only:  # --audio-only: A3-A9 only; V1, A1, A2 and the markers stay as they are
@@ -220,7 +243,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     mp.SetCurrentFolder(root)
     if not a1_only:  # A1-only is purely additive on an empty track: no backup needed
         bak = f"{tl.GetName()}_bak_place_{stamp}"
-        assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+        from dvr_cowork.resolve_ops import backup_timeline
+        assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
         project.SetCurrentTimeline(tl)
         print("backup:", bak)
     if full:
@@ -334,7 +358,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     for s in slots if not (audio_only or fill) else [s for s in vids if s["status"] in MARK]:
         if s["status"] in MARK:
             a, b = f(s["start"]), fe(s)
-            why = f" | {s['why']}" if str(s.get("why", "")).startswith("_check") else ""  # held clip: say why
+            why = f" | {s['why']}" if re.search(r"_check|kiểm tra", str(s.get("why", ""))) else ""  # held clip / sex-age unseen
+            why += (" | loại: " + ", ".join(f"{k} {n}" for k, n in s["rej"].items())) if s["status"] == "THIEU" and s.get("rej") else ""
             tl.AddMarker(a, MARK[s["status"]], f"{s['status']} #{s['slot']}", (s["need"] + why)[:240], b - a,
                          f"doc_edit:slot{s['slot']}")
     pm.SaveProject()
@@ -378,6 +403,9 @@ def selftest():
     assert kind_of("x", ["run", "hunt"]) == "attack" and kind_of("x", ["run"]) == "run" and kind_of("x", ["walk"]) == "other"
     assert kind_of(r"Z:\AI\Chạy\lion\a.mp4", []) == "run" and kind_of(r"D:\lion_hunts_zebra.mp4", []) == "attack"
     assert kind_of(r"Z:\savannah\brunei_grass.mov", []) == "other" and kind_of(r"D:\lion_runs.mp4", []) == "run"
+    k = skip_intro([{"start": 0, "dur": 50, "intro": True}, {"start": 55, "dur": 40, "src_in": 2.0, "speed": 0.8},
+                    {"start": 95, "dur": 3}], 90)  # intro shot gone, story 1's landscape trimmed to 90 s
+    assert [(s["start"], s["dur"]) for s in k] == [(90, 5), (95, 3)] and abs(k[0]["src_in"] - 30.0) < 1e-9
     print("selftest ok")
 
 
@@ -385,4 +413,4 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
     until = float(sys.argv[sys.argv.index("--until") + 1]) if "--until" in sys.argv else 1e9  # --fill only slots starting before (s)
-    selftest() if "--selftest" in sys.argv else rebin() if "--rebin" in sys.argv else main(a[0], "--replace" in sys.argv, "--dry-run" in sys.argv, "--video-only" in sys.argv, "--a1-only" in sys.argv, "--audio-only" in sys.argv, "--fill" in sys.argv, until)
+    selftest() if "--selftest" in sys.argv else rebin() if "--rebin" in sys.argv else main(a[0], "--replace" in sys.argv, "--dry-run" in sys.argv, "--video-only" in sys.argv, "--a1-only" in sys.argv, "--audio-only" in sys.argv, "--fill" in sys.argv, until, "--skip-intro" in sys.argv)

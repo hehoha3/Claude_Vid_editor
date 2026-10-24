@@ -229,6 +229,16 @@ def cmd_frames(args, cfg):
     return EXIT_OK if all(r["ok"] for r in res) else EXIT_ERR
 
 
+def cmd_timelines(args, cfg):
+    """Every timeline of the open project into bin "6. Timeline" (user 2026-10-24; scripts also do it at each backup)."""
+    from .resolve_ops import TIMELINE_BIN, tidy_timelines
+    project = _project(cfg)
+    n = tidy_timelines(project)
+    _connect(cfg).GetProjectManager().SaveProject()
+    log(f'project {project.GetName()}: {n} timeline(s) moved into "{TIMELINE_BIN}", project saved')
+    return EXIT_OK
+
+
 def cmd_backups(args, cfg):
     """Backup timelines (<name>_bak_*) of the open project: many of them make Resolve slow. --keep N --apply deletes
     all but the newest N per kind (place / light / match / vo-sync...); destructive: only after the user's yes."""
@@ -339,6 +349,8 @@ def build_parser():
     b.add_argument("--keep", type=int, default=0, help="newest backups kept per kind")
     b.add_argument("--apply", action="store_true", help="really delete (default dry run)")
     b.set_defaults(fn=cmd_backups)
+    tt = sub.add_parser("timelines", help='move every timeline (not "Master") into bin "6. Timeline"')
+    tt.set_defaults(fn=cmd_timelines)
 
     vo = sub.add_parser("vo-sync", help="sync narration to a [mm:ss] timestamp file on the VO track")
     vsub = vo.add_subparsers(dest="vo_cmd", required=True)

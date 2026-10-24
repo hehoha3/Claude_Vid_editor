@@ -27,6 +27,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / ".claude" / "skills" / "scan-source" / "scripts"))
 from dvr_cowork.config import load_config  # noqa: E402
 from scan_source import ROOTS  # noqa: E402
+sys.path.insert(0, str(Path(__file__).parent))
+from plan import AGE_CAP, KILL, SEX_CAP  # noqa: E402  the story-truth words plan.py checks, same in the prompts
 # where the user saves generated clips, per plan.json region: amazon = AI root of this machine (config.toml);
 # africa = D:\AI_video\_africa\_check (user 2026-10-22; organize.py --africa files them into _africa\<species>)
 AI_DIR = {"amazon": load_config()["paths"]["ai_video"], "africa": str(ROOTS["africa_ai_check"][0] / "_check")}
@@ -74,7 +76,11 @@ def groups(slots):
         # coverage: the other characters' footage in the same sentences (hunter OK -> only the prey is missing)
         others = Counter(f"{tag_of(s)}:{s['status']}" for s in slots
                          if s.get("line") in lines and tag_of(s) not in ("-", k[0]))
-        out.append({"id": f"G{i}", "key": k, "slots": [s["slot"] for s in ss], "sec": round(sec, 1),
+        # story truth of the slots (plan.py sex= / age= / out=) and what the library offered but the rules refused
+        truth = {t: sorted({x for s in ss for x in s["filter"].get(t, [])}) for t in ("sex", "age", "out")}
+        refused = sum((Counter(s.get("rej") or {}) for s in ss), Counter())
+        out.append({"id": f"G{i}", "key": k, "truth": truth, "refused": dict(refused),
+                    "slots": [s["slot"] for s in ss], "sec": round(sec, 1),
                     # one prompt per THIẾU slot (user 2026-10-17: was ceil(sec / CLIP_YIELD); half the clips of a
                     # round fail tagging, so fewer clips left slots empty)
                     "clips": len(ss), "lines": lines, "others": dict(others),
@@ -82,10 +88,16 @@ def groups(slots):
     return out
 
 
-def lint(species, role, vec, text):
-    """QC gates of one prompt line; returns the problems (empty = pass)."""
+def lint(species, role, vec, text, truth=None):
+    """QC gates of one prompt line; returns the problems (empty = pass). truth = the group's sex / age / out."""
     errs, low = [], text.lower()
     pos = NEG.sub("", low)  # what the prompt asks for, without its "no ..." clauses
+    for k, pats in (("sex", SEX_CAP), ("age", AGE_CAP)):
+        for v in (truth or {}).get(k, []):
+            if not re.search(pats[v], pos):  # the generator must be told: "a lioness", "a newborn calf"
+                errs.append(f"truth: {k}={v} but the prompt never names it ({pats[v][4:40]}...)")
+    if truth is not None and "kill" not in truth.get("out", []) and KILL.search(pos):
+        errs.append(f"truth: '{KILL.search(pos)[0]}' shows an outcome the screenplay does not (no out=kill)")
     if role != "-":  # legacy lines have no role/vector
         if role not in ROLES:
             errs.append(f"role {role!r} not in {sorted(ROLES)}")
@@ -113,7 +125,7 @@ def check(p, gs):
         g = by.get(gid)
         sp = gid[1:] if gid.startswith("+") else g["key"][1]
         for n, (role, vec, text) in enumerate(rows, 1):
-            errs += [f"{gid}#{n}: {e}" for e in lint(sp, role, vec, text)]
+            errs += [f"{gid}#{n}: {e}" for e in lint(sp, role, vec, text, g and g.get("truth"))]
         for a in range(len(rows)):
             for b in range(a + 1, len(rows)):
                 if difflib.SequenceMatcher(None, rows[a][2], rows[b][2]).ratio() >= DUP:
@@ -194,7 +206,9 @@ def main(video, mode, rng=None):
             tag, sp, act, st, li = g["key"]
             print(f"{g['id']} [{tag}] sp={sp} act={act or '-'} set={st or '-'} light={li or '-'} | "
                   f"{len(g['slots'])} slots {g['sec']}s -> {g['clips']} clips | ## {','.join(map(str, g['lines']))} | "
-                  f"others there: {g['others'] or '-'} | " + " / ".join(g["needs"][:4]))
+                  f"others there: {g['others'] or '-'} | "
+                  + "truth " + (" ".join(f"{t}={','.join(v)}" for t, v in g["truth"].items() if v) or "-")
+                  + (f" | refused in library: {g['refused']}" if g["refused"] else "") + " | " + " / ".join(g["needs"][:4]))
             print("   at " + " ".join(tc(at[n]) for n in g["slots"]))
         return
     p = parse_prompts((work / "prompts.txt").read_text("utf-8"))
@@ -284,6 +298,16 @@ def selftest():
            ("jaguar", "predator_burst", "L>R", "A single ocelot runs left to right")]           # wrong species
     for a in bad:
         assert lint(*a), f"lint passed {a}"
+    # story truth: a lioness / calf group must name them; no kill unless out=kill; slot refusals summed per group
+    tr = {"sex": ["female"], "age": [], "out": []}
+    ln = "A single adult lioness crouches low in tall grass, watching left to right"
+    assert lint("lion", "action", "L>R", ln, tr) == []
+    assert lint("lion", "action", "L>R", ln.replace("adult lioness", "lion"), tr)[0].startswith("truth: sex=female")
+    assert any("outcome" in x for x in lint("lion", "action", "L>R", ln + ", then catches a calf", tr))
+    assert lint("lion", "action", "L>R", ln + ", then catches a calf", dict(tr, out=["kill"])) == []
+    gt = groups([{"slot": 1, "status": "THIEU", "dur": 3, "need": "[L] x", "filter": {"sp": ["lion"], "sex": ["female"]}, "rej": {"sex": 4}},
+                 {"slot": 2, "status": "THIEU", "dur": 3, "need": "[L] y", "filter": {"sp": ["lion"]}, "rej": {"sex": 1, "kill": 2}}])
+    assert gt[0]["truth"]["sex"] == ["female"] and gt[0]["refused"] == {"sex": 5, "kill": 2}, gt
     e, _ = check({"G1": [("predator_burst", "L>R", good), ("predator_burst", "L>R", good + ".")]},
                  [{"id": "G1", "key": ("J", "jaguar", "run", "", ""), "clips": 2, "lines": [1], "slots": [1]}])
     assert any("near-duplicate" in x for x in e)

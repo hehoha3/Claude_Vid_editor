@@ -41,7 +41,11 @@ TimelineItems (per track). Gallery for stills. Fusion comps per item.
 - `Project.ExportCurrentFrameAsStill(path)` = graded frame at the playhead (`Timeline.SetCurrentTimecode(tc)` first;
   some versions need the Color page; wait until `GetCurrentTimecode()` = tc, else the previous frame comes out).
 - Render: `project.SetRenderSettings({...})`, `AddRenderJob()`, `StartRendering()`, `IsRenderingInProgress()`.
-- Undo: script changes are not one clean undo step: `timeline.DuplicateTimeline(name)` before bulk edits.
+- Undo: script changes are not one clean undo step: back up before bulk edits with
+  `dvr_cowork.resolve_ops.backup_timeline(project, tl, name)` (duplicate into bin "6. Timeline", created if missing,
+  then `tidy_timelines` moves every other timeline but "Master" there too; folder restored; vo-sync, place, reframe,
+  light / match / grade, audio-expert use it since 2026-10-24). A script creating a timeline another way: call
+  `tidy_timelines(project)` after it.
 - Every new / duplicated / imported timeline lives in bin "6. Timeline" (user 2026-10-23): `SetCurrentFolder` to it
   before `CreateEmptyTimeline` / `DuplicateTimeline` / `ImportTimelineFromFile` / `CreateTimelineFromClips`, check
   the item sits there, restore the folder. `ImportTimelineFromFile(importSourceClips=True)` dumps ALL source clips

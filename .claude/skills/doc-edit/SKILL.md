@@ -32,9 +32,16 @@ videos before).
 - Audio roots shared: `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `Z:\Unseen\Sound` (a new root = scan_source ROOTS +
   plan.py CATEGORY).
 - Africa `logo` / `delogo` / process-ai-video work on `D:\AI_video\_africa\_check`; ingest files them with
-  `organize.py --africa --apply` (folders: `.work\scripts\make_africa_ai_folders.ps1`). Clips kept in `_check` are
+  `organize.py --africa --apply` (folders: tag-source `scripts\make_africa_ai_folders.ps1`). Clips kept in `_check` are
   planned at most WEAK, as for Amazon.
 - Africa footage is tagged per species when a film needs it (references/new-video.md B1b), never all at once.
+
+**Story first** (user 2026-10-23, `input/plan.md`): shots are chosen for what the film / story / beat must make the
+viewer understand, never as keyword matches of a sentence: whole screenplay -> bible + `# HOOK` blueprint -> shot
+lines with truth tokens (`sex=` `age=` `out=kill` `xact=`, story `no=`) that plan.py enforces; no true clip = THIẾU
+(new-video.md 1c, edit-grammar "Story first"). 2026-10-24: the film is read through `story.py brief` (one pack,
+~40 % of the source files) and written as a beat sheet (emotion + shot pool per beat); `story.py expand` turns it
+into spec.txt with the grammar's rhythm and sound rules (new-video.md B1-B2).
 
 **Story choice** (user 2026-10-21): before writing a spec read `references/biome-story-pacing.md` for the biome
 (`# BIOME savanna` = Africa open country, `rainforest` = Amazon / Congo) and its hook rules. The hook (0:00-1:30, above
@@ -45,7 +52,7 @@ sounds come from the screenplay and the footage, never from the biome name.
 | command (user's words) | runs | reply |
 |---|---|---|
 | `/doc-edit <audios-folder> <region>` | `references/new-video.md`: A narration (background) + B plan + prompts in parallel, then place on empty tracks | place lines + new-video reply |
-| `/doc-edit plan` | re-plan after spec edits / new clips: B2-B3 of new-video.md with the WEAK pin round | B reply part 3 |
+| `/doc-edit plan` | re-plan after beat / spec edits or new clips: B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
 | `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`; a range -> `missing.py <video> --range=A-B` (same flag on `--check` / `--write`) | prompts reply |
 | `/doc-edit logo` ("check folder _check") | `hide_logo.py "D:\AI_video\_check"` (africa: `"D:\AI_video\_africa\_check"`) (~1-2 min) | LOGO / SUSPECT names + `.work\hide_logo\check_list.txt` |
 | `/doc-edit delogo` | `hide_logo.py --list` (MiniMax ~30 s per clip, background) -> `D:\AI_video\_nologo` copies (africa: env `NOLOGO_DIR`) | done, REVIEW FIRST, FAILED, gone |
@@ -62,4 +69,8 @@ sounds come from the screenplay and the footage, never from the biome name.
 - Place / fill details (bins, markers, `--fill`, `--rebin`, substitutes, gaps): `references/place-fill.md`.
 - Every place / fill / color apply leaves a backup timeline; many make Resolve lag: run `dvr_cowork backups` (one line)
   and when a kind has > 3, offer `dvr_cowork backups --keep 3 --apply` (user yes).
+- Shot-choice benchmark (after a rule change, user 2026-10-23): `scripts/bench_story_first.py <video>` re-runs
+  today's matching on a finished video's plan.json slots -> `.work/doc_edit/<video>/bench_story_first.md` (old picks
+  that break a story rule, status counts, changed slots); `plan.py <folder> --spec=<file> --out=<dir>` plans another
+  spec into another folder (the video's spec / plan untouched).
 - `state.py diff <video>` only when the user asks or a step must not undo hand edits it cannot see.

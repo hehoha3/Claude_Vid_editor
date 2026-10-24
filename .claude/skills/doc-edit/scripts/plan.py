@@ -17,6 +17,10 @@ spec.txt lives in .work/doc_edit/<video>/ (video = parent of the audios folder).
 filter: k=v1,v2 tokens, '_' = space. sp (species, hard; sp=none = no animal) act size light set mood cam dir
         count kw (caption words) no (species or caption word that must NOT be in the clip, hard) pin (path fragment, or pin=none = force THIẾU)
         look=green|dry (ground look of this line; '# LOOK dry' = the film's first look, see match())
+        story truth, hard (hard()): sex=female|male age=young|adult (other one rejected, not visible -> WEAK
+        'kiểm tra'), xact=rest,sleep (clip actions never allowed), out=kill (only then a caught / killed prey);
+        a stalk / hunt / run / fight line never takes a clip that only rests / sleeps
+    # STORY 2 06:30 no=river,crocodile   that story's slots never show these; # HOOK ... = cold-open blueprint
 audio:  A3=forest,day A6=bird A8=branch,snap A7=off   (keywords matched against file paths; A2 forbidden)
 '*' = rest of the sentence slot (sentence start -> next sentence start, pause included); exactly one per sentence.
 'NxK' / '*xK' = N s (or the rest) as K shots of the same need + filter, uneven lengths, audio on the first part.
@@ -36,8 +40,34 @@ import beats  # noqa: E402
 import ledger  # noqa: E402
 
 SRC = {"real", "ai", "any", "GFX"}
-KEYS = {"sp", "act", "size", "light", "set", "mood", "cam", "ang", "dir", "count", "kw", "no", "pin", "look"}
-TAG = {"act": "action", "size": "shot_size", "set": "setting", "cam": "camera", "ang": "angle", "dir": "direction"}
+KEYS = {"sp", "act", "size", "light", "set", "mood", "cam", "ang", "dir", "count", "kw", "no", "pin", "look",
+        "sex", "age", "xact", "out"}
+TAG = {"act": "action", "xact": "action", "size": "shot_size", "set": "setting", "cam": "camera", "ang": "angle",
+       "dir": "direction"}
+# Story truth (input/plan.md, user 2026-10-23): checked before any score, a high fit never rescues a clip that breaks
+# them. sex= / age= of the slot's own animal: the tag (tag-source, when it has the field) else caption words; the
+# other sex / age = rejected, not visible (or both sexes in frame) = at most WEAK with a 'kiểm tra' marker note.
+SEX_CAP = {"female": r"\b(lioness(es)?|females?|mothers?|her|she|cows?|doe|ewes?|hens?)\b",
+           "male": r"\b(males?|maned|manes?|his|he|bulls?|rams?|stallions?)\b"}
+AGE_CAP = {"young": r"\b(cubs?|calf|calves|foals?|juveniles?|young|youngsters?|bab(y|ies)|infants?|newborns?|pups?|"
+                    r"chicks?|fawns?|kittens?|yearlings?)\b",
+           "adult": r"\b(adults?|mothers?|bulls?|lioness(es)?|maned|matriarch)\b"}
+# a caught / killed / eaten prey shows an outcome: only where the screenplay confirms it (out=kill) or the line is a
+# meal (act=eat); a near miss or an unknown end never gets it (plan.md 8.1: no kill from another hunt)
+KILL = re.compile(r"\b(kill(s|ed|ing)?|carcass(es)?|corpse|lifeless|catch(es|ing)?|caught|takes? down|brings? down|"
+                  r"devour\w*|suffocat\w*|prey in (its|her|his) (jaws|mouth)|drags? (the |its )?(prey|kill))\b", re.I)
+STILL = {"rest", "sleep"}  # a clip doing only these never stands in for a stalk / hide / hunt / chase / fight line
+OPP = {"left": "right", "right": "left", "toward": "away", "away": "toward"}
+MOVING = {"attack", "hunt", "chase", "fight", "run", "stalk", "jump", "walk", "swim", "fly"}
+# tag-source 2026-10-23 split 'hunt' into chase / catch and added hide; clips tagged before keep 'hunt'
+ACT_SYN = {"hunt": ("chase", "catch"), "chase": ("hunt",), "catch": ("hunt",), "hide": ("stalk",), "stalk": ("hide",)}
+TAG_POS = (0.15, 0.40, 0.65, 0.90)  # = tag_source.POS: clip time of contact-sheet frames 1-4 ('phase' = action per frame)
+
+
+def acts_of(want):
+    return set(want) | {y for x in want for y in ACT_SYN.get(x, ())}
+TRUTH_WHY = {"sex", "age", "kill", "resting", "xact"}  # hard() reasons the reports count (no= / biome / night: filters)
+DIR_PEN = 0.15  # same sentence, moving subject, screen direction reversed against the previous shot
 SIZES = ["extreme_close", "close_up", "medium", "wide", "aerial"]
 OK_FIT, WEAK_FIT = 0.6, 0.35
 FALLBACK_T = 300.0  # first 5 min: strict matches only; later THIẾU shots may use related/neutral clips
@@ -51,7 +81,7 @@ SUB_GAP, SUB_MAX = 60.0, 8  # late substitutes only (user 2026-10-17, amazon_2):
 # timeline beats unrelated scenery, so the reuse limits loosen from 120 s / 3 uses to 60 s / 4 uses
 # action shots (user rule 2026-10-12): a strike/chase shot prefers a clip that shows action; a same-species clip
 # without it is capped at WEAK (yellow, below OK_FIT) instead of looking like a match; none at all -> THIẾU
-STRIKE = {"attack", "hunt", "fight", "run", "stalk", "jump"}
+STRIKE = {"attack", "hunt", "chase", "catch", "fight", "run", "stalk", "jump"}
 NEUTRAL = {"landscape", "bird", "birds", "insects", "butterfly", "frog", "hummingbird", "toucan-bird", "spider",
            "supplementary_shots", "others"}  # folders of side shots: scenery, insects, birds, frogs
 INTRO_MIN, INTRO_MAX = 15.0, 120.0  # '# INTRO m:ss': default INTRO_MIN; longer than INTRO_LEGACY = a cold-open hook
@@ -66,7 +96,7 @@ LOOKS = {"green": r"\b(green|lush|flooded|floodwater|floodplain|wetland|marsh|sw
          "desert": r"\b(desert|semi-desert|dunes?|kalahari|namib|arid)\b"}
 LOOK_PEN = 0.3
 HARD_MIN, HARD_MAX = 0.8, 10.0  # shots outside this are errors; SHOT_MIN-SHOT_MAX is only a warning (holds / flashes)
-OPEN_ACT = {"run", "fight", "attack", "hunt", "stalk", "jump"}  # '# OPENING action': the first shot shows one of these
+OPEN_ACT = {"run", "fight", "attack", "hunt", "chase", "catch", "stalk", "jump"}  # '# OPENING action': the first shot shows one of these
 OPEN_WIDE_T = 20.0  # '# OPENING action': a wide/medium/aerial shot that places who is where starts within 20 s
 SIDE_MAX = 0.3   # after the intro, side shots (anything without a [tag] main character) <= 30% of footage time
 SIDE_RUN = 3     # max side shots in a row; a run of 3 is rare: at most one per RUN3_EVERY seconds
@@ -78,6 +108,8 @@ SHORT_T, LONG_T = 2.0, 3.5  # rhythm needs both: >= 25% shots <= 2.0 s and >= 10
 OPEN_MIN, OPEN_MAX = 3.0, 4.0  # user rule 2026-10-13: the first shot of "Edit" is a landscape (sp=none, wide/aerial)
 # of 3-4 s, longer than every other intro shot
 HIT_WIN, BEAT_WIN = 0.45, 0.25  # intro cuts move onto a hit B3+ / bar line within HIT_WIN s, else a beat within BEAT_WIN
+OUT = next((a[6:] for a in sys.argv if a.startswith("--out=")), None)  # benchmark: plan written there, not the video's
+SPEC = next((a[7:] for a in sys.argv if a.startswith("--spec=")), None)  # benchmark: another spec than <work>/spec.txt
 AI_TRIM = 0.3  # AI clips often morph in the first/last frames
 YOLO_SEEN = 0.3  # YOLO saw the subject in >= 30% of samples: its window and size are trusted
 # Reuse inside one video (user 2026-10-22, africa_1: save source, not too often, not too rarely): one clip serves up
@@ -109,6 +141,9 @@ def parse_filter(s, n):
         assert k in KEYS and v, f"spec line {n}: bad filter token {tok!r} (keys: {sorted(KEYS)})"
         f[k] = [x.replace("_", " ") if k in ("sp", "kw", "no") else x for x in v.split(",")]  # no=male_lion
         assert k != "look" or set(f[k]) <= set(LOOKS), f"spec line {n}: look={v} not in {sorted(LOOKS)}"
+        assert k != "sex" or set(f[k]) <= set(SEX_CAP), f"spec line {n}: sex={v} not in {sorted(SEX_CAP)}"
+        assert k != "age" or set(f[k]) <= set(AGE_CAP), f"spec line {n}: age={v} not in {sorted(AGE_CAP)}"
+        assert k != "out" or f[k] == ["kill"], f"spec line {n}: out={v}: only out=kill (default = no kill on screen)"
     return f
 
 
@@ -151,7 +186,8 @@ def spec_meta(text, end=None, intro=INTRO_MIN):
     """Optional headers: '# OPENING landscape|action', '# BIOME savanna|rainforest', '# FAST_UNTIL m:ss',
     '# STORY n m:ss' (start of story n), '# TURN' under a '## N' (a change of advantage the author marked).
     Missing = old behaviour (landscape opening, one HOOK/BODY report)."""
-    meta, errs, cur = {"opening": "landscape", "biome": None, "look": None, "fast": None, "stories": [], "turns": set()}, [], None
+    meta, errs, cur = {"opening": "landscape", "biome": None, "look": None, "fast": None, "stories": [], "turns": set(),
+                       "story_no": {}, "hook": bool(re.search(r"^\s*#\s*HOOK\b", text, re.M))}, [], None
     for n, raw in enumerate(text.splitlines(), 1):
         s = raw.strip()
         try:
@@ -166,8 +202,12 @@ def spec_meta(text, end=None, intro=INTRO_MIN):
                 assert meta["look"] in LOOKS, f"spec line {n}: LOOK {m[1]!r} not in {sorted(LOOKS)}"
             elif m := re.match(r"#\s*FAST_UNTIL\s+([\d:.]+)", s):
                 meta["fast"] = parse_clock(m[1])
-            elif m := re.match(r"#\s*STORY\s+(\d+)\s+([\d:.]+)", s):
+            elif m := re.match(r"#\s*STORY\s+(\d+)\s+([\d:.]+)(.*)", s):
                 meta["stories"].append((int(m[1]), parse_clock(m[2])))
+                if m[3].strip():  # '# STORY 2 06:30 no=river,crocodile': what this story's place / time never shows
+                    f = parse_filter(m[3], n)
+                    assert set(f) == {"no"}, f"spec line {n}: a STORY line takes only no=..."
+                    meta["story_no"][int(m[1])] = f["no"]
             elif s.startswith("## "):
                 cur = int(s[3:])
             elif re.match(r"#\s*TURN\b", s):
@@ -183,6 +223,14 @@ def spec_meta(text, end=None, intro=INTRO_MIN):
             errs.append(f"spec: STORY times must lie between INTRO ({tc(intro)}) and END")
     assert not errs, "\n".join(errs)
     return meta
+
+
+def story_rules(slots, meta):
+    """A story's no= (its '# STORY' line) joins the no= of every slot from that story's start to the next one."""
+    for s in slots:
+        k = max((k for k, t in meta["stories"] if t <= s["start"]), default=None)
+        if extra := meta["story_no"].get(k):  # new dict: the parts of one line share their filter
+            s["filter"] = {**s["filter"], "no": s["filter"].get("no", []) + [x for x in extra if x not in s["filter"].get("no", [])]}
 
 
 def story_report(slots, meta, intro, end):
@@ -221,9 +269,11 @@ SEQ_W = (1.25, 0.8, 1.05, 0.9, 1.2, 0.85, 1.1, 0.75)  # 'NxK' sequence: uneven p
 
 def seq(d):
     """'3.5' -> ('3.5', 1); '12x4' / '*x5' -> 12 s (or the rest) as 4 / 5 shots of the same need and filter,
-    each its own slot (different clips), audio on the first (africa_1, 2026-10-21: 45 s slots, half without voice)."""
-    m = re.fullmatch(r"(\*|[\d.]+)x(\d+)", d)
-    return (m[1], int(m[2])) if m else (d, 1)
+    each its own slot (different clips), audio on the first (africa_1, 2026-10-21: 45 s slots, half without voice).
+    '12x4 same' (2026-10-23): the K shots are consecutive parts of ONE clip (one action that really continues:
+    stalk -> lunge -> miss), cut where the parts meet; no clip long enough -> K separate picks as without 'same'."""
+    m = re.fullmatch(r"(\*|[\d.]+)x(\d+)(\s+same)?", d)
+    return (m[1], int(m[2]), bool(m[3])) if m else (d, 1, False)
 
 
 def build(starts, end, blocks, intro=INTRO_MIN):
@@ -244,14 +294,15 @@ def build(starts, end, blocks, intro=INTRO_MIN):
             continue
         t = t0
         for d, need, src, flt, audio in blocks[i]:
-            base, k = seq(d)
+            base, k, same = seq(d)
             total = rest if base == "*" else float(base)
             w = SEQ_W[:k] if k <= len(SEQ_W) else (SEQ_W * (k // len(SEQ_W) + 1))[:k]
+            chain = f"{i}:{len(slots) + 1}" if same and k > 1 else None
             for j, x in enumerate(w if k > 1 else (1.0,)):
                 dur = total * x / sum(w) if k > 1 else total
                 slots.append({"slot": len(slots) + 1, "line": i, "start": round(t, 2), "dur": round(dur, 2),
                               "need": need, "src": src, "filter": flt, "audio": audio if j == 0 else [],
-                              "intro": t < intro})
+                              "intro": t < intro, **({"chain": chain} if chain else {})})
                 t += dur
         assert abs(t - t1) < 1e-6
     assert not errs, "\n".join(errs)
@@ -493,11 +544,12 @@ def usable(c):
     return a, b
 
 
-def yolo_pass(clips):
-    """Measure the candidate clips with YOLO (cached, local GPU), then trust its shot size over the tag."""
+def yolo_pass(clips, cached=False):
+    """Measure the candidate clips with YOLO (cached, local GPU), then trust its shot size over the tag.
+    cached = cache only: --yolo-cached, and always for africa (4K ProRes on the NAS, africa_1: 6 h unfinished)."""
     try:
         import yolo
-        new, sec = yolo.measure(clips, "--yolo-cached" not in sys.argv)
+        new, sec = yolo.measure(clips, not cached)
     except ImportError as e:
         return f"yolo: skipped ({e}); tags only"
     n = 0
@@ -509,7 +561,7 @@ def yolo_pass(clips):
         if t.get("shot_size") != "aerial":
             t["shot_size"] = y["size"]
     return (f"yolo: {len(clips)} candidate clips, {new} measured now ({sec}s), {n} with subject window + measured size"
-            + (" (--yolo-cached: unmeasured clips use tags only; yolo.py --warm measures them)" if "--yolo-cached" in sys.argv else ""))
+            + (" (cache only: unmeasured clips use tags only; yolo.py --warm measures them)" if cached else ""))
 
 
 # Meaning of the shot text (Vietnamese) vs the clip caption (English): multilingual-e5-small of the memory gateway
@@ -606,23 +658,64 @@ def ground_looks(clips):
             f"green {n['green']}, dry {n['dry']}, desert {n['desert']}, mixed/unknown {n[None]}")
 
 
-def fit(c, f, prev_size):
+def trait(c, key, pats):
+    """'female' / 'male' / 'young' / 'adult', 'mixed' (both in frame) or None (not visible): the tag when there."""
+    v = c["tags"].get(key)
+    if v and v != "unknown":
+        return v
+    hit = [k for k, p in pats.items() if re.search(p, c["tags"]["caption"], re.I)]
+    return hit[0] if len(hit) == 1 else "mixed" if hit else None
+
+
+def hard(c, f, own=True):
+    """Story truth, before any score -> (reject reason or None, unsure traits ''/'sex'/'age'/'sex,age').
+    own=False: the caller picked the species itself (fallback tiers); species not checked."""
     t = c["tags"]
-    if "sp" in f:
+    sp, cap = set(t.get("species", [])), t["caption"].lower()
+    if own and "sp" in f:
         if f["sp"] == ["none"]:
-            if t.get("species") and t.get("count") != "none":
-                return None
-        elif not set(f["sp"]) & set(t.get("species", [])):
-            return None
-    if any(x in t.get("species", []) or x.lower() in t["caption"].lower() for x in f.get("no", [])):
-        return None
-    if any(w in t["caption"].lower() for w in BIOME_NO):  # temperate scenery never passes for a tropical film
-        return None
+            if sp and t.get("count") != "none":
+                return "species", ""
+        elif not set(f["sp"]) & sp:
+            return "species", ""
+    if any(x in sp or x.lower() in cap for x in f.get("no", [])):
+        return "no", ""
+    if any(w in cap for w in BIOME_NO):  # temperate scenery never passes for a tropical film
+        return "biome", ""
     if "light" in f and ("night" in f["light"]) != (t.get("light") == "night"):
+        return "night", ""
+    if "look" in f and clip_look(t["caption"], c.get("green")) == "desert" and "desert" not in f["look"]:
+        return "desert", ""
+    acts = set(t.get("action") or [])
+    if acts & set(f.get("xact", [])):
+        return "xact", ""
+    if not (set(f.get("sp", [])) - {"none"}) & sp:  # the slot's own animal is not in frame (scenery, companion)
+        return None, ""
+    out = t.get("outcome")  # tag-source vision field when there; older clips: caption words
+    killed = out in ("catch", "kill") if out and out != "unknown" else bool(KILL.search(cap))
+    if killed and "kill" not in f.get("out", []) and "eat" not in f.get("act", []):
+        return "kill", ""
+    if acts and acts <= STILL and acts_of(f.get("act", [])) & (STRIKE | {"hide"}):
+        return "resting", ""
+    unsure = []
+    for k, pats in (("sex", SEX_CAP), ("age", AGE_CAP)):
+        if k in f:
+            v = trait(c, k, pats)
+            if k == "age" and v is None:  # captions name calves / cubs when they are in frame (africa 2026-10-23:
+                v = "adult"               # 375 of 445 wildebeest captions name no age = adult herds)
+            if v in pats and v not in f[k]:
+                return k, ""
+            if v is None or (v == "mixed" and k == "sex"):  # age 'mixed' = mother + calf: the young is in frame
+                unsure.append(k)
+    return None, ",".join(unsure)
+
+
+def fit(c, f, prev_size):
+    why, unsure = hard(c, f)
+    if why:
         return None
+    t = c["tags"]
     lk = clip_look(t["caption"], c.get("green")) if "look" in f else None
-    if lk == "desert" and "desert" not in f["look"]:
-        return None
     pts = mx = 0
     for k, w in (("act", 3), ("set", 2), ("size", 2), ("light", 1), ("mood", 1), ("cam", 1), ("ang", 1), ("dir", 1), ("count", 1)):
         if k not in f:
@@ -632,7 +725,7 @@ def fit(c, f, prev_size):
         have = set(v) if isinstance(v, list) else {v}
         if k == "set":
             pts += min(w, len(have & set(f[k])))
-        elif have & set(f[k]):
+        elif have & (acts_of(f[k]) if k == "act" else set(f[k])):
             pts += w
         elif k == "act" and set(f[k]) & STRIKE and have & STRIKE:  # lunge / chase for an attack: close enough
             pts += w - 1
@@ -643,9 +736,9 @@ def fit(c, f, prev_size):
         pts += sum(k.lower() in t["caption"].lower() for k in f["kw"])
     s = pts / mx if mx else 1.0
     s -= 0.15 * len(t.get("issues", [])) + (0.1 if not t.get("sure", True) else 0)
-    if c.get("hold"):
-        s = min(s, OK_FIT - 0.05)   # _check clip: never OK, the user looks at it first
-    if set(f.get("act", [])) & STRIKE and not set(t.get("action") or []) & STRIKE:
+    if c.get("hold") or unsure:
+        s = min(s, OK_FIT - 0.05)   # _check clip / sex or age not visible: never OK, the user looks at it first
+    if set(f.get("act", [])) & STRIKE and not acts_of(t.get("action") or []) & STRIKE:
         s = min(s, OK_FIT - 0.05)   # no action in the clip: never OK
     s -= 0.1 if prev_size and t.get("shot_size") == prev_size else 0
     s -= LOOK_PEN if lk and lk not in f["look"] else 0
@@ -657,6 +750,14 @@ def overlaps(uses, x, d):
     return [u for u in uses if u[1] < x + d and u[2] > x]
 
 
+def focus(c, s):
+    """Clip time where the slot's action happens: mean time of the tag-sheet frames whose 'phase' (tag-source, action per
+    frame 1-4) is one the slot asks for; None = no phase, no act, or no frame shows it (centre of the free part)."""
+    ph, want = c["tags"].get("phase"), acts_of(s["filter"].get("act", []))
+    t = [p * c["duration"] for p, x in zip(TAG_POS, ph or ()) if x in want]
+    return sum(t) / len(t) if t and want else None
+
+
 def window(c, s, uses, gap=None, mx=None):
     """In-point for slot s from clip c, or None (REUSE_* / SAME_* above). Uses from timeline Open (start -1e9) are
     never shown again; frames already on Edit may come back, up to SAME_MAX times in all, SAME_GAP s apart."""
@@ -666,7 +767,11 @@ def window(c, s, uses, gap=None, mx=None):
     lo, gaps = a, []
     for _, i, o in sorted(uses, key=lambda u: u[1]):
         gaps.append((lo, i - SRC_MARGIN)); lo = max(lo, o + SRC_MARGIN)
-    lo, hi = max(gaps + [(lo, b)], key=lambda g: g[1] - g[0])
+    gaps.append((lo, b))
+    if (x := focus(c, s)) is not None and (fits := [g for g in gaps if g[1] - g[0] >= s["dur"]]):
+        lo, hi = min(fits, key=lambda g: max(g[0] - x, x - g[1], 0))  # the free part nearest the asked action
+        return round(min(max(x - s["dur"] / 2, lo), hi - s["dur"]), 2)
+    lo, hi = max(gaps, key=lambda g: g[1] - g[0])
     if hi - lo >= s["dur"]:
         return round(lo + (hi - lo - s["dur"]) / 2, 2)
     best = None  # no unseen part long enough: the same frames again, the least repeated in-point first
@@ -693,6 +798,7 @@ def match(slots, clips, taken=None, look=None):
     (neighbours never jump green -> dry -> desert), a line's own look= wins; the look changes only where no clip
     of it fits better than LOOK_PEN."""
     uses, prev_size, cur = {}, None, [look]  # clip path -> [(timeline start, src_in, src_out)]
+    last = {}  # line + screen direction of the shot just taken
     for c in clips:  # start -1e9: another timeline, so the REUSE_GAP check never applies to these
         if u := (taken or {}).get(c["abs"].lower()):
             uses[c["abs"]] = [(-1e9, a, b) for a, b in u]
@@ -703,6 +809,10 @@ def match(slots, clips, taken=None, look=None):
         uses.setdefault(c["abs"], []).append((s["start"], cin, cin + s["dur"]))
         if c.get("hold"):
             kw.setdefault("why", "_check: " + (",".join(c["tags"].get("issues") or []) or "sure=false"))
+        if unsure := hard(c, s["filter"], own=False)[1]:
+            note = f"kiểm tra {unsure}: " + "/".join(sorted({x for k in unsure.split(",") for x in s["filter"][k]}))
+            kw["why"] = "; ".join(filter(None, (kw.get("why"), note)))  # shown in plan.md and the marker note
+        last.update(line=s.get("line"), dir=c["tags"].get("direction"))
         s.update(path=c["abs"], id=c.get("id"), source=c["source"], src_in=cin, src_out=round(cin + s["dur"], 2),
                  caption=c["tags"]["caption"], reuse=len(uses[c["abs"]]),
                  same=len(overlaps(uses[c["abs"]][:-1], cin, s["dur"])), **kw)
@@ -718,13 +828,19 @@ def match(slots, clips, taken=None, look=None):
                     and (w := window(c, s, uses.get(c["abs"], ()))) is not None]
             assert len(hits) == 1, f"slot {s['slot']}: pin {f['pin'][0]!r} -> {len(hits)} usable clips"
             return [(1.0, *hits[0])]
-        # fit first (cheap, rejects most clips on species), window only for the survivors: same result, ~10x fewer calls
-        # ponytail: greedy in timeline order; a later slot may lose a clip it fits better
-        out = []
+        # truth + fit first (cheap, rejects most clips on species), window only for the survivors: ~10x fewer calls
+        # ponytail: greedy in timeline order; a later slot may lose a clip it fits better (plan.md 8.3 beam search)
+        out, rej = [], Counter()
+        flip = OPP.get(last.get("dir")) if last.get("line") == s.get("line") and set(f.get("act", [])) & MOVING else None
         for c in cands:
+            if why := hard(c, f)[0]:
+                rej[why] += why in TRUTH_WHY  # the slot's own animal, refused by a story rule: the THIẾU report says why
+                continue
             if (v := fit(c, f, prev)) is not None and (w := window(c, s, uses.get(c["abs"], ()))) is not None:
                 u = uses.get(c["abs"], ())
+                v -= DIR_PEN if flip and c["tags"].get("direction") == flip else 0
                 out.append((v - REUSE_PEN * len(u) - SAME_PEN * len(overlaps(u, w, s["dur"])), c, w))
+        s["rej"] = {k: n for k, n in rej.items() if n}
         return sorted(out, key=lambda x: rank_key(x, s.get("need")), reverse=True)
 
     def split(s, prev):
@@ -746,7 +862,7 @@ def match(slots, clips, taken=None, look=None):
                 return parts
         return None
 
-    out = []
+    out, run = [], None  # run: (chain, clip, next src_in, status, fit) after a part of a '12x4 same' chain
     for s in slots:
         f = s["filter"]
         out.append(s)
@@ -754,7 +870,20 @@ def match(slots, clips, taken=None, look=None):
             s["status"] = "GFX" if s["src"] == "GFX" else "THIEU"
             prev_size = None
             continue
-        ranked = rank(s, prev_size)
+        ch = s.get("chain")
+        if ch and run and run[0] == ch and run[2] + s["dur"] <= usable(run[1])[1] + 0.01:  # the action goes on
+            take(s, run[1], run[2], status=run[3], fit=run[4])
+            run = (ch, run[1], round(run[2] + s["dur"], 2), run[3], run[4])
+            continue
+        # first part of a chain: one clip with room for the whole remaining chain, else parts picked one by one
+        # ponytail: each part counts as one use toward REUSE_MAX
+        q = dict(s, dur=round(sum(x["dur"] for x in slots if x.get("chain") == ch and x["start"] >= s["start"]), 2)) if ch else s
+        ranked = rank(q, prev_size)
+        if q is not s:
+            s["rej"] = q.get("rej", {})
+            if not ranked or ranked[0][0] < WEAK_FIT:
+                ranked, ch = rank(s, prev_size), None
+        run = None
         s["top3"] = [f"{v:.2f} {Path(c['path']).name[:40]} — {c['tags']['caption']}" for v, c, _ in ranked[:3]]
         s["alts"] = [[c["abs"], c["source"]] for _, c, _ in ranked[:ALTS + 1]]  # place.py imports these (minus the chosen) too
         if not ranked or ranked[0][0] < WEAK_FIT:
@@ -770,6 +899,8 @@ def match(slots, clips, taken=None, look=None):
         v, c, cin = ranked[0]
         prev_size = c["tags"].get("shot_size")
         take(s, c, cin, status="OK" if v >= OK_FIT else "WEAK", fit=round(v, 2))
+        if ch:
+            run = (ch, c, round(cin + s["dur"], 2), s["status"], s["fit"])
     if len(out) != len(slots):  # some slots became 2-3 shots
         slots[:] = out
         for n, s in enumerate(slots, 1):
@@ -800,9 +931,10 @@ def match(slots, clips, taken=None, look=None):
         side_ok = not s.get("vo") and s["dur"] <= budget and run_len(i) <= 2  # never a cutaway over a narrated character line
         best = None
         for c in clips:
-            if s["src"] not in ("any", c["source"]) or (w := window(c, s, uses.get(c["abs"], ()))) is None:
+            if s["src"] not in ("any", c["source"]) or hard(c, f, own=False)[0] \
+                    or (w := window(c, s, uses.get(c["abs"], ()))) is None:  # other action, never a contradicting one
                 continue
-            related = bool(want & set(c["tags"].get("species", [])))
+            related =bool(want & set(c["tags"].get("species", [])))
             if not related and not (side_ok and ((c.get("subject") or "").lower() in NEUTRAL
                                                  or c["tags"].get("count") == "none")):
                 continue
@@ -830,7 +962,7 @@ def match(slots, clips, taken=None, look=None):
             for tier in tiers:
                 best = None
                 for c in clips:
-                    if s["src"] not in ("any", c["source"]) or \
+                    if s["src"] not in ("any", c["source"]) or hard(c, f, own=False)[0] or \
                             (w := window(c, s, uses.get(c["abs"], ()), SUB_GAP, SUB_MAX)) is None:
                         continue
                     sp = set(c["tags"].get("species", []))
@@ -870,27 +1002,24 @@ def highlights(slots, clips):
     took, n = set(), 0
     for s in slots:
         want = set(s["filter"].get("sp", [])) - {"none"}
-        if not s.get("intro") or not want or s["src"] == "GFX" or "pin" in s["filter"]:
-            continue
+        if not s.get("intro") or not want or s["src"] == "GFX" or "pin" in s["filter"] or s.get("chain"):
+            continue  # a '... same' chain keeps its one continuous clip
         v = HL_SPEEDS[n % len(HL_SPEEDS)]
         need = round(s["dur"] * v, 2)
         own = [u for u in uses.get(s.get("path"), ()) if u[3] != s["slot"]]
         best = None
-        # tiers (user 2026-10-22: epic intro, no empty slot): same species > a related one (KIN class, e.g. antelope
-        # for a red lechwe the library lacks) > any species; a line asking for a chase / fight takes a related
-        # species' chase before a calm shot of its own species; other species only ever on chase / fight shots
-        cls = {KIN.get(x, "").split()[0] for x in want if KIN.get(x)}
-        kin_sp = {x for x, k in KIN.items() if k.split()[0] in cls} - want
+        # tiers: the line's own species only (user 2026-10-23, input/plan.md: a teaser previews later threats, never
+        # another animal standing in; the 2026-10-22 KIN / any-species tiers are gone): its chase / fight first, else
+        # its calm footage; a line asking a calm act keeps calm footage. The intro line's sex / age / no= / kill hold.
         ask = set(s["filter"].get("act") or [])
-        tiers = ([(want, True), (kin_sp, True), (want, False), (None, True)] if not ask or ask & HL_ACT
-                 else [(want, False), (kin_sp, True), (None, True)])  # a line asking a calm act keeps calm footage
+        tiers = [(want, True), (want, False)] if not ask or ask & HL_ACT else [(want, False)]
         for tier, act_only in tiers:
             for L in later:
                 c = by[L["path"]]
                 cap, sp = c["tags"]["caption"].lower(), set(c["tags"].get("species", []))
                 if L["start"] - s["start"] < SAME_GAP or L["slot"] in took or L["path"] in took \
-                        or (tier is not None and not tier & sp) or (act_only and not acts(L) & HL_ACT) \
-                        or any(w in cap for w in HL_NO) or any(x in sp or x.lower() in cap for x in s["filter"].get("no", [])):
+                        or not tier & sp or (act_only and not acts(L) & HL_ACT) \
+                        or any(w in cap for w in HL_NO) or hard(c, s["filter"])[0]:
                     continue
                 a, b = usable(c)
                 x = round(min(L["src_in"], b - need), 2)
@@ -903,31 +1032,30 @@ def highlights(slots, clips):
                     continue
                 k = (bool(acts(L) & HL_ACT), bool(set(s["filter"].get("act") or []) & acts(L)), c["source"] == "real", L["fit"])
                 if best is None or k > best[0]:
-                    best = (k, L, x, len(ov), len(u), tier is want)
+                    best = (k, L, x, len(ov), len(u))
             if best:
                 break
         if not best:
             continue
-        _, L, x, same, ru, own_sp = best
+        _, L, x, same, ru = best
         c = by[L["path"]]
         if s.get("path"):
             uses[s["path"]] = own
         uses.setdefault(L["path"], []).append((s["start"], x, x + need, s["slot"]))
         took |= {L["slot"], L["path"]}
         n += 1
+        unsure = hard(c, s["filter"])[1]
         s.update(path=L["path"], id=c.get("id"), source=c["source"], src_in=x, src_out=round(x + need, 2),
-                 caption=c["tags"]["caption"], status="OK", fit=L["fit"], reuse=ru + 1, same=same, speed=v,
-                 highlight=L["slot"])
+                 caption=c["tags"]["caption"], status="WEAK" if unsure else "OK", fit=L["fit"], reuse=ru + 1,
+                 same=same, speed=v, highlight=L["slot"])
         s.pop("part", None); s.pop("why", None); s.pop("zoom", None)
-        if not own_sp:
-            s["why"] = "intro highlight, other species"
+        if unsure:
+            s["why"] = f"kiểm tra {unsure}"
     hl = [s for s in slots if s.get("highlight")]
     empty = [tc(s["start"]) for s in slots if s.get("intro") and s["src"] != "GFX" and s.get("status") == "THIEU"]
     return (f"intro highlights: {len(hl)} of {sum(1 for s in slots if s.get('intro') and set(s['filter'].get('sp', [])) - {'none'})} "
-            f"animal intro shots show later story shots at {min(HL_SPEEDS):.0%}-{max(HL_SPEEDS):.0%} "
-            f"({sum(bool(acts(s) & HL_ACT) for s in hl)} chase/fight, "
-            f"{sum(s.get('why') == 'intro highlight, other species' for s in hl)} of another species); "
-            f"intro THIẾU left: {', '.join(empty) or 'none'}")
+            f"animal intro shots show later story shots of their own species at {min(HL_SPEEDS):.0%}-{max(HL_SPEEDS):.0%} "
+            f"({sum(bool(acts(s) & HL_ACT) for s in hl)} chase/fight); intro THIẾU left: {', '.join(empty) or 'none'}")
 
 
 # ------------------------------------------------------------------ zoom + speed (user 2026-10-22, africa_1)
@@ -948,7 +1076,7 @@ def vary(slots, clips):
       repeat of the same frames gets another crop (ZOOMS by use), fresh clips every ZOOM_EVERY-th eligible shot.
     Source used = dur * speed, so slow motion also saves footage."""
     by = {c["abs"]: c for c in clips}
-    last_slow, n_zoom, n_fast = -1e9, 0, 0
+    last_slow, n_zoom, n_fast, prev = -1e9, 0, 0, {}
     cnt = Counter()
     for s in slots:
         c = by.get(s.get("path"))
@@ -970,6 +1098,11 @@ def vary(slots, clips):
             n_fast += 1
             if n_fast % FAST_EVERY == 0 and s["src_in"] + s["dur"] * FAST <= usable(c)[1]:
                 sp = FAST
+        if s.get("chain") and prev.get("chain") == s["chain"] and prev.get("path") == s["path"]:
+            sp = prev.get("speed", 1.0)  # '... same' chain: one speed, each part starts where the last one ended
+            s["src_in"] = prev["src_out"]
+            s["src_out"] = round(s["src_in"] + s["dur"] * sp, 2)
+        prev = s
         if sp != 1.0:
             s["speed"] = sp
             s["src_out"] = round(s["src_in"] + s["dur"] * sp, 2)
@@ -1022,15 +1155,25 @@ KIN = {"jaguar": "cat cheetah leopard lion tiger carnivore", "peccary": "pig boa
        "hyena": "carnivore", "spotted hyena": "hyena carnivore", "wild dog": "dog carnivore", "jackal": "dog carnivore",
        "zebra": "horse hoof herbivore", "wildebeest": "antelope hoof herbivore", "impala": "antelope hoof herbivore",
        "gazelle": "antelope hoof herbivore", "springbok": "antelope hoof herbivore", "kudu": "antelope hoof herbivore",
-       "cape buffalo": "buffalo cow hoof herbivore", "warthog": "pig boar hoof", "giraffe": "hoof herbivore",
+       "cape buffalo": "buffalo cow hoof herbivore", "warthog": "pig boar hoof herbivore", "giraffe": "hoof herbivore",
        "elephant": "herbivore", "hippo": "herbivore", "rhino": "herbivore", "crocodile": "caiman alligator carnivore",
        "vulture": "bird birds raptor", "eagle": "bird birds raptor hawk", "ostrich": "bird birds",
-       "baboon": "monkey primate",
+       "baboon": "monkey primate herbivore",  # grazing warthog / baboon: herbivore chewing (2026-10-24)
        # africa_1 (2026-10-21): tag variants seen in the Africa library + its waterbirds
        "african wild dog": "wild dog dog carnivore", "lioness": "lion cat carnivore",
        "red lechwe": "antelope hoof herbivore", "lechwe": "antelope hoof herbivore",
        "heron": "bird birds", "egret": "bird birds", "cattle egret": "bird birds", "stork": "bird birds",
-       "marabou stork": "bird birds", "yellow-billed stork": "bird birds", "fish eagle": "eagle bird birds raptor"}
+       "marabou stork": "bird birds", "yellow-billed stork": "bird birds", "fish eagle": "eagle bird birds raptor",
+       # 2026-10-24: tagged species with no kin had no sound at all although relatives' files exist
+       "thomson's gazelle": "gazelle antelope hoof herbivore", "blesbok": "antelope hoof herbivore",
+       "nyala": "antelope hoof herbivore", "eland": "antelope hoof herbivore", "topi": "antelope hoof herbivore",
+       "gemsbok": "antelope hoof herbivore", "hartebeest": "antelope hoof herbivore", "tapir": "hoof herbivore",
+       "red river hog": "pig boar hoof herbivore", "serval": "cat carnivore", "ocelot": "cat carnivore",
+       "bush dog": "dog carnivore", "banded mongoose": "carnivore", "gorilla": "ape primate",
+       "chimpanzee": "chimp ape primate", "spider monkey": "monkey primate", "howler monkey": "monkey primate",
+       "toucan": "bird birds", "hummingbird": "bird birds", "songbird": "bird birds", "guineafowl": "bird birds",
+       "python": "snake", "forest buffalo": "buffalo cow hoof herbivore", "buffalo": "cow hoof herbivore",
+       "caracal": "cat carnivore"}
 
 
 def kin(sp):
@@ -1058,16 +1201,20 @@ def match_audio(slots, lib, end):
     a7 = [(s["start"], e) for s in slots for e in s["audio"] if e["track"] == 7]
     for (t0, e), (t1, _) in zip(a7, a7[1:] + [(end, None)]):
         e["span"] = round(t1 - t0, 2)  # music plays until the next A7 entry
-    used = Counter()
+    used, last_music = Counter(), None
     for s in slots:
         for e in s["audio"]:
             if e["kw"] == ["off"]:
                 continue
 
-            def key(a):  # most keyword hits, then least used (variety); music: covers its span, then closest length
-                k = (sum(w in a["words"] for w in e["kw"]), -used[a["abs"]])
-                return k + (a["duration"] >= e["span"], -abs(a["duration"] - e["span"])) if "span" in e else k
+            def key(a):  # most keyword hits, then least used (variety); music (user 2026-10-24: the best fit, never
+                # by how often a track was used): mood words, covers its span, closest length
+                k = (sum(w in a["words"] for w in e["kw"]),)
+                return k + (a["duration"] >= e["span"], -abs(a["duration"] - e["span"])) if "span" in e \
+                    else k + (-used[a["abs"]],)
             pool = [a for a in lib if a["category"] in AUDIO_POOL[e["track"]]]
+            if e["track"] == 7 and len(pool) > 1:  # never the same track twice in a row (edit-grammar)
+                pool = [a for a in pool if a["abs"] != last_music]
             if e["track"] in (3, 4, 5):  # a bed / layer loops with 4 s crossfades: a 2 s bird call is a SFX, not a bed
                 pool = [a for a in pool if a["duration"] >= BED_MIN]
                 if "water" not in e["kw"]:  # no water file under a bed that is not about water
@@ -1084,6 +1231,8 @@ def match_audio(slots, lib, end):
                 e["status"] = "THIEU"
                 continue
             used[a["abs"]] += 1
+            if e["track"] == 7:
+                last_music = a["abs"]
             e.update(status="OK", path=a["abs"], dur=a["duration"])
 
 
@@ -1147,8 +1296,10 @@ def write_md(path, title, slots):
         talk = "●" if s.get("vo") else ""
         clip = {"OK": "", "WEAK": "⚠ ", "FALLBACK": "↪ ", "THIEU": "**THIẾU**", "GFX": "GFX"}[s["status"]]
         if "path" in s:
-            clip += f"{s['caption']} `{Path(s['path']).name[:30]}`" + (f" ↻{s['reuse']}" if s.get("reuse", 1) > 1 else "") + (" =frame" if s.get("same") else "") + (f" ★#{s['highlight']}" if s.get("highlight") else "")                     + (f" ⏱{s['speed'] * 100:.0f}%" if s.get("speed", 1) != 1 else "") + (f" 🔍{s['zoom']}" if s.get("zoom", 1) != 1 else "")                     + (f" ⧉{s['part']}" if "part" in s else "") \
-                    + (f" ({s['why']})" if str(s.get("why", "")).startswith("_check") else "")
+            clip += f"{s['caption']} `{Path(s['path']).name[:30]}`" + (f" ↻{s['reuse']}" if s.get("reuse", 1) > 1 else "") + (" =frame" if s.get("same") else "") + (f" ★#{s['highlight']}" if s.get("highlight") else "")                     + (f" ⏱{s['speed'] * 100:.0f}%" if s.get("speed", 1) != 1 else "") + (f" 🔍{s['zoom']}" if s.get("zoom", 1) != 1 else "")                     + (f" ⧉{s['part']}" if "part" in s else "") + (" ⛓" if s.get("chain") else "") \
+                    + (f" ({s['why']})" if re.search(r"_check|kiểm tra", str(s.get("why", ""))) else "")
+        elif s.get("rej"):  # THIẾU although the animal is in the library: what the story rules refused
+            clip += " (loại: " + ", ".join(f"{k} {n}" for k, n in s["rej"].items()) + ")"
         aud = " · ".join(f"A{e['track']} " + (Path(e["path"]).stem[:25] if e.get("status") == "OK"
                          else "off" if e["kw"] == ["off"] else f"**THIẾU** {','.join(e['kw'])}") for e in s["audio"])
         md.append(f"| {s['slot']} | {s['line']} | {tc(s['start'])} | {s['dur']:.1f} | {talk} | {s['need']} | {clip} "
@@ -1182,8 +1333,9 @@ def estimate_vo(cues):
     return [(c.t, max(c.t + 0.5, min(c.t + len(c.text.split()) / WPS, n - 0.3))) for c, n in zip(cues, nxt)]
 
 
-def main(folder, sem=True):
-    folder = Path(folder)
+def narration(folder, wait=True):
+    """-> (cues, voice spans (start, end) per sentence, message): measured by vo-sync when the audio exists.
+    wait=False (story.py): vo-sync not finished yet -> estimated spans instead of stopping."""
     ts = [p for p in folder.glob("*.md") if "timestamp" in p.name.lower()]
     assert len(ts) == 1, f"need exactly one *timestamp*.md in {folder}, found {[p.name for p in ts]}"
     cues = parse_timestamp_file(ts[0])
@@ -1194,8 +1346,10 @@ def main(folder, sem=True):
         job = f"{folder.parent.name}_mp3"
     else:
         job = audio and audio[0].stem
+    vp = ROOT / ".work" / str(job) / "plan.json"
+    if audio and not wait and not vp.exists():
+        audio = []
     if audio:  # measured speech spans: vo-sync analyze/run output (narration job A)
-        vp = ROOT / ".work" / job / "plan.json"
         assert vp.exists(), f"{vp} not there yet: vo-sync (narration) has not finished Whisper; wait for it, re-run"
         vplan = json.loads(vp.read_text("utf-8"))
         vo = [(s["ts"], s["ts"] + s["src_out"] - s["src_in"]) for s in vplan["segments"]]
@@ -1204,10 +1358,15 @@ def main(folder, sem=True):
     else:  # no audio yet (user 2026-10-16: plan + prompts before the narration exists)
         vo = estimate_vo(cues)
         vmsg = f"narration: no audio yet, spans estimated at {WPS} words/s (VO ● approximate; /doc-edit plan after vo-sync = exact)"
+    return cues, vo, vmsg
 
+
+def main(folder, sem=True):
+    folder = Path(folder)
+    cues, vo, vmsg = narration(folder)
     video = folder.parent
     work = ROOT / ".work" / "doc_edit" / video.name
-    spec = work / "spec.txt"
+    spec = Path(SPEC) if SPEC else work / "spec.txt"
     assert spec.exists(), f"write {spec} first"
     end, intro, blocks = parse_spec(spec.read_text("utf-8"))
     region = spec_region(spec.read_text("utf-8"))
@@ -1218,6 +1377,7 @@ def main(folder, sem=True):
     assert not cut, f"{', '.join(cut)} falls inside a voice cue; move it to a pause or a cue start"
 
     slots = build([c.t for c in cues], end, blocks, intro)
+    story_rules(slots, meta)
     clips = load_clips(region)
     looks = meta["look"] or any("look" in s["filter"] for s in slots)
     lmsg = ground_looks(clips) if looks else "ground look: off (no # LOOK / look=)"
@@ -1236,7 +1396,9 @@ def main(folder, sem=True):
         errs.append(str(e))
     species = Counter(x for c in clips for x in c["tags"].get("species", []))
     vocab = {k: {x for c in clips for x in (lambda v: v if isinstance(v, list) else [v])(c["tags"].get(TAG.get(k, k)))}
-             for k in ("act", "size", "light", "set", "mood", "cam", "ang", "dir", "count")}
+             for k in ("act", "xact", "size", "light", "set", "mood", "cam", "ang", "dir", "count")}
+    for k in ("act", "xact"):  # hide / chase / catch are valid before the first clip carries them (ACT_SYN)
+        vocab[k] |= set(ACT_SYN)
     for s in slots:
         for k, vals in s["filter"].items():
             if bad := [v for v in vals if k in vocab and v not in vocab[k]]:
@@ -1251,22 +1413,27 @@ def main(folder, sem=True):
     old = [c for c in clips if c["id"] in recent]
     pool = [c for c in clips if c["id"] not in recent]
     want = {x for s in slots for x in s["filter"].get("sp", []) if x != "none"}
-    ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))])
+    ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))],
+                     "--yolo-cached" in sys.argv or region == "africa")
     smsg = semantic(slots, pool) if sem else "semantic: off (--no-sem); tags only"
     taken, omsg = open_uses(video.name)
     match(slots, pool, taken, meta["look"])
     hmsg = highlights(slots, pool)
-    vmsg = vary(slots, pool)
+    varmsg = vary(slots, pool)
     wmsg = fix_water(slots, pool, load_audio(), end)
-    (work / "plan.json").write_text(json.dumps({"video": video.name, "video_dir": str(video), "region": region,
-                                                "end": end, "slots": slots},
+    out = Path(OUT) if OUT else None  # --out=<dir>: plan.json + plan.md there (benchmark), the video's untouched
+    if out:
+        out.mkdir(parents=True, exist_ok=True)
+    ((out or work) / "plan.json").write_text(json.dumps({"video": video.name, "video_dir": str(video), "region": region,
+                                                "end": end, "intro": intro, "slots": slots},
                                                ensure_ascii=False, indent=1), "utf-8")
-    write_md(video / "plan.md", video.name, slots)
+    write_md((out or video) / "plan.md", video.name, slots)
 
     tag = lambda s: re.match(r"\[([^\]]+)\]", s["need"])[1] if s["need"].startswith("[") else "-"  # noqa: E731
     cnt = Counter(s["status"] for s in slots)
     print(f"region: {region} ({', '.join(video_roots(region))}: {len(clips)} tagged clips)"
           + ("" if re.search(r"^\s*#\s*REGION", spec.read_text("utf-8"), re.M | re.I) else " - no # REGION line, default"))
+    print(vmsg)
     print(f"slots={len(slots)} end={tc(end)} " + " ".join(f"{k}={v}" for k, v in cnt.items())
           + " src=" + str(dict(Counter(s["src"] for s in slots))))
     fb = sum(s["dur"] for s in slots if s.get("why") == "side shot")
@@ -1276,13 +1443,24 @@ def main(folder, sem=True):
         print("  rhythm warning:", w)
     print(f"opening: {meta['opening']}; biome: {meta['biome'] or '-'}; intro {tc(intro)}; fast until "
           f"{tc(meta['fast']) if meta['fast'] else '-'} (a story cue, not a cut-rate rule)")
+    print("hook blueprint: " + ("ok (# HOOK lines)" if meta["hook"] else
+                                "MISSING - write the # HOOK lines (edit-grammar 'Cold open') before judging the intro picks")
+          if intro > INTRO_LEGACY else "hook blueprint: - (short intro)")
     print("\n".join(story_report(slots, meta, intro, end)))
+    rej = Counter()
+    for s in slots:
+        rej.update(s.get("rej") or {})
+    truth = [s for s in slots if s.get("status") == "THIEU" and s.get("rej")]
+    print(f"truth: clips of the slot's animal refused {dict(rej)}; {sum('kiểm tra' in str(s.get('why', '')) for s in slots)} "
+          f"picks capped WEAK (sex/age not visible: 'kiểm tra' marker); THIẾU because of them: "
+          + (", ".join(f"#{s['slot']} {tc(s['start'])} {s['rej']}" for s in truth[:12]) or "none")
+          + (f" (+{len(truth) - 12})" if len(truth) > 12 else ""))
     print(bmsg)
     print(ymsg)
     print(omsg)
     print(smsg)
     print(hmsg)
-    print(vmsg)
+    print(varmsg)
     print(wmsg)
     if looks:
         gp = {c["abs"]: c.get("green") for c in pool}
@@ -1317,7 +1495,7 @@ def main(folder, sem=True):
     for s in slots:
         if s["status"] == "WEAK" and not is_side(s):  # scenery near-misses don't hurt the story, characters do
             print(f"  {s['slot']} ##{s['line']} {s['dur']}s {s['need'][:70]}\n    " + "\n    ".join(x[:110] for x in s["top3"]))
-    print(f"-> {work / 'plan.json'}\n-> {video / 'plan.md'}")
+    print(f"-> {(out or work) / 'plan.json'}\n-> {(out or video) / 'plan.md'}")
 
 
 def selftest():
@@ -1378,12 +1556,68 @@ def selftest():
     msg = highlights(hs, hc)
     assert hs[0]["path"] == "h_run" and hs[0]["highlight"] == 3 and hs[0]["speed"] == 1.4 and hs[0]["src_out"] == 6.8, (hs[0], msg)
     assert "speed" not in hs[3] and hs[1].get("highlight") is None  # later shots untouched; 200 s on is too close
-    # no species footage: a related species' chase fills the intro slot (no empty intro slot)
+    # no footage of the species: no other animal stands in (2026-10-23), the intro slot stays THIẾU
     rc = [mk("l_imp", "real", species=["impala"], action=["run"]), mk("l_lion", "real", species=["lion"], action=["run"])]
     rs = [{"slot": 1, "start": 30.0, "dur": 2.0, "src": "any", "status": "THIEU", "intro": True, "filter": {"sp": ["red lechwe"]}},
           dict(sh(2, 400.0, "l_lion", "run"), fit=1.0), dict(sh(3, 500.0, "l_imp", "run"), fit=0.7)]
     highlights(rs, rc)
-    assert rs[0]["path"] == "l_imp" and rs[0]["status"] == "OK" and rs[0]["why"] == "intro highlight, other species", rs[0]
+    assert rs[0]["status"] == "THIEU" and "path" not in rs[0], rs[0]
+    # story truth (plan.md T11): "lionesses hiding to watch prey" never takes a resting male lion, even the best caption
+    tc_ = [mk("male lion resting in the grass, watching", "real", species=["lion"], action=["rest"], shot_size="medium"),
+           mk("maned lion crouches and stalks", "real", species=["lion"], action=["stalk"], shot_size="medium"),
+           mk("lion lies low in tall grass", "real", species=["lion"], action=["stalk"], shot_size="wide"),
+           mk("lioness crouches low in tall grass", "real", species=["lion"], action=["stalk"], shot_size="close_up")]
+    lf = {"sp": ["lion"], "sex": ["female"], "act": ["stalk", "look"], "size": ["medium"]}
+    assert [hard(c, lf)[0] for c in tc_] == ["resting", "sex", None, None] and hard(tc_[2], lf)[1] == "sex"
+    ts = [{"slot": 1, "line": 1, "dur": 3, "src": "any", "need": "[L]", "filter": lf, "start": 0.0}]
+    match(ts, tc_[:3])
+    assert ts[0]["path"].startswith("lion lies") and ts[0]["status"] == "WEAK" and ts[0]["why"] == "kiểm tra sex: female", ts[0]
+    ts = [{"slot": 1, "line": 1, "dur": 3, "src": "any", "need": "[L]", "filter": lf, "start": 0.0}]
+    match(ts, tc_[:2])
+    assert ts[0]["status"] == "THIEU" and ts[0]["rej"] == {"resting": 1, "sex": 1}, ts[0]
+    # a kill only where the screenplay confirms it (out=kill) or the line is a meal; a near miss never shows one
+    kc = mk("lioness catches a wildebeest calf", "real", species=["lion", "wildebeest"], action=["hunt"])
+    assert hard(kc, {"sp": ["lion"], "act": ["hunt"]})[0] == "kill" and hard(kc, {"sp": ["lion"], "out": ["kill"]})[0] is None
+    assert hard(kc, {"sp": ["none"]})[0] == "species" and hard(mk("calf", "real", species=["wildebeest"]), {"sp": ["wildebeest"], "age": ["young"]}) == (None, "")
+    # fallback after 5 min: same species, other action, but never a contradicting one (resting for a chase)
+    fl = [{"slot": 1, "line": 1, "dur": 3, "src": "any", "need": "[L]", "filter": {"sp": ["lion"], "act": ["run"], "kw": ["zzz"]}, "start": 400.0}]
+    match(fl, tc_[:1])
+    assert fl[0]["status"] == "THIEU", fl[0]
+    # '# STORY 2 06:30 no=river': story 2's slots refuse river clips, the intro / story 1 do not
+    mr = spec_meta("# STORY 1 01:30\n# STORY 2 06:30 no=river,crocodile\n", end=900.0, intro=90.0)
+    rv = [{"start": 100.0, "filter": {"sp": ["lion"]}}, {"start": 400.0, "filter": {"sp": ["lion"], "no": ["hyena"]}}]
+    story_rules(rv, mr)
+    assert "no" not in rv[0]["filter"] and rv[1]["filter"]["no"] == ["hyena", "river", "crocodile"], rv
+    # chase inside one sentence: screen direction kept (left -> left beats a better-sized right)
+    dc = [mk("a", "real", species=["impala"], action=["run"], shot_size="wide", direction="left"),
+          mk("b", "real", species=["impala"], action=["run"], shot_size="medium", direction="right"),
+          mk("c", "real", species=["impala"], action=["run"], shot_size="close_up", direction="left")]
+    ds = [{"slot": n, "line": 1, "dur": 2, "src": "any", "need": "[I]", "start": 0.0,
+           "filter": {"sp": ["impala"], "act": ["run"], "size": z}} for n, z in ((1, ["wide"]), (2, ["medium", "close_up"]))]
+    match(ds, dc)
+    assert [x["path"] for x in ds] == ["a", "c"], [x["path"] for x in ds]
+    # vision fields (tag-source 2026-10-23): outcome beats the caption; hide / chase / catch match old 'stalk' / 'hunt'
+    assert hard(mk("lion catches nothing", "real", species=["lion"], action=["chase"], outcome="miss"), {"sp": ["lion"]})[0] is None
+    assert hard(mk("lion runs", "real", species=["lion"], action=["chase"], outcome="catch"), {"sp": ["lion"]})[0] == "kill"
+    assert hard(mk("lion lies", "real", species=["lion"], action=["rest"]), {"sp": ["lion"], "act": ["hide"]})[0] == "resting"
+    assert fit(mk("x", "real", species=["lion"], action=["hunt"]), {"sp": ["lion"], "act": ["chase"]}, None) == 1.0
+    assert fit(mk("x", "real", species=["lion"], action=["hide"]), {"sp": ["lion"], "act": ["stalk"]}, None) == 1.0
+    # phase: the in-point goes where the asked action is (frames 3-4 run of a 20 s clip -> around 15.5 s)
+    pc = dict(mk("p", "real", species=["impala"], action=["walk", "run"], phase=["walk", "walk", "run", "run"]), duration=20.0)
+    pc["tags"]["best"] = [0, 20]
+    ps = {"slot": 1, "dur": 3, "src": "any", "start": 0.0, "filter": {"sp": ["impala"], "act": ["run"]}}
+    assert window(pc, ps, ()) == 14.0 and window(pc, dict(ps, filter={"sp": ["impala"]}), ()) == 8.5
+    # '9x3 same': three consecutive parts of one long clip, cut where they meet; no long clip -> separate picks
+    cs = build([0.0], 9.0, {1: [("*x3 same", "[I] chạy", "any", {"sp": ["impala"], "act": ["run"]}, [])]})
+    assert len(cs) == 3 and len({x["chain"] for x in cs}) == 1
+    match(cs, [pc, mk("short", "real", species=["impala"], action=["run"], shot_size="wide")])
+    assert [x["path"] for x in cs] == ["p"] * 3 and all(abs(a["src_out"] - b["src_in"]) < 0.02 for a, b in zip(cs, cs[1:])), cs
+    cs = build([0.0], 9.0, {1: [("*x3 same", "[I] chạy", "any", {"sp": ["impala"], "act": ["run"]}, [])]})
+    match(cs, [mk(n, "real", species=["impala"], action=["run"]) for n in "abc"])  # 10 s clips hold the 9 s chain
+    assert len({x["path"] for x in cs}) == 1, [x["path"] for x in cs]
+    cs = build([0.0], 24.0, {1: [("*x3 same", "[I] chạy", "any", {"sp": ["impala"], "act": ["run"]}, [])]})
+    match(cs, [mk(n, "real", species=["impala"], action=["run"]) for n in "abc"])  # 24 s > any clip: one by one
+    assert len({x.get("path") for x in cs}) == 3, [x.get("path") for x in cs]
     # epic intro: animal shots cut into 1.0-2.2 s pieces on hits / bars; scenery and audio cues stay
     sp_ = [{"slot": 1, "start": 0.0, "dur": 5.0, "intro": True, "src": "any", "filter": {"sp": ["impala"]}, "audio": ["cue"]},
            {"slot": 2, "start": 5.0, "dur": 4.0, "intro": True, "src": "real", "filter": {"sp": ["none"]}, "audio": []}]

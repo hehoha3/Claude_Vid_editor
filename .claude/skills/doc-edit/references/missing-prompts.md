@@ -1,14 +1,16 @@
 # Missing footage prompts: `/doc-edit missing-prompts` (shot director V2, user 2026-10-13)
 
 Needs plan.json (SKILL.md B3). The user generates the clips; nothing is generated, imported or placed here.
-In a new-video run (`/doc-edit <audios-folder>`) the screenplay is already in context: use it, don't re-read it,
-and the reply is SKILL.md's combined one (its part 4 = the Reply below).
+In a new-video run (`/doc-edit <audios-folder>`) brief.md (the screenplay) is already in context: use it, never
+re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply below).
 
 1. `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>`: THIẾU groups (character + main
    action, or setting + light), slots, seconds, suggested clip count (= the number of THIẾU slots: one prompt per slot, user 2026-10-17; = the budget), the
-   story sentences (`## n`) and `others there` (the other characters' footage status in those sentences).
-2. Per group, think before writing (read the screenplay entries of its `## n` and the ones around them, never a
-   lone sentence):
+   story sentences (`## n`), `others there` (the other characters' footage status in those sentences), `truth`
+   (sex / age / out of its slots) and `refused in library` (what plan.py's story rules turned down).
+2. Per group, think before writing (the brief entries of its `## n` and the ones around them, never a lone sentence;
+   `/doc-edit missing-prompts` on its own: read `.work/doc_edit/<video>/brief.md` (`story.py brief` if missing), not
+   the screenplay file):
    - **Event**: pursuit / escape / ambush / charge / strike / reaction / travel / rest...; actors with role
      (predator, prey, bystander), goal, cause, visible effect, urgency; species, count, marks, light, time of day
      and geography from the screenplay continuity bible. Never invent animals, counts, injuries or a new
@@ -69,6 +71,11 @@ and the reply is SKILL.md's combined one (its part 4 = the Reply below).
      solitary species stay solitary, herds/troops only with the bible's count.
    - Opening groups (slots before 1:30, edit-grammar "Opening"): one continuous event, so every prompt of it keeps the
      same individual(s), count, axis, light and site; medium / wide framings that show both sides come first.
+   - **Story truth** (group line `truth sex=female age=young out=...`, user 2026-10-23): every prompt names it
+     ("A single adult lioness", "a newborn wildebeest calf"); no catch / kill / carcass unless `out=kill` (a near
+     miss stays a miss: the prey escapes in frame). `refused in library: sex 8, kill 2` = the library had that animal
+     but not as the story needs: write exactly what was missing (the sex, the hidden pose, the miss). The `--check`
+     gates refuse prompts that break the truth.
    - No gore, no blood, no text; environment groups (`## G` with sp=none) describe the place only, no animal.
 4. `missing.py <video> --check`: QC gates (role/vector valid and stated, no contradicting direction, no
    reversal/orbit/slow motion, biome words, biology, species named, near-duplicates, budget) + a preview of roles

@@ -52,8 +52,17 @@ def clips_segments(folder: str, cues, acfg: dict):
     """One file per sentence (user 2026-10-16: audios/mp3/1.mp3 ... = timestamp line 1 ...): no Whisper, no cutting.
     Each file becomes one A2 item; its onset lands on the timestamp, head/tail pads as in refine()."""
     files, segs, total = clip_files(folder, len(cues)), [], 0.0
+    audio, bad = {}, []
+    for c in cues:  # decode all first: one error lists every broken file (africa_3: 5 runs, 1 file each)
+        try:
+            audio[c.index] = load_audio(files[c.index])
+        except Exception:
+            bad.append(c.index)
+    if bad:
+        raise ValueError(f"{folder}: {len(bad)} unreadable file(s), re-export: "
+                         + " ".join(files[i].name for i in bad))
     for c in cues:
-        x = load_audio(files[c.index])
+        x = audio[c.index]
         dur = len(x) / 16000
         on, off = speech_span(x, acfg)
         total += dur

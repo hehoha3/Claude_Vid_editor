@@ -240,7 +240,8 @@ def apply():
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
     project.GetMediaPool().SetCurrentFolder(project.GetMediaPool().GetRootFolder())
     bak = f"Edit_bak_grade_{dt.datetime.now():%Y%m%d_%H%M%S}"
-    assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+    from dvr_cowork.resolve_ops import backup_timeline
+    assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)
     groups = {g.GetName(): g for g in project.GetColorGroupsList() or []}
     ok = bad = 0

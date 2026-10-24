@@ -217,7 +217,8 @@ def apply():
     miss = [r for r in rows if (r["start"], r["path"].lower()) not in q]
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
     bak = f"Edit_bak_light_{dt.datetime.now():%Y%m%d_%H%M%S}"
-    assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+    from dvr_cowork.resolve_ops import backup_timeline
+    assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)
     ok, bad, dry = 0, [], []
     for r in rows:

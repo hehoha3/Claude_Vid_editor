@@ -35,8 +35,8 @@ The render makes it long (a 30 min 4K timeline): run it with `run_in_background`
    `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined;
    Open spans prefixed `Open:`), then the missing ones. No `licenses\` folder, no pdf copies (user 2026-10-21).
    Envato licenses are per project: remind the user to register them.
-   Export (user rule 2026-10-13): timeline "Master" (or `--timeline Edit`, user 2026-10-21) rendered as H.264 mp4
-   `Done_<project>.mp4` into the video folder, waits for it; already there -> not rendered again. Subtitle tracks are
+   Export (user rule 2026-10-13): timeline "Master" (or `--timeline Edit`, user 2026-10-21) rendered with the Resolve preset
+   "YouTube 1080 HEVC" (user 2026-10-24, always; missing preset = stop) as `Done_<project>.mp4` into the video folder, waits for it; already there -> not rendered again. Subtitle tracks are
    switched off for the render and back on after (user 2026-10-21: the Done file has no subtitles). Render failed ->
    stops, nothing moved.
 1. Final check-timelines (ledger), then Change Source Folder: every media pool item under `<ws>\<video>` (narration,

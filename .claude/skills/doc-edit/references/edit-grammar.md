@@ -1,5 +1,21 @@
 # Edit grammar (doc-edit plan)
 
+## Story first (user 2026-10-23, input/plan.md)
+Film -> story -> beat -> shot sequence -> footage. Before any shot text: what the film asks, what this story's
+place / season / cast / outcome is, what this beat does for the story; the narrator's nouns come last. Conflicts:
+`screenplay boundaries > what the footage visibly shows > subject + event continuity > beat intent > narrator words >
+beauty`. Each story's truth goes into the spec as filter tokens (machine-checked, a high score never rescues them):
+- cast: `sex=female` (lioness, mother) / `age=young` (calf, cub) on every line of that animal; the other sex / age is
+  refused, an unseen sex is at most WEAK with a "kiểm tra" marker.
+- state: a stalk / hunt / run / fight line never takes a clip that only rests / sleeps; `xact=rest,sleep,eat` for more.
+- outcome: clips with a catch / kill / carcass are refused unless the line has `out=kill` (the screenplay confirms
+  the kill on screen) or `act=eat` (a meal at another time). Near miss, hidden or unknown end = no `out`.
+- place / time: `# STORY n m:ss no=river,crocodile` = what that story never shows (calving plains before the river).
+- identity: each story's calf / lioness is a representative animal unless the screenplay says the same one; no
+  match cut or reused clip that claims a later story's animal is the earlier one.
+- no fitting clip = THIẾU (its plan.md row and red marker list what was refused: `loại: sex 8, kill 2`); fix the
+  filter only when the refusal was wrong, never loosen it to fill the slot.
+
 ## Shots
 - Opening shot, two forms (spec header `# OPENING landscape|action`, default landscape = every video before):
   `landscape` (user rule 2026-10-13): `sp=none size=wide|aerial`, `real` preferred, held 3-4 s, a little longer than
@@ -28,10 +44,24 @@ Spec headers (all optional): `# INTRO 1:30` (0:15-2:00; > 0:30 needs >= 50% of t
 `# OPENING action`, `# BIOME savanna|rainforest`, `# FAST_UNTIL m:ss` (story cue for the hook + first two stories, no
 cut-rate rule), `# STORY n m:ss` (chapter starts, rising, inside END, STORY 1 at/after INTRO, never inside a voice cue),
 `# TURN` under a `## N` where the advantage really changes (counted in the chapter report).
-The first 90 s decide whether the viewer stays, story 1 whether they finish. Plan the opening as ONE micro-story with
-cause and effect, not a reel of unrelated attacks: place + threat -> one animal with a concrete cost -> a change of
-advantage -> a consequence that hands an open question to story 1. Find these beats in the screenplay's opening;
-the clock is a frame, the screenplay's events win (a contact written at 0:38 stays at 0:38, cause before effect).
+The first 90 s decide whether the viewer stays, story 1 whether they finish. Before any intro shot line write the
+cold-open blueprint as `# HOOK` comment lines at the top of part 01 (plan.py prints `hook blueprint: MISSING` for an
+intro > 0:30 without them):
+
+    # HOOK form: teaser | micro-story      promise: what the viewer must want to know at 1:30
+    # HOOK anchor: herd > mother > calf      vulnerable: the calf, slow legs, gaps in the herd
+    # HOOK threats: lioness at the edge > hyena on the rim > Mara water (rising, each a preview)
+    # HOOK motif: herd moving, the gap, small hooves     reset: 1:30 back to the southern plains, before the birth
+    # HOOK never: a kill, the calf crossing the river, three threats hitting one calf
+
+The screenplay's opening decides the form (read its visual directions, not only the narrator):
+- `micro-story`: ONE event with cause and effect: place + threat -> one animal with a concrete cost -> a change of
+  advantage -> a consequence that hands an open question to story 1. Same individuals, site, light, direction.
+- `teaser`: the anchor (one subject the eye follows) between previews of later threats. Every preview is its own
+  place / time (`teaser_preview`): a change of light, scale or bed between them, never a match cut or a reaction shot
+  that makes one threat act on the anchor animal; no outcome (no kill, no crossing done), no story's ending.
+Find the beats in the screenplay; the clock is a frame, the screenplay's events win (a contact written at 0:38 stays
+at 0:38, cause before effect). Ends with the `reset`: story 1 must read as earlier / elsewhere (light, sound, scale).
 
 | ~time | function | picture | narrator |
 |---|---|---|---|
@@ -50,11 +80,12 @@ the clock is a frame, the screenplay's events win (a contact written at 0:38 sta
   once at normal speed too.
 - Intro footage = highlights of the later stories (user 2026-10-22, africa_1): plan.py `highlights()` gives every
   intro shot with an animal the frames of a later OK story shot of the same species (chase / fight first, >= 5 min
-  later, the line's `no=` + no carcass / meal, same-frame cap 3), played at 136-150 %; scenery intro shots keep their
-  own clip. plan.md marks them `★#<slot>`. Re-cut only the intro: delete V1/A1 items before 1:30 (user yes, backup),
-  then `place.py <video> --fill --until 90`. Epic intro, no empty slot (user 2026-10-22): `split_intro()` cuts every
-  animal intro shot into 1.0-2.2 s pieces on music hits / bars / beats; a species without later footage takes a
-  related species' chase (KIN class), then any chase / fight. Lines with a calm act (look / rest) keep calm footage.
+  later, the intro line's `no=` / `sex=` / `age=` + no carcass / meal / kill, same-frame cap 3), played at 136-150 %;
+  scenery intro shots keep their own clip. plan.md marks them `★#<slot>`. Re-cut only the intro: delete V1/A1 items
+  before 1:30 (user yes, backup), then `place.py <video> --fill --until 90`. Epic intro (user 2026-10-22):
+  `split_intro()` cuts every animal intro shot into 1.0-2.2 s pieces on music hits / bars / beats. A species without
+  later footage keeps its own pick or stays THIẾU (2026-10-23: no related / other species standing in). Lines with a
+  calm act (look / rest) keep calm footage.
 - Intro ends with its music (user 2026-10-22): `intro_outro()` makes the last 4 s before the intro music's end one
   landscape fading to black (1.5 s, place.py `SetFades`); story 1's first shot (write it as a landscape, sp=none)
   starts at the music end and fades in from black (2.5 s). Intro shots after that point are dropped (their A7 'off'
@@ -62,9 +93,12 @@ the clock is a frame, the screenplay's events win (a contact written at 0:38 sta
 - Leave one stretch without narration so the viewer hears real movement. Test the hook muted (geography is clear)
   and with eyes closed (the sound means something). plan.py prints a hook hypothesis, not a retention KPI: measure
   retention after publishing.
-- One event, one place: same individuals and count, same site, time of day, light and screen direction for the 90 s
-  (same `dir` / `light` tokens on its shots). Never cut two hunts, species or sites into one claimed event; a
-  clip whose action exists only in the caption is not the action.
+- `micro-story`: one event, one place: same individuals and count, same site, time of day, light and screen direction
+  for the 90 s (same `dir` / `light` tokens on its shots). Both forms: never cut two hunts, species or sites into one
+  claimed event; a clip whose action exists only in the caption is not the action.
+- Hook QC in the reply, before the per-line check: what does the viewer understand and want to know at 1:30
+  (`promise`)? Any shot that misleads about the individual, the place, a hunt's result or the time order = hard
+  fail, however good it looks: re-plan that line or THIẾU.
 - Clip picks here are stricter (the viewer must read who does what to whom; strikes read from medium / wide, see
   Visual thinking). Hard reject: wrong species / forest, action not visible, facing
   directions that cannot cut together, count changes without a bridge, AI anatomy errors or bodies passing through
@@ -107,6 +141,8 @@ filter follow from these three, not from the nouns of the sentence alone.
   (`kw=shadow` / `kw=sunlight` when the captions use them); never a flat, evenly lit frame for the hero's intro.
 
 ## Rhythm - shot length follows the story's emotion, never a metronome
+With a beat sheet (new-video.md B2) `story.py expand` applies this section and "Sound that moves the viewer" from
+each beat's emotion; the rules below are what it does and what a raw beat must do by hand.
 Lengths mostly 1.2-6 s (a hold longer or a flash shorter is a story choice: only < 0.8 s or > 10 s is an error).
 Decide each length from what the moment feels like, then mix:
 - Short 1.2-2 s: tension, danger, chase, fight, quick reactions, a list of things ("ăn quả, bắt côn trùng...").
@@ -160,8 +196,12 @@ carries the tag: plan.py counts untagged footage shots as side shots.
 `k=v1,v2` tokens, `_` = space. Only `sp` and night/not-night are hard; the rest rank candidates.
 - `sp` species, lowercase singular common name (`sp=golden_cat`, `sp=elephant`); `sp=none` = no animal
   (landscape/atmosphere). Missing species are listed by the script -> those slots become THIẾU.
-- `act`: walk look none rest perch eat swim fly run call climb groom drink play hang sleep stalk carry_young
-  jump feed fight attack hunt
+- `act`: walk look none rest perch eat swim fly run call climb groom drink play hang sleep stalk hide carry_young
+  jump feed fight attack chase catch (hunt = chase or catch, older tags; hide <-> stalk match). Clips with a
+  `phase` (action per tag frame) are cut where the asked act happens, not in the clip's middle.
+- One continuous action from one clip: dur `12x4 same` / `*x3 same` = consecutive parts of ONE clip (stalk -> lunge
+  -> miss really in that order, plan.md ⛓); no clip long enough -> separate picks. Use it where the story claims
+  one event (the opening micro-story, a hunt); separate clips there are `illustrative`, never a claimed take.
 - `size`: extreme_close close_up medium wide aerial
 - `light`: day golden dusk night
 - `set`: forest forest_floor canopy river undergrowth riverbank sky swamp grassland rock underwater lake
@@ -172,7 +212,12 @@ carries the tag: plan.py counts untagged footage shots as side shots.
 - `no=<species or caption word>` hard-excludes clips (e.g. `no=jaguar,caiman` so multi-species AI clips don't leak
   one story thread into another; `no=autumn,conifer` keeps temperate scenery out). Pin fragments: no `_` (= space).
 - `pin=<path fragment>` forces a clip; `pin=none` forces THIẾU.
-Give 2-4 tokens per shot; over-filtering pushes good clips to WEAK.
+- Story truth, hard (section "Story first"): `sex=female|male`, `age=young|adult`, `xact=<actions>` (clip actions
+  refused), `out=kill` (only then a caught / killed prey). `# STORY n m:ss no=...` adds `no=` to that whole story.
+- Screen direction: inside one sentence a moving subject (`act` run / walk / hunt / swim...) keeps the previous
+  shot's direction (an opposite `dir` costs 0.15); write `dir=` only where the screenplay fixes it.
+Give 2-4 tokens per shot (truth tokens not counted: write them on every line of that animal); over-filtering pushes
+good clips to WEAK.
 
 ## Audio column (track layout in SKILL.md; never A2)
 `A<n>=kw1,kw2` tokens, English keywords matched against the audio file/folder names (library has no tags yet).
@@ -198,6 +243,9 @@ Give 2-4 tokens per shot; over-filtering pushes good clips to WEAK.
 
 ## Sound that moves the viewer
 Plan the audio column per story, before the per-shot details: what must the viewer feel at its start, peak, end?
+(Beat sheet: the emotions are that plan; expand writes the cues below, beds A3 / A5 stay yours on the beat line.)
+Music choice (user 2026-10-24): the best fit, never by how often a track was used: most mood words hit, then the
+track that covers its span, then the closest length; two cues in a row never get the same track.
 - Music carries emotion: one A7 cue per story beat (opening wonder, tension, chase, aftermath, resolution), never
   the same track twice in a row. Target music under 60-85% of the film; the rest is deliberate silence of music,
   not forgotten gaps. plan.py picks the track that lasts until the next A7 entry; the `audio:` line reports

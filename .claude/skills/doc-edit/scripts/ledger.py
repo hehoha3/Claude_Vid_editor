@@ -14,7 +14,7 @@ its library id (content hash; a hide-logo `_nologo` copy counts as its original)
 .work/doc_edit/ledgers/<workspace>.json. A new video goes on top; re-checking a video updates it in place.
 Ban for video V = clips + open_clips of the `recent` (config, default 6) newest OTHER videos of V's workspace.
 done (= /doc-edit done): licensed music of Edit + Open (license paths), render Master -> <video>/Done_<project>.mp4
-(H.264), final check, relink the project's media to <workspace>/_done/<video> (temporary junction),
+(preset "YouTube 1080 HEVC"), final check, relink the project's media to <workspace>/_done/<video> (temporary junction),
 quit Resolve, move the folder into _done. Resolve stays closed (the user reopens it). Videos in _done keep their workspace.
 """
 import json, os, re, shutil, sys
@@ -254,8 +254,11 @@ def licenses(project, vdir, fname="audio_licenses.md"):
         print(f"  NO LICENSE ROW (in {LICENSED_ROOT.rstrip(os.sep)}, missing from {LICENSES.name}): " + "; ".join(nolic))
 
 
+PRESET = "YouTube 1080 HEVC"
+
+
 def render_done(project, out_dir, timeline="Master", name=None):
-    """Render <timeline> as H.264 mp4 Done_<project>.mp4 into out_dir and wait (user order 2026-10-13)."""
+    """Render <timeline> with the preset PRESET as Done_<project>.mp4 into out_dir and wait (user order 2026-10-13)."""
     import time
     name = name or f"Done_{project.GetName()}"
     if (Path(out_dir) / f"{name}.mp4").exists():
@@ -273,23 +276,20 @@ def render_done(project, out_dir, timeline="Master", name=None):
     subs = [i for i in range(1, int(tl.GetTrackCount("subtitle") or 0) + 1) if tl.GetIsTrackEnabled("subtitle", i)]
     for i in subs:
         tl.SetTrackEnable("subtitle", i, False)
-    # amazon_2 2026-10-17: generic "H264" failed at 0% ("Cannot find appropriate codec"), the NVIDIA encoder is
-    # listed by Resolve on this machine: try it next (still an H.264 mp4)
-    st = {}
+    # user 2026-10-24: every Done render uses the Resolve render preset "YouTube 1080 HEVC" (no codec fallback: a
+    # missing preset or a failed render stops here, nothing moved)
+    st, codec = {}, PRESET
     try:
-        for codec in ("H264", "H264_NVIDIA"):
-            if not project.SetCurrentRenderFormatAndCodec("mp4", codec):
-                continue
-            assert project.SetRenderSettings({"SelectAllFrames": True, "TargetDir": str(out_dir), "CustomName": name,
-                                              "ExportVideo": True, "ExportAudio": True}), "render settings refused"
-            job = project.AddRenderJob()
-            assert job and project.StartRendering(job), "render job did not start"
-            while project.IsRenderingInProgress():
-                time.sleep(5)
-            st = project.GetRenderJobStatus(job) or {}
-            project.DeleteRenderJob(job)  # job only, the rendered file stays
-            if st.get("JobStatus") == "Complete":
-                break
+        assert project.LoadRenderPreset(PRESET), f'render preset "{PRESET}" not found in Resolve'
+        assert project.SetRenderSettings({"SelectAllFrames": True, "TargetDir": str(out_dir), "CustomName": name,
+                                          "ExportVideo": True, "ExportAudio": True}), "render settings refused"
+        job = project.AddRenderJob()
+        assert job and project.StartRendering(job), "render job did not start"
+        while project.IsRenderingInProgress():
+            time.sleep(5)
+        st = project.GetRenderJobStatus(job) or {}
+        project.DeleteRenderJob(job)  # job only, the rendered file stays
+        if st.get("JobStatus") != "Complete":
             print(f"render with {codec} failed: {st.get('Error') or st}")
     finally:
         for i in subs:
@@ -298,7 +298,7 @@ def render_done(project, out_dir, timeline="Master", name=None):
             project.SetCurrentTimeline(cur)
     if st.get("JobStatus") != "Complete":
         raise SystemExit(f"render {name} failed ({st}): folder not moved, Resolve left open")
-    print(f"render: {Path(out_dir) / name}.mp4 (H.264 {codec}, timeline {timeline}, {st.get('TimeTakenToRenderInMs', 0) // 1000}s)")
+    print(f"render: {Path(out_dir) / name}.mp4 ({codec}, timeline {timeline}, {st.get('TimeTakenToRenderInMs', 0) // 1000}s)")
 
 
 def rerender(video, ws=None, proj=None, timeline="Edit"):
@@ -319,7 +319,7 @@ def rerender(video, ws=None, proj=None, timeline="Edit"):
 
 def done(video, ws=None, proj=None, timeline="Master"):
     """Archive a finished video (user order 2026-10-13):
-    0. list the licensed music used on Edit + Open (license pdf paths); render timeline Master -> H.264
+    0. list the licensed music used on Edit + Open (license pdf paths); render timeline Master (preset "YouTube 1080 HEVC")
        <video folder>/Done_<project>.mp4 and wait (a failed render stops here, nothing moved).
     1. final check-timelines; relink the project's media under <ws>/<video> to <ws>/_done/<video> (Change Source
        Folder). The files are not there yet, so a temporary junction _done/<video> -> <video> lets ReplaceClip see them.
