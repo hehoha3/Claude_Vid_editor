@@ -10,11 +10,13 @@ clips to generate (one generated clip ~CLIP_YIELD s of usable footage, cut into 
 sentences of the group and the other characters' footage status in them (coverage: a chase whose hunter is
 already OK needs only the prey clips). Claude writes .work/doc_edit/<video>/prompts.txt:
     ## G3
-    prey_escape L>R | <shot_content, one species, English>   <- one line per clip: shot role, travel vector | prompt
-    ## +harpy_eagle                           <- extra group (not a THIẾU slot, e.g. daily life): saved to D:/AI_video/<name>
-Lines without 'role vec |' (old files) still render, without the direction gate. --check / --write run the QC
-gates (references/missing-prompts.md); --write refuses on errors, prepends PREFIX, writes <video>/missing_prompts.txt
-(prompt lines only) and .work/doc_edit/<video>/shot_manifest.csv (one row per prompt line, same order).
+    prey_escape L>R | long telephoto lens with natural handheld tracking | <place> | bright daylight   <- one clip
+    0-2s: <what happens, English>          <- beats, contiguous 0..CLIP_S s
+    2-5s: ...
+    ## +harpy_eagle                           <- extra group (not a THIẾU slot, e.g. daily life): saved to <AI_DIR>/<name>
+--check / --write run the QC gates (references/missing-prompts.md); --write refuses on errors, writes HEAD + beats as
+numbered prompts '1. ', '2. ' into <video>/missing_prompts.txt (no group headers) and
+.work/doc_edit/<video>/shot_manifest.csv (row n = prompt n).
 """
 import csv, difflib, json, math, re, sys
 from collections import Counter, defaultdict
@@ -22,12 +24,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / ".claude" / "skills" / "scan-source" / "scripts"))
 from dvr_cowork.config import load_config  # noqa: E402
-AI = load_config()["paths"]["ai_video"]  # AI clips root of this machine (config.toml)
-PREFIX = ("Cinematic nature documentary, BBC Earth style, 4k ultra-realistic, national geographic photography, "
-          "high speed phantom camera, detailed animal textures, No text, no logo, No voiceover, "
-          "no background music, natural sound, normal motion - ")
-CLIP_YIELD = 6.0  # usable seconds per generated clip (8-10 s clip minus morphing ends, cut into 2-3 shots)
+from scan_source import ROOTS  # noqa: E402
+sys.path.insert(0, str(Path(__file__).parent))
+from plan import AGE_CAP, KILL, SEX_CAP  # noqa: E402  the story-truth words plan.py checks, same in the prompts
+# where the user saves generated clips, per plan.json region: amazon = AI root of this machine (config.toml);
+# africa = D:\AI_video\_africa\_check (user 2026-10-22; organize.py --africa files them into _africa\<species>)
+AI_DIR = {"amazon": load_config()["paths"]["ai_video"], "africa": str(ROOTS["africa_ai_check"][0] / "_check")}
+# prompt format (user 2026-10-22): numbered '1. ' header paragraph + timed beats '0-2s: ...' covering 0..CLIP_S
+CLIP_S = 10
+HEAD = ("Photorealistic wildlife documentary video, {s} seconds, 16:9, shot on {cam}, {place}, {light}, "
+        "National Geographic style, real animal anatomy and motion, no blood, no gore.")
+BEAT = re.compile(r"(\d+)-(\d+)s:\s*(.+)")
+CLIP_YIELD = 6.0  # usable seconds per generated clip (10 s clip minus morphing ends, cut into 2-3 shots)
 # QC gates (PLAN missing-prompt V2, user 2026-10-13)
 ROLES = {"predator_burst", "prey_escape", "relationship_wide", "reaction", "obstacle", "reacquisition", "aftermath",
          "environmental_speed", "action", "establishing", "detail"}
@@ -37,6 +47,7 @@ OPPOSITE = {"L>R": "right to left", "R>L": "left to right"}
 BAD_MOVE = ("reverse", "backward", "turns around", "turning around", "u-turn", "mirrored", "flipped", "teleport",
             "orbit", "slow motion", "slow-motion")
 BAD_ENV = ("snow", "alpine", "conifer", "pine", "autumn", "desert", "dust cloud", "dusty")
+BAD_ENV_REGION = {"africa": ("snow", "alpine", "conifer", "pine", "autumn")}  # dry, dusty savanna is right there
 NO_GAIT = {"sloth": ("run", "sprint", "gallop", "charge"), "snake": ("run", "sprint", "leg", "gallop"),
            "python": ("run", "sprint", "leg", "gallop"), "anaconda": ("run", "sprint", "leg", "gallop"),
            "fish": ("run", "walk", "sprint")}
@@ -65,16 +76,28 @@ def groups(slots):
         # coverage: the other characters' footage in the same sentences (hunter OK -> only the prey is missing)
         others = Counter(f"{tag_of(s)}:{s['status']}" for s in slots
                          if s.get("line") in lines and tag_of(s) not in ("-", k[0]))
-        out.append({"id": f"G{i}", "key": k, "slots": [s["slot"] for s in ss], "sec": round(sec, 1),
-                    "clips": max(1, math.ceil(sec / CLIP_YIELD)), "lines": lines, "others": dict(others),
+        # story truth of the slots (plan.py sex= / age= / out=) and what the library offered but the rules refused
+        truth = {t: sorted({x for s in ss for x in s["filter"].get(t, [])}) for t in ("sex", "age", "out")}
+        refused = sum((Counter(s.get("rej") or {}) for s in ss), Counter())
+        out.append({"id": f"G{i}", "key": k, "truth": truth, "refused": dict(refused),
+                    "slots": [s["slot"] for s in ss], "sec": round(sec, 1),
+                    # one prompt per THIẾU slot (user 2026-10-17: was ceil(sec / CLIP_YIELD); half the clips of a
+                    # round fail tagging, so fewer clips left slots empty)
+                    "clips": len(ss), "lines": lines, "others": dict(others),
                     "needs": list(dict.fromkeys(s["need"] for s in ss))})
     return out
 
 
-def lint(species, role, vec, text):
-    """QC gates of one prompt line; returns the problems (empty = pass)."""
+def lint(species, role, vec, text, truth=None):
+    """QC gates of one prompt line; returns the problems (empty = pass). truth = the group's sex / age / out."""
     errs, low = [], text.lower()
     pos = NEG.sub("", low)  # what the prompt asks for, without its "no ..." clauses
+    for k, pats in (("sex", SEX_CAP), ("age", AGE_CAP)):
+        for v in (truth or {}).get(k, []):
+            if not re.search(pats[v], pos):  # the generator must be told: "a lioness", "a newborn calf"
+                errs.append(f"truth: {k}={v} but the prompt never names it ({pats[v][4:40]}...)")
+    if truth is not None and "kill" not in truth.get("out", []) and KILL.search(pos):
+        errs.append(f"truth: '{KILL.search(pos)[0]}' shows an outcome the screenplay does not (no out=kill)")
     if role != "-":  # legacy lines have no role/vector
         if role not in ROLES:
             errs.append(f"role {role!r} not in {sorted(ROLES)}")
@@ -102,7 +125,7 @@ def check(p, gs):
         g = by.get(gid)
         sp = gid[1:] if gid.startswith("+") else g["key"][1]
         for n, (role, vec, text) in enumerate(rows, 1):
-            errs += [f"{gid}#{n}: {e}" for e in lint(sp, role, vec, text)]
+            errs += [f"{gid}#{n}: {e}" for e in lint(sp, role, vec, text, g and g.get("truth"))]
         for a in range(len(rows)):
             for b in range(a + 1, len(rows)):
                 if difflib.SequenceMatcher(None, rows[a][2], rows[b][2]).ratio() >= DUP:
@@ -115,24 +138,67 @@ def check(p, gs):
 
 
 def parse_prompts(text):
-    p, cur = defaultdict(list), None
+    """prompts.txt -> {group: [(role, vec, full prompt text)]}. One clip = 'role vec | camera | place | light' and its
+    beat lines 'a-bs: ...' (contiguous, 0 .. CLIP_S); the script writes the fixed HEAD around camera / place / light."""
+    p, cur, clip, errs = defaultdict(list), None, None, []
+
+    def close():
+        if clip:
+            n, role, vec, head, beats = clip
+            t = [(int(a), int(b)) for a, b, _ in beats]
+            if len(t) < 2 or t[0][0] != 0 or t[-1][1] != CLIP_S or any(a >= b for a, b in t) \
+                    or any(x[1] != y[0] for x, y in zip(t, t[1:])):
+                errs.append(f"prompts line {n}: beats {[f'{a}-{b}s' for a, b in t]} must be 2+ beats running 0-{CLIP_S}s without gaps")
+            p[cur].append((role, vec, "\n\n".join([head] + [f"{a}-{b}s: {x.strip()}" for a, b, x in beats])))
+
     for n, raw in enumerate(text.splitlines(), 1):
         s = raw.strip()
         if s.startswith("## "):
+            close(); clip = None
             cur = s[3:].strip()
         elif s and not s.startswith("#"):
-            assert cur, f"prompts line {n}: text before any '## G<n>' header"
-            m = re.match(r"(\w+)\s+(\S+)\s*\|\s*(.+)", s)  # 'role vec | prompt'; old files: prompt only
-            role, vec, text = m.groups() if m else ("-", "-", s)
-            assert not text.lower().startswith("cinematic nature documentary"), f"prompts line {n}: write only the shot content, the prefix is added"
-            p[cur].append((role, vec, text.strip()))
+            if not cur:
+                errs.append(f"prompts line {n}: text before any '## G<n>' header"); continue
+            if m := BEAT.match(s):
+                if clip:
+                    clip[4].append(m.groups())
+                else:
+                    errs.append(f"prompts line {n}: beat before its 'role vec | camera | place | light' line")
+                continue
+            f = [x.strip() for x in s.split("|")]
+            rv = f[0].split()
+            if len(f) != 4 or len(rv) != 2 or not all(f):
+                errs.append(f"prompts line {n}: need 'role vec | camera | place | light' (or a beat 'a-bs: ...')"); continue
+            if f[1].lower().startswith(("photorealistic", "cinematic")):
+                errs.append(f"prompts line {n}: write only the camera, the fixed header is added"); continue
+            close()
+            clip = (n, rv[0], rv[1], HEAD.format(s=CLIP_S, cam=f[1], place=f[2], light=f[3]), [])
+    close()
+    assert not errs, "\n".join(errs)
     return p
 
 
-def main(video, mode):
+def tc(s):
+    return f"{int(s // 60):02d}:{s % 60:04.1f}"
+
+
+def secs(t):
+    m, _, s = t.rpartition(":")
+    return int(m or 0) * 60 + float(s)
+
+
+def main(video, mode, rng=None):
+    global BAD_ENV
     work = ROOT / ".work" / "doc_edit" / video
     plan = json.loads((work / "plan.json").read_text("utf-8"))
-    gs = groups(plan["slots"])
+    slots = plan["slots"]
+    region = plan.get("region", "amazon")  # plans before 2026-10-20 have no region: amazon
+    AI, BAD_ENV = AI_DIR[region], BAD_ENV_REGION.get(region, BAD_ENV)
+    if rng:  # --range=0:00-6:30: only THIẾU slots starting inside it (user asks per part of the film)
+        a, b = (secs(x) for x in rng.split("-"))
+        slots = [s for s in slots if a <= s.get("start", 0) < b]
+    gs = groups(slots)
+    at = {s["slot"]: s.get("start", 0) for s in slots}
     if mode == "list":
         print(f"{sum(len(g['slots']) for g in gs)} THIẾU slots, {sum(g['sec'] for g in gs):.0f}s -> "
               f"{len(gs)} groups, {sum(g['clips'] for g in gs)} clips suggested")
@@ -140,7 +206,10 @@ def main(video, mode):
             tag, sp, act, st, li = g["key"]
             print(f"{g['id']} [{tag}] sp={sp} act={act or '-'} set={st or '-'} light={li or '-'} | "
                   f"{len(g['slots'])} slots {g['sec']}s -> {g['clips']} clips | ## {','.join(map(str, g['lines']))} | "
-                  f"others there: {g['others'] or '-'} | " + " / ".join(g["needs"][:4]))
+                  f"others there: {g['others'] or '-'} | "
+                  + "truth " + (" ".join(f"{t}={','.join(v)}" for t, v in g["truth"].items() if v) or "-")
+                  + (f" | refused in library: {g['refused']}" if g["refused"] else "") + " | " + " / ".join(g["needs"][:4]))
+            print("   at " + " ".join(tc(at[n]) for n in g["slots"]))
         return
     p = parse_prompts((work / "prompts.txt").read_text("utf-8"))
     ids = {g["id"] for g in gs}
@@ -158,28 +227,13 @@ def main(video, mode):
     print("QC: pass")
     if mode == "check":
         return
-    md = [f"# Prompt cho footage THIẾU — {video}\n",
-          f"{sum(len(v) for v in p.values())} clip cần generate (mỗi clip chỉ 1 loài, cắt thành nhiều shot). "
-          "Generate xong: lưu đúng thư mục ghi ở từng nhóm (tên thư mục = tên loài khi tag), chạy "
-          "/process-ai-video, /scan-source ai, /tag-source, rồi /doc-edit plan + place --replace.\n"]
-    for g in gs:
-        if g["id"] not in p:
-            continue
-        tag, sp, act, st, li = g["key"]
-        folder = "landscape" if sp == "none" else sp.split(",")[0].replace(" ", "_")  # tagger names species from it
-        md += [f"## {g['id']} · [{tag}] {sp} · {act or '-'} · {st or '-'} · {li or '-'} — {len(g['slots'])} shot, {g['sec']}s",
-               f"Lưu vào: `{AI}\\{folder}` · Slot: {', '.join(map(str, g['slots']))}",
-               f"Cần: {' / '.join(g['needs'][:6])}", "", "```"]
-        md += [PREFIX + x[2] for x in p[g["id"]]] + ["```", ""]
-    for k in extra:
-        md += [PREFIX + x[2] for x in p[k]]
     missing = [g["id"] for g in gs if g["id"] not in p]
     sys.path.insert(0, str(Path(__file__).parent))
     import ledger  # video folder looked up in the workspaces (plan.json may hold a path from before a rename)
     vdir = Path(plan.get("video_dir", ""))  # plan.json knows the exact folder (same video name in two workspaces)
-    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing_prompts.txt"  # prompt lines only (2026-10-09)
-    lines = [l for l in md if l.startswith(PREFIX)]
-    out.write_text("\n".join(lines) + "\n", "utf-8")
+    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing_prompts.txt"  # prompts only, no headers (2026-10-09)
+    lines = [x[2] for g in gs if g["id"] in p for x in p[g["id"]]] + [x[2] for k in extra for x in p[k]]
+    out.write_text("\n\n".join(f"{n}. {t}" for n, t in enumerate(lines, 1)) + "\n", "utf-8")  # '1. ', '2. ' (2026-10-22)
     # manifest: row n = prompt line n of missing_prompts.txt (same order as the loop above)
     rows = [(gid, r) for g in gs if g["id"] in p for gid, r in [(g["id"], x) for x in p[g["id"]]]] \
         + [(k, x) for k in extra for x in p[k]]
@@ -198,8 +252,9 @@ def main(video, mode):
     for g in gs:
         if g["id"] in p:
             sp = g["key"][1]
-            print(f"  {g['id']} {len(p[g['id']])} clips -> {AI}\\"
-                  + ("landscape" if sp == "none" else sp.split(",")[0].replace(" ", "_")))
+            name = "landscape" if sp == "none" else sp.split(",")[0].replace(" ", "_")
+            # africa: flat into _africa\_check, organize.py --africa files them into _africa\<species> after tagging
+            print(f"  {g['id']} {len(p[g['id']])} clips -> " + (f"{AI} (species {name})" if region == "africa" else f"{AI}\\{name}"))
     for k in extra:
         print(f"  {k} {len(p[k])} clips -> {AI}\\{k[1:]}")
     print("groups without prompts:", missing)
@@ -212,12 +267,22 @@ def selftest():
           {"slot": 4, "status": "THIEU", "dur": 2.5, "need": "Tán rừng", "filter": {"sp": ["none"], "set": ["canopy"]}}]
     g = groups(sl)
     assert [x["slots"] for x in g] == [[1, 2], [4]] and g[0]["clips"] == 2 and g[1]["key"][0] == "-"
-    p = parse_prompts("## G1\nA golden cat sprints\nA golden cat pauses\n## G2\nCanopy at dawn\n")  # legacy lines
-    assert len(p["G1"]) == 2 and p["G2"] == [("-", "-", "Canopy at dawn")]
-    try:
-        parse_prompts("## G1\nCinematic nature documentary, BBC Earth style - x\n"); raise SystemExit("prefix accepted")
-    except AssertionError:
-        pass
+    p = parse_prompts("## G1\naction L>R | long lens | dry savanna | bright daylight\n0-4s: A golden cat walks left to right.\n"
+                      "4-10s: It stops.\naction R>L | drone | dry savanna | dusk\n0-3s: x\n3-10s: y\n## G2\n"
+                      "establishing static | drone | canopy | dawn\n0-5s: Mist.\n5-10s: Sun.\n")
+    assert len(p["G1"]) == 2 and p["G2"][0][:2] == ("establishing", "static")
+    assert p["G1"][0][2] == ("Photorealistic wildlife documentary video, 10 seconds, 16:9, shot on long lens, dry savanna, "
+                             "bright daylight, National Geographic style, real animal anatomy and motion, no blood, no gore."
+                             "\n\n0-4s: A golden cat walks left to right.\n\n4-10s: It stops."), p["G1"][0][2]
+    for bad in ("## G1\nCinematic nature documentary, BBC Earth style - x\n",                          # old one-line prompt
+                "## G1\naction L>R | Photorealistic wildlife | x | y\n0-10s: a\n",                     # header written by hand
+                "## G1\naction L>R | lens | x | y\n0-2s: a\n3-10s: b\n",                               # gap in the beats
+                "## G1\naction L>R | lens | x | y\n0-2s: a\n2-8s: b\n",                                # ends before 10 s
+                "## G1\n0-2s: a\n"):                                                                   # beat without a clip
+        try:
+            parse_prompts(bad); raise SystemExit(f"accepted {bad!r}")
+        except AssertionError:
+            pass
     # coverage: the other character's status in the same sentence
     cov = groups([{"slot": 1, "line": 5, "status": "THIEU", "dur": 3, "need": "[P] heo chạy", "filter": {"sp": ["peccary"], "act": ["run"]}},
                   {"slot": 2, "line": 5, "status": "OK", "dur": 3, "need": "[J] báo lao", "filter": {"sp": ["jaguar"]}}])
@@ -233,6 +298,16 @@ def selftest():
            ("jaguar", "predator_burst", "L>R", "A single ocelot runs left to right")]           # wrong species
     for a in bad:
         assert lint(*a), f"lint passed {a}"
+    # story truth: a lioness / calf group must name them; no kill unless out=kill; slot refusals summed per group
+    tr = {"sex": ["female"], "age": [], "out": []}
+    ln = "A single adult lioness crouches low in tall grass, watching left to right"
+    assert lint("lion", "action", "L>R", ln, tr) == []
+    assert lint("lion", "action", "L>R", ln.replace("adult lioness", "lion"), tr)[0].startswith("truth: sex=female")
+    assert any("outcome" in x for x in lint("lion", "action", "L>R", ln + ", then catches a calf", tr))
+    assert lint("lion", "action", "L>R", ln + ", then catches a calf", dict(tr, out=["kill"])) == []
+    gt = groups([{"slot": 1, "status": "THIEU", "dur": 3, "need": "[L] x", "filter": {"sp": ["lion"], "sex": ["female"]}, "rej": {"sex": 4}},
+                 {"slot": 2, "status": "THIEU", "dur": 3, "need": "[L] y", "filter": {"sp": ["lion"]}, "rej": {"sex": 1, "kill": 2}}])
+    assert gt[0]["truth"]["sex"] == ["female"] and gt[0]["refused"] == {"sex": 5, "kill": 2}, gt
     e, _ = check({"G1": [("predator_burst", "L>R", good), ("predator_burst", "L>R", good + ".")]},
                  [{"id": "G1", "key": ("J", "jaguar", "run", "", ""), "clips": 2, "lines": [1], "slots": [1]}])
     assert any("near-duplicate" in x for x in e)
@@ -242,5 +317,6 @@ def selftest():
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
+    rng = next((x[8:] for x in sys.argv if x.startswith("--range=")), None)
     selftest() if "--selftest" in sys.argv else main(
-        a[0], "write" if "--write" in sys.argv else "check" if "--check" in sys.argv else "list")
+        a[0], "write" if "--write" in sys.argv else "check" if "--check" in sys.argv else "list", rng)

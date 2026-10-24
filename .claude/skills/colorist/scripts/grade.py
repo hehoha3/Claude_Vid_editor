@@ -9,9 +9,12 @@ Method (demo_2, 2026-10-09; simulated grade matched Resolve stills within 0.01):
   near-neutral pixels only.
 - Color Group per light (library tag): Day -> AMZ_01, Golden -> AMZ_06, Dusk/Night -> AMZ_07; the LUT sits on the
   group's post-clip node 1, so the whole film shares one look per light.
-- Per shot CDL on clip node 1: levels half-way to the group target (low-key shots stay dark), cast half-way to the
-  group's neutral, sat toward the target; then iterated until the simulated result passes LIM (clean blacks, whites
-  ~0.95, no neon, no clipping): this is what keeps shots from looking hazy / faded / vintage.
+- Per shot CDL on clip node 1, closed loop (2026-10-16, demo_5: half-way matching left p50 0.15-0.35 and +-5 % casts
+  between shots): simulate CDL + LUT, then pull p1 / p99 / p50 / sat and the near-neutral balance fully onto the group's
+  OUTPUT target (TGT; neutral = the LUT's own tint on grey, so the look stays). Casts only from near-neutral pixels
+  (none -> balance untouched: foliage is green, not a cast); sat never cut below 0.75x. Only Dusk keeps low-key shots dark; a dark Day/Golden shot is lifted to ~80 % of
+  the target. Then nudged until LIM passes (clean blacks, whites ~0.91, no neon, sim clip <= 1 % because the 160x90
+  sim hides speculars: ~3x more clip in Resolve). Bright-sky shots (p50 > 0.7) stay bright on purpose.
 Output: .work/grade/<project>/plan.json (+ sheet.jpg: 6 shots, ungraded top / graded bottom).
 """
 import datetime as dt, hashlib, importlib.util, json, subprocess, sys
@@ -32,7 +35,14 @@ GROUPS = {"Day": "AMZ_01_Natural_Canopy", "Golden": "AMZ_06_Golden_Release", "Du
 LIGHT = {"day": "Day", "golden": "Golden", "dusk": "Dusk", "night": "Dusk"}
 # house limits after CDL + LUT: clean blacks, open whites, controlled saturation (colorist non-negotiables)
 LIM = dict(p1=(0.0, 0.06), crush=(0.0, 6.0), p99=(0.72, 0.975), con=(0.25, 0.75), sat=(0.20, 0.42), sat95=(0.0, 0.74),
-           clip=(0.0, 2.0))
+           clip=(0.0, 1.0))  # 160x90 sim hides specular highlights: 0.7 % here was 2-3.4 % in Resolve (demo_5)
+SATMIN = 0.75  # never strip more than 25 % saturation: a lush shot cut to 0.65 reads grey / fake
+# per light group: where every shot lands after CDL + LUT (from the group's raw medians, clamped to the house range;
+# Dusk keeps >= 90 % of its saturation, luts/README.md)
+TGT = {"Day": lambda m: dict(p99=0.91, p50=float(np.clip(m["p50"], 0.34, 0.42)), sat=float(np.clip(m["sat"], 0.30, 0.38))),
+       "Golden": lambda m: dict(p99=0.91, p50=float(np.clip(m["p50"], 0.32, 0.40)), sat=float(np.clip(m["sat"], 0.31, 0.38))),
+       "Dusk": lambda m: dict(p99=float(np.clip(m["p99"] * 1.1, 0.65, 0.85)), p50=float(np.clip(m["p50"], 0.14, 0.24)),
+                              sat=float(np.clip(0.9 * m["sat"], 0.24, 0.38)), keep_dark=True)}
 
 
 def stats(a):
@@ -42,9 +52,9 @@ def stats(a):
     q = np.percentile(y, [1, 10, 50, 90, 99])
     mid = (y > 0.15) & (y < 0.85)
     nm = mid & (s < 0.15)
-    return dict(p1=q[0], p50=q[2], p99=q[4], con=q[3] - q[1], sat=s.mean(),
+    return dict(p1=q[0], p50=q[2], p99=q[4], con=q[3] - q[1], sat=s.mean(), mr=mid_ratio(a),
                 sat95=np.percentile(s[y > 0.06], 95) if (y > 0.06).any() else 0, crush=(y <= 0.02).mean() * 100,
-                clip=(mx >= 0.995).mean() * 100, neutral=a[nm].mean(0) if nm.mean() > 0.03 else None,
+                clip=(mx >= 0.995).mean() * 100, nfrac=float(nm.mean()), neutral=a[nm].mean(0) if nm.mean() > 0.03 else None,
                 lowkey=bool(q[2] < 0.16 or q[4] < 0.45))  # night / deep shade: keep the intent, no forced brightening
 
 
@@ -54,18 +64,23 @@ def cdl(a, slope, offset, power, sat):
     return np.clip(y + (o - y) * sat, 0, 1)
 
 
+def mid_ratio(a):
+    """Colour balance of the midtones (all content, normalised): fallback cast measure when nothing is neutral."""
+    y = a @ Y
+    m = a[(y > 0.12) & (y < 0.85)]
+    m = m.mean(0) if len(m) > 50 else a.mean(0)
+    return m / max(m.mean(), 1e-3)
+
+
 def solve(st, tgt):
+    """Open-loop start: full levels to the target (low-key shots keep their darkness), cast toward the group."""
     lk = st["lowkey"]
-    hi = tgt["p99"] if not lk else max(st["p99"], min(st["p99"] * 1.1, tgt["p99"]))
-    s = float(np.clip((hi - tgt["p1"]) / max(st["p99"] - st["p1"], 0.05), 0.85, 1.25))
-    o = float(np.clip(tgt["p1"] - st["p1"] * s, -0.08, 0.04))
-    m = float(np.clip(st["p50"] * s + o, 0.05, 0.95))
-    pw = 1.0 if lk else float(np.clip(np.log(m + 0.5 * (tgt["p50"] - m)) / np.log(m), 0.92, 1.15))  # half-way
-    k = np.ones(3)
-    if st["neutral"] is not None:  # cast from near-neutral pixels only, never from the green content
-        k = np.clip(1 + 0.5 * (tgt["ratio"] / (st["neutral"] / max(st["neutral"].mean(), 1e-3)) - 1), 0.95, 1.05)
-    k = k / (k @ Y)
-    return dict(slope=s * k, offset=np.full(3, o), power=pw, sat=float(np.clip(tgt["sat"] / max(st["sat"], 0.05), 0.75, 1.25)))
+    hi = tgt["p99"] if not lk else min(tgt["p99"], st["p99"] * 1.25)
+    s = float(np.clip((hi - tgt["p1"]) / max(st["p99"] - st["p1"], 0.05), 0.7, 1.8))
+    o = float(np.clip(tgt["p1"] - st["p1"] * s, -0.1, 0.06))
+    # no colour start from content: a foliage-only frame IS green (02:41 demo_5 turned teal/lime when its green was read
+    # as a cast). Casts are corrected in converge() from near-neutral pixels only.
+    return dict(slope=np.full(3, s), offset=np.full(3, o), power=1.0, sat=float(np.clip(tgt["sat"] / max(st["sat"], 0.05), SATMIN, 1.5)))
 
 
 def check(f, lowkey):
@@ -73,9 +88,38 @@ def check(f, lowkey):
     return [k for k in bad if not (lowkey and (k == "con" or (k == "p99" and f[k] < LIM[k][0])))]
 
 
-def fit(img, st, tgt, P):
-    """solve(), then nudge until the simulated CDL + LUT passes LIM. -> (cdl dict, final stats, flags)"""
+def converge(img, st, tgt, P, n=10):
+    """Closed loop on the simulated CDL + LUT output: levels, midtone, saturation and neutral balance all pulled to the
+    group target, so every shot of a light group lands on the same numbers (not half-way)."""
     g = solve(st, tgt)
+    lk = st["lowkey"] and tgt.get("keep_dark", False)  # only Dusk keeps its darkness; a dark Day shot = underexposed
+    hi = tgt["p99"] if not lk else min(tgt["p99"], st["p99"] * 1.25)
+    tp50 = tgt["p50"] * (0.8 if st["lowkey"] else 1.0)
+    # trust in the neutral pixels scales with how much of the frame is really neutral (3 % -> 0, 13 %+ -> full): in a
+    # foliage frame they are pale leaves the LUT pushes to emerald on purpose; chasing them kills the green (02:41 demo_5)
+    w = float(np.clip((st["nfrac"] - 0.03) / 0.10, 0, 1))
+    tr = None  # this shot's own balance target: LUT neutral ** w * its uncorrected balance ** (1 - w), fixed once
+    for _ in range(n):
+        f = stats(ml.grade(cdl(img, g["slope"], g["offset"], g["power"], g["sat"]), P))
+        sc = float(np.clip(((hi - tgt["p1"]) / max(f["p99"] - f["p1"], 0.05)) ** 0.8, 0.9, 1.1))
+        g["slope"] = np.clip(g["slope"] * sc, 0.6, 1.9)
+        g["offset"] = np.clip(g["offset"] + 0.8 * (tgt["p1"] - f["p1"]), -0.12, 0.08)
+        if not lk:
+            g["power"] = float(np.clip(g["power"] * (np.log(tp50) / np.log(min(max(f["p50"], 0.02), 0.98))) ** 0.7, 0.7, 1.45))
+        g["sat"] = float(np.clip(g["sat"] * (tgt["sat"] / max(f["sat"], 0.03)) ** 0.8, SATMIN, 1.6))
+        if f["neutral"] is not None and w > 0:  # residual cast after the LUT, judged on near-neutral pixels only
+            nr = f["neutral"] / max(f["neutral"].mean(), 1e-3)
+            tr = tgt["ratio"] ** w * nr ** (1 - w) if tr is None else tr
+            k = (tr / nr) ** 0.7
+            ks = g["slope"] * k / (k @ Y)
+            m = ks @ Y  # total balance shift bounded to +-10 % (absolute, not per iteration)
+            g["slope"] = np.clip(ks, m * 0.90, m * 1.10)
+    return g
+
+
+def fit(img, st, tgt, P):
+    """converge(), then nudge until the simulated CDL + LUT passes LIM. -> (cdl dict, final stats, flags)"""
+    g = converge(img, st, tgt, P)
     for _ in range(12):
         f = stats(ml.grade(cdl(img, g["slope"], g["offset"], g["power"], g["sat"]), P))
         bad = check(f, st["lowkey"])
@@ -132,6 +176,14 @@ def timeline():
     return pm, project, tl, rows
 
 
+def group_target(name, sts):
+    """Targets in OUTPUT space (after CDL + LUT) from the group's raw stats; neutral = the LUT's own tint on grey, so
+    the look stays and casts go."""
+    med = {k: float(np.median([s[k] for s in sts])) for k in ("p1", "p50", "p99", "sat")}
+    grey = ml.grade(np.full((1, 3), 0.4, np.float32), ml.LUTS[GROUPS[name]])[0]
+    return dict(p1=0.025, mr=np.median([s["mr"] for s in sts], 0), ratio=grey / grey.mean(), **TGT[name](med))
+
+
 def plan(sheet):
     import plan as P
     pm, project, tl, rows = timeline()
@@ -146,12 +198,7 @@ def plan(sheet):
         if not cs:
             continue
         Pm = ml.LUTS[lut]
-        med = {k: float(np.median([s[k] for _, _, s in cs])) for k in ("p1", "p50", "p99", "sat")}
-        nr = [s["neutral"] / s["neutral"].mean() for _, _, s in cs if s["neutral"] is not None]
-        tgt = dict(p1=float(np.clip(med["p1"], 0.02, 0.045)), p99=float(np.clip(med["p99"], 0.88, 0.94)),
-                   p50=float(np.clip(med["p50"], 0.34, 0.46)) if name != "Dusk" else min(med["p50"], 0.3),
-                   ratio=0.5 + 0.5 * (np.median(nr, 0) if nr else np.ones(3)),  # half-way to neutral
-                   sat=float(np.clip(med["sat"], 0.27, 0.34)) / Pm["sat"])
+        tgt = group_target(name, [s for _, _, s in cs])
         f0s, f1s, fl0, fl1 = [], [], 0, 0
         for r, im, st in cs:
             g, f, bad = fit(im, st, tgt, Pm)
@@ -163,8 +210,9 @@ def plan(sheet):
             show.append((im, g, Pm))
         sd = lambda fs, k: np.std([f[k] for f in fs])  # noqa: E731  shot-to-shot spread = how "one place" it feels
         mn = lambda fs, k: np.mean([f[k] for f in fs])  # noqa: E731
+        cs_ = lambda fs: float(np.std([f["mr"] for f in fs], 0).mean())  # noqa: E731  midtone colour-balance spread
         rep.append(f"{name} {len(cs)} shots, {lut}: spread p50 {sd(f0s, 'p50'):.3f}->{sd(f1s, 'p50'):.3f} sat "
-                   f"{sd(f0s, 'sat'):.3f}->{sd(f1s, 'sat'):.3f} | p1 {mn(f0s, 'p1'):.3f}->{mn(f1s, 'p1'):.3f} p99 "
+                   f"{sd(f0s, 'sat'):.3f}->{sd(f1s, 'sat'):.3f} cast {cs_(f0s):.3f}->{cs_(f1s):.3f} | p1 {mn(f0s, 'p1'):.3f}->{mn(f1s, 'p1'):.3f} p99 "
                    f"{mn(f0s, 'p99'):.3f}->{mn(f1s, 'p99'):.3f} sat {mn(f0s, 'sat'):.3f}->{mn(f1s, 'sat'):.3f} | "
                    f"flagged LUT-only {fl0} -> CDL+LUT {fl1}")
     out.sort(key=lambda q: q["start"])
@@ -192,7 +240,8 @@ def apply():
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
     project.GetMediaPool().SetCurrentFolder(project.GetMediaPool().GetRootFolder())
     bak = f"Edit_bak_grade_{dt.datetime.now():%Y%m%d_%H%M%S}"
-    assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+    from dvr_cowork.resolve_ops import backup_timeline
+    assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)
     groups = {g.GetName(): g for g in project.GetColorGroupsList() or []}
     ok = bad = 0
@@ -220,11 +269,23 @@ def selftest():
     y = rng.uniform(0.02, 0.75, (4000, 1))  # lifted blacks, dull whites, slight green cast: the "hazy / vintage" shot
     grey_haze = np.clip(y * [0.95, 1.0, 0.9] + 0.09 + rng.normal(0, 0.03, (4000, 3)), 0, 1)
     st = stats(grey_haze)
-    tgt = dict(p1=0.03, p99=0.92, p50=0.4, ratio=np.ones(3), sat=0.3)
-    g, f, bad = fit(grey_haze, st, tgt, ml.LUTS["AMZ_01_Natural_Canopy"])
+    P = ml.LUTS["AMZ_01_Natural_Canopy"]
+    grey = ml.grade(np.full((1, 3), 0.4, np.float32), P)[0]
+    tgt = dict(p1=0.025, p99=0.93, p50=0.38, ratio=grey / grey.mean(), sat=0.33, mr=np.ones(3))
+    g, f, bad = fit(grey_haze, st, tgt, P)
     assert f["p1"] < LIM["p1"][1] < st["p1"] and f["p99"] > st["p99"], (st, f, bad)  # de-hazed: clean blacks, open whites
+    # two shots of one scene, one dark + warm, one bright + cool: after the grade they must land on the same numbers
+    base = np.clip(rng.uniform(0, 1, (4000, 1)) ** 1.3 * [0.85, 0.95, 0.8] + rng.normal(0, 0.12, (4000, 3)) * 0.5, 0, 1)
+    a, b = np.clip(base * 0.75 * [1.06, 1.0, 0.91], 0, 1), np.clip(base * 1.05 * [0.9, 1.0, 1.12] + 0.04, 0, 1)
+    fa, fb = (fit(x, stats(x), tgt, P)[1] for x in (a, b))
+    na, nb = (f["neutral"] / f["neutral"].mean() for f in (fa, fb))
+    assert abs(fa["p50"] - fb["p50"]) < 0.03 and abs(fa["sat"] - fb["sat"]) < 0.03 and np.abs(na - nb).max() < 0.04, (fa, fb, na, nb)  # 0.04: cast trust scales with neutral area
+    leaves = np.clip(rng.uniform(0.05, 0.8, (4000, 1)) * [0.72, 1.0, 0.55] + rng.normal(0, 0.02, (4000, 3)), 0, 1)
+    gl = fit(leaves, stats(leaves), tgt, P)[0]
+    assert gl["slope"][1] >= gl["slope"].max() - 0.02, gl  # no neutral pixels: green is content, never pulled as a cast
     night = rng.uniform(0.0, 0.2, (4000, 3))
-    assert stats(night)["lowkey"] and solve(stats(night), tgt)["power"] == 1.0  # low-key shot is not brightened
+    assert stats(night)["lowkey"] and converge(night, stats(night), dict(tgt, keep_dark=True), P)["power"] == 1.0  # Dusk night stays dark
+    assert converge(night, stats(night), tgt, P)["power"] < 1.0  # a dark shot in a Day group is lifted toward the scene
     print("selftest ok")
 
 

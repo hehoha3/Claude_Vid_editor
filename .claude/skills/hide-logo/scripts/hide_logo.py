@@ -26,9 +26,11 @@ CACHE = ROOT / ".work" / "hide_logo" / "scan.json"
 EXTS = {".mp4", ".mov", ".mkv", ".mxf", ".avi", ".m4v"}
 # every logo-free copy (D: and read-only Z: sources) waits here until the project is Done; scan-source and
 # process-ai-video skip it. MANIFEST maps copy -> original for the overwrite question when the video is finished.
-NOLOGO = Path(load_config()["paths"]["ai_video"]) / "_nologo"  # was _check/_nologo until 2026-10-13
+NOLOGO = Path(os.environ.get("NOLOGO_DIR") or Path(load_config()["paths"]["ai_video"]) / "_nologo")  # NOLOGO_DIR = per-run override (africa)  # was _check/_nologo until 2026-10-13
 MANIFEST = ROOT / ".work" / "hide_logo" / "nologo.json"
 OVERWRITTEN = ROOT / ".work" / "hide_logo" / "overwritten.json"  # replaced copies to relink back after a Resolve quit
+QUICK = ROOT / ".work" / "hide_logo" / "quick_fix.txt"  # originals fixed with the fast ffmpeg fill, redo with MiniMax later
+LIST = ROOT / ".work" / "hide_logo" / "check_list.txt"  # scan's path list for the user's review, input of --list
 
 
 def manifest():
@@ -51,6 +53,7 @@ W, H, N = 640, 360, 8          # analysis size, frames sampled per file
 HI, LO = 0.45, 0.33            # NCC: >= HI logo, LO..HI suspect (vid_3: logos 0.47-0.66, clean <= ~0.35)
 SHIFT, PAD = 8, 6              # template search radius, template margin (px at 640x360)
 EDGE_PAD = 3                   # extra px around the logo for delogo, at source resolution
+MINIMAX_PY = Path(r"D:\tools\minimax_remover\venv\Scripts\python.exe")   # MiniMax-Remover venv (minimax_worker.py)
 FEATHER, SOFT = 12, 1.5        # clone-patch edge fade (px) and blur sigma: raise SOFT if the patch still looks glossy
 HAZE = 9                      # blur sigma of the soft haze over patch + margin: raise if seams show, lower if it smears
 FPS_END = 8                   # decode rate for --end (logo that appears late in the clip)
@@ -68,13 +71,12 @@ def probe(path):
 def sample(path):
     """Temporal median + persistent-edge mask of N frames spread over the whole file."""
     _, _, dur = probe(path)
-    fr = []
-    for k in range(N):
-        raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur * (k + 0.5) / N:.3f}", "-i", path, "-frames:v", "1",
-                              "-vf", f"scale={W}:{H}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-                             capture_output=True).stdout
-        if len(raw) >= W * H:
-            fr.append(np.frombuffer(raw[:W * H], np.uint8).reshape(H, W).astype(np.float32))
+    grab = lambda k: subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{dur * (k + 0.5) / N:.3f}", "-i", path, "-frames:v", "1",
+                                     "-vf", f"scale={W}:{H}", "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+                                    capture_output=True).stdout
+    with ThreadPoolExecutor(N) as pool:   # the N seeks in parallel (~2.4 s -> ~0.5 s)
+        raws = list(pool.map(grab, range(N)))
+    fr = [np.frombuffer(raw[:W * H], np.uint8).reshape(H, W).astype(np.float32) for raw in raws if len(raw) >= W * H]
     if len(fr) < 3:
         return None, None
     f = np.stack(fr)
@@ -119,13 +121,48 @@ def logo_box(g, x, y, w, h):
     return lx0, ly0, lx1, ly1
 
 
-def scan(folder):
-    files = sorted(str(p) for p in Path(folder).iterdir() if p.suffix.lower() in EXTS and p.is_file())
+def timeline_files(name=None):
+    """Read only: [(file path, start s, end s)] of every V1 item of timeline <name> (default the current one)."""
+    project = connect().GetProjectManager().GetCurrentProject()
+    tl = project.GetCurrentTimeline() if not name else next(
+        t for t in (project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)) if t.GetName() == name)
+    fps, t0 = float(tl.GetSetting("timelineFrameRate")), tl.GetStartFrame()
+    out = []
+    for it in tl.GetItemListInTrack("video", 1) or []:
+        if mp := it.GetMediaPoolItem():
+            out.append((mp.GetClipProperty("File Path"), (it.GetStart() - t0) / fps, (it.GetEnd() - t0) / fps))
+    return tl.GetName(), out
+
+
+def report_timeline(name=None):
+    """--timeline [name]: which V1 shots of a timeline carry the logo (user 2026-10-17). Nothing is written: no
+    scan.json, no list, no markers. The logo template comes from the files of that timeline (self-calibrating), so
+    a timeline where almost no shot has the logo may name a wrong recurring edge: look at the top hits."""
+    tname, items = timeline_files(name)
+    files = sorted({p for p, _, _ in items if Path(p).is_file()})
+    print(f"timeline '{tname}': {len(items)} V1 shots, {len(files)} files")
+    scan(None, files=files, report=lambda fo, side: _print_hits(fo, items, side, tname))
+
+
+def _print_hits(files_out, items, side, tname):
+    def tc(s):
+        return f"{int(s // 3600):02d}:{int(s % 3600 // 60):02d}:{s % 60:04.1f}" if s >= 3600 else f"{int(s // 60):02d}:{s % 60:04.1f}"
+    rows = []
+    for p, a, b in items:
+        v = files_out.get(os.path.normcase(p))
+        if v and v["score"] >= LO:
+            rows.append((a, b, v["score"], Path(p).name))
+    print(f"logo template at {side}; shots with score >= {LO} (>= {HI} = logo, below = suspect), {len(rows)} shots:")
+    for a, b, s, n in rows:
+        print(f"  {tc(a)}-{tc(b)}  {s:.2f} {'LOGO' if s >= HI else 'suspect'}  {n[:60]}")
+
+
+def scan(folder, files=None, report=None):
+    files = files or sorted(str(p) for p in Path(folder).iterdir() if p.suffix.lower() in EXTS and p.is_file())
     if not files:
         sys.exit(f"No video files in {folder}")
-    with ThreadPoolExecutor(8) as pool:
-        res = list(pool.map(sample, files))
-    ok = [(f, med, per) for f, (med, per) in zip(files, res) if med is not None]
+    res = [sample(f) for f in files]   # sample() already runs its N seeks in parallel
+    ok =[(f, med, per) for f, (med, per) in zip(files, res) if med is not None]
     acc = sum(per.astype(np.int32) for _, _, per in ok)
     ys, xs = np.nonzero(acc >= max(3, acc.max() * 0.3))
     if len(xs) < 20:
@@ -142,17 +179,71 @@ def scan(folder):
         bx = logo_box(g, x, y, x1 - x0, y1 - y0)
         files_out[os.path.normcase(f)] = {"score": round(s, 3), "box": [v / (W if i % 2 == 0 else H) for i, v in enumerate(bx)]}
     default = [(x0 + PAD) / W, (y0 + PAD) / H, (x1 - PAD) / W, (y1 - PAD) / H]
+    if report:  # --timeline: print only, write nothing
+        return report(files_out, ("top" if y0 < H / 2 else "bottom") + "-" + ("left" if x0 < W / 2 else "right"))
     CACHE.parent.mkdir(parents=True, exist_ok=True)
     CACHE.write_text(json.dumps({"folder": str(Path(folder).resolve()), "default_box": default, "files": files_out}))
 
     hit = sorted(Path(f).name for f, v in files_out.items() if v["score"] >= HI)
     sus = sorted((Path(f).name, v["score"]) for f, v in files_out.items() if LO <= v["score"] < HI)
-    marked = mark(files_out)
+    # reviewed path list for --list (clips not on a timeline, e.g. _check; user 2026-10-17): LOGO lines active,
+    # SUSPECT lines commented out ('#? ', user 2026-10-17: '#' = skip, no '#' = run): the user's review removes / adds lines, then --list runs on it
+    score = {f: files_out[os.path.normcase(f)]["score"] for f, *_ in ok}
+    # a LOGO clip the user already skipped in the previous list stays skipped (amazon_2: same 2 clips twice)
+    old = LIST.read_text("utf-8") if LIST.exists() else ""
+    skipped = set(map(os.path.normcase, skipped_paths(old)))
+    LIST.write_text("# LOGO (delete a line = keep that clip as is; '#' = skipped in your last review)\n"
+                    + "".join(f"{'#' if os.path.normcase(f) in skipped else ''}{f}  # {s:.2f}\n"
+                              for f, s in sorted(score.items()) if s >= HI)
+                    + "# SUSPECT (#? = skipped; delete '#? ' to delogo it)\n"
+                    + "".join(f"#? {f}  # {s:.2f}\n" for f, s in sorted(score.items()) if LO <= s < HI), "utf-8")
+    try:
+        marked = mark(files_out)
+    except (SystemExit, Exception):  # noqa: BLE001  no Resolve / no "Edit": the list file is the review
+        marked = 0
     side = ("top" if y0 < H / 2 else "bottom") + "-" + ("left" if x0 < W / 2 else "right")
     print(f"{len(ok)} files scanned | logo at {side} | {len(hit)} with logo, {len(sus)} suspect | "
           f"{marked} markers on '{TIMELINE}' (Purple = logo, Yellow = suspect)")
     print("LOGO: " + ", ".join(n.rsplit(".", 1)[0] for n in hit))
     print("SUSPECT: " + (", ".join(f"{n.rsplit('.', 1)[0]}({s:.2f})" for n, s in sus) or "none"))
+    print(f"list: {LIST}")
+
+
+def skipped_paths(text):
+    """Paths of a review list's commented lines ('#D:\\x.mp4', '#? D:\\x.mp4'): clips the user chose to skip."""
+    return [p for p in (ln.lstrip("#? ").split("  #")[0].strip() for ln in text.splitlines()
+                        if ln.startswith("#") and ":\\" in ln) if p]
+
+
+def list_paths(text):
+    """Active path lines of a review list ('#' lines and '  # score' tails ignored)."""
+    return [p for p in (ln.split("  #")[0].strip() for ln in text.splitlines() if not ln.lstrip().startswith("#")) if p]
+
+
+def run_list(path):
+    """Delogo every path of the reviewed list with its scan box -> _nologo copy (recorded for --overwrite-all).
+    A listed file that is gone (the user deleted it from _check) is skipped and named."""
+    cache = json.loads(CACHE.read_text()) if CACHE.exists() else {"files": {}, "default_box": None}
+    paths = list_paths(Path(path).read_text("utf-8"))
+    gone = [p for p in paths if not Path(p).is_file()]
+    done, failed, busy = 0, [], []
+    for p in (p for p in paths if Path(p).is_file()):  # one at a time: MiniMax needs the whole GPU
+        box = cache["files"].get(os.path.normcase(p), {}).get("box") or cache["default_box"]
+        if box is None:
+            failed.append(f"{Path(p).name}: not in the last scan")
+            continue
+        src, dst, err, grain = delogo(original_of(p), box)
+        if dst:
+            record(src, dst)
+            done += 1
+            if grain >= BUSY:
+                busy.append(Path(src).stem)
+        else:
+            failed.append(f"{Path(p).name}: {err}")
+    print(f"delogo {done}/{len(paths) - len(gone)} listed clips -> {NOLOGO}")
+    print("REVIEW FIRST (detailed background, patch may show): " + (", ".join(sorted(busy)) or "none"))
+    print("FAILED: " + ("; ".join(failed) or "none") + " | gone (deleted by the user, skipped): "
+          + (", ".join(Path(p).name for p in gone) or "none"))
 
 
 def edit_timeline():
@@ -189,10 +280,39 @@ def mark(files_out):
     return n
 
 
-def delogo(src, box, start=0.0, end=None, side=False, fill="clone"):
-    """side=True: clone from the same rows beside the logo (inward), not above/below - over moving water the
+def nologo_path(src):
+    """One flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name."""
+    dst = NOLOGO / Path(src).name
+    if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
+        dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
+    assert dst.drive.upper() != "Z:", dst
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    return dst
+
+
+def frames(p):
+    return subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
+                           "stream=nb_read_packets", "-of", "csv=p=0", p], capture_output=True, text=True).stdout.strip()
+
+
+def delogo(src, box, start=0.0, end=None, side=False, fill="minimax"):
+    """fill="minimax" (default, user 2026-10-15: clone patch blurred / glowed): MiniMax-Remover video inpainting of a
+    crop around the logo, minimax_worker.py in its own venv. "clone" / "interp": the older ffmpeg patches below.
+    side=True: clone from the same rows beside the logo (inward), not above/below - over moving water the
     vertical neighbour is foam/sky of another brightness and the patch glows (user 2026-10-14)."""
     w, h, dur = probe(src)
+    if fill == "minimax":
+        dst = nologo_path(src)
+        bxs = [f"{max(0, int(b[0] * w) - EDGE_PAD)},{max(0, int(b[1] * h) - EDGE_PAD)},"
+               f"{min(w, int(np.ceil(b[2] * w)) + EDGE_PAD)},{min(h, int(np.ceil(b[3] * h)) + EDGE_PAD)}"
+               for b in (box if isinstance(box[0], (list, tuple)) else [box])]
+        r = subprocess.run([str(MINIMAX_PY), str(Path(__file__).with_name("minimax_worker.py")), src, str(dst),
+                            f"{start:.3f}", f"{-1 if end is None else end:.3f}", *bxs], capture_output=True, text=True)
+        if r.returncode:
+            return src, None, (r.stderr.strip() or r.stdout.strip())[-200:], 0
+        if frames(src) != frames(str(dst)):
+            return src, None, "frame count changed", 0
+        return src, str(dst), None, 0
     en = (f":enable='between(t,{start:.3f},{end:.3f})'" if end is not None
           else f":enable='gte(t,{start:.3f})'" if start > 0 else "")
     chain, cur, grain = [], "0:v", 0
@@ -252,21 +372,14 @@ def delogo(src, box, start=0.0, end=None, side=False, fill="clone"):
                      f"[c{i}][q{i}]overlay={qx}:{qy}:format=auto{en}[o{i}]")
         cur = f"o{i}"
     vf = ";".join(chain)
-    # one flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name
-    dst = NOLOGO / Path(src).name
-    if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
-        dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
-    assert dst.drive.upper() != "Z:", dst
-    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst = nologo_path(src)
     r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", vf, "-map", f"[{cur}]",
                         "-map", "0:a?", "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p",
                         "-fps_mode", "passthrough", "-c:a", "copy", "-map_metadata", "0", "-movflags", "+faststart",
                         str(dst)], capture_output=True, text=True)
     if r.returncode:
         return src, None, r.stderr.strip()[-200:], grain
-    count = lambda p: subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
-                                      "stream=nb_read_packets", "-of", "csv=p=0", p], capture_output=True, text=True).stdout.strip()
-    if count(src) != count(str(dst)):
+    if frames(src) != frames(str(dst)):
         return src, None, "frame count changed", grain
     return src, str(dst), None, grain
 
@@ -288,8 +401,7 @@ def execute():
     if not todo:
         sys.exit("No markers on V1 clips.")
     jobs = [(p, cache["files"].get(p, {}).get("box", cache["default_box"])) for p in todo]
-    with ThreadPoolExecutor(4) as pool:
-        results = list(pool.map(lambda j: delogo(*j), jobs))
+    results = [delogo(*j) for j in jobs]   # one at a time: MiniMax needs the whole GPU
     done, failed, busy = 0, [], []
     for src, dst, err, grain in results:
         if dst and todo[src].ReplaceClip(dst):
@@ -346,13 +458,49 @@ def late_logo(src, quads, h2, w2, head=False):
                 # tight box: longest run of dense rows, then dense columns inside it (stray pixels make delogo streak)
                 r0, r1 = _run(np.nonzero(m.sum(1) >= 3)[0], 2)
                 c0, c1 = _run(np.nonzero(m[r0:r1 + 1].sum(0) >= 2)[0], 8)
-                bx = (ox + c0 - 2, oy + r0 - 2, ox + c1 + 3, oy + r1 + 3)
+                if r1 - r0 < 3 or c1 - c0 < 6:   # no dense rows/columns = empty box at the corner, not a logo
+                    continue
+                bx =(ox + c0 - 2, oy + r0 - 2, ox + c1 + 3, oy + r1 + 3)
                 tt = (len(f) - t + 2) / FPS_END if head else max(0.0, (t - 2) / FPS_END)
                 best = (share, corner, bx, tt)
     return best   # (share, corner, box@640x360, start_s | end_s when head) or None
 
 
-def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="clone"):
+def static_edges(src, bx, t0, t1):
+    """Pixels of box bx (640x360) that are an edge in every frame of [t0, t1] and do not change (sample()'s test)."""
+    x0, y0, x1, y1 = (int(v) for v in bx)
+    x0, y0 = max(x0, 0), max(y0, 0)
+    span = ["-ss", f"{t0:.3f}"] + (["-to", f"{t1:.3f}"] if t1 is not None else [])
+    raw = subprocess.run(["ffmpeg", "-v", "error", *span, "-i", src, "-vf", f"fps={FPS_END},scale={W}:{H}",
+                          "-pix_fmt", "gray", "-f", "rawvideo", "-"], capture_output=True).stdout
+    f = np.frombuffer(raw, np.uint8)[:len(raw) // (W * H) * W * H].reshape(-1, H, W)[:, y0:y1, x0:x1].astype(np.float32)
+    if len(f) < 3 or f.shape[1] < 2 or f.shape[2] < 2:
+        return 0
+    g = np.abs(np.diff(f, axis=2))[:, :-1, :] + np.abs(np.diff(f, axis=1))[:, :, :-1]
+    return int(((g.min(axis=0) > 20) & (f.std(axis=0)[:-1, :-1] < 6)).sum())
+
+
+def part_logo(src, corner, heads):
+    """Logo on part of the clip only: head=True shown at the start then gone, False popping in late. Tries each
+    mode in `heads`, best share wins -> (corner, box@640x360, start_s, end_s | None) or None."""
+    bh, bw = H // 5, W * 3 // 10    # channel logos hug the frame edge: search a corner band, not a quadrant
+    bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
+    best = None
+    for head in heads:
+        f = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
+        # late_logo also fires on water / animals moving (2026-10-15, logo-free otter, leaf litter): keep it only if
+        # the box holds persistent edges while the logo is supposed to be there, the whole-clip rule of sample()
+        # (span pulled 0.5 s inward: late_logo pads the pop-in time, and logo-free frames there break the test)
+        if f and static_edges(src, f[2], *((0.0, f[3] - 0.5) if head else (f[3] + 0.5, None))) >= 20 \
+                and (best is None or f[0] > best[0][0]):
+            best = (f, head)
+    if not best:
+        return None
+    (_, c, bx, t), head = best
+    return (c, bx, 0.0, t) if head else (c, bx, t, None)
+
+
+def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="minimax"):
     """One shot name or video path: find its static logo in a corner (persistent edges over 8 frames), delogo,
     relink the V1 clip using it (if any). endpart=True: logo appears late in the clip; head=True: logo only at
     the start of the clip, gone later."""
@@ -374,24 +522,26 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="cl
     if manual:   # --box x0,y0,x1,y1 [x0,y0,x1,y1 ...] at 640x360: semi-transparent logos the edge detector misses
         bx, corner = manual[0], "manual"
     elif endpart or head:
-        bh, bw = H // 5, W * 3 // 10    # channel logos hug the frame edge: search a corner band, not a quadrant
-        bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
-        found = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
+        found = part_logo(src, corner, [head])
         if not found:
             sys.exit(f"no logo {'leaving' if head else 'appearing late'} found in corner {corner or 'any'}")
-        _, corner, bx, t = found
-        start, end = (0.0, t) if head else (t, None)
+        corner, bx, start, end = found
     else:
         _, per = sample(src)
         if per is None:
             sys.exit("could not decode " + src)
+        want = corner
         corner = corner or max(quads, key=lambda c: per[quads[c][0]:quads[c][0] + h2, quads[c][1]:quads[c][1] + w2].sum())
         oy, ox = quads[corner]
         ys, xs = np.nonzero(per[oy:oy + h2, ox:ox + w2])
-        if len(xs) < 20:
-            sys.exit(f"no static logo found in corner {corner}")
-        k = (abs(xs - np.median(xs)) < 80) & (abs(ys - np.median(ys)) < 40)   # densest cluster, drops stray edges
-        bx = (ox + xs[k].min() - 2, oy + ys[k].min() - 2, ox + xs[k].max() + 3, oy + ys[k].max() + 3)
+        if len(xs) >= 20:
+            k = (abs(xs - np.median(xs)) < 80) & (abs(ys - np.median(ys)) < 40)   # densest cluster, drops stray edges
+            bx = (ox + xs[k].min() - 2, oy + ys[k].min() - 2, ox + xs[k].max() + 3, oy + ys[k].max() + 3)
+        else:   # user gives the corner, not the time (2026-10-15): logo only at the start, or popping in late
+            found = part_logo(src, want, [True, False])
+            if not found:
+                sys.exit(f"no logo found in corner {want or 'any'} (whole clip, start or late)")
+            corner, bx, start, end = found
     box = [bx[0] / W, bx[1] / H, bx[2] / W, bx[3] / H]
     if manual:
         box = [[b[0] / W, b[1] / H, b[2] / W, b[3] / H] for b in manual]
@@ -399,13 +549,16 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="cl
     if not dst or (mpi and not mpi.ReplaceClip(dst)):
         sys.exit(f"failed: {err or 'ReplaceClip failed'}")
     record(src, dst)
+    if fill != "minimax":  # quick pass (user 2026-10-17): remember the originals to redo with MiniMax after Done
+        with QUICK.open("a", encoding="utf-8") as q:
+            q.write(f"{src}  # {corner} {fill}\n")
     when = f"0.0-{end:.1f}s" if end is not None else f"from {start:.1f}s"
     print(f"{Path(src).stem}: logo {corner} {[int(v) for v in bx]}@640x360 {when} removed -> {dst} | "
           + ("relinked" if mpi else "not on V1, file only") + f" | grain {grain}"
           + (" REVIEW (detailed background)" if grain >= BUSY else ""))
 
 
-def at_clip(tc, corner=None):
+def at_clip(tc, corner=None, fill="minimax"):
     """Timeline position the user saw the logo at (mm:ss or hh:mm:ss) -> the V1 clip there, or a neighbour within
     1 s (a reported time often lands just before the cut), whichever shows the most static edges in the corner."""
     project, tl = edit_timeline()
@@ -433,7 +586,7 @@ def at_clip(tc, corner=None):
             best = (score, src, rank)
         srcs.append(src)
     if best and best[0] >= 20:
-        return one_clip(best[1], corner)
+        return one_clip(best[1], corner, fill=fill)
     # no logo through the whole clip: one shown only at the start (head) or popping in late (end)
     bh, bw = H // 5, W * 3 // 10
     bands = {"tl": (0, 0), "tr": (0, W - bw), "bl": (H - bh, 0), "br": (H - bh, W - bw)}
@@ -446,7 +599,7 @@ def at_clip(tc, corner=None):
                 part = (f[0], src, head)
     if not part:
         sys.exit(f"no logo found near {tc}")
-    one_clip(part[1], corner, endpart=not part[2], head=part[2])
+    one_clip(part[1], corner, endpart=not part[2], head=part[2], fill=fill)
 
 
 def frame_info(p):
@@ -597,18 +750,32 @@ if __name__ == "__main__":
     if "--execute" in sys.argv:
         execute()
     elif "--at" in sys.argv:   # --at 21:38 tl 05:12 tr 07:40   (corner optional after each time)
-        jobs = []
+        jobs, fill = [], ("interp" if "--fill" in sys.argv and "interp" in sys.argv else "minimax")  # --fill interp = fast
         for a in sys.argv[sys.argv.index("--at") + 1:]:
+            if a in ("--fill", "interp", "clone"):
+                continue
             if a in ("tl", "tr", "bl", "br") and jobs:
                 jobs[-1][1] = a
             else:
                 jobs.append([a, None])
         for tc, corner in jobs:
-            print(f"{tc} {corner or 'any corner'}:")
+            print(f"{tc} {corner or 'any corner'}:", flush=True)
             try:
-                at_clip(tc, corner)
+                at_clip(tc, corner, fill)
             except SystemExit as e:   # one shot failing must not stop the others
                 print(f"  FAILED: {e}")
+    elif "--timeline" in sys.argv:   # --timeline [name]: read-only report of the V1 shots that carry the logo
+        i = sys.argv.index("--timeline")
+        report_timeline(sys.argv[i + 1] if len(sys.argv) > i + 1 else None)
+    elif "--selftest" in sys.argv:
+        assert list_paths("# LOGO\nD:\\a\\x 1.mp4  # 0.52\n# D:\\a\\y.mp4  # 0.40\n\n  D:\\a\\z.mp4\n") == \
+            ["D:\\a\\x 1.mp4", "D:\\a\\z.mp4"]
+        assert skipped_paths("# LOGO\n#D:\\a\\x.mp4  # 0.52\nD:\\a\\y.mp4  # 0.5\n#? D:\\a\\z.mp4  # 0.4\n") == \
+            ["D:\\a\\x.mp4", "D:\\a\\z.mp4"]
+        print("selftest ok")
+    elif "--list" in sys.argv:   # --list [file]: delogo the reviewed scan list (default .work/hide_logo/check_list.txt)
+        i = sys.argv.index("--list")
+        run_list(sys.argv[i + 1] if len(sys.argv) > i + 1 else LIST)
     elif "--pending" in sys.argv:
         pending()
     elif "--overwrite-all" in sys.argv:
@@ -626,8 +793,9 @@ if __name__ == "__main__":
             haze = [sys.argv[sys.argv.index("--haze") + 1]]
             HAZE = float(haze[0])
             SOFT = max(SOFT, HAZE / 3)
-        fill = "interp" if "interp" in sys.argv else "clone"   # --fill interp: big logo over a fast pan
-        args = [a for a in sys.argv[1:] if a not in ("--end", "--box", "--haze", "--fill", "interp") and a not in boxes and a not in haze]
+        # --fill clone | interp: the older ffmpeg patches (no GPU); default MiniMax-Remover
+        fill = next((f for f in ("interp", "clone") if f in sys.argv), "minimax")
+        args = [a for a in sys.argv[1:] if a not in ("--end", "--box", "--haze", "--fill", "interp", "clone") and a not in boxes and a not in haze]
         one_clip(args[0], args[1] if len(args) > 1 else None, endpart, manual=manual, fill=fill)
     else:
         sys.exit("usage: hide_logo.py <folder> | --execute | <shot_NNN|video path> [tl|tr|bl|br] [--end] | --at <mm:ss> [corner] | --pending | --overwrite-all | --relink")

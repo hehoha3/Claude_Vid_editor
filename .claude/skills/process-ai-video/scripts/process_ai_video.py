@@ -264,6 +264,8 @@ def targets(args):
     out = []
     for a in args or [str(ROOT)]:
         p = Path(a)
+        # user rule 2026-10-11: Z: is READ + COPY only; this script overwrites in place (--compare writes elsewhere)
+        assert p.drive.upper() != "Z:" or compare_dir, f"refusing to overwrite on read-only drive Z: {p}"
         out += sorted(x for x in p.rglob("*") if x.suffix.lower() in EXTS and ".processing" not in x.name
                    and not {"_nologo", "_z_nologo"} & set(x.parts)) \
             if p.is_dir() else [p]

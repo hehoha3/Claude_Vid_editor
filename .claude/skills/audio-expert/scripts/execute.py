@@ -18,14 +18,13 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).parent))
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
-from dvr_cowork.resolve_ops import (_norm, clip_fps, ensure_audio_track, find_bin, find_clip,  # noqa: E402
-                                    find_timeline, get_project, timeline_fps)
+from dvr_cowork.resolve_ops import (AUDIO_TOP, _norm, audio_bin, clip_fps, ensure_audio_track,  # noqa: E402
+                                    ensure_bin, find_clip, find_timeline, get_project, timeline_fps)
 import plan as pl  # noqa: E402
 
 _s = importlib.util.spec_from_file_location("doc_place", ROOT / ".claude/skills/doc-edit/scripts/place.py")
 dp = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(dp)  # TARGET, FADE, loudness (main() is guarded)
-BIN = "4. Audio"
 
 
 def main(video, run, replace, rollback):
@@ -74,7 +73,8 @@ def main(video, run, replace, rollback):
     mp.SetCurrentFolder(root)
     if not log_p.exists():
         bak = f"{tl.GetName()}_bak_audio_{stamp}"
-        assert tl.DuplicateTimeline(bak), "backup failed, nothing changed"
+        from dvr_cowork.resolve_ops import backup_timeline
+        assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
         project.SetCurrentTimeline(tl)
         print("backup:", bak)
         if replace and busy:
@@ -82,16 +82,16 @@ def main(video, run, replace, rollback):
             print("cleared:", busy)
     ensure_audio_track(tl, 9, 2, print)
 
-    b = find_bin(root, BIN) or mp.AddSubFolder(root, BIN)
-    items, new = {}, []
+    look = ensure_bin(mp, AUDIO_TOP)  # whole "4. Audio": a file already in any sub-bin is reused
+    items, new = {}, {}  # new: file -> sub-bin of its first track (Ambience | Music | SFX), imported once
     for p in plan:
         k = _norm(p["source_path"])
-        items[k] = items.get(k) or find_clip(b, p["source_path"])
+        items[k] = items.get(k) or find_clip(look, p["source_path"])
         if not items[k]:
-            new.append(os.path.normpath(p["source_path"]))
-    if new:
-        mp.SetCurrentFolder(b)
-        for it in mp.ImportMedia(sorted(set(new))) or []:
+            new.setdefault(os.path.normpath(p["source_path"]), audio_bin(p["track_index"]))
+    for name in sorted(set(new.values())):
+        mp.SetCurrentFolder(ensure_bin(mp, name))
+        for it in mp.ImportMedia(sorted(f for f, b in new.items() if b == name)) or []:
             items[_norm(it.GetClipProperty("File Path"))] = it
 
     have = {(n, int(i.GetStart()) - t0, int(i.GetEnd()) - t0) for n in range(5, 10)

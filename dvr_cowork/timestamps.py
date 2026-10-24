@@ -10,6 +10,8 @@ from .timecode import parse_clock
 _TS = re.compile(
     r"^\s*\[\s*(?P<t>\d{1,3}:\d{1,2}(?::\d{1,2})?(?:[.,]\d{1,3})?)\s*\]\s*(?P<text>.*)$"
 )
+# `###### 001 · [00:00.6] text`: a numbered heading in front of the cue (Vietnamese part of africa_1)
+_NUMBERED = re.compile(r"^#{3,}\s*\d+\s*[·.:-]?\s*(?=\[)")
 _QUOTES = "\"'\u201c\u201d\u2018\u2019"
 
 
@@ -29,13 +31,28 @@ def _clean(s: str) -> str:
     return s.strip().strip(_QUOTES).strip()
 
 
-def parse_timestamp_file(path: str | Path) -> list[Cue]:
-    raw = Path(path).read_text(encoding="utf-8-sig")
+def _sections(lines: list[str]) -> list[str]:
+    return [s.strip()[3:].strip().lower() for s in lines if s.strip().startswith("## ")]
+
+
+def parse_timestamp_file(path: str | Path, section: str = "english") -> list[Cue]:
+    """`## English` / `## Vietnamese` headings split a bilingual file: only `section` is read
+    (no such heading -> the cues before the first heading if there are any, else the first heading).
+    A file without `## ` headings is read whole."""
+    lines = [_NUMBERED.sub("", l.strip()) for l in Path(path).read_text(encoding="utf-8-sig").splitlines()]
+    names = _sections(lines)
+    head = next((i for i, l in enumerate(lines) if l.startswith("## ")), len(lines))
+    pre = any(_TS.match(l) for l in lines[:head])  # e.g. English cues with no `## English` heading
+    want = next((h for h in names if h.startswith(section.lower())), None if pre or not names else names[0])
     cues: list[Cue] = []
     errors: list[str] = []
-    for n, line in enumerate(raw.splitlines(), 1):
+    cur = None
+    for n, line in enumerate(lines, 1):
         s = line.strip()
-        if not s or s.startswith("#"):
+        if s.startswith("## "):
+            cur = s[3:].strip().lower()
+            continue
+        if not s or s.startswith("#") or cur != want:
             continue
         m = _TS.match(s)
         if m:

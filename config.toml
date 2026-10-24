@@ -2,7 +2,7 @@
 
 [resolve]
 timeline_name = "Edit"        # timeline that receives the narration
-audio_bin = "4. Audio"        # top-level bin the audio is imported into
+audio_bin = "4. Audio/Narrator"  # bin (path) the narration is imported into
 audio_track = 2               # A2 = Narrator Voice
 backup_timeline = true        # duplicate the timeline before changing it (Edit_bak_YYYYMMDD_HHMMSS)
 save_project = true
@@ -41,4 +41,4 @@ ai_video = 'D:\AI_video'      # AI-generated clips root on THIS machine (Z:\Unse
 # Channel folders, one sub folder per video (D:\Chann_shadowCanopy\demo_4\audios ...). Every folder matching a glob is
 # a workspace with its own clip ledger (.work/doc_edit/ledgers/<workspace>.json): a new channel = create the folder.
 globs = ['D:\Chann_*']
-recent = 4                    # a new video never reuses clips on Edit/Open of the last N videos of its workspace
+recent = 6                    # a new video never reuses clips on Edit/Open of the last N videos of its workspace

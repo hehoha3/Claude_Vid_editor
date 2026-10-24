@@ -1,72 +1,76 @@
 ---
 name: doc-edit
-description: Gated documentary edit of one video in DaVinci Resolve - narration on A2 (/doc-edit <audios-folder>), shot list + footage/audio match (/doc-edit plan), place on timeline "Edit" (/doc-edit place), reframe, missing-prompts for THIẾU shots, check-timelines (clip ledger per workspace D:\Chann_*), done (archive the video into <workspace>\_done). Use for /doc-edit, a new video edit with timestamp file + narration, or "phân bố voice audio theo ./audios".
+description: Documentary edit of one video in Resolve, one step per command - new video (narration A2 + plan + missing prompts + place), plan, missing-prompts, logo, delogo, ingest, fill, color, place, reframe, check-timelines, done, status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source ai, /tag-source", "xong video".
 ---
 
 # Doc edit
 
-Steps 1 narration -> 2 plan -> 3 place, one per invocation; reply and STOP after each, the next runs only when the
-user approves. Never chain steps, never prep shots (no unzip / logo / character-sheet work; never calls hide-logo).
-Scripts do the heavy work: read only stdout; write only spec.txt, plan.json/md, loudness cache, ledger; media is
-never copied or rendered. Goal: picture + narrator let the viewer follow who does what, and with eyes closed the
-sound still carries it (music arc, silence before the strike, SXF on state changes). Replies in Vietnamese.
-
-| mode | read first |
-|---|---|
-| `/doc-edit <audios-folder>` (step 1) | `references/narration.md` |
-| `/doc-edit reframe [<video>]` | `references/reframe.md` |
-| `/doc-edit check-timelines [<video>]`, `/doc-edit done [<video>]` / "xong video" | `references/check-timelines.md` |
-| `/doc-edit missing-prompts` | `references/missing-prompts.md` |
-| plan / place | below |
+- One video, one command per step: the user calls each step (user 2026-10-18: no "tiếp" chain, no "next step" line).
+- Scripts do the heavy work: read only stdout (`| tail` / `grep` the summary lines). Media is never rendered except by
+  `done`.
+- Goal: picture + narrator let the viewer follow who does what; with eyes closed the sound still carries it.
+- Replies in Vietnamese, short: result lines, problems, what the user must check.
+- Resolve steps need project `<video>` open (`dvr_cowork info` once per session; else stop, ask). One failing clip never
+  stops a step (name it).
+- Calling a step's command = the user's yes for the change its row names (CLAUDE.md rule 2); anything else destructive
+  (`--replace`, `--force-clear`) still needs an explicit yes.
+- Parallel: narration A runs in the background while B plans; tag batches = up to 4 background agents; delogo and
+  `apply` of many batches in the background. Never poll; act on the notification.
 
 Tracks of "Edit": A1 AI-clip audio of V1 at -12 dB · A2 narrator only · A3/A4 bed (alternating, 4 s crossfades,
-~-32 LUFS, original files, no merged audio) · A5 extra environment (water, rain, night) · A6 natural · A7 music ·
-A8/A9 SXF.
+~-32 LUFS, original files) · A5 extra environment · A6 natural · A7 music · A8/A9 SXF.
 
-## Step 2 - Plan: `/doc-edit plan [<audios-folder>]`
+## Region (user 2026-10-20)
+`/doc-edit <audios-folder> amazon|africa`; no region -> ask, never guess. It becomes the spec's first line
+`# REGION <region>`; plan, fill and missing-prompts then use only that region's footage (no line = amazon, the
+videos before).
+| region | footage roots |
+|---|---|
+| amazon | `Z:\Unseen\Amazona\video` + `D:\AI_video` |
+| africa | `Z:\Unseen\Động vật\AAA Trên cạn` (footage; its `AI_copyright\` = AI clips; `bản quyền\` = whole films, never tagged, user handles later) + `Z:\Unseen\savannah` (scenery) + `D:\AI_video\_africa` (Africa AI clips, root `africa_ai_check`; user 2026-10-22: new clips in `_africa\_check`, filed into `_africa\<species>` like Amazon's `D:\AI_video`) |
 
-Timeline untouched. Folder = step 1's (unknown -> ask); `<video>` = its parent folder name. Step 1 must be done.
+- Audio roots shared: `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `Z:\Unseen\Sound` (a new root = scan_source ROOTS +
+  plan.py CATEGORY).
+- Africa `logo` / `delogo` / process-ai-video work on `D:\AI_video\_africa\_check`; ingest files them with
+  `organize.py --africa --apply` (folders: tag-source `scripts\make_africa_ai_folders.ps1`). Clips kept in `_check` are
+  planned at most WEAK, as for Amazon.
+- Africa footage is tagged per species when a film needs it (references/new-video.md B1b), never all at once.
 
-1. Read `references/edit-grammar.md`, the screenplay and the timestamp file once (not the script; never plan.json,
-   audio, `_library.json`).
-2. Write `.work/doc_edit/<video>/spec.txt` in batches of ~20 sentences with `cat >> spec.txt <<'EOF'` (never re-read):
+**Story first** (user 2026-10-23, `input/plan.md`): shots are chosen for what the film / story / beat must make the
+viewer understand, never as keyword matches of a sentence: whole screenplay -> bible + `# HOOK` blueprint -> shot
+lines with truth tokens (`sex=` `age=` `out=kill` `xact=`, story `no=`) that plan.py enforces; no true clip = THIẾU
+(new-video.md 1c, edit-grammar "Story first"). 2026-10-24: the film is read through `story.py brief` (one pack,
+~40 % of the source files) and written as a beat sheet (emotion + shot pool per beat); `story.py expand` turns it
+into spec.txt with the grammar's rhythm and sound rules (new-video.md B1-B2).
 
-       # END 29:50                       <- target length; omit = last sentence end + 2 s
-       # INTRO 0:20                      <- 0:15-0:30, side shots free before it; omit = 0:15
-       # [D] Peters's duiker  [GC] African golden cat
-       ## 1
-       4 | Wide tán rừng lúc bình minh, sương | real | sp=none size=wide,aerial set=canopy light=golden kw=mist | A3=forest,birds A7=tense
-       2 | [D] Cận duiker ngẩng đầu nghe | any | sp=duiker size=close_up act=look set=forest_floor | A6=insects
-       * | Lối mòn trống, nắng xiên | real | sp=none set=forest_floor size=medium light=day |
+**Story choice** (user 2026-10-21): before writing a spec read `references/biome-story-pacing.md` for the biome
+(`# BIOME savanna` = Africa open country, `rainforest` = Amazon / Congo) and its hook rules. The hook (0:00-1:30, above
+all the first 10 s) is planned first and hardest. The preset steers shot order and pacing only: species, places and
+sounds come from the screenplay and the footage, never from the biome name.
 
-   `dur` s (`*` = rest of the sentence slot + pause, exactly one per sentence) | shot needed (Vietnamese) |
-   real/ai/any/GFX | filter | audio (formats: edit-grammar.md).
-3. `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py "<audios-folder>"`
-   - Prints ALL spec errors grouped with `##` numbers: fix them in one pass with targeted edits, re-run.
-   - YOLO-World on unmeasured clips of the spec's species (cache `.work/library/yolo.json`, normally warm via
-     tag-source); many measured now -> run in background. Read only the `yolo:` line.
-   - A shot no clip is long enough for -> 2-3 parts from different clips (⧉); audio stays on part 1.
-   - Ledger: clips of the last 4 checked videos of the workspace are never matched; `recent ledger` line = slots
-     lost, by character. Inside one video a clip may serve 3 slots (edit-grammar Source).
-   - stdout lists character WEAK slots with top 3 candidates: keep, `pin=<fragment>`, or `pin=none` (THIẾU); re-run.
-   - Check the `audio:` line against edit-grammar (music coverage, early-ending cues, SXF count), fix in the same pass.
-   - Outputs `.work/doc_edit/<video>/plan.json` (step 3 input) and `<video>/plan.md` (user table; VO ● = narration).
-4. Reply: shots, OK / WEAK / THIẾU / GFX, species missing, THIẾU and ledger-lost by character, the audio line,
-   plan.md path, every audio THIẾU (slot, timecode, sound): no substitute; user downloads one or says no (-> remove
-   that token). End: "Duyệt plan.md (muốn đổi shot/clip nào cứ nói), xong báo tôi để sang bước 3 (đặt lên timeline)."
+## Commands
+| command (user's words) | runs | reply |
+|---|---|---|
+| `/doc-edit <audios-folder> <region>` | `references/new-video.md`: A narration (background) + B plan + prompts in parallel, then place on empty tracks | place lines + new-video reply |
+| `/doc-edit plan` | re-plan after beat / spec edits or new clips: B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
+| `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`; a range -> `missing.py <video> --range=A-B` (same flag on `--check` / `--write`) | prompts reply |
+| `/doc-edit logo` ("check folder _check") | `hide_logo.py "D:\AI_video\_check"` (africa: `"D:\AI_video\_africa\_check"`) (~1-2 min) | LOGO / SUSPECT names + `.work\hide_logo\check_list.txt` |
+| `/doc-edit delogo` | `hide_logo.py --list` (MiniMax ~30 s per clip, background) -> `D:\AI_video\_nologo` copies (africa: env `NOLOGO_DIR`) | done, REVIEW FIRST, FAILED, gone |
+| `/doc-edit ingest` ("/scan-source ai, /tag-source") | amazon: scan ai -> tag-source (prepare, Sonnet agents in parallel, apply) -> `organize.py --apply` -> scan ai ("moved N"); africa: scan africa_ai_check -> tag-source `prepare africa_ai_check` -> apply -> `organize.py --africa --apply` -> scan africa_ai_check | tagged, filed per folder, kept in `_check` (why) |
+| `/doc-edit fill [--sub mm:ss]` ("lấp slot thiếu") | `plan.py <folder> [--late-sub --late-sub-t=<s>]` or `--sub-all` -> `place.py <video> --fill` (backup; `references/place-fill.md`) | THIẾU left (timecodes), placed, backup |
+| `/doc-edit ingest --fill [--sub mm:ss]` | `ingest`, then `fill` in one go (no stop between); `--sub` as in `fill` | tagged, filed, THIẾU left, placed, gaps left |
+| `/doc-edit place` | `references/place-fill.md` | backup, placed, max deviation, gaps, audio, failures, markers |
+| `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; light, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`) | ranges, AI clips toned down, intro count, the frames checked |
+| `/doc-edit status` | `state.py status`: every video of every channel, its stage, the command to call next (files only, no Resolve) | the table |
+| `/doc-edit reframe [<video>]` | `references/reframe.md` | |
+| `/doc-edit check-timelines`, `/doc-edit done` ("xong video") | `references/check-timelines.md` | |
 
-User edits -> change spec.txt and re-run; never hand-edit plan.json.
-
-## Step 3 - Place: `/doc-edit place`
-
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/place.py <video>
-
-Backs up "Edit" (`Edit_bak_place_<stamp>`), imports used files into bins 1. A_roll / 2. B_roll / 3. AI_roll /
-4. Audio, places V1 frame-exact (WEAK yellow) + A1 + A3-A9 (crossfades, fades, starting Clip Volume), markers: red
-THIẾU (note = shot needed), yellow WEAK, blue GFX. A2 never touched. V1/A3-A9 not empty -> it stops: say what is
-there and ask before `--replace` (clears those tracks after the backup; destructive, CLAUDE.md rule 2).
-`--video-only` = V1 + A1 + markers. `--a1-only` = A1 of AI clips only (A1 must be empty, no backup).
-"V1 gaps of 1-3 frames" must be 0.
-
-Reply: backup, clips placed, max start deviation, gaps, audio pieces, failures, markers. End: "Duyệt timeline; slot
-đỏ cần footage mới (/doc-edit missing-prompts); /doc-edit reframe để lấp viền đen + punch-in."
+## After a step
+- Place / fill details (bins, markers, `--fill`, `--rebin`, substitutes, gaps): `references/place-fill.md`.
+- Every place / fill / color apply leaves a backup timeline; many make Resolve lag: run `dvr_cowork backups` (one line)
+  and when a kind has > 3, offer `dvr_cowork backups --keep 3 --apply` (user yes).
+- Shot-choice benchmark (after a rule change, user 2026-10-23): `scripts/bench_story_first.py <video>` re-runs
+  today's matching on a finished video's plan.json slots -> `.work/doc_edit/<video>/bench_story_first.md` (old picks
+  that break a story rule, status counts, changed slots); `plan.py <folder> --spec=<file> --out=<dir>` plans another
+  spec into another folder (the video's spec / plan untouched).
+- `state.py diff <video>` only when the user asks or a step must not undo hand edits it cannot see.

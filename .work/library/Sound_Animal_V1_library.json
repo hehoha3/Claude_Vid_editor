@@ -1141,7 +1141,7 @@
  },
  "kind": "audio",
  "root": "Z:\\Unseen\\Sound Animal V1",
- "updated": "2026-10-10",
+ "updated": "2026-10-16",
  "layout": {
   "<category>/": "folder name as given by the user (ambience_sound, Nature_sound, tense_music...)",
   "fields": "category from folder; title_hint = stock file name"

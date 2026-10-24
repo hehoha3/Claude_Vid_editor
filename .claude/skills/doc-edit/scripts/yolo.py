@@ -53,10 +53,11 @@ def derive(f):
     return {"in": [round(best[0] / FPS, 2), round(best[1] / FPS, 2)], "size": size, "seen": round(len(boxes) / len(f), 2)}
 
 
-def measure(clips):
-    """Attach c["yolo"] to every clip; runs the model only on clips not cached yet. Returns (new, seconds)."""
+def measure(clips, new=True):
+    """Attach c["yolo"] to every clip; runs the model only on clips not cached yet (new=False: cache only,
+    africa_1 2026-10-22: 4K ProRes over the NAS measured ~4 clips/min). Returns (new, seconds)."""
     cache = json.loads(CACHE.read_text("utf-8")) if CACHE.exists() else {}
-    todo = [c for c in clips if cache.get(c["id"], {}).get("v") != V]
+    todo = [c for c in clips if cache.get(c["id"], {}).get("v") != V] if new else []
     t0 = time.time()
     if todo:
         from ultralytics import YOLOWorld

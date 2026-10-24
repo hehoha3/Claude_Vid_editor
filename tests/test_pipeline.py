@@ -24,6 +24,7 @@ from dvr_cowork.layout import layout  # noqa: E402
 from dvr_cowork.resolve_ops import OpsError, OverlapError, apply_plan  # noqa: E402
 from dvr_cowork.timestamps import TimestampError, parse_timestamp_file  # noqa: E402
 from dvr_cowork.transcribe import load_audio  # noqa: E402
+from dvr_cowork.vosync import clips_segments  # noqa: E402
 
 SR = 16000
 LINES = [
@@ -108,6 +109,8 @@ class MPI:
     def GetClipProperty(self, k=None):
         return self.props.get(k) if k else dict(self.props)
 
+    def GetUniqueId(self): return str(id(self))
+
 
 class TItem:
     def __init__(self, mpi, start, dur, left):
@@ -128,6 +131,7 @@ class Folder:
     def GetName(self): return self.name
     def GetSubFolderList(self): return list(self.subs)
     def GetClipList(self): return list(self.clips)
+    def GetUniqueId(self): return str(id(self))
 
 
 class Timeline:
@@ -136,8 +140,10 @@ class Timeline:
         self.tracks = {"video": 1, "audio": audio_tracks, "subtitle": 0}
         self.items = {("audio", i): [] for i in range(1, 9)}
         self.markers = {}
+        self.mpi = MPI(name)  # the timeline's own media pool item
 
     def GetName(self): return self.name
+    def GetMediaPoolItem(self): return self.mpi
     def GetSetting(self, k=None): return {"timelineFrameRate": self.fps, "timelineResolutionWidth": "1920", "timelineResolutionHeight": "1080"}.get(k)
     def GetStartFrame(self): return self.start
     def GetEndFrame(self): return self.start + 24 * 600
@@ -148,7 +154,10 @@ class Timeline:
     def DeleteClips(self, items, ripple=False):
         for k in self.items: self.items[k] = [x for x in self.items[k] if x not in items]
         return True
-    def DuplicateTimeline(self, name): self.project.timelines.append(Timeline(name)); return self.project.timelines[-1]
+    def DuplicateTimeline(self, name):
+        t = Timeline(name); t.project = self.project
+        self.project.timelines.append(t); self.project.pool.current.clips.append(t.mpi)
+        return t
     def GetMarkers(self): return dict(self.markers)
     def AddMarker(self, f, c, n, note, d, cd=""): self.markers[f] = {"color": c, "name": n, "note": note, "customData": cd}; return True
     def DeleteMarkerAtFrame(self, f): self.markers.pop(f, None); return True
@@ -162,6 +171,14 @@ class MediaPool:
     def GetRootFolder(self): return self.root
     def AddSubFolder(self, parent, name): f = Folder(name); parent.subs.append(f); return f
     def SetCurrentFolder(self, f): self.current = f; return True
+    def GetCurrentFolder(self): return self.current
+    def MoveClips(self, clips, dst):
+        stack = [self.root]
+        while stack:
+            f = stack.pop(); stack += f.subs
+            f.clips = [c for c in f.clips if c not in clips]
+        dst.clips += clips
+        return True
     def ImportMedia(self, paths):
         out = [MPI(p) for p in paths]
         self.current.clips += out
@@ -184,10 +201,11 @@ class MediaPool:
 
 class Project:
     def __init__(self):
-        self.timelines = [Timeline("Assembly"), Timeline("Edit")]
+        self.timelines = [Timeline("Assembly"), Timeline("Edit"), Timeline("Master")]
         for t in self.timelines: t.project = self
         self.current = self.timelines[0]
         self.pool = MediaPool(self)
+        self.pool.root.clips += [t.mpi for t in self.timelines]
         self.imports = 0
 
     def GetName(self): return "BBS_test"
@@ -286,7 +304,12 @@ def test_apply_mock(cfg, plan, tight_plan):
     tl = proj.timelines[1]
     vo_items = tl.GetItemListInTrack("audio", vo)
     assert tl.GetTrackCount("audio") >= vo, "VO track should exist"
-    assert proj.pool.root.subs[0].GetName() == "4. Audio" and proj.imports == 1
+    bins = {f.GetName(): f for f in proj.pool.root.subs}
+    assert set(bins) == {"4. Audio", "6. Timeline"} and proj.imports == 1
+    assert [f.GetName() for f in bins["4. Audio"].subs] == ["Narrator"]
+    # every timeline but Master in bin "6. Timeline" (user 2026-10-24), the backup included
+    assert {c.props["File Path"] for c in bins["6. Timeline"].clips} == {"Assembly", "Edit", res["backup"]}
+    assert [c.props["File Path"] for c in proj.pool.root.clips] == ["Master"]
     assert len(vo_items) == len(plan["segments"]) and res["placed"] == len(vo_items)
     assert all(ti.GetMediaPoolItem() is vo_items[0].GetMediaPoolItem() for ti in vo_items), "one source clip"
     assert res["max_start_dev"] == 0 and res["max_in_dev"] == 0
@@ -320,6 +343,34 @@ def test_apply_mock(cfg, plan, tight_plan):
           f"guards ok, {len(colored)} pushed items coloured")
 
 
+def test_clips_mode(cfg, tmp):
+    """audios/mp3/1.wav ... one file per sentence: no Whisper, one A2 item per file, onset on its stamp."""
+    audio, truth = synth()
+    d = Path(tmp) / "mp3"
+    d.mkdir()
+    for k, (s, e) in enumerate(truth, 1):  # each sentence with 0.2 s of near-silence around it
+        write_wav(d / f"{k}.wav", audio[int((s - 0.2) * SR):int((e + 0.2) * SR)])
+    ts = Path(tmp) / "ts.txt"
+    write_ts(ts, [3 + 6 * k for k in range(len(LINES))])
+    cues = parse_timestamp_file(ts)
+    segs, _ = clips_segments(str(d), cues, cfg["align"])
+    assert all(abs(s["onset"] - 0.2) <= 0.03 for s in segs), [s["onset"] for s in segs]
+    plan = {"audio": str(d), "timestamps": str(ts), "segments": segs}
+    r = FakeResolve()
+    res = apply_plan(r, plan, cfg, log=lambda m: None)
+    proj = r.pm.project
+    vo_items = proj.timelines[1].GetItemListInTrack("audio", cfg["resolve"]["audio_track"])
+    assert res["placed"] == len(LINES) == proj.imports == len({id(ti.GetMediaPoolItem()) for ti in vo_items})
+    assert next(f for f in proj.pool.root.subs if f.GetName() == "4. Audio").subs[0].GetName() == "Narrator" and res["max_start_dev"] == 0
+    (d / "3.wav").unlink()
+    try:
+        clips_segments(str(d), cues, cfg["align"])
+        raise AssertionError("should refuse a missing sentence file")
+    except ValueError as e:
+        assert "missing [3]" in str(e)
+    print(f"  per-sentence files: {len(LINES)} files -> {res['placed']} A2 items, own source each, bin 4. Audio/Narrator")
+
+
 def test_timestamp_errors(tmp):
     p = Path(tmp) / "bad.txt"
     p.write_text("[00:10] a\n[00:09] b\nno stamp here\n[00:75] c\n", encoding="utf-8")
@@ -331,7 +382,15 @@ def test_timestamp_errors(tmp):
     p.write_text("\ufeff[01:02.5] \u201cQuoted line\u201d\n  wrapped continuation\n[1:05:00] later\n", encoding="utf-8")
     cues = parse_timestamp_file(p)
     assert cues[0].t == 62.5 and cues[0].text == "Quoted line wrapped continuation" and cues[1].t == 3900
-    print("  timestamp parser: errors reported with line numbers, BOM/quotes/wrapping/hh:mm:ss ok")
+    p.write_text("## English\n[00:01] one\n[00:05] two\n## Vietnamese\n[00:01] mot\n[00:05] hai\n", encoding="utf-8")
+    assert [c.text for c in parse_timestamp_file(p)] == ["one", "two"]
+    assert [c.text for c in parse_timestamp_file(p, "vietnamese")] == ["mot", "hai"]
+    # africa_1 layout: English cues before any heading, Vietnamese as `###### 001 · [mm:ss] text`
+    p.write_text("# Title\n[00:01] one\n[00:05] two\n## Vietnamese\n###### 001 · [00:01] mot\n"
+                 "###### 002 · [00:05] hai\n", encoding="utf-8")
+    assert [c.text for c in parse_timestamp_file(p)] == ["one", "two"]
+    assert [c.text for c in parse_timestamp_file(p, "vietnamese")] == ["mot", "hai"]
+    print("  timestamp parser: errors reported with line numbers, BOM/quotes/wrapping/hh:mm:ss/EN+VI sections ok")
 
 
 def test_scale():
@@ -366,9 +425,25 @@ def main():
         with tempfile.TemporaryDirectory() as tmp2:
             print("overlap");          tight = test_overlap(cfg, tmp2)
             print("apply (mock)");     test_apply_mock(cfg, plan, tight)
+        with tempfile.TemporaryDirectory() as tmp3:
+            print("per-sentence files"); test_clips_mode(cfg, tmp3)
         print("timestamp parser");     test_timestamp_errors(tmp)
         print("scale");                test_scale()
+    print("script self-tests");        test_script_selftests()
     print("\nALL TESTS PASSED")
+
+
+def test_script_selftests():
+    """Every skill / tool script with a --selftest (no Resolve, no Postgres, no model downloads) passes it."""
+    import subprocess
+    root = Path(__file__).resolve().parent.parent
+    files = sorted(root.glob(".claude/skills/*/scripts/*.py")) + [root / ".work/tools/library_db.py"]
+    files = [f for f in files if f.exists() and "--selftest" in f.read_text("utf-8")]
+    for f in files:
+        r = subprocess.run([sys.executable, str(f), "--selftest"], capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", cwd=root, timeout=300)
+        assert r.returncode == 0 and "selftest ok" in r.stdout, f"{f.relative_to(root)}:\n{r.stdout[-800:]}{r.stderr[-1500:]}"
+    print(f"  {len(files)} scripts ok")
 
 
 if __name__ == "__main__":
