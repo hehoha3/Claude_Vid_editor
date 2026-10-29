@@ -2,8 +2,7 @@
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py check <video> [--ws <workspace>] [--project <Resolve project>]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py show [<workspace>]
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline Edit]
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py move <video>   # redo the move of a failed done
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline <name>]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py --selftest
 
 Workspace = a channel folder holding one folder per video (D:\\Chann_shadowCanopy\\demo_4\\audios ...). Workspaces are
@@ -13,11 +12,11 @@ and "Open" of Resolve project <video> (loads it if another project is open, then
 its library id (content hash; a hide-logo `_nologo` copy counts as its original) and stores them in
 .work/doc_edit/ledgers/<workspace>.json. A new video goes on top; re-checking a video updates it in place.
 Ban for video V = clips + open_clips of the `recent` (config, default 6) newest OTHER videos of V's workspace.
-done (= /doc-edit done): licensed music of Edit + Open (license paths), render Master -> <video>/Done_<project>.mp4
-(preset "YouTube 1080 HEVC"), final check, relink the project's media to <workspace>/_done/<video> (temporary junction),
-quit Resolve, move the folder into _done. Resolve stays closed (the user reopens it). Videos in _done keep their workspace.
+done (= /doc-edit done): final check, licensed music of Edit (+ Open if it exists) (license paths), render Edit ->
+<video>/Done_<video>.mp4 (preset "YouTube 1080 HEVC"). Works in a day project (the channel's own "Edit"). Resolve stays
+open; the user moves the folder into _done himself (user 2026-10-26). Videos in _done keep their workspace.
 """
-import json, os, re, shutil, sys
+import json, os, re, sys
 from datetime import date
 from glob import glob
 from pathlib import Path
@@ -93,6 +92,12 @@ def library():
     return lib
 
 
+def _tls(project):
+    """Timelines Edit / Open of the video: in a day project the channel's own ones (DVR_CHANNEL), never both "Edit"."""
+    from dvr_cowork.resolve_ops import find_timeline
+    return [t for name in ("Edit", "Open") if (t := find_timeline(project, name))]  # find_timeline: exact name
+
+
 def timeline_files(video):
     """{field: {file path}} of timelines Edit / Open of project <video>; loads the project if another one is open."""
     from dvr_cowork.resolve_conn import connect
@@ -106,13 +111,11 @@ def timeline_files(video):
             back and pm.LoadProject(back)
             raise SystemExit(f'Resolve project "{video}" not found in the current project library; nothing recorded')
     cur, out = project.GetCurrentTimeline(), {}
-    for i in range(1, project.GetTimelineCount() + 1):
-        t = project.GetTimelineByIndex(i)
-        if t.GetName().lower() in TL:  # a timeline not loaded yet returns no items: make it current first
-            project.SetCurrentTimeline(t)
-            out[TL[t.GetName().lower()]] = {
-                ti.GetMediaPoolItem().GetClipProperty("File Path") for k in range(1, int(t.GetTrackCount("video")) + 1)
-                for ti in t.GetItemListInTrack("video", k) or [] if ti.GetMediaPoolItem()}
+    for t in _tls(project):  # a timeline not loaded yet returns no items: make it current first
+        project.SetCurrentTimeline(t)
+        out[TL[t.GetName().lower()]] = {
+            ti.GetMediaPoolItem().GetClipProperty("File Path") for k in range(1, int(t.GetTrackCount("video")) + 1)
+            for ti in t.GetItemListInTrack("video", k) or [] if ti.GetMediaPoolItem()}
     if cur:
         project.SetCurrentTimeline(cur)
     if back:
@@ -123,9 +126,8 @@ def timeline_files(video):
 def timeline_uses(project, name):
     """{lower-case file path: [(src_in, src_out) s]} of the video items on timeline <name> of the open project; the
     current timeline is restored. Edit + Open of one video share the reuse budget (plan.py REUSE_MAX, other parts)."""
-    from dvr_cowork.resolve_ops import clip_fps, timeline_fps
-    t = next((project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)
-              if project.GetTimelineByIndex(i).GetName().lower() == name.lower()), None)
+    from dvr_cowork.resolve_ops import clip_fps, find_timeline, timeline_fps
+    t = find_timeline(project, name)  # the channel's own one in a day project (DVR_CHANNEL)
     if not t:
         return {}
     cur, out = project.GetCurrentTimeline(), {}
@@ -144,9 +146,11 @@ def timeline_uses(project, name):
 
 def check(video, ws=None, proj=None):  # proj: Resolve project name when it differs from the folder
     vdir = find_video(video, ws)
+    from dvr_cowork.resolve_ops import use_channel
+    use_channel(vdir)  # D:\\Chann_N_*: that channel's "Edit" in a day project
     files = timeline_files(proj or vdir.name)
     if "clips" not in files:
-        raise SystemExit(f'project {video} has no timeline "Edit": nothing recorded')
+        raise SystemExit(f'project {proj or vdir.name} has no timeline "Edit": nothing recorded')
     lib, fields, miss = library(), {}, {}
     for field, paths in files.items():
         got = {p: lib.get(norm(p)) for p in paths}
@@ -167,22 +171,22 @@ def _current(pm):
     return None if not p or p.GetName() == "Untitled Project" else p
 
 
-def _pool(project):
-    def walk(f):
-        yield from f.GetClipList() or []
-        for s in f.GetSubFolderList() or []:
-            yield from walk(s)
-    return [(c, c.GetClipProperty("File Path") or "") for c in walk(project.GetMediaPool().GetRootFolder())]
-
-
-def _junction(link, target):
-    import subprocess
-    subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True)
-    return os.path.isjunction(link)
-
-
 LICENSES = ROOT / ".work" / "audio_licenses.md"
 LICENSED_ROOT = norm(r"Z:\Unseen\Sound") + os.sep  # licensed music library: a file here without a row = warning
+MUSIC_ROOT = norm(r"D:\Music") + os.sep  # intro music (intro.py MUSIC_DIRS), Pixabay: no row/license = warning too
+
+
+def pixabay_row(p):
+    """Pixabay track <author>-<title>-<id>.mp3 -> [file, license txt, title, author] from the *-<id>-license.txt
+    beside it (user 2026-10-29: the intro music must be in audio_licenses.md), else None."""
+    m = re.search(r"-(\d+)$", Path(p).stem)
+    lic = m and next(Path(p).parent.glob(f"*-{m[1]}-license.txt"), None)
+    if not lic:
+        return None
+    t = [x.strip() for x in lic.read_text("utf-8", "replace").splitlines()] + [""]
+    get = lambda key: next((t[i + 1] for i, x in enumerate(t[:-1]) if x.startswith(key)), "")
+    author = re.sub(r"-\d+$", "", get("Licensor's Username").rstrip("/").rsplit("/", 1)[-1])
+    return [p, str(lic), get("Audio File Title"), author]
 
 
 def license_rows(text):
@@ -218,21 +222,22 @@ def licenses(project, vdir, fname="audio_licenses.md"):
     from dvr_cowork.resolve_ops import timeline_fps
     rows = license_rows(LICENSES.read_text("utf-8")) if LICENSES.exists() else {}
     cur, used = project.GetCurrentTimeline(), {}  # file -> {timeline name: [(start, stop) s]}
-    for i in range(1, project.GetTimelineCount() + 1):
-        t = project.GetTimelineByIndex(i)
-        if t.GetName().lower() in TL:
-            project.SetCurrentTimeline(t)
-            fps, t0 = timeline_fps(t, project), t.GetStartFrame()
-            for k in range(1, int(t.GetTrackCount("audio")) + 1):
-                for ti in t.GetItemListInTrack("audio", k) or []:
-                    if mp := ti.GetMediaPoolItem():
-                        used.setdefault(mp.GetClipProperty("File Path"), {}).setdefault(t.GetName(), []).append(
-                            ((ti.GetStart() - t0) / fps, (ti.GetEnd() - t0) / fps))
+    for t in _tls(project):
+        project.SetCurrentTimeline(t)
+        fps, t0 = timeline_fps(t, project), t.GetStartFrame()
+        for k in range(1, int(t.GetTrackCount("audio")) + 1):
+            for ti in t.GetItemListInTrack("audio", k) or []:
+                if mp := ti.GetMediaPoolItem():
+                    used.setdefault(mp.GetClipProperty("File Path"), {}).setdefault(t.GetName(), []).append(
+                        ((ti.GetStart() - t0) / fps, (ti.GetEnd() - t0) / fps))
     if cur:
         project.SetCurrentTimeline(cur)
+    for p in used:
+        if norm(p) not in rows and (r := pixabay_row(p)):
+            rows[norm(p)] = r
     lic = sorted(((p, rows[norm(p)]) for p in used if norm(p) in rows),
                  key=lambda x: min(a for sp in used[x[0]].values() for a, _ in sp))  # film order
-    nolic = sorted(p for p in used if norm(p) not in rows and norm(p).startswith(LICENSED_ROOT))
+    nolic = sorted(p for p in used if norm(p) not in rows and norm(p).startswith((LICENSED_ROOT, MUSIC_ROOT)))
 
     def line(p, c):
         spans = ", ".join((f"{name}: " if name.lower() != "edit" else "")
@@ -257,15 +262,15 @@ def licenses(project, vdir, fname="audio_licenses.md"):
 PRESET = "YouTube 1080 HEVC"
 
 
-def render_done(project, out_dir, timeline="Master", name=None):
+def render_done(project, out_dir, timeline="Edit", name=None):
     """Render <timeline> with the preset PRESET as Done_<project>.mp4 into out_dir and wait (user order 2026-10-13)."""
     import time
+    from dvr_cowork.resolve_ops import find_timeline
     name = name or f"Done_{project.GetName()}"
     if (Path(out_dir) / f"{name}.mp4").exists():
         print(f"render: {name}.mp4 already in {out_dir}, not rendered again")
         return
-    tl = next((project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)
-               if project.GetTimelineByIndex(i).GetName() == timeline), None)
+    tl = find_timeline(project, timeline)  # day project: the channel's own one (DVR_CHANNEL)
     if not tl:
         raise SystemExit(f'no timeline "{timeline}" to render: nothing changed')
     if not any(tl.GetItemListInTrack("video", i) for i in range(1, int(tl.GetTrackCount("video")) + 1)):
@@ -297,7 +302,7 @@ def render_done(project, out_dir, timeline="Master", name=None):
         if cur:
             project.SetCurrentTimeline(cur)
     if st.get("JobStatus") != "Complete":
-        raise SystemExit(f"render {name} failed ({st}): folder not moved, Resolve left open")
+        raise SystemExit(f"render {name} failed ({st})")
     print(f"render: {Path(out_dir) / name}.mp4 ({codec}, timeline {timeline}, {st.get('TimeTakenToRenderInMs', 0) // 1000}s)")
 
 
@@ -317,26 +322,20 @@ def rerender(video, ws=None, proj=None, timeline="Edit"):
     render_done(project, vdir, timeline, f"Done_{project.GetName()}_v{n}")
 
 
-def done(video, ws=None, proj=None, timeline="Master"):
-    """Archive a finished video (user order 2026-10-13):
-    0. list the licensed music used on Edit + Open (license pdf paths); render timeline Master (preset "YouTube 1080 HEVC")
-       <video folder>/Done_<project>.mp4 and wait (a failed render stops here, nothing moved).
-    1. final check-timelines; relink the project's media under <ws>/<video> to <ws>/_done/<video> (Change Source
-       Folder). The files are not there yet, so a temporary junction _done/<video> -> <video> lets ReplaceClip see them.
-    2. save, quit Resolve, remove the junction (link only), rename the folder into _done (all or nothing, never copy +
-       delete). Resolve stays closed: reopening is the user's call (2026-10-13)."""
-    import subprocess, time
+def done(video, ws=None, proj=None, timeline="Edit"):
+    """A finished video (user 2026-10-26: Master / Open deleted, no quit, no move): final check-timelines, licensed
+    music of Edit (+ Open) -> <video folder>/audio_licenses.md, render <timeline> (preset "YouTube 1080 HEVC") as
+    <video folder>/Done_<video>.mp4 and wait. Resolve stays open on the user's timeline; the user moves the folder into
+    _done. Project: --project, else the one place.py wrote in .work/doc_edit/<video>/project.txt (day project
+    vid_DDMMYY/Chann_N), else <video>."""
     from dvr_cowork.resolve_conn import connect
+    from dvr_cowork.resolve_ops import use_channel
     vdir = find_video(video, ws)
-    if vdir.parent.name.lower() == DONE:
-        raise SystemExit(f"{vdir} is already in {DONE}: nothing to do")
-    dest = vdir.parent / DONE / vdir.name
-    if dest.exists():
-        raise SystemExit(f"{dest} already exists: nothing changed")
-    proj = proj or vdir.name
-    check(video, ws, proj)  # final ledger record of Edit + Open
-    resolve = connect(load_config())
-    pm = resolve.GetProjectManager()
+    pt = ROOT / ".work" / "doc_edit" / vdir.name / "project.txt"
+    proj = proj or (pt.read_text("utf-8").strip().split("/")[0] if pt.exists() else vdir.name)
+    check(video, ws, proj)  # final ledger record of Edit (+ Open); sets the channel of a day project
+    use_channel(vdir)
+    pm = connect(load_config()).GetProjectManager()
     project = _current(pm)
     if not project or project.GetName().lower() != proj.lower():
         assert not project or pm.SaveProject(), f'could not save open project "{project.GetName()}": nothing changed'
@@ -344,39 +343,9 @@ def done(video, ws=None, proj=None, timeline="Master"):
         if not project:
             raise SystemExit(f'Resolve project "{proj}" not found: nothing changed')
     licenses(project, vdir)
-    render_done(project, vdir, timeline)  # into the video folder: it moves into _done with it
-    if not _junction(dest, vdir):
-        raise SystemExit(f"could not create the temporary link {dest}: nothing changed")
-    old = norm(vdir) + os.sep
-    jobs = [(c, str(dest) + p[len(old) - 1:]) for c, p in _pool(project) if norm(p).startswith(old)]
-    ok = sum(bool(c.ReplaceClip(n)) for c, n in jobs)
-    assert pm.SaveProject(), "project not saved after the relink"
-    running = lambda: "Resolve.exe" in subprocess.run(  # noqa: E731
-        ["tasklist", "/FI", "IMAGENAME eq Resolve.exe"], capture_output=True, text=True).stdout
-    resolve.Quit()  # Resolve keeps the media open: Windows refuses to move the folder while it runs
-    for _ in range(90):
-        if not running():
-            break
-        time.sleep(1)
-    os.rmdir(dest)  # removes the junction only (rmdir never deletes a non-empty real folder)
-    moved, err = False, ""
-    for _ in range(10):  # file handles are released a moment after the process ends
-        try:
-            vdir.rename(dest)  # same drive: all or nothing
-            moved = True
-            break
-        except OSError as e:
-            err = str(e)
-            time.sleep(1)
-    moved = moved and dest.is_dir() and not os.path.isjunction(dest) and not vdir.exists()
-    if not moved and not dest.exists():
-        _junction(dest, vdir)  # keep the relinked paths working until the move is redone
-    if not moved:
-        raise SystemExit(f"relinked {ok}/{len(jobs)} but NOT moved ({err}): {dest} is a link to {vdir} for now; close "
-                         f"whatever holds files there (Explorer, player), then run: ledger.py move {vdir.name}")
-    handoff(f"done {vdir.name} ({ws_of(dest)}): moved into {DONE}, relinked {ok}/{len(jobs)} media, Resolve closed")
-    print(f"done {vdir.name}: relinked {ok}/{len(jobs)} media to {dest} | moved {vdir} -> {dest} | "
-          f"Resolve closed")
+    render_done(project, vdir, timeline, f"Done_{vdir.name}")
+    handoff(f"done {vdir.name} ({ws_of(vdir)}): rendered Done_{vdir.name}.mp4 (timeline {timeline}); folder move = user")
+    print(f"done {vdir.name}: rendered, Resolve left open; move {vdir} into {DONE} yourself")
 
 
 HANDOFF = ROOT / ".work" / "knowledge" / "handoffs" / "current.md"  # memory gateway: project state
@@ -392,21 +361,6 @@ def handoff(line, path=None):
     s = re.sub(r"(?m)^Updated: .*$", f"Updated: {date.today()}", s, count=1)
     s = s.replace("Last completed:\n\n", f"Last completed:\n\n- {date.today()} {line}\n", 1)
     p.write_text(s, "utf-8")
-
-
-def move(video, ws=None):
-    """Redo the folder move of a done whose rename failed (Resolve must be closed)."""
-    vdir = find_video(video, ws)
-    dest = vdir.parent / DONE / vdir.name
-    assert os.path.isjunction(dest), f"{dest} is not the temporary link of a failed done"
-    os.rmdir(dest)
-    try:
-        vdir.rename(dest)
-    except OSError as e:
-        _junction(dest, vdir)
-        raise SystemExit(f"still NOT moved ({e}); link restored")
-    handoff(f"done {vdir.name} ({ws_of(dest)}): moved into {DONE} (ledger.py move)")
-    print(f"moved {vdir} -> {dest}")
 
 
 def show(ws=None, led=None):
@@ -432,14 +386,7 @@ def selftest():
     assert banned("x", Path("D:/Other/x")) == (set(), [])  # other workspace: its own (empty) ledger
     assert banned("e", Path("D:/W/_done/e")) == banned("e", Path("D:/W/e"))  # archived video keeps its workspace
     assert ws_of(r"D:\W\_done\e") == ws_of(r"D:\W\e") == "W"
-    tmp = Path(tempfile.mkdtemp())  # done's junction trick: link removal keeps the files, then the rename works
-    (tmp / "v" / "audios").mkdir(parents=True); (tmp / "v" / "audios" / "a.mp3").write_text("x")
-    (tmp / DONE).mkdir()
-    assert _junction(tmp / DONE / "v", tmp / "v") and (tmp / DONE / "v" / "audios" / "a.mp3").read_text() == "x"
-    os.rmdir(tmp / DONE / "v")
-    assert (tmp / "v" / "audios" / "a.mp3").exists()
-    (tmp / "v").rename(tmp / DONE / "v")
-    assert (tmp / DONE / "v" / "audios" / "a.mp3").read_text() == "x" and not (tmp / "v").exists()
+    tmp = Path(tempfile.mkdtemp())
     rows = license_rows("| file | license |\n|---|---|\n| Z:\\S\\a.wav | Z:\\S\\1.pdf | x |\n| head | not a pdf |")
     assert rows == {norm(r"Z:\S\a.wav"): [r"Z:\S\a.wav", r"Z:\S\1.pdf", "x"]}, rows
     assert merge_spans([(70, 90), (10, 20), (20.5, 30)]) == [[10, 30], [70, 90]]
@@ -460,10 +407,8 @@ if __name__ == "__main__":
         selftest()
     elif a[:1] == ["check"] and len(a) >= 2:
         check(a[1], ws, proj)
-    elif a[:1] == ["move"] and len(a) >= 2:
-        move(a[1], ws)
     elif a[:1] == ["done"] and len(a) >= 2:
-        done(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else "Master")  # user 2026-10-21: Edit
+        done(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else "Edit")  # user 2026-10-26
     elif a[:1] == ["rerender"] and len(a) >= 2:
         rerender(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else "Edit")
     elif a[:1] == ["show"]:

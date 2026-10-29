@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import os
+import re
 import time
 from pathlib import Path
 
@@ -41,11 +42,59 @@ def list_timelines(project):
     return [project.GetTimelineByIndex(i) for i in range(1, int(project.GetTimelineCount() or 0) + 1)]
 
 
+# One project per day may hold one video per channel (user 2026-10-25, project vid_251026): top bins Chann_1, Chann_2 ...
+# each with the old sub-bins and its own timeline "Edit" in "Chann_N/6. Timeline". DVR_CHANNEL (set by use_channel()
+# from the video's path D:\Chann_N_*\<video>) points every bin / timeline lookup into that channel's bin; a project
+# without that bin works as before (one video per project).
+CHANNEL_ENV = "DVR_CHANNEL"
+_CHANN = re.compile(r"(?i)\bchann_(\d+)")
+
+
+def use_channel(path):
+    r"""D:\Chann_2_darkAmazona\africa_1\audios -> DVR_CHANNEL=Chann_2 (an explicit other value is an error). -> channel."""
+    m = _CHANN.search(str(path or ""))
+    ch = os.environ.get(CHANNEL_ENV)
+    if m:
+        want = f"Chann_{m[1]}"
+        if ch and ch.lower() != want.lower():
+            raise OpsError(f"{CHANNEL_ENV}={ch} but {path} belongs to {want}")
+        os.environ[CHANNEL_ENV] = ch = want
+    return ch
+
+
+def channel_bin(media_pool):
+    """The active channel's top bin, None when no channel is set or this project has no such bin."""
+    ch = os.environ.get(CHANNEL_ENV)
+    return find_bin(media_pool.GetRootFolder(), ch) if ch else None
+
+
+def pool_root(media_pool):
+    """Root of every bin path ("4. Audio/Music", "6. Timeline"): the channel's bin, else the media pool root."""
+    return channel_bin(media_pool) or media_pool.GetRootFolder()
+
+
+def _clip_ids(folder):
+    out, stack = set(), [folder]
+    while stack:
+        f = stack.pop()
+        stack += f.GetSubFolderList() or []
+        out |= {c.GetUniqueId() for c in f.GetClipList() or []}
+    return out
+
+
 def find_timeline(project, name):
-    for tl in list_timelines(project):
-        if tl and tl.GetName() == name:
-            return tl
-    return None
+    """Timeline `name`; in a channel project only the one inside the channel's bin. Several of that name and no
+    channel to choose -> OpsError (never a guess: the other channel's "Edit" would be changed)."""
+    tls = [t for t in list_timelines(project) if t and t.GetName() == name]
+    b = channel_bin(project.GetMediaPool())
+    if b:
+        ids = _clip_ids(b)
+        tls = [t for t in tls if t.GetMediaPoolItem() and t.GetMediaPoolItem().GetUniqueId() in ids]
+    if len(tls) > 1:
+        raise OpsError(f'{len(tls)} timelines named "{name}" in project {project.GetName()}'
+                       + (f" inside bin {os.environ[CHANNEL_ENV]}" if b else
+                          f": set {CHANNEL_ENV}=Chann_N (or run on the video's D:\\Chann_N_* path)"))
+    return tls[0] if tls else None
 
 
 def find_bin(root, name):
@@ -72,10 +121,11 @@ def tidy_timelines(project):
         if it:
             want.add(it.GetUniqueId())
     move, stack = [], [mp.GetRootFolder()]
+    ch = (os.environ.get(CHANNEL_ENV) or "").lower() if channel_bin(mp) else ""
     while stack:
         f = stack.pop()
-        if f.GetUniqueId() == dst.GetUniqueId():
-            continue
+        if f.GetUniqueId() == dst.GetUniqueId() or (_CHANN.fullmatch(f.GetName()) and f.GetName().lower() != ch):
+            continue  # another channel's timelines stay in its own bin
         stack += f.GetSubFolderList() or []
         move += [c for c in f.GetClipList() or [] if c.GetUniqueId() in want]
     if move and not mp.MoveClips(move, dst):
@@ -104,8 +154,8 @@ def backup_timeline(project, tl, name):
 
 
 def ensure_bin(media_pool, name):
-    """find_bin from the media pool root, creating the missing levels."""
-    b = media_pool.GetRootFolder()
+    """find_bin from pool_root (the channel's bin or the media pool root), creating the missing levels."""
+    b = pool_root(media_pool)
     for part in name.split("/"):
         b = find_bin(b, part) or media_pool.AddSubFolder(b, part)
         if not b:
@@ -217,7 +267,7 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
     fps_tl = timeline_fps(tl, project)
     tl_start = int(tl.GetStartFrame())
     media_pool = project.GetMediaPool()
-    root = media_pool.GetRootFolder()
+    root = pool_root(media_pool)
     pool = find_bin(root, rc["audio_bin"].split("/")[0])  # search all of "4. Audio": no duplicate imports
     found = {_norm(f): find_clip(pool, f) if pool else None for f in files}
     item = next((v for v in found.values() if v), None)  # fps / channels reference (all narration files alike)
@@ -439,8 +489,11 @@ def project_info(resolve, cfg):
     _, project = get_project(resolve)
     rc = cfg["resolve"]
     cur = project.GetCurrentTimeline()
-    tl = find_timeline(project, rc["timeline_name"]) or cur
-    info = {"project": project.GetName(),
+    try:
+        tl = find_timeline(project, rc["timeline_name"]) or cur
+    except OpsError:  # several "Edit" and no channel: show the current one
+        tl = cur
+    info = {"project": project.GetName(), "channel": os.environ.get(CHANNEL_ENV) if channel_bin(project.GetMediaPool()) else None,
             "timelines": [t.GetName() for t in list_timelines(project) if t],
             "current_timeline": cur.GetName() if cur else None}
     try:
@@ -460,7 +513,7 @@ def project_info(resolve, cfg):
             "start_tc": frames_to_tc(int(tl.GetStartFrame()), fps),
             "duration_tc": frames_to_tc(int(tl.GetEndFrame()) - int(tl.GetStartFrame()), fps),
             "tracks": tracks}
-        bin_ = find_bin(project.GetMediaPool().GetRootFolder(), rc["audio_bin"])
+        bin_ = find_bin(pool_root(project.GetMediaPool()), rc["audio_bin"])
         info["audio_bin_exists"] = bool(bin_)
     return info
 

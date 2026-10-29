@@ -10,42 +10,40 @@ Only when the user asks (any time, any number of times). Video = this conversati
   back). plan.json is not used: hand swaps count, unused plan clips don't. Id = library content hash; a `_nologo`
   copy = its original.
 - `.work/doc_edit/ledgers/<workspace>.json`: new video on top, re-check updates in place. Plan ban = Edit + Open
-  clips of the `recent` (config, 6) newest other videos of the same workspace; workspaces never ban each other.
+  clips of the `recent` (config, 6) newest other videos of the same workspace, on slots before 15:00 only (`BAN_UNTIL` in plan.py, user 2026-10-25);
+  workspaces never ban each other.
   `ledger.py show` prints all ledgers.
 
+Then, in the same pass, `dvr_cowork gaps` (DVR_CHANNEL set; user 2026-10-26): every empty V1 span is an error except
+THIEU slots (markers + plan) and the ~0.6 s intro -> story 1 black. Any timeline check (status, after place/fill,
+"kiểm tra timeline") runs it too.
+
 Reply: clips per timeline, clips not in the library index (file gone/renamed outside the pipeline = offline on the
-timeline: say where, `dvr_cowork find <name>`), the workspace ledger line.
+timeline: say where, `dvr_cowork find <name>`), the workspace ledger line, the `gaps` lines (spans to fill ->
+propose `place.py --fill`).
 
-## Done: `/doc-edit done [<video>]` ("xong video", "done demo_4") - user rule 2026-10-13
+## Done: `/doc-edit done [<video>]` ("xong video", "done demo_4") - user rule 2026-10-13, reworked 2026-10-26
 
-Run it right away: no "exported?" question, no confirmation (the user's "done" is the go). Tell the user once that
-Resolve will be closed (it stays closed: reopening is the user's call). Several videos -> one after another.
+Run it right away: no "exported?" question, no confirmation (the user's "done" is the go). Several videos -> one
+after another. Works in a day project (`vid_DDMMYY`: project + channel from `.work/doc_edit/<video>/project.txt`).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <name>]
 
-`--project` (also on `check`) when the Resolve project is not named like the folder (amazon_1 = "build_agent").
-Media still linked to an old location of the video folder (renamed drive/folder) -> first
-`dvr_cowork offline --relink <old folder> <ws>\<video> --apply`, so every file under the video folder moves with it.
+`--project` (also on `check`) when the Resolve project is not named like the folder and has no project.txt
+(amazon_1 = "build_agent"). The render makes it long (a 60 min 4K timeline): run it with `run_in_background`.
 
-The render makes it long (a 30 min 4K timeline): run it with `run_in_background`, never a foreground timeout.
+1. Final check-timelines (ledger).
+2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of "Edit" (+ "Open" if it
+   still exists) is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
+   `*-<id>-license.txt` beside the file; files under `Z:\Unseen\Sound` or `D:\Music` with no license -> warn.
+   `<video folder>\audio_licenses.md` = one line per licensed file, film order:
+   `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined),
+   then the missing ones. No `licenses\` folder, no pdf copies. Envato licenses are per project: remind the user.
+3. Export: timeline "Edit" (user 2026-10-26: Master / Open are deleted; `--timeline <name>` for another) rendered with
+   the Resolve preset "YouTube 1080 HEVC" (missing preset = stop) as `Done_<video>.mp4` into the video folder, waits;
+   already there -> not rendered again. Subtitle tracks off for the render, back on after (no subtitles in the file).
+Resolve stays open; no relink, no folder move: the user moves the folder into `_done` himself (user 2026-10-26).
 
-0. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on all audio tracks of "Edit" + "Open" is
-   looked up in `.work/audio_licenses.md`; files under `Z:\Unseen\Sound` with no row -> warn (no license recorded).
-   `<video folder>\audio_licenses.md` (moves into `_done` with the video) = one line per licensed file, film order:
-   `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined;
-   Open spans prefixed `Open:`), then the missing ones. No `licenses\` folder, no pdf copies (user 2026-10-21).
-   Envato licenses are per project: remind the user to register them.
-   Export (user rule 2026-10-13): timeline "Master" (or `--timeline Edit`, user 2026-10-21) rendered with the Resolve preset
-   "YouTube 1080 HEVC" (user 2026-10-24, always; missing preset = stop) as `Done_<project>.mp4` into the video folder, waits for it; already there -> not rendered again. Subtitle tracks are
-   switched off for the render and back on after (user 2026-10-21: the Done file has no subtitles). Render failed ->
-   stops, nothing moved.
-1. Final check-timelines (ledger), then Change Source Folder: every media pool item under `<ws>\<video>` (narration,
-   audio...) -> same file under `<ws>\_done\<video>` (ReplaceClip through a temporary junction; timeline kept), saved.
-2. Quit Resolve, remove the junction (link only), rename the folder into `_done` (all or nothing). Never relaunch.
-Rename failed (file held by Explorer / a player) -> the junction is put back so the project still works; tell the
-user what to close, then `ledger.py move <video>` (Resolve closed). Archived videos keep workspace + ledger rank.
-
-Several videos: before the next one ask the user to reopen Resolve (done needs it). After it: `hide_logo.py --pending`; copies listed -> ask only "Bạn có muốn ghi đè các file trong folder _nologo lên
-các file gốc của chúng không?"; "có" -> `hide_logo.py --overwrite-all` (needs a project open that uses them; else
-ask the user to open it). Reply: the license list (file -> license path, missing ones), the `render:` line (now
-under `_done\<video>`), `done ...` line per video, the overwrite question.
+After it: `hide_logo.py --pending`; copies listed -> ask only "Bạn có muốn ghi đè các file trong folder _nologo lên
+các file gốc của chúng không?"; "có" -> `hide_logo.py --overwrite-all`. Reply: the license list (file -> license path,
+missing ones), the `render:` line, the overwrite question.

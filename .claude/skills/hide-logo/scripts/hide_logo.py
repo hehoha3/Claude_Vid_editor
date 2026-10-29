@@ -651,7 +651,7 @@ def pending():
     """Logo-free copies waiting for the overwrite question when the video is finished."""
     m = manifest()
     for clean, orig in m.items():
-        z = " (Z: read-only, copy stays)" if Path(orig).drive.upper() == "Z:" else ""
+        z = " (Z: read-only, copy stays)" if Path(orig).drive.upper() != "D:" else ""
         print(f"  {Path(orig).name}{z}" + ("" if Path(clean).exists() else "  MISSING copy " + clean))
     print(f"{len(m)} logo-free copies in {NOLOGO}")
 
@@ -696,7 +696,7 @@ def overwrite_all():
     jobs, kept, bad = [], [], []
     for clean, orig in m.items():
         c, o = Path(clean), Path(orig)
-        if o.drive.upper() == "Z:":
+        if o.drive.upper() != "D:":  # only D: originals are overwritten; Z: (also as \\172.10.10.3\...) = read + copy
             kept.append(o.name)
         # frame count only: a copy later graded by process-ai-video is 1920x1080 on purpose (user 2026-10-14)
         elif not (c.is_file() and o.is_file()) or frame_info(c)["nb_read_packets"] != frame_info(o)["nb_read_packets"]:

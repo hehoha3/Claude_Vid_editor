@@ -4,8 +4,10 @@ Needs plan.json (SKILL.md B3). The user generates the clips; nothing is generate
 In a new-video run (`/doc-edit <audios-folder>`) brief.md (the screenplay) is already in context: use it, never
 re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply below).
 
-1. `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>`: THIẾU groups (character + main
-   action, or setting + light), slots, seconds, suggested clip count (= the number of THIẾU slots: one prompt per slot, user 2026-10-17; = the budget), the
+1. `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>`: THIẾU groups `G<n>` and WEAK groups `W<n>`
+   (always both, user 2026-10-27; character + main action, or setting + light), slots, seconds, suggested clip count
+   (= the number of slots: one prompt per slot, user 2026-10-17; = the budget; a WEAK prompt asks for what the
+   picked clip lacks: the sex / age shown, the act, the framing), the
    story sentences (`## n`), `others there` (the other characters' footage status in those sentences), `truth`
    (sex / age / out of its slots) and `refused in library` (what plan.py's story rules turned down).
 2. Per group, think before writing (the brief entries of its `## n` and the ones around them, never a lone sentence;
@@ -23,7 +25,7 @@ re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply bel
    - **Shot roles**: `predator_burst` `prey_escape` `relationship_wide` `reaction` `obstacle` `reacquisition`
      `aftermath` `environmental_speed`; outside chases `action` `establishing` `detail`. Each prompt adds a role,
      angle or information the others lack; never 10 prompts that differ by one adjective.
-3. Write `.work/doc_edit/<video>/prompts.txt` (overwrite; Write tool): `## G<n>` (or `## +<species>` extra group),
+3. Write `.work/doc_edit/<video>/prompts.txt` (overwrite; Write tool): `## G<n>` / `## W<n>` (or `## +<species>` extra group),
    then per clip (= one 10 s generated video, format user 2026-10-22) a line `<role> <vector> | <camera> | <place> |
    <light>` and 2-4 beat lines `a-bs: ...` running 0-10 s without gaps. The script wraps camera / place / light in
    the fixed header "Photorealistic wildlife documentary video, 10 seconds, 16:9, shot on <camera>, <place>, <light>,
@@ -81,7 +83,7 @@ re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply bel
    reversal/orbit/slow motion, biome words, biology, species named, near-duplicates, budget) + a preview of roles
    per group. Fix every error in prompts.txt, re-run.
 5. `missing.py <video> --write` (re-runs the gates, refuses on errors) -> `<video>/missing_prompts.txt` (numbered
-   prompts `1. ` .. with their beats, no group headers, user rules 2026-10-09 / 10-22) + `.work/doc_edit/<video>/shot_manifest.csv` (row n = prompt n:
+   prompts `1. ` .. with their beats, under `## THIEU` then `## WEAK`, no group headers, numbering runs on; user rules 2026-10-09 / 10-22 / 10-27) + `.work/doc_edit/<video>/shot_manifest.csv` (row n = prompt n:
    group, role, vector, species, save folder, slots, sentences, seconds, needs, prompt). stdout gives the save
    folder per group (= species name for tag-source): put them in the reply, never in the file.
 

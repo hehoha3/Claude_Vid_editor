@@ -24,24 +24,26 @@ Read only the reference that fits the question:
 7. Protect natural references: fur, feathers, foliage, water and sky have expected hues (a lion turning orange or a
    neon canopy is noticed).
 
-## `/doc-edit color` = light pass `scripts/light.py` (user 2026-10-22: "không cần đồng bộ quá đà", vivid + bright)
+## `/doc-edit color` = light pass `scripts/light.py`, one space per story (user 2026-10-25: "mỗi story các shot trông như cùng 1 không gian", never a broken shot; 2026-10-22: no heavy match, vivid + bright)
 
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py plan    # Resolve untouched
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/dry_preview.py <project>   # golden-grass before/after
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply   # backup Edit_bak_light_<stamp>, CDL node 1
 
 **Per shot: one small CDL on node 1** (~1 min for 1000 shots, frame cache; no group look LUT):
-- exposure toward the film median x0.35; cast from near-grey pixels x0.4; slope 0.93-1.07 +-3 % per channel; power
-  <= 1.04 on flat shots; sat 0.80-1.25;
-- "màu tươi" (user 2026-10-22): every day shot below SAT_HI gets sat >= x1.10, dull ones sqrt(0.42 / sat), never past
-  SAT_HI; night stays muted; over-saturated AI clips come down;
+- toward its `# STORY`'s space (`space()`: median of the story's day shots): exposure x0.6, tint of near-grey pixels
+  x0.6 (story tint 40 % neutralised), sat x0.5 toward story median x1.10; slope 0.90-1.10 +-5 % per channel; power
+  <= 1.04 on flat shots; sat 0.80-1.25; `plan` prints each story's spread before -> after;
+- "màu tươi" (user 2026-10-22): a day shot below its story aim gets sat >= x1.10, one above it comes down to >= x0.92,
+  never past SAT_HI; night stays dark + muted; over-saturated AI clips come down;
 - intro shots (spec `# INTRO`) get 30 %; a correction that adds clip / crush / neon is halved until it does not.
 
 **Golden grass** (user 2026-10-22, 02:25 impala pair; `dry_pass`), ONLY inside a daytime stretch of burnt / golden
 grass (same story, +-5 shots, >= 60 % of the day shots golden):
 - a shot whose grass is greener (+8 deg hue) or paler (gold sat < 75 %) gets the stretch's golden grass as its own
   LUT on node 1 (`dry_auto_<frame>.cube`, match.dry, strength 1);
-- never: intro, night / dusk / golden light, water settings, fog / dust / grey shots (sat < 0.16);
+- never: intro, night / dusk / golden light, water settings (waterhole too), forest / sky settings (2026-10-25: forest
+  under a flying vulture went blotchy yellow), fog / dust / grey shots (sat < 0.16);
 - match.dry keeps saturated leaves, greys and haze, never lifts sat past the gold or the hue > 3 deg under it; a result
   that adds neon orange, clip or sat95 is halved, then dropped;
 - before apply view every sheet `.work/grade/<project>/dry_preview_N.jpg`.
