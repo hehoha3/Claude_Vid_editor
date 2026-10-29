@@ -7,7 +7,8 @@
 User 2026-10-22 (africa_1, after match.py broke shots): no heavy scene matching. Per shot only a CDL on node 1
 (no per-shot LUT, no group look LUT, node 1 LUTs left as they are):
   - AI clips that are too saturated come down (to SAT_HI_AI); every other day shot gets livelier (VIVID, dull ones more),
-  - every shot moves a little toward the film's median exposure and loses a little cast (partial, clamped),
+  - one space per '# STORY' (user 2026-10-25): every shot moves part of the way to its story's median day exposure,
+    tint (near-grey pixels) and saturation (space(); partial, clamped by LIM, safe() below),
   - intro shots (before the spec's '# INTRO') get INTRO_K of that,
   - a correction that would add clipping or crush, or push saturation out, is halved until it does not,
   - golden grass (user 2026-10-22, 02:25 impala pair): only inside a daytime stretch of burnt / golden grass, a shot
@@ -28,17 +29,23 @@ import grade as G  # noqa: E402
 import match as M  # noqa: E402  (frame grab + cache only)
 
 ROOT = G.ROOT
-LIM = dict(slope=(0.93, 1.07), cast=0.03, power=(0.97, 1.04), sat=(0.80, 1.25))  # the most any shot is moved
-EXP_K, CAST_K = 0.35, 0.4   # share of the way to the film's median exposure / to neutral
+LIM = dict(slope=(0.90, 1.10), cast=0.05, power=(0.97, 1.04), sat=(0.80, 1.25))  # the most any shot is moved
+# one space per story (user 2026-10-25, africa_4: "mỗi story các shot trông như cùng 1 không gian", never a broken
+# shot): every shot moves EXP_K of the way to its story's median day exposure and CAST_K to the story's tint (near-grey
+# pixels; the story tint itself is TINT_NEUTRAL neutralised), saturation SAT_K toward the story's median x VIVID
+EXP_K, CAST_K, TINT_NEUTRAL, SAT_K = 0.6, 0.6, 0.4, 0.5
+SPACE_MIN = 5               # day shots a story needs for its own space, else the film's
 SAT_HI, SAT_HI_AI = 0.46, 0.40  # mean saturation: above -> down (AI clips earlier), never pushed past it
-# "màu tươi" (user 2026-10-22): every day shot below SAT_HI gets at least VIVID, dull ones sqrt(SAT_AIM / sat)
+# "màu tươi" (user 2026-10-22): every day shot below its aim gets at least VIVID (no aim: SAT_AIM)
 SAT_AIM, VIVID = 0.42, 1.10
 INTRO_K = 0.3               # intro shots: 30 % of every correction
 OUT = ROOT / ".work" / "grade"
 # golden grass: strength (1.0 = what the user approved at 02:25), +- shots looked at, share of golden day shots there,
 # "paler" = gold saturation below this share of the stretch's; never on water (would turn gold), never below hue 28
 DRY_K, DRY_WIN, DRY_SHARE, DRY_PALE, DRY_MINHUE, DRY_MINSAT = 1.0, 5, 0.6, 0.75, 28.0, 0.16
-WATER = {"river", "riverbank", "lake", "swamp", "waterfall", "underwater"}
+WATER = {"river", "riverbank", "lake", "swamp", "waterfall", "underwater", "waterhole"}
+# no grass to turn (africa_4 2026-10-25: forest under a flying vulture went blotchy yellow, leaves went brown)
+NO_GRASS = {"forest", "sky"}
 CUBE_N = 33
 
 
@@ -58,24 +65,43 @@ def intro_end(project):
     return 0.0
 
 
+def tint(st):
+    """Colour of the near-grey pixels, normalised (None: nothing grey in the frame; foliage is never a cast)."""
+    return None if st["neutral"] is None else st["neutral"] / max(float(st["neutral"].mean()), 1e-3)
+
+
+def space(rows):
+    """The story's space from its day shots: {p50, tint, sat}; None below SPACE_MIN day shots."""
+    day = [r["st"] for r in rows if not r["st"]["lowkey"]]
+    if len(day) < SPACE_MIN:
+        return None
+    ts = [t for t in map(tint, day) if t is not None]
+    return {"p50": float(np.clip(np.median([s["p50"] for s in day]), 0.32, 0.48)),
+            "tint": np.median(ts, 0) ** (1 - TINT_NEUTRAL) if len(ts) >= SPACE_MIN else None,
+            "sat": float(np.median([s["sat"] for s in day]))}
+
+
 def decide(st, ref, ai, k):
-    """CDL for one shot: st = G.stats of its frame, ref = film medians, k = strength (1 body, INTRO_K intro)."""
+    """CDL for one shot: st = G.stats of its frame, ref = its story's space (space(); film medians: p50 only),
+    k = strength (1 body, INTRO_K intro)."""
     s = 1.0
     if not st["lowkey"]:  # night / deep shade keeps its darkness
         s = (ref["p50"] / max(st["p50"], 0.02)) ** EXP_K
     gain = np.ones(3)
-    ref_c = st["neutral"] if st["neutral"] is not None else None  # cast only from near-grey pixels (foliage is green)
-    if ref_c is not None:
-        gain = (ref_c.mean() / np.maximum(ref_c, 1e-3)) ** CAST_K
-        gain = np.clip(gain, 1 - LIM["cast"], 1 + LIM["cast"])
+    t = tint(st)  # cast only from near-grey pixels (foliage is green)
+    if t is not None:
+        aim = ref.get("tint") if ref.get("tint") is not None else np.ones(3)
+        gain = np.clip((aim / np.maximum(t, 1e-3)) ** CAST_K, 1 - LIM["cast"], 1 + LIM["cast"])
     hi = SAT_HI_AI if ai else SAT_HI
     s0 = max(st["sat"], 0.05)
     if s0 > hi:
         sat = hi / s0
     elif st["lowkey"]:  # night / deep shade stays muted
         sat = 1.0
-    else:
-        sat = max(1.0, min(max(VIVID, (SAT_AIM / s0) ** 0.5), hi / s0))
+    else:  # toward the story's saturation, livelier than it; a shot above the aim comes down at most to 0.92
+        aim = SAT_AIM if ref.get("sat") is None else float(np.clip(ref["sat"] * VIVID, 0.25, hi))
+        sat = max(VIVID, (aim / s0) ** SAT_K) if s0 < aim else max(0.92, (aim / s0) ** SAT_K)
+        sat = min(sat, hi / s0)
     power = 1.0
     if st["con"] < 0.30 and not st["lowkey"]:  # flat: a touch more contrast
         power = 1.03
@@ -108,12 +134,20 @@ def tags_by_path():
     return out
 
 
+def mark_night(st, tag):
+    """A clip tagged night / moon is low-key even when its pixels are bright (user 2026-10-26: moonlit AI deer at
+    p50 0.28 was lifted + saturated like a day shot): keeps its darkness and stays muted in decide()."""
+    if (tag or {}).get("light") in ("night", "moon"):
+        st["lowkey"] = True
+    return st
+
+
 def dry_ok(r, tags):
     """Daytime, no water, not intro, not dark: the only shots the golden-grass pass looks at or changes."""
     t = tags.get(r["path"].lower(), {})
     return (not r["intro"] and not r["f"]["lowkey"] and t.get("light", "day") == "day"
             and r["f1"]["sat"] >= DRY_MINSAT  # fog / dust / grey close-ups: no grass to turn, only blotches (46:23)
-            and not WATER & set(t.get("setting") or []))
+            and not (WATER | NO_GRASS) & set(t.get("setting") or []))
 
 
 def dry_safe(c1, f1, d):
@@ -172,16 +206,20 @@ def plan():
     with ThreadPoolExecutor(6) as ex:
         imgs = list(ex.map(M.grab, rows))
     rows = [dict(r, img=im) for r, im in zip(rows, imgs) if im is not None]
+    tags = tags_by_path()
     for r in rows:
-        r["st"] = G.stats(r["img"])
-    ref = {"p50": float(np.clip(np.median([r["st"]["p50"] for r in rows if not r["st"]["lowkey"]]), 0.34, 0.46))}
-    cuts, story, tags = M.story_cuts(project.GetName(), rows), 0, tags_by_path()
+        r["st"] = mark_night(G.stats(r["img"]), tags.get(r["path"].lower()))
+    film = {"p50": float(np.clip(np.median([r["st"]["p50"] for r in rows if not r["st"]["lowkey"]]), 0.34, 0.46))}
+    cuts, story = M.story_cuts(project.GetName(), rows), 0
+    for r in rows:
+        story += r["start"] in cuts
+        r["story"] = story
+    spaces = {n: space([r for r in rows if r["story"] == n]) or film for n in {r["story"] for r in rows}}
     out, n_ai, n_int = [], 0, 0
     for r in rows:
         ai, intro = is_ai(r["path"]), r["start"] < t_intro
-        c, f = safe(r["img"], r["st"], decide(r["st"], ref, ai, INTRO_K if intro else 1.0))
-        story += r["start"] in cuts
-        r.update(c=c, f=f, ai=ai, intro=intro, story=story)
+        c, f = safe(r["img"], r["st"], decide(r["st"], spaces[r["story"]], ai, INTRO_K if intro else 1.0))
+        r.update(c=c, f=f, ai=ai, intro=intro)
         r["c1"] = G.cdl(r["img"], c["slope"], c["offset"], c["power"], c["sat"])
         r["f1"], r["gd"] = G.stats(r["c1"]), M.ground(r["c1"])
         r["ok"] = dry_ok(r, tags)
@@ -200,10 +238,20 @@ def plan():
     (d / "light_plan.json").write_text(json.dumps({"timeline": tl.GetName(), "shots": out}), "utf-8")
     sl = np.array([s["slope"] for s in out])
     sat = np.array([s["sat"] for s in out])
-    print(f"V1 {len(out)} shots (intro {n_int} at {INTRO_K:.0%}) | film exposure target p50 {ref['p50']:.3f}")
+    print(f"V1 {len(out)} shots (intro {n_int} at {INTRO_K:.0%}) | film exposure p50 {film['p50']:.3f}; story spaces p50 " + " ".join(f"{n}:{s['p50']:.2f}" for n, s in sorted(spaces.items())))
     print(f"slope {sl.min():.3f}-{sl.max():.3f}, sat {sat.min():.3f}-{sat.max():.3f}, power "
           f"{min(s['power'] for s in out):.3f}-{max(s['power'] for s in out):.3f}; AI clips toned down: {n_ai}; "
           f"untouched (all within 1 %): {sum(1 for s in out if np.abs(np.array(s['slope']) - 1).max() < 0.01 and abs(s['sat'] - 1) < 0.01)}")
+    for n in sorted(spaces):  # how far apart the day shots of a story are, before -> after (smaller = one space)
+        day = [r for r in rows if r["story"] == n and not r["st"]["lowkey"]]
+        if len(day) < SPACE_MIN:
+            continue
+        sd = lambda k, key: float(np.std([r[k][key] for r in day]))  # noqa: E731
+        def ti(k):  # tint spread: median distance of a shot's grey from the story's median grey
+            ts = [t for t in (tint(r[k]) for r in day) if t is not None]
+            return float(np.median([np.abs(t - np.median(ts, 0)).max() for t in ts])) if ts else 0.0
+        print(f"story {n}: {len(day)} day shots | spread p50 {sd('st', 'p50'):.3f}->{sd('f', 'p50'):.3f}, "
+              f"sat {sd('st', 'sat'):.3f}->{sd('f', 'sat'):.3f}, cast {ti('st'):.3f}->{ti('f'):.3f}")
     dl = [s for s in out if s["dry"]]
     print(f"golden grass (burnt-grass daytime stretches only): {n_dry} shots: "
           + " ".join(f"{s['start'] // 1440:02d}:{s['start'] // 24 % 60:02d}({s['dry']['why'][0]}{s['dry']['k']:.2g})" for s in dl))
@@ -256,6 +304,9 @@ def selftest():
     dull = (base * 0.3 + base.mean(1, keepdims=True) * 0.7).astype(np.float32)  # a washed-out day frame
     sd = G.stats(dull)
     assert not sd["lowkey"] and sd["sat"] < SAT_AIM and decide(sd, ref, False, 1.0)["sat"] >= VIVID  # gets livelier
+    sn = mark_night(G.stats(dull), {"light": "night"})  # same bright frame tagged night: no lift, no extra sat
+    cn = decide(sn, {"p50": 0.45}, True, 1.0)
+    assert sn["lowkey"] and cn["sat"] == 1.0 and np.all(cn["slope"] <= 1 + LIM["cast"] + 1e-6), cn
     loud = np.clip(base * [1.2, 0.5, 0.2], 0, 1)  # an over-saturated AI frame
     sl = G.stats(loud)
     assert sl["sat"] > SAT_HI_AI and decide(sl, ref, True, 1.0)["sat"] < 1.0
@@ -263,6 +314,15 @@ def selftest():
     c2, f2 = safe(loud, sl, dict(slope=np.full(3, 1.3), offset=np.zeros(3), power=1.0, sat=1.0))
     assert f2["clip"] <= sl["clip"] + 0.5  # safe() backs a clipping correction off
     assert is_ai(r"D:\AI_video\_africa\hyena\x.mp4") and not is_ai(r"Z:\Unseen\savannah\x.mov")
+    # one space per story: a darker, bluer shot and a brighter, warmer one of the same story end closer together
+    grey = np.clip(rng.uniform(0.25, 0.75, (6000, 1)) * np.ones(3), 0, 1).astype(np.float32)
+    a_, b_ = np.clip(grey * [0.85, 0.88, 0.92], 0, 1), np.clip(grey * [1.12, 1.08, 1.03], 0, 1)
+    sa, sb = G.stats(a_), G.stats(b_)
+    sp = space([{"st": x} for x in [sa, sb] * 3])
+    fa, fb = (G.stats(G.cdl(img, c["slope"], c["offset"], c["power"], c["sat"]))
+              for img, c in ((a_, decide(sa, sp, False, 1.0)), (b_, decide(sb, sp, False, 1.0))))
+    assert abs(fa["p50"] - fb["p50"]) < abs(sa["p50"] - sb["p50"]) and \
+        np.abs(tint(fa) - tint(fb)).max() < np.abs(tint(sa) - tint(sb)).max(), (fa["p50"], fb["p50"])
 
     def shot(h, s, v, ok=True, story=0):  # a frame of grass of one HSV colour (+ a little noise)
         px = M.hsv2rgb(np.stack([np.full(2000, h) + rng.normal(0, 2, 2000), np.full(2000, s), np.full(2000, v)], -1))

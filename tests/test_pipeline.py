@@ -429,8 +429,19 @@ def main():
             print("per-sentence files"); test_clips_mode(cfg, tmp3)
         print("timestamp parser");     test_timestamp_errors(tmp)
         print("scale");                test_scale()
+    print("v1 gaps");                  test_v1_gaps()
     print("script self-tests");        test_script_selftests()
     print("\nALL TESTS PASSED")
+
+
+def test_v1_gaps():
+    from dvr_cowork.cli import v1_gaps
+    spans = [(0, 2160), (2175, 5000), (5100, 6000), (6200, 7000), (7140, 8000)]  # 24 fps
+    bad, n, intro = v1_gaps(spans, thieu=[(5000, 5100), (6200 - 200, 6100)], fps=24)
+    assert intro == (2160, 2175) and n == 1, (intro, n)  # 15 f at 1:30 = intro; 5000-5100 under a THIEU marker
+    assert bad == [(6100, 6200), (7000, 7140)], bad  # partly covered gap keeps its uncovered part
+    bad, _, intro = v1_gaps(spans, [], 24, intro_end=7000)  # plan intro end: only the short gap there is allowed
+    assert intro is None and (2160, 2175) in bad, (intro, bad)
 
 
 def test_script_selftests():

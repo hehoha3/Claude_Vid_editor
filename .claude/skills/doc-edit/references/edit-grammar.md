@@ -17,6 +17,11 @@ beauty`. Each story's truth goes into the spec as filter tokens (machine-checked
   filter only when the refusal was wrong, never loosen it to fill the slot.
 
 ## Shots
+- Opener (user 2026-10-25): the narrator starts at 0:03.6; plan.py puts one epic, cinematic shot on 0:00 -> sentence 1
+  by itself (landscape, sunrise / sun, wide sky: default filter `sp=none size=wide,aerial`), and ## 1's beds / music
+  start under it. Rarely, when the screenplay opens on a character: `# OPENER Cận mắt báo đốm | real | sp=jaguar
+  size=extreme_close` (face / eye / mouth close-up; no zoom unless it looks like a real lens). The forms below start
+  after the opener; ## 1 then needs no landscape of its own.
 - Opening shot, two forms (spec header `# OPENING landscape|action`, default landscape = every video before):
   `landscape` (user rule 2026-10-13): `sp=none size=wide|aerial`, `real` preferred, held 3-4 s, a little longer than
   every other intro shot. `action`: the first shot is a real event on screen (`sp=<animal>` + `act=run|fight|attack|
@@ -85,10 +90,18 @@ at 0:38, cause before effect). Ends with the `reset`: story 1 must read as earli
   before 1:30 (user yes, backup), then `place.py <video> --fill --until 90`. Epic intro (user 2026-10-22):
   `split_intro()` cuts every animal intro shot into 1.0-2.2 s pieces on music hits / bars / beats. A species without
   later footage keeps its own pick or stays THIẾU (2026-10-23: no related / other species standing in). Lines with a
-  calm act (look / rest) keep calm footage.
+  calm act (look / rest) keep calm footage, except in the action zone (user 2026-10-28): every intro shot but the
+  first `HL_HEAD` = 5 (the hook's set-up, 3-7) and the last `HL_TAIL` = 2 (outro landscapes) shows a chase / fight /
+  climax of the line's species: later story shots or library clips (the animal = the clip's main species), chase /
+  fight first, then tense / dramatic footage; a clip <= 3x in the intro, other frames, >= 8 s apart; the line's calm
+  act and a "7. Open" pick yield. `# ACTION 0:29-1:21` in the beats header (user 2026-10-28) = the action zone as a time
+  window instead of first 5 / last 2; in the zone only the intro's own animals may be in frame (no zebra / warthog /
+  wildebeest prey), so the shots fit what the narrator says there. `intro highlights:` line = `action zone: N chase/fight + M tense of K`. A species
+  with few action clips (africa_271026 elephants: ~8) leaves calm shots there: write more lion / predator lines into
+  the zone, or prompts for action clips of it.
 - Intro ends with its music (user 2026-10-22): `intro_outro()` makes the last 4 s before the intro music's end one
   landscape fading to black (1.5 s, place.py `SetFades`); story 1's first shot (write it as a landscape, sp=none)
-  starts at the music end and fades in from black (2.5 s). Intro shots after that point are dropped (their A7 'off'
+  starts 0.6 s after the music end (black, ambience only: story 1's bed pre-laps it on A5) and fades in from black (2.5 s). Intro shots after that point are dropped (their A7 'off'
   too); the A7 intro music must play from its file start (africa_1 had a 34-frame head trim: beats + end were off).
 - Leave one stretch without narration so the viewer hears real movement. Test the hook muted (geography is clear)
   and with eyes closed (the sound means something). plan.py prints a hook hypothesis, not a retention KPI: measure
@@ -175,7 +188,8 @@ Side shot = any footage shot whose `need` has no `[tag]` of a main character.
   only when an AI look would hurt (hero wide, aerial).
 - Real next to AI is fine: the grade makes them one place and moment. Keep the same individual's look
   (size, markings, setting) consistent across the cut.
-- Reuse: clips on "Edit" + "Open" of the last 6 checked videos of the same workspace are never used. Inside one video
+- Reuse: clips on "Edit" + "Open" of the last 6 checked videos of the same workspace are never used in the
+  first 15:00 (user 2026-10-25); after 15:00 any clip may come in, under the same in-video limits. Inside one video
   (user 2026-10-22: save source, not too often, not too rarely) a clip may serve up to 6 slots, >= 90 s apart: another
   part of the clip first, else the same frames again, but no frame on screen more than 3 times and those repeats >= 5
   min apart (plan.md ↻n, `=frame`); fresh clips still win at similar fit. Parts already on "Open" never come back.

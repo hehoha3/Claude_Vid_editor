@@ -1,4 +1,4 @@
-"""doc-edit: prompts for the THIẾU slots of plan.json, to generate the missing footage.
+"""doc-edit: prompts for the THIẾU and WEAK slots of plan.json, to generate the missing / better footage.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>                 # list groups
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --check         # QC gates + preview
@@ -15,7 +15,7 @@ already OK needs only the prey clips). Claude writes .work/doc_edit/<video>/prom
     2-5s: ...
     ## +harpy_eagle                           <- extra group (not a THIẾU slot, e.g. daily life): saved to <AI_DIR>/<name>
 --check / --write run the QC gates (references/missing-prompts.md); --write refuses on errors, writes HEAD + beats as
-numbered prompts '1. ', '2. ' into <video>/missing_prompts.txt (no group headers) and
+numbered prompts '1. ', '2. ' into <video>/missing_prompts.txt under '## THIEU' then '## WEAK' (G<n> / W<n> groups) and
 .work/doc_edit/<video>/shot_manifest.csv (row n = prompt n).
 """
 import csv, difflib, json, math, re, sys
@@ -55,10 +55,10 @@ NEG = re.compile(r"\b(?:no|not|never|without|avoid)\b[^,.;]*", re.I)  # "no reve
 DUP = 0.9  # two prompts of one group this similar = the same shot twice
 
 
-def groups(slots):
+def groups(slots, status="THIEU", pre="G"):
     g = defaultdict(list)
     for s in slots:
-        if s["status"] != "THIEU":
+        if s["status"] != status:
             continue
         f = s["filter"]
         tag = re.match(r"\[([^\]]+)\]", s["need"])
@@ -79,7 +79,7 @@ def groups(slots):
         # story truth of the slots (plan.py sex= / age= / out=) and what the library offered but the rules refused
         truth = {t: sorted({x for s in ss for x in s["filter"].get(t, [])}) for t in ("sex", "age", "out")}
         refused = sum((Counter(s.get("rej") or {}) for s in ss), Counter())
-        out.append({"id": f"G{i}", "key": k, "truth": truth, "refused": dict(refused),
+        out.append({"id": f"{pre}{i}", "status": status, "key": k, "truth": truth, "refused": dict(refused),
                     "slots": [s["slot"] for s in ss], "sec": round(sec, 1),
                     # one prompt per THIẾU slot (user 2026-10-17: was ceil(sec / CLIP_YIELD); half the clips of a
                     # round fail tagging, so fewer clips left slots empty)
@@ -197,11 +197,13 @@ def main(video, mode, rng=None):
     if rng:  # --range=0:00-6:30: only THIẾU slots starting inside it (user asks per part of the film)
         a, b = (secs(x) for x in rng.split("-"))
         slots = [s for s in slots if a <= s.get("start", 0) < b]
-    gs = groups(slots)
+    gs = groups(slots) + groups(slots, "WEAK", "W")  # always both parts (user 2026-10-27): G<n> THIẾU, W<n> WEAK
     at = {s["slot"]: s.get("start", 0) for s in slots}
     if mode == "list":
-        print(f"{sum(len(g['slots']) for g in gs)} THIẾU slots, {sum(g['sec'] for g in gs):.0f}s -> "
-              f"{len(gs)} groups, {sum(g['clips'] for g in gs)} clips suggested")
+        for st in ("THIEU", "WEAK"):
+            gg = [g for g in gs if g["status"] == st]
+            print(f"{sum(len(g['slots']) for g in gg)} {st} slots, {sum(g['sec'] for g in gg):.0f}s -> "
+                  f"{len(gg)} groups, {sum(g['clips'] for g in gg)} clips suggested")
         for g in gs:
             tag, sp, act, st, li = g["key"]
             print(f"{g['id']} [{tag}] sp={sp} act={act or '-'} set={st or '-'} light={li or '-'} | "
@@ -231,12 +233,19 @@ def main(video, mode, rng=None):
     sys.path.insert(0, str(Path(__file__).parent))
     import ledger  # video folder looked up in the workspaces (plan.json may hold a path from before a rename)
     vdir = Path(plan.get("video_dir", ""))  # plan.json knows the exact folder (same video name in two workspaces)
-    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing_prompts.txt"  # prompts only, no headers (2026-10-09)
-    lines = [x[2] for g in gs if g["id"] in p for x in p[g["id"]]] + [x[2] for k in extra for x in p[k]]
-    out.write_text("\n\n".join(f"{n}. {t}" for n, t in enumerate(lines, 1)) + "\n", "utf-8")  # '1. ', '2. ' (2026-10-22)
+    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing_prompts.txt"
+    # headers "## THIEU" / "## WEAK" always (user 2026-10-27; extras count as THIEU), numbering '1. ' runs on
+    part = {st: [x[2] for g in gs if g["status"] == st and g["id"] in p for x in p[g["id"]]] for st in ("THIEU", "WEAK")}
+    part["THIEU"] += [x[2] for k in extra for x in p[k]]
+    lines, n, blocks = part["THIEU"] + part["WEAK"], 0, []
+    for name, ts in part.items():
+        blocks.append(f"## {name}\n\n" + ("\n\n".join(f"{n + i}. {t}" for i, t in enumerate(ts, 1)) or "(none)"))
+        n += len(ts)
+    out.write_text("\n\n".join(blocks) + "\n", "utf-8")
     # manifest: row n = prompt line n of missing_prompts.txt (same order as the loop above)
     rows = [(gid, r) for g in gs if g["id"] in p for gid, r in [(g["id"], x) for x in p[g["id"]]]] \
         + [(k, x) for k in extra for x in p[k]]
+    rows = [r for r in rows if r[0][0] != "W"] + [r for r in rows if r[0][0] == "W"]  # file order: THIEU, then WEAK
     assert len(rows) == len(lines)
     with open(work / "shot_manifest.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)

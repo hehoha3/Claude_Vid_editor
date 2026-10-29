@@ -9,9 +9,15 @@ is still empty (+ their A1 if free), removes the markers of those slots only; au
 --fill --until <s>: only slots starting before <s> (e.g. a re-cut opening, the rest of the film's empty slots wait).
 --skip-intro (default of a new video, user 2026-10-23): nothing before the plan's intro end; the user and Claude cut
 the intro by hand later.
+--intro (/doc-edit intro, user 2026-10-25): only 0:00 -> the plan's intro end, on V1 / A1 / A3-A9 + its markers; that
+range must be empty; the intro music (its source file, user 2026-10-26: no fitted file) goes into bin "7. Open" as
+intro.py's bar pieces back to back on A7, short fades at the joints, the tail fade on the last, the 1 s from black;
+story 1's bed pre-laps the black before story 1 on A5 (prelap()).
+Every run: items at 0:00 fade in from black EDGE_IN, items at the video end fade out EDGE_OUT (not A2).
+Multi-channel project: plan.json's video_dir D:/Chann_N_*/... -> bins and "Edit" inside bin Chann_N (resolve_ops).
 Audio rules: A3/A4 entry = bed change, the bed alternates A3/A4 with BED_OVERLAP crossfades until the next change;
 A5 / A7 run from their slot until the next entry on that track, 'off', or the timeline end (looped by
-re-placing the file); A1 = own audio of every AI clip on V1 at A1_DB (--a1-only adds just that, nothing else touched); A6 = its slot only; A8/A9 = one hit at the slot start (moves to the other SFX track if busy).
+re-placing the file); A1 = own audio of every AI clip on V1 starting before A1_UNTIL (08:00) at A1_DB (--a1-only adds just that, nothing else touched); A6 = its slot only; A8/A9 = one hit at the slot start (moves to the other SFX track if busy).
 """
 import datetime as dt, json, os, re, subprocess, sys
 from collections import defaultdict
@@ -21,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
-from dvr_cowork.resolve_ops import (_norm, audio_bin, clip_fps, ensure_audio_track, ensure_bin, find_bin,  # noqa: E402
+from dvr_cowork.resolve_ops import (_norm, audio_bin, clip_fps, ensure_audio_track, ensure_bin, find_bin, pool_root, use_channel,  # noqa: E402
                                     find_clip, find_timeline, get_project, timeline_fps)
 
 # starting levels (integrated LUFS per clip); final mix is done by ear in Fairlight
@@ -29,13 +35,18 @@ TARGET = {3: -32, 4: -32, 5: -34, 6: -28, 7: -26, 8: -22, 9: -22}
 BED_OVERLAP = 4.0
 SFX_TAIL = 2.0  # s an A8/A9 hit may run past the end of its slot
 A1_DB = -12  # AI clips bring their own audio to A1, this much below the clip level (user rule 2026-10-09)
+A1_UNTIL = 480.0  # s: A1 only for shots starting before 08:00; later AI clips get no A1 audio (user 2026-10-28)
 FADE = {3: 4.0, 4: 4.0, 5: 2.0, 6: 0.5, 7: 3.0, 8: 0.0, 9: 0.0}
+EDGE_IN, EDGE_OUT = 1.0, 3.0  # s: the video opens from black / ends to black on every track but A2 (user 2026-10-26)
+BIRD_ON, BIRD_OFF = 30.0, 30.0  # s: a birds bed = one bird file this long, then the non-bird bed, next time another bird (user 2026-10-27)
+PRELAP = 4.0  # s: --intro, story 1's bed on A5 fades in this long before the black after the intro (user 2026-10-26)
 # video bins by what the clip shows (user 2026-10-22): attack / run first, everything else Other. audio: audio_bin(track)
 BINS = {"other": "1. Other_roll", "attack": "2. Attack_roll", "run": "3. Run_roll"}
 ATTACK, RUN = {"attack", "hunt", "chase", "catch", "fight"}, {"run"}  # tag "action" values (chase / catch = old hunt)
 # untagged clips: the folder / file name (africa AI_copyright\AI\Chạy\...)
 ATTACK_RE, RUN_RE = r"attack|hunt|fight|kill|tấn công|săn", r"(?<![a-z])run|chase|chạy|đuổi"
 _ACTS = {}
+OPEN_BIN = "7. Open"  # intro music (/doc-edit intro)
 MARK = {"THIEU": "Red", "WEAK": "Yellow", "FALLBACK": "Cyan", "GFX": "Blue"}
 
 
@@ -118,6 +129,25 @@ def loudness(path, cache):
     return cache[path]
 
 
+def bed_pieces(cue, p, dur, last, on=BIRD_ON, off=BIRD_OFF):
+    """Endless (path, file length, max s on its own) for one A3/A5 cue. A birds cue with plan.py's "birds" / "rest"
+    (user 2026-10-27: no bird file looped) alternates BIRD_ON s of a bird file and BIRD_OFF s of the non-bird bed, each
+    bird stretch the next file, never the one heard last (last = [path], shared by all cues); else p looped."""
+    birds, rest = cue.get("birds"), cue.get("rest")
+    if not birds:
+        while True:
+            yield p, dur, dur
+    k = 0
+    while True:
+        if birds[k % len(birds)][0] == last[0] and len(birds) > 1:
+            k += 1
+        bp, bd = birds[k % len(birds)]
+        last[0], k = bp, k + 1
+        yield bp, bd, on
+        if rest:
+            yield rest[0], rest[1], off
+
+
 def audio_events(slots, end):
     """-> list of (track, start, length, path, src_in) pieces, seconds."""
     out, spans = [], defaultdict(list)  # track -> [(start, path|None)]
@@ -132,29 +162,43 @@ def audio_events(slots, end):
                 ln = min(e["dur"], s["dur"] + (SFX_TAIL if tr in (8, 9) else 0))
                 out.append([tr, s["start"], ln, e["path"], 0.0])
     i = 0  # bed piece counter, global so a bed change lands on the other track
+    last_bird = [None]
     for tr, ch in spans.items():
         ch.append((end, None))
         for (t0, p), (t1, _) in zip(ch, ch[1:]):
             if not p:
                 continue
-            dur = next(e["dur"] for s in slots for e in s["audio"] if e.get("path") == p)
+            cue = next(e for s in slots for e in s["audio"] if e.get("path") == p)
+            dur = cue["dur"]
+            if tr == 7 and cue.get("pieces"):  # /doc-edit intro: the source's bar pieces back to back, timeline fades
+                t, xs = t0, cue["pieces"]
+                for i, (a, b) in enumerate(xs):
+                    ln = min(b - a, t0 + dur - t)
+                    if ln <= 0:
+                        break
+                    last = i == len(xs) - 1 or t + ln >= t0 + dur - 1e-6
+                    out.append([7, t, ln, p, a, (cue["xf"] if i else 0.0, cue["fade"] if last else cue["xf"])])
+                    t += ln
+                continue
             if tr == 7:  # music plays once, never looped
                 out.append([7, t0, min(dur, t1 - t0), p, 0.0])
                 continue
-            t = t0
+            t, gen = t0, bed_pieces(cue, p, dur, last_bird)
             if tr == 3:  # alternate A3/A4; each piece overlaps the next by BED_OVERLAP (also across bed changes)
                 if dur <= 2 * BED_OVERLAP:
                     print(f"warning: bed {Path(p).name} only {dur}s, skipped")
                     continue
                 while t < t1 - BED_OVERLAP:
-                    ln = min(dur, t1 + (BED_OVERLAP if t1 < end else 0) - t)
-                    out.append([3 + i % 2, t, ln, p, 0.0])
+                    pp, d, cap = next(gen)
+                    ln = min(d, cap + BED_OVERLAP, t1 + (BED_OVERLAP if t1 < end else 0) - t)
+                    out.append([3 + i % 2, t, ln, pp, 0.0])
                     i += 1
                     t += ln - BED_OVERLAP
             else:
                 while t < t1 - 0.5:
-                    ln = min(dur, t1 - t)
-                    out.append([tr, t, ln, p, 0.0])
+                    pp, d, cap = next(gen)
+                    ln = min(d, cap, t1 - t)
+                    out.append([tr, t, ln, pp, 0.0])
                     t += ln
     # SFX: A8 busy -> A9, both busy -> drop
     busy = {8: 0.0, 9: 0.0}
@@ -187,11 +231,71 @@ def skip_intro(slots, t):
     return out
 
 
+def only_intro(slots, t):
+    """Slots before the intro end t, the last one trimmed to t (/doc-edit intro, the mirror of skip_intro)."""
+    return [dict(s, dur=min(s["dur"], t - s["start"])) for s in slots if s["start"] < t - 0.05]
+
+
+def edge_fade(a, b, d, fi, fo, end, fps):
+    """New (FadeIn, FadeOut) frames of an item [a, b) d frames long: from black at 0:00, to black at the video end;
+    an existing longer fade stays, SetFades fails on a fade longer than the item (africa_4's last shot: 2.79 s)."""
+    return (max(fi, round(EDGE_IN * fps)) if a == 0 else fi,
+            max(fo, min(round(EDGE_OUT * fps), d - 7)) if b >= end - 1 else fo)
+
+
+def edge_fades(tl, t0, fps, end):
+    """edge_fade() on V1, A1, A3-A9 (A2: the narrator's first / last word stay whole). end = video end frame. -> set."""
+    n = 0
+    for kind, k in [("video", 1)] + [("audio", k) for k in range(1, int(tl.GetTrackCount("audio") or 0) + 1) if k != 2]:
+        for ti in tl.GetItemListInTrack(kind, k) or []:
+            old = ti.GetFades() or {}
+            fi, fo = int(old.get("FadeIn", 0)), int(old.get("FadeOut", 0))
+            new = edge_fade(int(ti.GetStart()) - t0, int(ti.GetEnd()) - t0, int(ti.GetDuration()), fi, fo, end, fps)
+            if new != (fi, fo):
+                n += bool(ti.SetFades({"FadeIn": new[0], "FadeOut": new[1]}))
+    return n
+
+
+def prelap(tl, mp, t0, fps, body):
+    """--intro: story 1's bed (its A3/A4 piece at the body start, frame `body`) is heard through the black before it
+    (plan.py GAP_BLACK): a slice of the same file's end on A5 from PRELAP s before the black to PRELAP s into the bed,
+    fading in / out PRELAP (the bed itself fades in 4 s from the body start), at the bed's volume. -> summary."""
+    bed = [ti for k in (3, 4) for ti in tl.GetItemListInTrack("audio", k) or [] if abs(int(ti.GetStart()) - t0 - body) <= 1]
+    black = max((int(ti.GetEnd()) - t0 for ti in tl.GetItemListInTrack("video", 1) or [] if int(ti.GetEnd()) - t0 <= body),
+                default=body)
+    if not bed:
+        return "pre-lap: no A3/A4 bed at story 1, skipped"
+    bed, p = bed[0], round(PRELAP * fps)
+    a, b = black - p, body + p
+    if not free([(int(ti.GetStart()) - t0, int(ti.GetEnd()) - t0) for ti in tl.GetItemListInTrack("audio", 5) or []], a, b):
+        return "pre-lap: A5 busy there, skipped"
+    it = bed.GetMediaPoolItem()
+    cf = float(it.GetClipProperty("FPS") or fps)
+    total = bed.GetSourceStartFrame() + round((int(bed.GetDuration()) + int(bed.GetRightOffset())) * cf / fps)
+    k = round((b - a) * cf / fps)
+    if k > total - round(0.2 * cf):
+        return "pre-lap: bed file too short, skipped"
+    s_end = total - round(0.2 * cf)  # the file's end: the A3 piece plays its start, no doubled birds
+    res = mp.AppendToTimeline([{"mediaPoolItem": it, "startFrame": s_end - k, "endFrame": s_end, "mediaType": 2,
+                                "trackIndex": 5, "recordFrame": t0 + a}])
+    if not res:
+        return "pre-lap: AppendToTimeline failed"
+    res[0].SetFades({"FadeIn": p, "FadeOut": p})
+    res[0].SetProperty("AudioVolume", bed.GetProperty("AudioVolume"))
+    return f"pre-lap: {bed.GetName()} on A5 {a / fps:.1f}-{(int(res[0].GetEnd()) - t0) / fps:.1f}s, black from {black / fps:.1f}s"
+
+
 def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False, fill=False, until=1e9,
-         no_intro=False):
+         no_intro=False, intro_only=False):
     work = ROOT / ".work" / "doc_edit" / video
     plan = json.loads((work / "plan.json").read_text("utf-8"))
+    use_channel(plan.get("video_dir"))  # D:\Chann_N_*\<video>: that channel's bins and "Edit" (multi-channel project)
     slots, end = plan["slots"], plan["end"]
+    if intro_only:  # /doc-edit intro: 0:00 -> intro end on every track, the rest of the timeline untouched
+        # up to where --skip-intro's body begins: story 1's first shot, or the intro end when that shot was pulled under it
+        end = max(plan["intro"], next((s["start"] for s in slots if not s.get("intro")), plan["intro"]))
+        slots = only_intro(slots, end)
+        print(f"--intro: V1/A1/A3-A9/markers 0:00-{end:.1f}s only")
     if no_intro:
         assert "intro" in plan, "plan.json has no intro end: re-run plan.py"
         slots = skip_intro(slots, plan["intro"])
@@ -223,6 +327,10 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     have = {f"{k[0].upper()}{n}": tl.GetItemListInTrack(k, n) or [] for k, n in tracks
             if n <= int(tl.GetTrackCount(k) or 0)}
     full = {k: len(v) for k, v in have.items() if v}
+    if intro_only:  # only the intro range must be empty; --replace never clears whole tracks here
+        full = {k: n for k, v in have.items() if (n := sum(int(i.GetStart()) - t0 < f(end) for i in v))}
+        if full:
+            raise SystemExit(f"intro range 0:00-{end:.1f}s not empty {full}: nothing changed")
     span = lambda k: [(int(i.GetStart()) - t0, int(i.GetEnd()) - t0) for i in have.get(k, [])]  # noqa: E731
     v1_used, a1_used = span("V1"), span("A1")
     if fill:  # user's timeline kept as is: only V1 slots still empty get their clip (new footage after a re-plan)
@@ -231,14 +339,14 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         print(f"fill: {len(vids)} empty V1 slots get a clip; existing items untouched")
     if full and not replace:
         raise SystemExit(f"tracks not empty {full}; re-run with --replace to clear them (backup is made first)")
-    if a1_only and not [s for s in slots if s["source"] == "ai" and s["status"] in ("OK", "WEAK", "FALLBACK")]:
+    if a1_only and not [s for s in slots if s["source"] == "ai" and s["start"] < A1_UNTIL and s["status"] in ("OK", "WEAK", "FALLBACK")]:
         raise SystemExit("no AI clips in plan")
     if dry:
         print("dry-run: nothing changed")
         return
 
     mp = project.GetMediaPool()
-    root = mp.GetRootFolder()
+    root = pool_root(mp)  # the channel's bin in a multi-channel project
     stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
     mp.SetCurrentFolder(root)
     if not a1_only:  # A1-only is purely additive on an empty track: no backup needed
@@ -264,7 +372,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
             need[video_bin({"source": src, "path": p})].add(p)
             alt.add(p)
     for e in events:
-        need[audio_bin(e[0])].add(e[3])  # 4. Audio/Ambience | Music | SFX by track
+        # 4. Audio/Ambience | Music | SFX by track; the intro's music -> "7. Open" (user 2026-10-25)
+        need[OPEN_BIN if intro_only and e[0] == 7 else audio_bin(e[0])].add(e[3])
     items, seen = {}, {}
     for name, paths in need.items():
         b = ensure_bin(mp, name)
@@ -310,7 +419,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     dev = v1 = a1 = 0
     for s in vids:
         a, b = f(s["start"]), fe(s)
-        if s["source"] == "ai" and free(a1_used, a, b):  # own audio on A1, lowered; no audio stream -> skipped
+        if s["source"] == "ai" and s["start"] < A1_UNTIL and free(a1_used, a, b):  # own audio on A1 (< 08:00), lowered
             n0 = len(failed)
             au = put(s["path"], 2, 1, a, b - a, s["src_in"])
             if au:
@@ -337,13 +446,14 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     cache_p = work.parent / "loudness.json"
     cache = json.loads(cache_p.read_text("utf-8")) if cache_p.exists() else {}
     vol_fail = 0
-    for tr, start, ln, path, src_in in events:
+    for tr, start, ln, path, src_in, *fade in events:
         ti = put(path, 2, tr, f(start), f(start + ln) - f(start), src_in)
         if not ti:
             continue
-        fd = round(min(FADE[tr], ln / 2) * rate)
-        if fd:
-            ti.SetFades({"FadeIn": fd, "FadeOut": fd})
+        fd = 0 if intro_only and tr == 7 else round(min(FADE[tr], ln / 2) * rate)  # intro music: own start / end
+        fi, fo = (round(x * rate) for x in fade[0]) if fade else (fd, fd)  # intro pieces: bar joints + tail fade
+        if fi or fo:
+            ti.SetFades({"FadeIn": fi, "FadeOut": fo})
         lu = loudness(path, cache)
         if lu is not None and not ti.SetProperty("AudioVolume", round(TARGET[tr] - lu, 1)):
             vol_fail += 1
@@ -352,7 +462,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     placed = [(f(s["start"]), fe(s)) for s in vids]
     for frame, m in list((tl.GetMarkers() or {}).items()) if not audio_only else []:
         # fill: only the markers of slots filled now go (the user's other markers / notes stay)
-        if str(m.get("customData", "")).startswith("doc_edit") and \
+        if str(m.get("customData", "")).startswith("doc_edit") and (not intro_only or frame < f(end)) and \
                 (not fill or not free(placed, frame, frame + int(m.get("duration", 1)))):
             tl.DeleteMarkerAtFrame(frame)
     for s in slots if not (audio_only or fill) else [s for s in vids if s["status"] in MARK]:
@@ -362,13 +472,19 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
             why += (" | loại: " + ", ".join(f"{k} {n}" for k, n in s["rej"].items())) if s["status"] == "THIEU" and s.get("rej") else ""
             tl.AddMarker(a, MARK[s["status"]], f"{s['status']} #{s['slot']}", (s["need"] + why)[:240], b - a,
                          f"doc_edit:slot{s['slot']}")
+    if intro_only:
+        print(prelap(tl, mp, t0, fps, f(end)))
+    print(f"edge fades (from / to black): {edge_fades(tl, t0, fps, f(plan['end']))} items")
     pm.SaveProject()
+    from dvr_cowork.resolve_ops import CHANNEL_ENV, channel_bin
+    if channel_bin(mp):  # which day project / channel holds this video (plan.same_project: color, intro)
+        (work / "project.txt").write_text(f"{project.GetName()}/{os.environ[CHANNEL_ENV]}\n", "utf-8")
     if orig and orig.GetName() != tl.GetName():
         project.SetCurrentTimeline(orig)
         print(f'back on timeline "{orig.GetName()}"')
     v = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda t: t.GetStart())
     small = sum(1 for x, y in zip(v, v[1:]) if 0 < int(y.GetStart()) - int(x.GetEnd()) <= 3)
-    print(f"V1 gaps of 1-3 frames: {small}; A1 audio of AI clips: {a1} at {A1_DB} dB")
+    print(f"V1 gaps of 1-3 frames: {small}; A1 audio of AI clips: {a1} at {A1_DB} dB (before {A1_UNTIL // 60:.0f}:00 only)")
     print(f"V1 placed {v1}/{len(vids)}, max start dev {dev}f; audio pieces {len(events) - (len(failed) - (len(vids) - v1))}"
           f"/{len(events)}; volume not set on {vol_fail}; failed: {failed[:20]}")
     if fill:  # what is still empty on V1 after this fill (the user's next decision), as mm:ss
@@ -397,8 +513,18 @@ def selftest():
     assert bed_p[0][0] == 0 and abs(max(b for _, b in bed_p) - 601) < 1e-6  # bed covers the whole timeline
     assert all(b[0] < a[1] for a, b in zip(bed_p, bed_p[1:]))  # no holes between bed pieces
     assert [e[0] for e in ev if e[3] == "h2"] == [8] and [e[2] for e in ev if e[3] == "m"] == [100]
+    # birds bed (user 2026-10-27): bird BIRD_ON s -> non-bird bed -> another bird file; A5 the same without overlaps
+    bc = dict(bed("b1", 90), birds=[["b1", 90], ["b2", 60]], rest=["w", 120])
+    for tr in (3, 5):
+        ev = [e for e in audio_events([S(0, 200, [dict(bc, track=tr)])], 200.0) if e[0] in (3, 4, 5)]
+        assert [e[3] for e in ev][:5] == ["b1", "w", "b2", "w", "b1"], ev
+        assert all(e[2] <= BIRD_ON + BED_OVERLAP for e in ev) and abs(max(e[1] + e[2] for e in ev) - 200) < 1e-6
     long = audio_events([S(0, 3, [{"track": 8, "kw": ["x"], "status": "OK", "path": "w", "dur": 104}])], 10.0)
     assert [e[2] for e in long] == [3 + SFX_TAIL], long  # a long SFX file is cut to its slot + tail
+    im = {"track": 7, "kw": ["intro"], "status": "OK", "path": "src", "dur": 90.0, "pieces": [[0, 40], [60, 112]],
+          "xf": 0.08, "fade": 1.5}  # intro.py: 20 s cut out of a 112 s track, 2 s tail off
+    ip = [e for e in audio_events([S(0, 90, [im])], 90.0) if e[0] == 7]
+    assert [(e[1], e[2], e[4], e[5]) for e in ip] == [(0, 40, 0, (0.0, 0.08)), (40, 50, 60, (0.08, 1.5))], ip
     assert free([(0, 10), (20, 30)], 10, 20) and not free([(0, 10)], 9, 12) and free([], 0, 5)  # --fill gaps
     assert kind_of("x", ["run", "hunt"]) == "attack" and kind_of("x", ["run"]) == "run" and kind_of("x", ["walk"]) == "other"
     assert kind_of(r"Z:\AI\Chạy\lion\a.mp4", []) == "run" and kind_of(r"D:\lion_hunts_zebra.mp4", []) == "attack"
@@ -406,6 +532,9 @@ def selftest():
     k = skip_intro([{"start": 0, "dur": 50, "intro": True}, {"start": 55, "dur": 40, "src_in": 2.0, "speed": 0.8},
                     {"start": 95, "dur": 3}], 90)  # intro shot gone, story 1's landscape trimmed to 90 s
     assert [(s["start"], s["dur"]) for s in k] == [(90, 5), (95, 3)] and abs(k[0]["src_in"] - 30.0) < 1e-9
+    E = 86400  # video end frame at 24 fps; first shot / last 2.79 s shot / mid shot / bed with its own 4 s fades
+    assert edge_fade(0, 85, 85, 0, 0, E, 24) == (24, 0) and edge_fade(E - 67, E, 67, 0, 0, E, 24) == (0, 60)
+    assert edge_fade(100, 200, 100, 0, 0, E, 24) == (0, 0) and edge_fade(0, E, E, 96, 96, E, 24) == (96, 96)
     print("selftest ok")
 
 
@@ -413,4 +542,4 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
     until = float(sys.argv[sys.argv.index("--until") + 1]) if "--until" in sys.argv else 1e9  # --fill only slots starting before (s)
-    selftest() if "--selftest" in sys.argv else rebin() if "--rebin" in sys.argv else main(a[0], "--replace" in sys.argv, "--dry-run" in sys.argv, "--video-only" in sys.argv, "--a1-only" in sys.argv, "--audio-only" in sys.argv, "--fill" in sys.argv, until, "--skip-intro" in sys.argv)
+    selftest() if "--selftest" in sys.argv else rebin() if "--rebin" in sys.argv else main(a[0], "--replace" in sys.argv, "--dry-run" in sys.argv, "--video-only" in sys.argv, "--a1-only" in sys.argv, "--audio-only" in sys.argv, "--fill" in sys.argv, until, "--skip-intro" in sys.argv, "--intro" in sys.argv)

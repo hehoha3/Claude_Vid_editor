@@ -119,7 +119,7 @@ def cmd_info(args, cfg):
     t = i.get("timeline")
     if t:
         tr = " ".join(f"{k[0].upper()}{x['n']}:{x['items']}" for k, v in t["tracks"].items() for x in v)
-        log(f"{t['name']} {t['fps']:g} fps {t['resolution']} start {t['start_tc']} dur {t['duration_tc']} | {tr} | "
+        log(f"{(i['channel'] + '/') if i.get('channel') else ''}{t['name']} {t['fps']:g} fps {t['resolution']} start {t['start_tc']} dur {t['duration_tc']} | {tr} | "
             f"audio bin {'ok' if i.get('audio_bin_exists') else 'MISSING'}")
     return EXIT_OK
 
@@ -130,11 +130,15 @@ def _project(cfg):
 
 def _timelines(project, names):
     """Yield the named timelines, each made current (items load only then); restores the user's timeline."""
+    from .resolve_ops import find_timeline
     cur = project.GetCurrentTimeline()
+    # each name through find_timeline: in a day project only the channel's own one (DVR_CHANNEL), never both "Edit"
+    want = {t.GetName() for i in range(1, project.GetTimelineCount() + 1)
+            if (t := project.GetTimelineByIndex(i)).GetName().lower() in names}
     try:
-        for i in range(1, project.GetTimelineCount() + 1):
-            t = project.GetTimelineByIndex(i)
-            if t.GetName().lower() in names:
+        for name in sorted(want):
+            t = find_timeline(project, name)
+            if t:
                 project.SetCurrentTimeline(t)
                 yield t
     finally:
@@ -163,6 +167,63 @@ def cmd_at(args, cfg):
                 if s - args.near <= t < e + args.near:
                     log(f"{fmt_seconds(t)}  {tr:<3} {fmt_seconds(s)}-{fmt_seconds(e)}  src_in {src:.2f}s  {p}")
     return EXIT_OK
+
+
+def v1_gaps(spans, thieu, fps, intro_end=None):
+    """Empty V1 spans (frames from timeline start) -> (to fill, THIEU count, intro gap or None).
+    Allowed empty (user 2026-10-26): inside THIEU spans; one gap <= 0.7 s at the intro end (plan) = intro -> story 1
+    black (no plan: the first such gap before 3:00)."""
+    gaps, e = [], 0
+    for a, b in sorted(spans):
+        if a > e:
+            gaps.append((e, a))
+        e = max(e, b)
+    bad, n_thieu, intro = [], 0, None
+    for a, b in gaps:
+        rest = [(a, b)]
+        for ma, mb in thieu:  # what no THIEU marker covers
+            rest = [p for x, y in rest for p in ((x, min(y, ma)), (max(x, mb), y)) if p[1] > p[0]]
+        if not rest:
+            n_thieu += 1
+        elif intro is None and b - a <= 0.7 * fps and (a - fps <= intro_end <= b + fps if intro_end is not None
+                                                        else a < 180 * fps):
+            intro = (a, b)
+        else:
+            bad += rest
+    return bad, n_thieu, intro
+
+
+def cmd_gaps(args, cfg):
+    """Every empty span on V1 that must be filled (THIEU slots and the intro -> story 1 black excluded).
+    THIEU = timeline markers + the doc-edit plan's THIEU slots (video: --video, else the one whose project.txt
+    names this project/channel)."""
+    import os
+    from .timecode import fmt_seconds
+    project, bad = _project(cfg), []
+    root = work_root(cfg) / "doc_edit"
+    if args.video:
+        pf = root / args.video / "plan.json"
+    else:
+        key = f"{project.GetName()}/{os.environ.get('DVR_CHANNEL', '')}".rstrip("/").lower()
+        pf = next((p.parent / "plan.json" for p in root.glob("*/project.txt")
+                   if p.read_text("utf-8").strip().lower().rstrip("/") == key), None)
+    plan = json.loads(pf.read_text("utf-8")) if pf and pf.exists() else None
+    for tl in _timelines(project, {args.tl.lower()}):
+        fps, t0 = float(tl.GetSetting("timelineFrameRate")), tl.GetStartFrame()
+        spans = [(it.GetStart() - t0, it.GetEnd() - t0) for it in tl.GetItemListInTrack("video", 1) or []]
+        thieu = [(f, f + int(m.get("duration", 1))) for f, m in (tl.GetMarkers() or {}).items()
+                 if str(m.get("name", "")).startswith("THIEU")]
+        if plan:
+            thieu += [(round(s["start"] * fps), round((s["start"] + s["dur"]) * fps))
+                      for s in plan["slots"] if s["status"] == "THIEU"]
+        intro_end = round(plan["intro"] * fps) if plan and plan.get("intro") else None
+        bad, n_thieu, intro = v1_gaps(spans, thieu, fps, intro_end)
+        log(f"{tl.GetName()} V1 (plan {pf.parent.name if plan else 'none: markers only'}): {len(bad)} gaps to fill"
+            f" | THIEU gaps {n_thieu} | intro gap "
+            + (f"{fmt_seconds(intro[0] / fps)} {(intro[1] - intro[0]) / fps:.2f}s" if intro else "none"))
+        for a, b in bad:
+            log(f"  {fmt_seconds(a / fps)}-{fmt_seconds(b / fps)}  {(b - a) / fps:.2f}s")
+    return EXIT_ERR if bad else EXIT_OK
 
 
 def cmd_find(args, cfg):
@@ -337,6 +398,10 @@ def build_parser():
     a.add_argument("--audio", action="store_true", help="audio tracks too")
     a.add_argument("--near", type=float, default=0.0, help="also items within N s (neighbours of a cut)")
     a.set_defaults(fn=cmd_at)
+    g = sub.add_parser("gaps", help="empty V1 spans to fill (THIEU slots + intro -> story 1 black excluded)")
+    g.add_argument("--tl", default="Edit", help="timeline name (default Edit)")
+    g.add_argument("--video", help="doc-edit video whose plan.json gives the THIEU slots (default: from project.txt)")
+    g.set_defaults(fn=cmd_gaps)
     fd = sub.add_parser("find", help="where files matching path fragments sit on Edit + Open")
     fd.add_argument("fragments", nargs="+")
     fd.set_defaults(fn=cmd_find)
@@ -391,9 +456,10 @@ def main(argv=None):
     cfg = load_config(args.config)
     from .align import AlignError
     from .resolve_conn import ResolveConnectionError
-    from .resolve_ops import OpsError, OverlapError
+    from .resolve_ops import OpsError, OverlapError, use_channel
     from .timestamps import TimestampError
-    try:
+    try:  # vo-sync on D:\Chann_N_*\... works in that channel's bin / "Edit" (multi-channel project)
+        use_channel(next((v for v in vars(args).values() if isinstance(v, str) and "chann_" in v.lower()), None))
         return args.fn(args, cfg)
     except OverlapError as e:
         elog(f"ERROR (overlap): {e}\n-> shorten/move those timestamps, or re-run with --on-overlap push|trim")

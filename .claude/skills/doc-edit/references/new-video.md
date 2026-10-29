@@ -1,6 +1,9 @@
 ## New video: `/doc-edit <audios-folder> <amazon|africa>`
 
-Region missing or another word -> ask which, stop (SKILL.md "Region").
+Region = the video folder's prefix (`amazon_` / `africa_`) or the command's word; neither -> ask, stop (SKILL.md
+"Region"). Several audios folders (one per channel, user 2026-10-25): one agent per video runs B (brief, beats, plan,
+prompts) in parallel; A and place of the videos run one after the other in the day project, each on its channel's
+"Edit" (SKILL.md "Day project").
 
 `<video>` = the folder's parent (`D:\Chann_1_shadowCanopy\amazon_2\audios` -> `amazon_2`); outputs land in that
 video folder. Two jobs in parallel: the narration is one background command (A), the plan + prompts (B) are what
@@ -23,7 +26,8 @@ which, stop. Then:
 - `<video>\plan.md` already there and the audio is new -> A only (the plan is done; `/doc-edit plan` afterwards
   only if the user wants exact VO ● marks).
 - A: Resolve's current project = `<video>` (case-insensitive; channel form `c2_africa1` = folder `africa_1`, the
-  user names it in the command) with a timeline "Edit" -> `run`; anything else
+  user names it in the command) with a timeline "Edit", or the day project `vid_DDMMYY` with bin `Chann_N` and its
+  "Edit" -> `run`; anything else
   (closed, other project) -> `analyze` (Whisper only, Resolve untouched) and the reply asks the user to open
   project `<video>`; on their "ok" run `vo-sync apply`. Never put A2 into another project.
 
@@ -32,7 +36,9 @@ which, stop. Then:
     .venv/Scripts/python.exe -m dvr_cowork vo-sync run "<folder>/mp3" "<folder>/<timestamp>.md"
     (old style: "<folder>/<audio>" instead of "<folder>/mp3")
 
-Bash `run_in_background`, then go straight to B; never poll it. With `mp3\` there is no Whisper: files 1..n must
+Narrator from 0:03.6 (user 2026-10-25): a timestamp file starting earlier is shifted as a whole (0:00.6 -> every line
++3.0 s, the `first line moved` log line); plan.py takes the sentence times from vo-sync's plan.json, so videos synced
+before keep theirs. Bash `run_in_background`, then go straight to B; never poll it. With `mp3\` there is no Whisper: files 1..n must
 match the n timestamp lines exactly (else it names the missing/extra numbers and stops), each file's speech onset
 is measured, `.work/<video>_mp3/plan.json` written in seconds (all B3 needs); then it imports the files into bin
 "4. Audio/Narrator", backs up "Edit" and lays file n as one A2 item with its onset on timestamp n. (Old style: Whisper
@@ -156,8 +162,8 @@ late: the timestamps or the take need a look), `boundary_uncertain` (old style: 
      action,sex,age,outcome,phase --subject <animal> --sample 60` + the tag loop, re-run plan; else THIẾU ->
      missing prompts name the sex / age.
    - `hook blueprint:` must say ok for an intro > 0:30.
-   - Ledger: clips of the last 6 checked videos of the workspace are never matched; `recent ledger` line = slots
-     lost, by character. Inside one video a clip may serve 3 slots over Edit + Open together, each a different part,
+   - Ledger: clips of the last 6 checked videos of the workspace are never matched on slots before 15:00
+     (any clip after it, user 2026-10-25); `recent ledger` line = slots lost before 15:00, by character. Inside one video a clip may serve 3 slots over Edit + Open together, each a different part,
      >= 2 min apart (edit-grammar Source); parts already on "Open" are read from Resolve (`open:` line).
    - Character WEAK slots (top 3 candidates in stdout): in a new-video run keep plan.py's pick (speed; the user
      reviews plan.md), except those starting before 1:30: judge them always by the opening's hard rejects and
@@ -172,7 +178,7 @@ late: the timestamps or the take need a look), `boundary_uncertain` (old style: 
      clips / usage); cross-video questions (THIẾU that recur, music reused in other videos, unused tracks) =
      `library_db.py query "SQL"`, never a script over the JSON.
 4. Missing prompts: read `references/missing-prompts.md` and do its steps 1-5 on this plan, the screenplay from B1
-   -> `<video>/missing_prompts.txt`. No THIẾU slot -> skip, say so.
+   -> `<video>/missing_prompts.txt` (parts `## THIEU` + `## WEAK`). No THIẾU and no WEAK slot -> skip, say so.
 
 User edits later -> change the beats part (old videos: spec.txt), expand, re-run (`/doc-edit plan`); never hand-edit plan.json.
 
@@ -195,7 +201,7 @@ User edits later -> change the beats part (old videos: spec.txt), expand, re-run
 ### Place (same run)
 As soon as A2 is on and plan.json written: `place.py <video> --skip-intro` (empty tracks; not empty -> stop, report).
 `--skip-intro` (user 2026-10-23): V1, audio and markers start at story 1 (the plan's intro end); 0:00-intro stays
-empty, the user and Claude cut the intro together later, so its music / beat / highlight lines are not a blocker. Send the two
+empty for `/doc-edit intro` (the last step, references/intro.md), so its music / beat / highlight lines are not a blocker. Send the two
 file paths in a message the moment missing_prompts.txt exists (the user starts generating), then go on. Place waits
 for A to finish (the two never write to Resolve at once); Resolve not on `<video>` -> no place, say so. The reply
 starts with the place lines (backup, V1 placed, red THIẾU markers), then parts 1-4 above. No "next step" line: the

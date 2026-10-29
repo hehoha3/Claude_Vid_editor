@@ -77,3 +77,14 @@ def parse_timestamp_file(path: str | Path, section: str = "english") -> list[Cue
     if errors:
         raise TimestampError("\n".join(errors))
     return cues
+
+
+VO_START = 3.6  # user 2026-10-25: the narrator speaks from 0:03.6; the opening shot holds the screen alone until then
+
+
+def to_vo_start(cues: list[Cue], start: float = VO_START) -> float:
+    """Shift every cue so the first lands on `start` when the file starts earlier (0:00.6 -> +3.0 s). -> shift."""
+    d = round(max(0.0, start - cues[0].t), 3) if cues else 0.0
+    for c in cues:
+        c.t = round(c.t + d, 3)
+    return d

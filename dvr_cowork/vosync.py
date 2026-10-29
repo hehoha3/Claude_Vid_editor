@@ -11,7 +11,7 @@ import numpy as np
 
 from .align import HOP, energy_db, match_cues, refine
 from .config import POINTER, ROOT, work_root
-from .timestamps import parse_timestamp_file
+from .timestamps import parse_timestamp_file, to_vo_start
 from .transcribe import load_audio, transcribe
 
 
@@ -84,6 +84,8 @@ def analyze(audio: str, ts_path: str, cfg: dict, log=print, transcript_json: str
         raise FileNotFoundError(f"timestamp file not found: {ts_path}")
 
     cues = parse_timestamp_file(ts_path)
+    if shift := to_vo_start(cues):  # whole narration later: the first sentence starts at VO_START
+        log(f"timestamps: first line moved to {cues[0].t:g}s, every line +{shift:g}s")
     log(f"timestamps: {len(cues)} lines, first {cues[0].t:g}s, last {cues[-1].t:g}s")
 
     if os.path.isdir(audio):
