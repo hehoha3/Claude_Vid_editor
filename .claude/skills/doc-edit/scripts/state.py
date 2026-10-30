@@ -6,8 +6,8 @@ starts from the user's own edits, less typing).
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/state.py --selftest
 
 Snapshot = items of timelines Edit + Open (track, start, end, file; read only, the user's timeline restored) when
-the open Resolve project is <video>, files of D:/AI_video/_check and _nologo, and the mtimes of the files the user
-edits (spec.txt, plan.md, missing_prompts.txt, the hide-logo check list, the audios folder). Stored in
+the open Resolve project holds <video> (own project, or day project vid_DDMMYY: only its Chann_N timelines), files of
+D:/AI_video/_check and _nologo, and the mtimes of the files the user edits (spec.txt, plan.md, missing_prompts.txt, the hide-logo check list, the audios folder). Stored in
 .work/doc_edit/<video>/state.json; diff prints the last step and every change, grouped, short.
 """
 import datetime as dt, json, sys
@@ -21,14 +21,20 @@ AI = Path(load_config()["paths"]["ai_video"])
 SHOW = 8  # items listed per group, the rest counted
 
 
-def timelines(video):
-    """{"Edit": {"V1@12.00": "file | end 15.20"}, "Open": {...}} or a note why Resolve was not read."""
+def timelines(video, audios=None):
+    """{"Edit": {"V1@12.00": "file | end 15.20"}, "Open": {...}} or a note why Resolve was not read. The open project
+    must hold <video>: its own project, or the day project vid_DDMMYY (place.py's project.txt, plan.same_project) where
+    only the video's channel timelines are read (DVR_CHANNEL from its D:/Chann_N_* path, never the other "Edit")."""
     try:
+        import plan
         from dvr_cowork.cli import _items, _timelines
         from dvr_cowork.resolve_conn import connect
+        from dvr_cowork.resolve_ops import use_channel
+        pj = ROOT / ".work" / "doc_edit" / video / "plan.json"
+        use_channel(audios or (json.loads(pj.read_text("utf-8")).get("video_dir") if pj.exists() else None))
         pr = connect(load_config()).GetProjectManager().GetCurrentProject()
-        if not pr or pr.GetName().lower() != video.lower():
-            return f"not read (open project {pr and pr.GetName()!r} is not {video!r})"
+        if not pr or not plan.same_project(pr.GetName(), video):
+            return f"not read (open project {pr and pr.GetName()!r} does not hold {video!r})"
         return {t.GetName(): {f"{tr}@{a:.2f}": f"{Path(p).name} | end {b:.2f}" for tr, a, b, _, p in _items(t)}
                 for t in _timelines(pr, {"edit", "open"})}
     except Exception as e:  # noqa: BLE001  Resolve closed: files are still compared
@@ -64,7 +70,7 @@ def main(cmd, video, step=None, audios=None):
     if cmd == "snap":
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps({"step": step, "at": dt.datetime.now().isoformat(timespec="seconds"), "audios": audios,
-                                 "timelines": timelines(video), "files": files(video, audios)}, ensure_ascii=False,
+                                 "timelines": timelines(video, audios), "files": files(video, audios)}, ensure_ascii=False,
                                 indent=0), "utf-8")
         print(f"state: {video} step '{step}' recorded")
         return
@@ -73,7 +79,7 @@ def main(cmd, video, step=None, audios=None):
         return
     s = json.loads(p.read_text("utf-8"))
     print(f"state: {video} last step '{s['step']}' at {s['at']}")
-    now_t, now_f = timelines(video), files(video, s.get("audios"))
+    now_t, now_f = timelines(video, s.get("audios")), files(video, s.get("audios"))
     if isinstance(now_t, str) or isinstance(s["timelines"], str):
         print(f"timelines: {now_t if isinstance(now_t, str) else s['timelines']}")
     else:
@@ -107,7 +113,7 @@ def stage(vdir, done):
     if last in ("P6", "color"):
         return "coloured", "/doc-edit done"
     if miss.exists() and miss.stat().st_size > 1:
-        return "planned, prompts out", "generate -> /doc-edit ingest, fill"
+        return "planned, prompts out", "Case 1: clips in _check -> /doc-edit ingest --fill / Case 2: /doc-edit fill-THIEU"
     return "planned", "/doc-edit fill, color"
 
 

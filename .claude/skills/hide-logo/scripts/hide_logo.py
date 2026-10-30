@@ -58,6 +58,32 @@ FEATHER, SOFT = 12, 1.5        # clone-patch edge fade (px) and blur sigma: rais
 HAZE = 9                      # blur sigma of the soft haze over patch + margin: raise if seams show, lower if it smears
 FPS_END = 8                   # decode rate for --end (logo that appears late in the clip)
 BUSY = 4                     # texture level from which a delogo patch can be noticed -> listed for review
+# known logos (user 2026-10-30, amazon_291026): gradient templates at 640x360 in ../logos/<name>.npy, matched
+# multi-scale in each corner band before the static-edge test, which loses to static scenery (a tree trunk scored
+# 6891 edges vs a BBC logo's 34). Logo clips scored 0.52-0.59, clean ones <= 0.40; a hit must sit at the corner.
+LOGOS = Path(__file__).resolve().parent.parent / "logos"
+KNOWN_HI, BAND_W, BAND_H, ANCHOR = 0.47, 160, 80, (20, 16)   # NCC, corner band (px), max gap to the frame edge (x, y)
+
+
+def known_logo(med):
+    """Best known logo on the median frame `med` (640x360): (score, (x0, y0, x1, y1), name) or None below KNOWN_HI."""
+    import cv2
+    g, best = grad(med).astype(np.float32), None
+    for f in sorted(LOGOS.glob("*.npy")):
+        tpl = np.load(f).astype(np.float32)
+        for c, (y, x) in {"tl": (0, 0), "tr": (0, g.shape[1] - BAND_W), "bl": (g.shape[0] - BAND_H, 0),
+                          "br": (g.shape[0] - BAND_H, g.shape[1] - BAND_W)}.items():
+            band = g[y:y + BAND_H, x:x + BAND_W]
+            for s in np.arange(0.7, 1.45, 0.05):
+                t = cv2.resize(tpl, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
+                if t.shape[0] >= BAND_H or t.shape[1] >= BAND_W:
+                    continue
+                _, v, _, (lx, ly) = cv2.minMaxLoc(cv2.matchTemplate(band, t, cv2.TM_CCOEFF_NORMED))
+                bx = (x + lx, y + ly, x + lx + t.shape[1], y + ly + t.shape[0])
+                gap = (min(bx[0], W - bx[2]), min(bx[1], H - bx[3]))   # distance to the nearest frame edges
+                if v >= KNOWN_HI and gap[0] <= ANCHOR[0] and gap[1] <= ANCHOR[1] and (not best or v > best[0]):
+                    best = (round(float(v), 3), bx, f"{f.stem} {c}")
+    return best
 
 
 def probe(path):
@@ -124,8 +150,8 @@ def logo_box(g, x, y, w, h):
 def timeline_files(name=None):
     """Read only: [(file path, start s, end s)] of every V1 item of timeline <name> (default the current one)."""
     project = connect().GetProjectManager().GetCurrentProject()
-    tl = project.GetCurrentTimeline() if not name else next(
-        t for t in (project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)) if t.GetName() == name)
+    from dvr_cowork.resolve_ops import find_timeline
+    tl = project.GetCurrentTimeline() if not name else find_timeline(project, name)  # day project: DVR_CHANNEL's
     fps, t0 = float(tl.GetSetting("timelineFrameRate")), tl.GetStartFrame()
     out = []
     for it in tl.GetItemListInTrack("video", 1) or []:
@@ -247,9 +273,9 @@ def run_list(path):
 
 
 def edit_timeline():
+    from dvr_cowork.resolve_ops import find_timeline
     project = connect().GetProjectManager().GetCurrentProject()
-    tl = next((t for t in (project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1))
-               if t.GetName() == TIMELINE), None)
+    tl = find_timeline(project, TIMELINE)  # day project: the DVR_CHANNEL one; two "Edit" without it -> stops
     if not tl:
         sys.exit(f"Timeline '{TIMELINE}' not found")
     project.SetCurrentTimeline(tl)
@@ -282,9 +308,10 @@ def mark(files_out):
 
 def nologo_path(src):
     """One flat folder on D: (Z: is READ + COPY only); a name already used by another original gets its folder name."""
-    dst = NOLOGO / Path(src).name
+    base = NOLOGO if Path(src).drive.upper() == "D:" else NOLOGO / "z"  # Z: originals never change: their copy is THE file (user 2026-10-30)
+    dst = base / Path(src).name
     if os.path.normcase(manifest().get(str(dst), src)) != os.path.normcase(src):
-        dst = NOLOGO / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
+        dst = base / f"{Path(src).stem}__{Path(src).parent.name}{Path(src).suffix}"
     assert dst.drive.upper() != "Z:", dst
     dst.parent.mkdir(parents=True, exist_ok=True)
     return dst
@@ -500,10 +527,10 @@ def part_logo(src, corner, heads):
     return (c, bx, 0.0, t) if head else (c, bx, t, None)
 
 
-def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="minimax"):
-    """One shot name or video path: find its static logo in a corner (persistent edges over 8 frames), delogo,
-    relink the V1 clip using it (if any). endpart=True: logo appears late in the clip; head=True: logo only at
-    the start of the clip, gone later."""
+def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="minimax", known=None):
+    """One shot name or video path: find its static logo in a corner (a known logo template first, else persistent
+    edges over 8 frames), delogo, relink the V1 clip using it (if any). endpart=True: logo appears late in the clip;
+    head=True: logo only at the start of the clip, gone later."""
     _, tl = edit_timeline()
     items = tl.GetItemListInTrack("video", 1)
     if Path(name).is_file():
@@ -519,6 +546,12 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="mi
     h2, w2 = H // 2, W // 2
     quads = {"tl": (0, 0), "tr": (0, w2), "bl": (h2, 0), "br": (h2, w2)}
     start, end = 0.0, None
+    if not (manual or endpart or head):
+        known = known or (known_logo(med) if (med := sample(src)[0]) is not None else None)
+        if known:  # a known logo template (logos/*.npy) beats the edge test: its box, 2 px around
+            b = known[1]
+            manual = [(max(0, b[0] - 2), max(0, b[1] - 2), min(W, b[2] + 2), min(H, b[3] + 2))]
+            print(f"  known logo {known[2]} (NCC {known[0]})")
     if manual:   # --box x0,y0,x1,y1 [x0,y0,x1,y1 ...] at 640x360: semi-transparent logos the edge detector misses
         bx, corner = manual[0], "manual"
     elif endpart or head:
@@ -573,18 +606,22 @@ def at_clip(tc, corner=None, fill="minimax"):
             continue
         src = it.GetMediaPoolItem().GetClipProperty("File Path")
         src = original_of(src)
-        _, per = sample(src)
+        med, per = sample(src)
         if per is None:
             continue
         score = max(int(np.count_nonzero(per[y:y + h2, x:x + w2])) for c, (y, x) in quads.items() if c in (corner or quads))
+        known = known_logo(med)
         span = f"{(it.GetStart() - t0) / fps:.1f}-{(it.GetEnd() - t0) / fps:.1f}s"
-        print(f"  candidate {span} {Path(src).name}: static edges {score}")
-        # a reported time is usually where the shot starts: a clip starting at/after it wins any logo, a neighbour
-        # that ended there only if it alone shows one (2026-10-12 shot_068 / landscape were picked by mistake)
-        rank = (score >= 20 and it.GetStart() >= fr - pad, score)
+        print(f"  candidate {span} {Path(src).name}: static edges {score}"
+              + (f" | known logo {known[2]} {known[0]}" if known else ""))
+        # a known logo wins; else a reported time is usually where the shot starts: a clip starting at/after it wins
+        # any logo, a neighbour that ended there only if it alone shows one (2026-10-12 shot_068 / landscape mistake)
+        rank = (known[0] if known else 0, score >= 20 and it.GetStart() >= fr - pad, score)
         if best is None or rank > best[2]:
-            best = (score, src, rank)
+            best = (score, src, rank, known)
         srcs.append(src)
+    if best and best[3]:
+        return one_clip(best[1], corner, fill=fill, known=best[3])
     if best and best[0] >= 20:
         return one_clip(best[1], corner, fill=fill)
     # no logo through the whole clip: one shown only at the start (head) or popping in late (end)
@@ -744,6 +781,14 @@ def overwrite_all():
     n = sum(_relink(project, {c, o}, o) for c, o, _ in done)
     print(f"overwritten {len(done)}/{len(jobs)} originals | relinked {n} media pool item(s) | "
           f"project '{name}' reopened on '{cur}'" + tail)
+    # the reopen drops V1 fades set by the API (2026-10-30): put back the 4 black fades of every video of this project
+    sys.path.insert(0, str(ROOT / ".claude/skills/doc-edit/scripts"))
+    import place
+    for p in sorted((ROOT / ".work" / "doc_edit").glob("*/project.txt")):
+        if p.read_text("utf-8").split("/")[0].strip().lower() == name.lower() and (p.parent / "plan.json").exists():
+            print(place.black_fades(p.parent.name))
+    if tl:
+        project.SetCurrentTimeline(tl)
 
 
 if __name__ == "__main__":

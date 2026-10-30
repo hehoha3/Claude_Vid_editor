@@ -10,7 +10,7 @@ Never open images, never ask the user to click in Resolve.
 
 **Copies:** every logo-free copy (D: and read-only Z: sources) goes to `D:\AI_video\_nologo\` (flat; scan-source and
 process-ai-video skip it), recorded in `.work/hide_logo/nologo.json` (copy -> original). Env `NOLOGO_DIR` = per-run
-override (africa: `D:\AI_video\_africa\_nologo`). Originals stay untouched until the project is Done ("Overwrite at
+override (africa: `D:\AI_video\_africa\_nologo`). Copies of Z: originals go to `_nologo\z\` (user 2026-10-30) and stay: plan.py load_clips uses that copy instead of the Z: file (matched by the path after `\Unseen\`, UNC or Z:). Originals stay untouched until the project is Done ("Overwrite at
 Done"). Re-running on a relinked clip always reads the original.
 
 ## Scan: `/hide-logo <folder>` (no argument -> ask for a folder or a shot)
@@ -57,6 +57,18 @@ the original.
   `hide_logo.py "<path>" --box 566,286,594,314`. Other resolution -> scale the box by the same ratios; unsure -> one
   corner crop (`crop=160:90:480:270` of the 640x360 frame, x4) to confirm, then the same crop of the `_nologo` copy once.
 
+- **"logo BBC"** (user 2026-10-30, amazon_291026, 1920x1080 AI clips): three white squares "B B C", top-left
+  corner, whole clip; at 640x360 ~(7,3)-(45,18) (some clips (0..9,6)-(32..43,20): scale 0.9-1.2). Template
+  `logos/bbc.npy`: `known_logo()` matches it in every `--at` / one-shot run before the static-edge test (static
+  scenery = a tree trunk outscored it and got inpainted, 01:22 / 12:56); 8/8 clips right. Clean ones <= 0.40, logos
+  >= 0.52 (`KNOWN_HI` 0.47). Miss -> `--box 0,3,50,21`.
+- **Old-delogo residue** ("đã xóa nhưng chưa sạch", user 2026-10-30): horizontal smeared streaks over the old logo
+  area (an earlier ffmpeg delogo baked into the original, e.g. both frogs at amazon_291026 05:36): no static logo
+  left, `--at` says FAILED -> `hide_logo.py "<file>" --box 0,3,74,22` (BBC area + the smear).
+- New logo kind confirmed by the user -> add its template: the median-frame gradient crop of one clean example
+  (`grad(sample(p)[0])[y0-2:y1+3, x0-2:x1+3]`) saved as `logos/<name>.npy`, then a line here.
+- In a day project `vid_DDMMYY` run every Resolve command with `DVR_CHANNEL=Chann_N` (two "Edit": it stops without).
+
 ## Logo at timeline positions ("shot ở 21:38 và 05:12 có logo góc trên trái")
 The user checks the result in Resolve: run it, reply with the output lines; no stills, no questions, no overwrite
 question.
@@ -90,7 +102,8 @@ list). Only on "có"/"yes":
 
 `--overwrite-all` drives Resolve itself: saves + closes the project (Resolve holds the files open), each copy replaces
 its original, reopens the project on the same timeline, relinks to the original paths, moves each clip's tags / YOLO
-cache / ledger id to the new content hash (no re-tag, no rescan). File still locked after the close -> it quits
+cache / ledger id to the new content hash (no re-tag, no rescan). The reopen drops V1 fades (2026-10-30): it then
+runs `place.black_fades` for every video of that project (one `black fades` line each). File still locked after the close -> it quits
 Resolve, finishes, says so: ask the user to reopen the project, then `--relink`. Z: originals are never overwritten
 (copy stays linked). Reply (Vietnamese): originals overwritten, relinked, kept (Z:), problems.
 `--relink`: open project -> items on an original point at its pending copy, items on an overwritten copy at the

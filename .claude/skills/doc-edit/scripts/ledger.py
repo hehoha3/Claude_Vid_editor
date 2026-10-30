@@ -176,11 +176,21 @@ LICENSED_ROOT = norm(r"Z:\Unseen\Sound") + os.sep  # licensed music library: a f
 MUSIC_ROOT = norm(r"D:\Music") + os.sep  # intro music (intro.py MUSIC_DIRS), Pixabay: no row/license = warning too
 
 
-def pixabay_row(p):
-    """Pixabay track <author>-<title>-<id>.mp3 -> [file, license txt, title, author] from the *-<id>-license.txt
-    beside it (user 2026-10-29: the intro music must be in audio_licenses.md), else None."""
+def pixabay_license(p):
+    """License txt beside a Pixabay track <author>-<title>-<id>.mp3: any *.txt naming that id (*-<id>-license.txt,
+    *-<id>.txt ..., user 2026-10-30; "license" names first), else one whose "Audio File ID" is it; None without."""
     m = re.search(r"-(\d+)$", Path(p).stem)
-    lic = m and next(Path(p).parent.glob(f"*-{m[1]}-license.txt"), None)
+    if not m:
+        return None
+    txts = sorted(Path(p).parent.glob("*.txt"), key=lambda t: ("license" not in t.name.lower(), t.name))
+    return next((t for t in txts if re.search(rf"(?<!\d){m[1]}(?!\d)", t.stem)), None) or next(
+        (t for t in txts if re.search(rf"Audio File ID:\s*{m[1]}(?!\d)", t.read_text("utf-8", "replace"))), None)
+
+
+def pixabay_row(p):
+    """Pixabay track -> [file, license txt, title, author] from its license txt (pixabay_license; user 2026-10-29:
+    the intro music must be in audio_licenses.md), else None."""
+    lic = pixabay_license(p)
     if not lic:
         return None
     t = [x.strip() for x in lic.read_text("utf-8", "replace").splitlines()] + [""]
@@ -270,6 +280,9 @@ def render_done(project, out_dir, timeline="Edit", name=None):
     if (Path(out_dir) / f"{name}.mp4").exists():
         print(f"render: {name}.mp4 already in {out_dir}, not rendered again")
         return
+    if (ROOT / ".work" / "doc_edit" / Path(out_dir).name / "plan.json").exists():  # the 4 black fades, before any render
+        import place
+        print(place.black_fades(Path(out_dir).name))
     tl = find_timeline(project, timeline)  # day project: the channel's own one (DVR_CHANNEL)
     if not tl:
         raise SystemExit(f'no timeline "{timeline}" to render: nothing changed')
@@ -391,6 +404,14 @@ def selftest():
     assert rows == {norm(r"Z:\S\a.wav"): [r"Z:\S\a.wav", r"Z:\S\1.pdf", "x"]}, rows
     assert merge_spans([(70, 90), (10, 20), (20.5, 30)]) == [[10, 30], [70, 90]]
     assert _clock(65.4) == "01:05" and _clock(3725) == "1:02:05"
+    for name, lic in (("a-x-492750", "schlagzeug-africa-492750-license.txt"), ("b-y-376385", "y-376385.txt"),
+                      ("c-z-111", "cert.txt")):  # Pixabay license by id in the name, or by the id inside
+        (tmp / f"{name}.mp3").touch()
+        (tmp / lic).write_text("Licensor's Username:\nhttps://pixabay.com/users/au-9/\n\nAudio File Title:\nT\n\n"
+                               f"Audio File ID:\n{name.rsplit('-', 1)[1]}\n", "utf-8")
+        assert pixabay_row(tmp / f"{name}.mp3")[1:] == [str(tmp / lic), "T", "au"], name
+    (tmp / "d-w-4927.mp3").touch()
+    assert pixabay_license(tmp / "d-w-4927.mp3") is None  # 4927 is not 492750
     h = tmp / "current.md"
     h.write_text("# H\n\nUpdated: 2000-01-01\n\nLast completed:\n\n- old\n", "utf-8")
     handoff("done v (W)", h)

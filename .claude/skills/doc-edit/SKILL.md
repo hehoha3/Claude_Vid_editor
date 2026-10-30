@@ -29,6 +29,37 @@ with the sub-bins 1-7 and its own timeline "Edit" in `Chann_N/6. Timeline`. The 
 "Edit" and no channel -> the script stops (never a guess). A project without `Chann_*` bins works as before.
 Parallel: the file work of each video (brief, beats, plan, prompts) in its own agent at once; Resolve writes
 (vo-sync, place, intro, color) one at a time: they share the current timeline / bin of one Resolve.
+## After the prompts: Case 1 / Case 2 per video (user 2026-10-30, `input/Claude_Vid_editor_V2_Architecture_*.md`)
+`/doc-edit <audios...>` ends when each video's `missing_prompts.txt` + `shot_manifest.csv` are out: reply per video
+THIẾU count + timecode ranges + prompt numbers, then wait. Waiting never turns into a fallback; Claude never opens
+Muse / Chrome or generates footage (the user does, by hand). State (`dvr_cowork/jobs.py`, SQLite, Python only):
+`python -m dvr_cowork.jobs status` = each recent video's stage (WAITING_FOR_USER until a decision), decision, last
+Resolve write (INTERRUPTED / FAILED + its backup = rollback point). Then the user decides per video; record it first
+with `jobs decide <video> ingest|fill-existing "<their words>"`:
+- **Case 1** ("đã generate / lưu clip vào `_check`, scan tag organize fill") = `/doc-edit ingest --fill` for the named
+  video(s), after `jobs check <video>`: only new files that finished copying (size stable, the last second decodes);
+  `still copying` -> wait, ask again; `broken` -> list them for the user to remove before ingest (never imported);
+  `SHARED _check` -> ask which clip is whose.
+  Clip -> video / slot: `shot_manifest.csv` (`save_folder`, `slots`) is the hint, the Resolve timeline the truth; unclear
+  which video a clip is for -> list the files, ask. Only open gaps are filled, hand edits kept. THIẾU left -> report,
+  wait (never `fill-THIEU` on its own). Called again = only the new files.
+- **Case 2** ("không generate nữa, fill THIẾU bằng footage có sẵn") = the yes for `/doc-edit fill-THIEU <video>` of the
+  named video(s), no second ask. What is still THIẾU comes from Resolve (`dvr_cowork gaps` + markers), not the old plan.
+  Truth gates never loosen (species, sex / age the story needs, outcome, day / night, screen direction): no true clip
+  -> stays THIẾU with its reason, never a fake 100 %. After plan `--sub-broad`: `jobs fill-report <video>` (tiers
+  A exact / B strong / C context / D last resort, `any light` flags, THIẾU + refusals) = the reply: filled
+  (timecode -> clip, tier), compromises to look at, THIẾU left + why.
+- User says a placed clip is wrong ("clip X sai loài") -> `jobs reject <video> "<path fragment>" "<why>"`: plan.py drops
+  it for that video from then on (hard gates unchanged), then the user's step (plan / fill) as usual.
+- Mixed ("video 1 có clip trong `_check`, video 2 fill THIẾU") = each video its own case, its own channel
+  (`DVR_CHANNEL`), Resolve writes one after the other; a clip never goes to the other video's bin / timeline. Video
+  not named and several have THIẾU -> `state.py status` lines, ask which.
+- Fill is never a yes to render: intro, color, done stay the user's commands.
+- One Resolve writer at a time: `backup_timeline` holds a lock for the whole process; a second writer stops with
+  `another Resolve write is running (pid, script)` -> wait for its notification, never retry in a loop.
+- Cost check (user asks, or after a rule change): `jobs metrics --days=7` = Claude tokens per day (this workspace,
+  subagents included) + Resolve writes per script (median time, FAILED, interrupted).
+
 ## Region (user 2026-10-20)
 `/doc-edit <audios-folder> [amazon|africa]`: the video folder's name says it (`amazon_3`, `africa_251026`, user
 2026-10-25); neither name nor word -> ask, never guess. It becomes the spec's first line

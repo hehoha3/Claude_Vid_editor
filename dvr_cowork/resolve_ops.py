@@ -136,7 +136,10 @@ def tidy_timelines(project):
 def backup_timeline(project, tl, name):
     """Duplicate `tl` as `name` into bin "6. Timeline" (created if missing), then move any other timeline lying outside
     it there too (tidy_timelines; a failure there never blocks the backup), restore the current bin, keep `tl`
-    current. -> True when the copy was made."""
+    current. -> True when the copy was made. Every Resolve change starts here: one writer process at a time + the
+    write log (jobs.writer_begin, V2 spec; a second writer raises before anything changes)."""
+    from .jobs import writer_begin
+    writer_begin(project.GetName(), os.environ.get(CHANNEL_ENV), tl.GetName(), name)
     mp = project.GetMediaPool()
     root = mp.GetRootFolder()
     prev = mp.GetCurrentFolder()

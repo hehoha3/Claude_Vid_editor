@@ -35,13 +35,15 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
 1. Final check-timelines (ledger).
 2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of "Edit" (+ "Open" if it
    still exists) is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
-   `*-<id>-license.txt` beside the file; files under `Z:\Unseen\Sound` or `D:\Music` with no license -> warn.
+   license txt beside the file (`*-<id>-license.txt`, `*-<id>.txt` or any txt naming the id: `ledger.pixabay_license`); files under `Z:\Unseen\Sound` or `D:\Music` with no license -> warn.
    `<video folder>\audio_licenses.md` = one line per licensed file, film order:
    `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined),
    then the missing ones. No `licenses\` folder, no pdf copies. Envato licenses are per project: remind the user.
 3. Export: timeline "Edit" (user 2026-10-26: Master / Open are deleted; `--timeline <name>` for another) rendered with
    the Resolve preset "YouTube 1080 HEVC" (missing preset = stop) as `Done_<video>.mp4` into the video folder, waits;
    already there -> not rendered again. Subtitle tracks off for the render, back on after (no subtitles in the file).
+   Before it, `place.black_fades` checks the 4 V1 black fades and puts back a missing one (`black fades <video>: ...`
+   line; `NOT SET` -> say so, the render has no fade there).
 Resolve stays open; no relink, no folder move: the user moves the folder into `_done` himself (user 2026-10-26).
 
 After it: `hide_logo.py --pending`; copies listed -> ask only "Bạn có muốn ghi đè các file trong folder _nologo lên

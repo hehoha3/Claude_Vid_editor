@@ -595,6 +595,10 @@ ALTS = 4  # alternative clips per slot imported into the bins next to the chosen
 def load_clips(region):
     """Tagged clips of the region's video roots only (user 2026-10-20: an Africa film never gets Amazon footage)."""
     clips = []
+    nl = ROOT / ".work" / "hide_logo" / "nologo.json"  # user 2026-10-30: a logo-free copy of a Z: original is used instead of it
+    tail = lambda x: x.replace("/", "\\").lower().partition("\\unseen\\")[2] or x.lower()  # Z:\Unseen\.. = \\nas\share\Unseen\..  # noqa: E731
+    swap = {tail(o): c for c, o in (json.loads(nl.read_text("utf-8")).items() if nl.exists() else [])
+            if not o.upper().startswith("D:") and os.path.exists(c)}
     for name, (root, kind, source) in video_roots(region).items():
         if not index_of(root).exists():  # root never scanned yet (e.g. D:\AI_video\_africa before its first clip)
             continue
@@ -610,6 +614,7 @@ def load_clips(region):
             if t.get("caption"):
                 c["hold"] = held
                 c["abs"] = str(root / c["path"]); c["source"] = source; c["id"] = cid  # id = content hash, survives moves
+                c["abs"] = swap.get(tail(c["abs"]), c["abs"])
                 c["tags"]["species"] = [x.replace("_", " ") for x in c["tags"].get("species", [])]  # folder names
                 clips.append(c)
     return clips
@@ -1063,7 +1068,7 @@ def match(slots, clips, taken=None, look=None):
             want = set(f.get("sp", [])) - {"none"}
             tiers = [want, {x for w in want for x in LATE_COMPANION.get(w, ())}, None]
             light = {"light": f["light"]} if "light" in f else {}
-            for tier in tiers:
+            for k, tier in enumerate(tiers):
                 best = None
                 for c in clips:
                     if not src_ok(s, c) or hard(c, f, own=False)[0] or \
@@ -1083,7 +1088,8 @@ def match(slots, clips, taken=None, look=None):
                         best = (v, c, w)
                 if best:
                     v, c, cin = best
-                    take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute")
+                    take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute",
+                         tier=("species", "companion", "scenery")[k])  # jobs.py fill-report tiers
                     break
     if SUB_BROAD:  # tier 4, only on the user's "Sử dụng các option thay thế các slot THIEU" (user 2026-10-26): every
         # slot still THIẾU gets the nearest clip: the species itself (looser reuse) > kin (same library folder) > birds / butterflies /
@@ -1099,7 +1105,7 @@ def match(slots, clips, taken=None, look=None):
             done = False
             for keep_light in (True, False):
                 g = f if keep_light else {k: x for k, x in f.items() if k != "light"}
-                for tier in tiers:
+                for k, tier in enumerate(tiers):
                     best = None
                     for c in clips:
                         if not tier(c) or hard(c, g, own=False)[0] or \
@@ -1113,7 +1119,8 @@ def match(slots, clips, taken=None, look=None):
                             best = (v, c, w)
                     if best:
                         v, c, cin = best
-                        take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute (broad)")
+                        take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute (broad)",
+                             tier=("species", "kin", "birds/insects", "landscape")[k] + ("" if keep_light else ", any light"))
                         done = True
                         break
                 if done:
@@ -1601,6 +1608,11 @@ def main(folder, sem=True):
     slots = build([c.t for c in cues], end, blocks, intro)
     story_rules(slots, meta)
     clips = load_clips(region)
+    from dvr_cowork.jobs import rejected  # user feedback (V2 spec PR 4): clips rejected for this video, never again
+    if rej := rejected(video.name):
+        n = len(clips)
+        clips = [c for c in clips if not any(x in c["abs"].lower() for x in rej)]
+        print(f"rejected by the user for {video.name}: {n - len(clips)} clips out ({len(rej)} fragments)")
     looks = meta["look"] or any("look" in s["filter"] for s in slots)
     lmsg = ground_looks(clips) if looks else "ground look: off (no # LOOK / look=)"
     errs, side_share, short, long_, rwarn = [], 0, 0, 0, []

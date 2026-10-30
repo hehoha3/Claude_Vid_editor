@@ -11,7 +11,8 @@ or generate footage; AI video prompts only via `/doc-edit missing-prompts` (THI�
 `frames --at 01:10 02:05 --stats` (stills + scope numbers), `at 21:09 [--tl Open] [--audio] [--near 1]` (items, file,
 src_in at a time), `find <path fragment>` (where a file sits on Edit + Open), `gaps` (empty V1 spans to fill; THIEU + intro black excluded; run at every timeline check), `offline [--relink OLD NEW [--apply]]`
 (offline media; prefix relink keeps timeline edits), `backups [--keep 3 --apply]` (backup timelines make Resolve lag;
-pruning = user yes), `vo-sync run AUDIO TIMESTAMPS`. DaVinci MCP: general ops.
+pruning = user yes), `vo-sync run AUDIO TIMESTAMPS`, `-m dvr_cowork.jobs status|decide|check|fill-report|reject|metrics`
+(per-video state, Case 1 / Case 2, one Resolve writer). DaVinci MCP: general ops.
 Skills load on demand (listed by the harness).
 
 ## Rules
@@ -44,6 +45,10 @@ Skills load on demand (listed by the harness).
    project, timeline exists); library/audio -> `Z:\Unseen\Amazona` (africa: its roots); AI clips -> `D:\AI_video`; a video ->
    `D:\Chann_*\<video>` (+ files the step needs). Missing -> stop, tell the user what to open/connect. After: verify.
    A denied/failed action is never retried the same way.
+11. After `/doc-edit <audios...>` the prompts are out -> stop, wait; the user decides per video (user 2026-10-30):
+   Case 1 = clips put in `_check` -> `/doc-edit ingest --fill`; Case 2 = "không generate, fill THIẾU" = the yes for
+   `/doc-edit fill-THIEU` of that video. Never generate footage, open Muse / a browser, fall back on your own, or
+   render because of a fill. Each video by its own channel; Resolve writes one at a time (doc-edit SKILL.md).
 
 ## Past incidents (do not repeat)
 - `place.py --replace` to swap 1 clip wiped V1, A1, A3-A9 + grade (2026-10-10) -> rule 2.

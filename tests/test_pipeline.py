@@ -417,6 +417,7 @@ def test_scale():
 
 
 def main():
+    os.environ["DVR_JOBS_DB"] = str(Path(tempfile.mkdtemp()) / "jobs.sqlite3")  # mock writes never reach the real log
     cfg = load_config()
     with tempfile.TemporaryDirectory() as tmp:
         print("boundaries + flags");   plan, _ = test_boundaries_and_flags(cfg, tmp)
@@ -430,8 +431,50 @@ def main():
         print("timestamp parser");     test_timestamp_errors(tmp)
         print("scale");                test_scale()
     print("v1 gaps");                  test_v1_gaps()
+    print("state.py day project");     test_state_day_project()
     print("script self-tests");        test_script_selftests()
     print("\nALL TESTS PASSED")
+
+
+def test_state_day_project():
+    """state.py reads only the video's own channel "Edit" in a day project vid_DDMMYY (two videos, one per channel)."""
+    import json
+    import dvr_cowork.resolve_conn as rc
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".claude/skills/doc-edit/scripts"))
+    import plan, state
+    fake = FakeResolve()
+    pr = fake.pm.project
+    pr.GetName = lambda: "vid_301026"
+    e1, e2 = Timeline("Edit"), Timeline("Edit")
+    pr.timelines += [e1, e2]
+    for n, t in ((1, e1), (2, e2)):  # Chann_N/6. Timeline/Edit
+        ch, tb = Folder(f"Chann_{n}"), Folder("6. Timeline")
+        ch.subs.append(tb); tb.clips.append(t.mpi); pr.pool.root.subs.append(ch)
+    pr.timelines = [t for t in pr.timelines if t.GetName() != "Edit" or t in (e1, e2)]  # drop the plain mock "Edit"
+    e2.items[("audio", 2)].append(TItem(MPI(r"D:\x\vo2.wav"), 86400 + 24, 48, 0))
+    old = (rc.connect, plan.ROOT, state.ROOT, os.environ.pop("DVR_CHANNEL", None))
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            rc.connect, plan.ROOT, state.ROOT = (lambda cfg=None: fake), Path(tmp), Path(tmp)
+            work = Path(tmp) / ".work" / "doc_edit" / "africa_9"
+            work.mkdir(parents=True)
+            (work / "plan.json").write_text(json.dumps({"video_dir": r"D:\Chann_2_x\africa_9"}), "utf-8")
+            (work / "project.txt").write_text("vid_301026/Chann_2\n", "utf-8")  # written by place.py
+            got = state.timelines("africa_9")
+            assert got == {"Edit": {"A2@1.00": "vo2.wav | end 3.00"}}, got  # Chann_2's Edit, not Chann_1's
+            assert pr.current is pr.timelines[0], "user's timeline restored"
+            os.environ.pop("DVR_CHANNEL")
+            got = state.timelines("africa_9", r"D:\Chann_1_y\africa_9\audios")  # same name, other channel's day
+            assert isinstance(got, str) and "does not hold" in got, got
+            os.environ.pop("DVR_CHANNEL")
+            pr.GetName = lambda: "vid_291026"  # yesterday's day project: never read
+            assert "does not hold" in state.timelines("africa_9"), "other day project read"
+        finally:
+            rc.connect, plan.ROOT, state.ROOT = old[:3]
+            os.environ.pop("DVR_CHANNEL", None)
+            if old[3]:
+                os.environ["DVR_CHANNEL"] = old[3]
+    print("  day project: only Chann_2/Edit read, other channel / other day refused, timeline restored")
 
 
 def test_v1_gaps():
@@ -448,7 +491,7 @@ def test_script_selftests():
     """Every skill / tool script with a --selftest (no Resolve, no Postgres, no model downloads) passes it."""
     import subprocess
     root = Path(__file__).resolve().parent.parent
-    files = sorted(root.glob(".claude/skills/*/scripts/*.py")) + [root / ".work/tools/library_db.py"]
+    files = sorted(root.glob(".claude/skills/*/scripts/*.py")) + [root / ".work/tools/library_db.py", root / "dvr_cowork/jobs.py"]
     files = [f for f in files if f.exists() and "--selftest" in f.read_text("utf-8")]
     for f in files:
         r = subprocess.run([sys.executable, str(f), "--selftest"], capture_output=True, text=True, encoding="utf-8",

@@ -5,8 +5,10 @@ the intro shots on its hits / bars and place.py --intro lays 0:00 -> story 1 on 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py <video> "<music file>"  fit the user's track
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py --selftest
 
-Pick (measured, never listened): candidates = the library's music (plan.py AUDIO_POOL[7], blocked files out) +
-D:\Music; tracks already on this video's A7 after the intro are skipped. An intro wants an early climax (loud within
+Pick (measured, never listened): candidates = D:\Music tracks with their Pixabay license beside them (user
+2026-10-30; the library's music only when there is none); tracks already on this video's A7 after the intro and the
+intro tracks of the 6 latest videos of the same channel and of this day project are skipped (user 2026-10-30); only 'căng, dồn dập' tracks (driving():
+tense name + >= 90 BPM or >= 9.5 hits / 10 s + energy holds >= 85 %) are ranked, all when none is; the pick's license line is printed (-> audio_licenses.md). An intro wants an early climax (loud within
 ~20 s) or a quiet, mysterious start that rises before ~45 s, hits to cut on (B3+ per 10 s), a steady tempo and energy
 that holds. Profiles are cached in .work/library/intro_music.json (path + size + mtime).
 Fit: the track's own start and ending stay; whole bars are cut out of the middle (track too long) or repeated there
@@ -14,7 +16,7 @@ Fit: the track's own start and ending stay; whole bars are cut out of the middle
 Output: .work/doc_edit/<video>/intro_music.json only (source pieces + fades); no audio file is written (user
 2026-10-26: all music work happens on the timeline) - place.py --intro lays the pieces on A7.
 """
-import json, math, re, sys
+import json, math, os, re, sys
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +26,9 @@ ROOT = HERE.parents[3]
 sys.path.insert(0, str(HERE))
 MUSIC_DIRS = [Path(r"D:\Music")]  # user 2026-10-25: intro music outside the indexed library
 EXTS = {".mp3", ".wav", ".m4a", ".flac", ".aac", ".ogg"}
-HINT = re.compile(r"open|intro|trailer|epic|tense|suspense|dread|action|drum|war|dark|myster")
+HINT = re.compile(r"open|intro|trailer|epic|tense|tension|suspense|dread|action|drum|war|dark|myster")
+RECENT = 6  # user 2026-10-30: never the intro music of the 6 latest videos of the same channel (Chann_N)
+DRIVE_BPM, DRIVE_HITS, DRIVE_HOLD = 90, 9.5, 0.85  # user 2026-10-30: "căng, dồn dập" = tense name + fast or dense + holds
 CACHE = ROOT / ".work" / "library" / "intro_music.json"
 SR = 22050
 EARLY, RISE = 20.0, 45.0  # s: climax this early = "cao trào sớm"; a quiet start may rise until RISE
@@ -64,13 +68,47 @@ def score(p, path, T):
                  + 0.5 * bool(HINT.search(str(path).lower())), 2)
 
 
+def channel_of(work):
+    """'chann_2' from plan.json's video_dir D:/Chann_2_*/<video>, else None."""
+    p = work / "plan.json"
+    m = p.exists() and re.search(r"(?i)\bchann_(\d+)", json.loads(p.read_text("utf-8")).get("video_dir", ""))
+    return f"chann_{m[1]}" if m else None
+
+
+def recent_intros(doc, video, n=RECENT):
+    """Intro tracks to skip: the n latest other videos of the same channel (newest first by file time; user
+    2026-10-30) + the other videos of the same day project (two channels once got the same track)."""
+    ch, day = channel_of(doc / video), (doc / video / "project.txt")
+    day = day.read_text("utf-8").split("/")[0].strip().lower() if day.exists() else None
+    fs = sorted((f for f in doc.glob("*/intro_music.json") if f.parent.name != video),
+                key=lambda f: f.stat().st_mtime, reverse=True)
+    same = [f for f in fs if channel_of(f.parent) == ch][:n]
+    if day:
+        same += [f for f in fs if (f.parent / "project.txt").exists()
+                 and (f.parent / "project.txt").read_text("utf-8").split("/")[0].strip().lower() == day]
+    return {json.loads(f.read_text("utf-8"))["source"] for f in same}
+
+
+def driving(p, path):
+    """'căng, dồn dập' (user 2026-10-30): a tense / percussive name, fast (BPM) or dense hits, energy that holds."""
+    return bool(HINT.search(Path(path).stem.lower())) and (p["bpm"] >= DRIVE_BPM or p["hits10"] >= DRIVE_HITS)         and p["hold"] >= DRIVE_HOLD
+
+
 def candidates():
-    import plan
-    lib = [a["abs"] for a in plan.load_audio() if a["category"] in plan.AUDIO_POOL[7]]
+    """Intro music = D:\\Music tracks with their license beside them (user 2026-10-30; the license goes into
+    audio_licenses.md at check-timelines / done); the library's music (plan.py AUDIO_POOL[7]) only when there is none."""
+    import ledger
     from scan_source import audio_blocked
-    extra = [str(p) for d in MUSIC_DIRS if d.is_dir() for p in d.rglob("*") if p.suffix.lower() in EXTS
+    music = [str(p) for d in MUSIC_DIRS if d.is_dir() for p in d.rglob("*") if p.suffix.lower() in EXTS
              and not audio_blocked(str(p))]
-    return sorted(set(lib + extra))
+    lic = [p for p in music if ledger.pixabay_license(p)]
+    if len(lic) < len(music):
+        print(f"no license, skipped: {', '.join(Path(p).name for p in music if p not in lic)}")
+    if lic:
+        return sorted(lic)
+    import plan
+    print(f"no licensed track in {', '.join(map(str, MUSIC_DIRS))}: library music instead")
+    return sorted({a["abs"] for a in plan.load_audio() if a["category"] in plan.AUDIO_POOL[7]})
 
 
 def profiles(paths):
@@ -162,12 +200,14 @@ def main(video, music=None):
     else:
         body = {e["path"] for s in pj["slots"] if not s.get("intro") for e in s["audio"]
                 if e["track"] == 7 and e.get("status") == "OK"}
-        # never another video's intro music (two channels in one day project once got the same track)
-        other = {json.loads(f.read_text("utf-8"))["source"] for f in work.parent.glob("*/intro_music.json")
-                 if f.parent.name != video}
+        other = recent_intros(work.parent, video)
+        if other:
+            print(f"intro music of the {RECENT} latest videos of this channel + this day project skipped: {', '.join(Path(x).name for x in other)}")
         paths = [p for p in candidates() if p not in body | other]
         prof, bad = profiles(paths)
-        rank = sorted(prof, key=lambda p: -score(prof[p], p, T))
+        drive = [p for p in prof if driving(prof[p], p)]
+        print(f"tense + driving: {len(drive)} of {len(prof)}" + ("" if drive else " -> none: every candidate ranked"))
+        rank = sorted(drive or prof, key=lambda p: -score(prof[p], p, T))
         for p in rank[:5]:
             x = prof[p]
             form = "early" if x["climax"] <= EARLY else "quiet->rise" if x["quiet"] and x["climax"] <= RISE else "late"
@@ -189,6 +229,10 @@ def main(video, music=None):
         "len": round(T, 2), "how": how}, ensure_ascii=False, indent=1), "utf-8")
     print(f"music: {Path(music).name} ({p['len']:.0f}s, {p['bpm']} BPM, bar {bar:.2f}s) -> {len(pieces)} pieces "
           f"on A7, {T:.2f}s ({how})")
+    import ledger
+    r = ledger.pixabay_row(music)
+    print(f"license: {r[1]} ({r[2]} + {r[3]}) -> audio_licenses.md at check-timelines / done" if r else
+          "license: NONE found beside the track (not Pixabay?): check .work/audio_licenses.md before done")
 
 
 def selftest():
@@ -204,6 +248,19 @@ def selftest():
     assert fit_plan(100.0, 99.0, 2.0, 0.5)[0] == [(0.0, 100.0)]  # < 1 bar too long: only the tail goes
     p = {"climax": 10.0, "quiet": False, "hits10": 3.0, "conf": 0.4, "hold": 0.8, "len": 120.0}
     assert score(p, "x/epic.mp3", 90) > score(dict(p, climax=60.0), "x/epic.mp3", 90)  # early climax wins
+    q = dict(p, bpm=93.3, hits10=9.8, hold=0.89)
+    assert driving(q, "x/alec_koff-drums-tribal-492753.mp3") and not driving(q, "x/lnplusmusic-cyberpunk-614539.mp3")
+    assert not driving(dict(q, bpm=70, hits10=9.3), "x/suspense-background.mp3") and not driving(dict(q, hold=0.76), "x/war.mp3")
+    import tempfile, time
+    d = Path(tempfile.mkdtemp())
+    for k in range(10):  # v0-v7 channel 1, v8 channel 2 same day as v7, v9 channel 2 other day
+        (d / f"v{k}").mkdir()
+        (d / f"v{k}" / "intro_music.json").write_text(json.dumps({"source": f"m{k}"}), "utf-8")
+        (d / f"v{k}" / "plan.json").write_text(json.dumps({"video_dir": f"D:/Chann_{1 + (k > 7)}_x/v{k}"}), "utf-8")
+        os.utime(d / f"v{k}" / "intro_music.json", (time.time() + k, time.time() + k))
+    for k, day in ((7, "vid_1"), (8, "vid_1"), (9, "vid_2")):
+        (d / f"v{k}" / "project.txt").write_text(f"{day}/Chann_{1 + (k > 7)}\n", "utf-8")
+    assert recent_intros(d, "v7") == {"m6", "m5", "m4", "m3", "m2", "m1", "m8"}, recent_intros(d, "v7")
     print("selftest ok")
 
 
