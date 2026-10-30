@@ -40,6 +40,15 @@ SAT_HI, SAT_HI_AI = 0.46, 0.40  # mean saturation: above -> down (AI clips earli
 SAT_AIM, VIVID = 0.42, 1.10
 INTRO_K = 0.3               # intro shots: 30 % of every correction
 OUT = ROOT / ".work" / "grade"
+CACHE_DAYS = 14  # frame cache (match.FR) files unused this long are dropped at each plan (user 2026-10-30)
+
+
+def pkey(project):
+    """Plan / LUT folder name: the project, + the channel in a day project (user 2026-10-30: two channels of vid_DDMMYY
+    shared one light_plan.json and dry_auto_<frame>.cube names)."""
+    import os
+    ch = os.environ.get("DVR_CHANNEL")
+    return f"{project.GetName()}_{ch}" if ch else project.GetName()
 # golden grass: strength (1.0 = what the user approved at 02:25), +- shots looked at, share of golden day shots there,
 # "paler" = gold saturation below this share of the stretch's; never on water (would turn gold), never below hue 28
 DRY_K, DRY_WIN, DRY_SHARE, DRY_PALE, DRY_MINHUE, DRY_MINSAT = 1.0, 5, 0.6, 0.75, 28.0, 0.16
@@ -201,6 +210,12 @@ def write_dry_cube(path, d):
 
 
 def plan():
+    import time
+    old = [f for f in M.FR.glob("*.npy") if f.stat().st_mtime < time.time() - CACHE_DAYS * 86400]
+    for f in old:
+        f.unlink()
+    if old:
+        print(f"frame cache: {len(old)} files unused for {CACHE_DAYS} days dropped")
     pm, project, tl, rows = G.timeline()
     t_intro = intro_end(project.GetName()) * 24
     with ThreadPoolExecutor(6) as ex:
@@ -233,7 +248,7 @@ def plan():
                         before=dict(p50=round(float(r["st"]["p50"]), 3), sat=round(float(r["st"]["sat"]), 3)),
                         after=dict(p50=round(float(f["p50"]), 3), sat=round(float(f["sat"]), 3)),
                         dry=r.get("dry")))
-    d = OUT / project.GetName()
+    d = OUT / pkey(project)
     d.mkdir(parents=True, exist_ok=True)
     (d / "light_plan.json").write_text(json.dumps({"timeline": tl.GetName(), "shots": out}), "utf-8")
     sl = np.array([s["slope"] for s in out])
@@ -261,7 +276,7 @@ def plan():
 def apply():
     pm, project, tl, rows = G.timeline()
     q = {(s["start"], s["path"].lower()): s for s in
-         json.loads((OUT / project.GetName() / "light_plan.json").read_text("utf-8"))["shots"]}
+         json.loads((OUT / pkey(project) / "light_plan.json").read_text("utf-8"))["shots"]}
     miss = [r for r in rows if (r["start"], r["path"].lower()) not in q]
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
     bak = f"Edit_bak_light_{dt.datetime.now():%Y%m%d_%H%M%S}"
@@ -281,10 +296,10 @@ def apply():
         g = r["it"].GetNodeGraph()
         old = g.GetLUT(1) or ""
         if s.get("dry"):  # golden grass: own LUT per shot, after the CDL on node 1
-            cube = M.lut_dir(project.GetName()) / f"dry_auto_{s['start']:07d}.cube"
+            cube = M.lut_dir(pkey(project)) / f"dry_auto_{s['start']:07d}.cube"
             cube.parent.mkdir(parents=True, exist_ok=True)
             write_dry_cube(cube, s["dry"])
-            dry.append((g, f"Amazona/match/{project.GetName()}/{cube.name}"))
+            dry.append((g, f"Amazona/match/{pkey(project)}/{cube.name}"))
         elif "dry_auto_" in old:  # an earlier run's golden grass the new plan no longer wants
             g.SetLUT(1, "")
     project.RefreshLUTList()

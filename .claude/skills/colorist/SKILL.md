@@ -30,6 +30,10 @@ Read only the reference that fits the question:
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/dry_preview.py <project>   # golden-grass before/after
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply   # backup Edit_bak_light_<stamp>, CDL node 1
 
+Day project: all three with `DVR_CHANNEL=Chann_N` in front; plan + golden-grass LUTs then live under
+`<project>_<Chann_N>` (light.pkey, user 2026-10-30), so the two channels never share them. `plan` drops frame-cache
+files (`.work/grade/frames320`) unused for 14 days (CACHE_DAYS).
+
 **Per shot: one small CDL on node 1** (~1 min for 1000 shots, frame cache; no group look LUT):
 - toward its `# STORY`'s space (`space()`: median of the story's day shots): exposure x0.6, tint of near-grey pixels
   x0.6 (story tint 40 % neutralised), sat x0.5 toward story median x1.10; slope 0.90-1.10 +-5 % per channel; power
