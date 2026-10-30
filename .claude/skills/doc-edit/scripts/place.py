@@ -256,6 +256,56 @@ def edge_fades(tl, t0, fps, end):
     return n
 
 
+def black_fades(video):
+    """The 4 black fades on V1 of <video>'s "Edit" (user rule): from black on the first shot + story 1's first shot, to
+    black on the last intro shot + the last shot (intro ones: plan.json fade_in / fade_out, else 2.5 / 1.5 s). Only a
+    missing / shorter fade is set, then read back and saved. Called by ledger.render_done before every render and by
+    hide_logo --overwrite-all after it reopens the project (2026-10-30: V1 fades were lost on that reopen). -> line."""
+    from dvr_cowork.resolve_ops import CHANNEL_ENV, find_timeline
+    plan = json.loads((ROOT / ".work" / "doc_edit" / video / "plan.json").read_text("utf-8"))
+    m, env = re.search(r"(?i)\bchann_(\d+)", plan.get("video_dir", "")), os.environ.get(CHANNEL_ENV)
+    if m:  # this video's channel, whatever was set before (overwrite-all walks several videos)
+        os.environ[CHANNEL_ENV] = f"Chann_{m[1]}"
+    try:
+        pm = connect(load_config()).GetProjectManager()
+        pr = pm.GetCurrentProject()
+        tl = find_timeline(pr, "Edit")
+        if not tl:
+            return f"black fades {video}: no Edit in {pr.GetName()}"
+        cur = pr.GetCurrentTimeline()
+        pr.SetCurrentTimeline(tl)
+        fps, t0 = timeline_fps(tl, pr), int(tl.GetStartFrame())
+        f = lambda s: round(s * fps)  # noqa: E731
+        v = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: int(i.GetStart()))
+        slot = {f(s["start"]): s for s in plan["slots"]}
+        k = sum(int(i.GetStart()) - t0 < f(plan.get("intro", 0)) - 1 for i in v)  # intro items before story 1
+        want = [(0, f(EDGE_IN), 0), (len(v) - 1, 0, min(f(EDGE_OUT), int(v[-1].GetDuration()) - 7))] if v else []
+        if 0 < k < len(v):
+            want += [(k - 1, 0, f(slot.get(int(v[k - 1].GetStart()) - t0, {}).get("fade_out") or 1.5)),
+                     (k, f(slot.get(int(v[k].GetStart()) - t0, {}).get("fade_in") or 2.5), 0)]
+        fixed, bad = 0, []
+        for j, fi, fo in want:
+            g = v[j].GetFades() or {}
+            old = (int(g.get("FadeIn", 0)), int(g.get("FadeOut", 0)))
+            new = (max(old[0], fi), max(old[1], fo))
+            if new != old:
+                fixed += 1
+                v[j].SetFades({"FadeIn": new[0], "FadeOut": new[1]})
+                g = v[j].GetFades() or {}
+                if (int(g.get("FadeIn", 0)), int(g.get("FadeOut", 0))) != new:
+                    bad.append(f"{(int(v[j].GetStart()) - t0) / fps:.1f}s")
+        if fixed:
+            pm.SaveProject()
+        if cur:
+            pr.SetCurrentTimeline(cur)
+        return f"black fades {video}: {len(want)} checked, {fixed} re-set" + (f", NOT SET at {bad}" if bad else "")
+    finally:
+        if env is None:
+            os.environ.pop(CHANNEL_ENV, None)
+        else:
+            os.environ[CHANNEL_ENV] = env
+
+
 def prelap(tl, mp, t0, fps, body):
     """--intro: story 1's bed (its A3/A4 piece at the body start, frame `body`) is heard through the black before it
     (plan.py GAP_BLACK): a slice of the same file's end on A5 from PRELAP s before the black to PRELAP s into the bed,
