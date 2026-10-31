@@ -1,6 +1,6 @@
 ---
 name: doc-edit
-description: Documentary edit in Resolve, one step per command - new video(s) (narration A2 + plan + missing prompts + place; several channels' videos in parallel in one day project), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU (tier 4 stand-ins), color, place, reframe, intro (music + beat-cut intro, last step), check-timelines, done, status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source ai, /tag-source", "xong video".
+description: Documentary edit in Resolve, one step per command - new video(s) (narration A2 + plan + missing prompts + intro music + place of intro and body; several channels' videos in parallel in one day project), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU (tier 4 stand-ins), color, place, reframe, check-timelines, done, status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source ai, /tag-source", "xong video".
 ---
 
 # Doc edit
@@ -54,7 +54,7 @@ with `jobs decide <video> ingest|fill-existing "<their words>"`:
 - Mixed ("video 1 có clip trong `_check`, video 2 fill THIẾU") = each video its own case, its own channel
   (`DVR_CHANNEL`), Resolve writes one after the other; a clip never goes to the other video's bin / timeline. Video
   not named and several have THIẾU -> `state.py status` lines, ask which.
-- Fill is never a yes to render: intro, color, done stay the user's commands.
+- Fill is never a yes to render: color, done stay the user's commands.
 - One Resolve writer at a time: `backup_timeline` holds a lock for the whole process; a second writer stops with
   `another Resolve write is running (pid, script)` -> wait for its notification, never retry in a loop.
 - Cost check (user asks, or after a rule change): `jobs metrics --days=7` = Claude tokens per day (this workspace,
@@ -92,7 +92,7 @@ sounds come from the screenplay and the footage, never from the biome name.
 ## Commands
 | command (user's words) | runs | reply |
 |---|---|---|
-| `/doc-edit <audios-folder> [<audios-folder> ...]` | `references/new-video.md` per video: A narration (background) + B plan + prompts in parallel, then place on empty tracks; several folders = one agent per video for B, A / place one after the other | place lines + new-video reply per video |
+| `/doc-edit <audios-folder> [<audios-folder> ...]` | `references/new-video.md` per video: A narration (background) + B plan + prompts in parallel, then intro music picked by itself (`references/intro.md`, user 2026-10-31: no separate intro command) and place of intro + body on empty tracks; several folders = one agent per video for B, A / place one after the other | place lines + new-video reply per video |
 | `/doc-edit plan` | re-plan after beat / spec edits or new clips: B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
 | `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`; a range -> `missing.py <video> --range=A-B` (same flag on `--check` / `--write`) | prompts reply |
 | `/doc-edit logo` ("check folder _check") | `hide_logo.py "D:\AI_video\_check"` (africa: `"D:\AI_video\_africa\_check"`) (~1-2 min) | LOGO / SUSPECT names + `.work\hide_logo\check_list.txt` |
@@ -106,7 +106,6 @@ sounds come from the screenplay and the footage, never from the biome name.
 | `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; one space per story, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`), several per story | ranges, story spread before -> after, AI clips toned down, intro count, the frames checked |
 | `/doc-edit status` | `state.py status`: every video of every channel, its stage, the command to call next (files only, no Resolve) | the table |
 | `/doc-edit reframe [<video>]` | `references/reframe.md` | |
-| `/doc-edit intro <video> [<music file>]` (last step) | `references/intro.md`: music (picked or the user's) fitted to 0:00 -> story 1, plan, `place.py --intro` (A7 in bin "7. Open", cuts on its hits / bars) | music, fit, intro cuts on the beat, placed, THIẾU in the intro |
 | `/doc-edit check-timelines`, `/doc-edit done` ("xong video") | `references/check-timelines.md` | |
 
 ## After a step

@@ -198,12 +198,19 @@ User edits later -> change the beats part (old videos: spec.txt), expand, re-run
    relationship_wide clips, biology flags; the user saves the generated clips into `D:\AI_video\_check` (amazon) or
    `D:\AI_video\_africa\_check` (africa, flat; ingest files them into `_africa\<species>`).
 
-### Place (same run)
-As soon as A2 is on and plan.json written: `place.py <video> --skip-intro` (empty tracks; not empty -> stop, report).
-`--skip-intro` (user 2026-10-23): V1, audio and markers start at story 1 (the plan's intro end); 0:00-intro stays
-empty for `/doc-edit intro` (the last step, references/intro.md), so its music / beat / highlight lines are not a blocker. Send the two
-file paths in a message the moment missing_prompts.txt exists (the user starts generating), then go on. Place waits
-for A to finish (the two never write to Resolve at once); Resolve not on `<video>` -> no place, say so. The reply
-starts with the place lines (backup, V1 placed, red THIẾU markers), then parts 1-4 above. No "next step" line: the
-user calls the next command.
+### Intro music + place (same run; user 2026-10-31: no separate `/doc-edit intro` any more)
+Send the two file paths in a message the moment missing_prompts.txt exists (the user starts generating), then go on.
+As soon as A2 is on and plan.json written:
+1. `intro.py <video>` picks the intro music by itself and fits it to 0:00 -> story 1 (`references/intro.md`: ranking,
+   license, bar cuts), then `plan.py "<audios-folder>"` again so the intro cuts land on its hits / bars (read
+   `intro music:` / `intro beat:` / `intro outro:` + the HOOK line). Intro THIẾU / WEAK go into the missing prompts
+   (`missing.py <video> --range=00:00-<story 1>` when the full prompt file is already out: say it overwrote it, and
+   keep a copy of the old one in `.work/doc_edit/<video>/`).
+2. `place.py <video>` (no flag): intro + body in one go on empty tracks (not empty -> stop, report); the intro music
+   goes to bin "7. Open", story 1's bed pre-laps the black.
+Place waits for A to finish (the two never write to Resolve at once); Resolve not on `<video>` -> no place, say so.
+The reply starts with the place lines (backup, V1 placed, red THIẾU markers), then the intro music (top 5, license,
+fit, cuts on the beat, joints to listen to), then parts 1-4 above. No "next step" line: the user calls the next
+command. Videos placed before 2026-10-31 with `--skip-intro` get their intro with `place.py <video> --intro`
+(intro range empty) after `intro.py` + `plan.py`.
 

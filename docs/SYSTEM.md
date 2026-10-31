@@ -165,7 +165,7 @@ audios/ (screenplay + timestamp EN/VI + mp3/1..n)
   │   plan.py ──► plan.json + plan.md (+ 25 dòng tóm tắt)      ◄─ sửa beat, expand, plan lại
   │   missing.py ──► missing_prompts.txt (1 prompt / slot THIẾU)
   ▼
- place.py --skip-intro: backup → V1 + A1 + A3-A9 + marker từ story 1 (intro cắt chung sau)
+ intro.py tự chọn nhạc intro → plan.py → place.py: backup → intro + thân phim cùng lúc (V1 + A1 + A3-A9 + marker)
   │ bạn tạo clip AI → logo / delogo → ingest --fill (scan + tag + organize + plan + place --fill)
   │ reframe · audio-expert · color (light pass)
   ▼
@@ -275,6 +275,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | `edit-craft` | Kiến thức dựng: nhịp, điểm cắt, J/L cut, xuất YouTube | — | — |
 | `resolve-api` | Lưu ý khi viết script cho Resolve | — | — |
 | `memory-find` / `memory-save` | Tìm / lưu memory dự án | `memory_gateway.py` | `.work/knowledge/` |
+| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
 
 ## 9. An toàn
 

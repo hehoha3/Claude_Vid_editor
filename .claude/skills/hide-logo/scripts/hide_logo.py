@@ -63,6 +63,7 @@ BUSY = 4                     # texture level from which a delogo patch can be no
 # 6891 edges vs a BBC logo's 34). Logo clips scored 0.52-0.59, clean ones <= 0.40; a hit must sit at the corner.
 LOGOS = Path(__file__).resolve().parent.parent / "logos"
 KNOWN_HI, BAND_W, BAND_H, ANCHOR = 0.47, 160, 80, (20, 16)   # NCC, corner band (px), max gap to the frame edge (x, y)
+DONE = {}   # originals delogoed in this run (normcase path -> stem): --at skips a file a second time
 
 
 def known_logo(med):
@@ -84,6 +85,33 @@ def known_logo(med):
                 if v >= KNOWN_HI and gap[0] <= ANCHOR[0] and gap[1] <= ANCHOR[1] and (not best or v > best[0]):
                     best = (round(float(v), 3), bx, f"{f.stem} {c}")
     return best
+
+
+def tail(med, per, bx, gap_max=8):
+    """Known-logo box widened toward the frame centre while the logo's text continues: static edges or pixels as
+    bright as the logo, letter gaps <= gap_max, at most 1.5x the box width ('BBC' -> 'BBC EARTH' / 'BBC Earth',
+    2026-10-31: the bbc template box left 'EARTH' on 7 clips; a bbc_earth template hit wrong corners at 0.49-0.53)."""
+    x0, y0, x1, y1 = bx
+    y0 = max(0, y0)
+    hot = 0.8 * np.percentile(med[y0:y1, x0:x1], 99)
+    step = 1 if x0 < W / 2 else -1
+    c, edge, gap = (x1, x0 - 1)[step < 0], (x1, x0)[step < 0], 0
+    for _ in range(int(1.5 * (x1 - x0))):
+        if not 0 <= c < per.shape[1]:
+            break
+        if per[y0:y1, c].any() or med[y0:y1, c].max() >= hot:
+            edge, gap = c + (step > 0), 0
+        else:
+            gap += 1
+            if gap > gap_max:
+                break
+        c += step
+    return (x0, y0, max(x1, edge), y1) if step > 0 else (min(x0, edge), y0, x1, y1)
+
+
+def edges_in(per, boxes):
+    """Persistent-edge pixels inside boxes (640x360): logo evidence before / after a fill."""
+    return sum(int(per[max(0, b[1]):b[3], max(0, b[0]):b[2]].sum()) for b in boxes)
 
 
 def probe(path):
@@ -546,21 +574,20 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="mi
     h2, w2 = H // 2, W // 2
     quads = {"tl": (0, 0), "tr": (0, w2), "bl": (h2, 0), "br": (h2, w2)}
     start, end = 0.0, None
+    med, per = sample(src)
     if not (manual or endpart or head):
-        known = known or (known_logo(med) if (med := sample(src)[0]) is not None else None)
-        if known:  # a known logo template (logos/*.npy) beats the edge test: its box, 2 px around
-            b = known[1]
-            manual = [(max(0, b[0] - 2), max(0, b[1] - 2), min(W, b[2] + 2), min(H, b[3] + 2))]
-            print(f"  known logo {known[2]} (NCC {known[0]})")
+        known = known or (known_logo(med) if med is not None else None)
+        if known:  # a known logo template (logos/*.npy) beats the edge test: its box + text tail, 3 px around
+            b = tail(med, per, known[1])
+            manual = [(max(0, b[0] - 3), max(0, b[1] - 3), min(W, b[2] + 3), min(H, b[3] + 3))]
     if manual:   # --box x0,y0,x1,y1 [x0,y0,x1,y1 ...] at 640x360: semi-transparent logos the edge detector misses
-        bx, corner = manual[0], "manual"
+        bx, corner = manual[0], (known[2] if known else "manual")
     elif endpart or head:
         found = part_logo(src, corner, [head])
         if not found:
             sys.exit(f"no logo {'leaving' if head else 'appearing late'} found in corner {corner or 'any'}")
         corner, bx, start, end = found
     else:
-        _, per = sample(src)
         if per is None:
             sys.exit("could not decode " + src)
         want = corner
@@ -582,13 +609,22 @@ def one_clip(name, corner=None, endpart=False, head=False, manual=None, fill="mi
     if not dst or (mpi and not mpi.ReplaceClip(dst)):
         sys.exit(f"failed: {err or 'ReplaceClip failed'}")
     record(src, dst)
+    DONE[os.path.normcase(src)] = Path(src).stem
     if fill != "minimax":  # quick pass (user 2026-10-17): remember the originals to redo with MiniMax after Done
         with QUICK.open("a", encoding="utf-8") as q:
             q.write(f"{src}  # {corner} {fill}\n")
-    when = f"0.0-{end:.1f}s" if end is not None else f"from {start:.1f}s"
-    print(f"{Path(src).stem}: logo {corner} {[int(v) for v in bx]}@640x360 {when} removed -> {dst} | "
-          + ("relinked" if mpi else "not on V1, file only") + f" | grain {grain}"
-          + (" REVIEW (detailed background)" if grain >= BUSY else ""))
+    # self-check instead of stills (2026-10-31: 2 redo rounds + crops): the logo's edges / template still there?
+    boxes = [[int(v) for v in b] for b in (manual or [bx])]
+    left = None
+    if start == 0 and end is None and per is not None:
+        dmed, dper = sample(dst)
+        before, after = edges_in(per, boxes), (edges_in(dper, boxes) if dper is not None else 0)
+        if (dmed is not None and known_logo(dmed)) or after > max(15, 0.3 * before):
+            left = f"RESIDUE edges {before}->{after}"
+    when = f" 0-{end:.1f}s" if end is not None else f" from {start:.1f}s" if start else ""
+    print(f"{Path(src).stem}: {corner} {[int(v) for v in bx]}{when} -> _nologo, "
+          + ("relinked" if mpi else "file only") + (" | REVIEW busy bg" if grain >= BUSY else "")
+          + (f" | {left}" if left else ""))
 
 
 def at_clip(tc, corner=None, fill="minimax"):
@@ -611,15 +647,14 @@ def at_clip(tc, corner=None, fill="minimax"):
             continue
         score = max(int(np.count_nonzero(per[y:y + h2, x:x + w2])) for c, (y, x) in quads.items() if c in (corner or quads))
         known = known_logo(med)
-        span = f"{(it.GetStart() - t0) / fps:.1f}-{(it.GetEnd() - t0) / fps:.1f}s"
-        print(f"  candidate {span} {Path(src).name}: static edges {score}"
-              + (f" | known logo {known[2]} {known[0]}" if known else ""))
         # a known logo wins; else a reported time is usually where the shot starts: a clip starting at/after it wins
         # any logo, a neighbour that ended there only if it alone shows one (2026-10-12 shot_068 / landscape mistake)
         rank = (known[0] if known else 0, score >= 20 and it.GetStart() >= fr - pad, score)
         if best is None or rank > best[2]:
             best = (score, src, rank, known)
         srcs.append(src)
+    if best and (best[3] or best[0] >= 20) and os.path.normcase(best[1]) in DONE:   # 25 times = ~16 files (2026-10-31)
+        return print(f"{DONE[os.path.normcase(best[1])]}: same file, done above")
     if best and best[3]:
         return one_clip(best[1], corner, fill=fill, known=best[3])
     if best and best[0] >= 20:
@@ -631,7 +666,6 @@ def at_clip(tc, corner=None, fill="minimax"):
     for src in srcs:
         for head in (True, False):
             f = late_logo(src, {c: bands[c] for c in ([corner] if corner else bands)}, bh, bw, head)
-            print(f"  {Path(src).name} {'start' if head else 'late'}: " + (f"share {f[0]:.2f}" if f else "none"))
             if f and (part is None or f[0] > part[0]):
                 part = (f[0], src, head)
     if not part:
@@ -804,11 +838,11 @@ if __name__ == "__main__":
             else:
                 jobs.append([a, None])
         for tc, corner in jobs:
-            print(f"{tc} {corner or 'any corner'}:", flush=True)
+            print(f"{tc} ", end="", flush=True)
             try:
                 at_clip(tc, corner, fill)
             except SystemExit as e:   # one shot failing must not stop the others
-                print(f"  FAILED: {e}")
+                print(f"FAILED: {e}")
     elif "--timeline" in sys.argv:   # --timeline [name]: read-only report of the V1 shots that carry the logo
         i = sys.argv.index("--timeline")
         report_timeline(sys.argv[i + 1] if len(sys.argv) > i + 1 else None)
@@ -817,6 +851,10 @@ if __name__ == "__main__":
             ["D:\\a\\x 1.mp4", "D:\\a\\z.mp4"]
         assert skipped_paths("# LOGO\n#D:\\a\\x.mp4  # 0.52\nD:\\a\\y.mp4  # 0.5\n#? D:\\a\\z.mp4  # 0.4\n") == \
             ["D:\\a\\x.mp4", "D:\\a\\z.mp4"]
+        med, per = np.full((H, W), 60.0), np.zeros((H - 1, W - 1), bool)   # 'BBC' squares x 10-40, 'EARTH' x 43-70
+        med[10:20, 10:40] = med[12:18, 43:70] = 230
+        assert tail(med, per, (10, 10, 40, 20)) == (10, 10, 70, 20), "tail: text after the squares"
+        assert tail(med, per, (10, 10, 70, 20)) == (10, 10, 70, 20), "tail: nothing more"
         print("selftest ok")
     elif "--list" in sys.argv:   # --list [file]: delogo the reviewed scan list (default .work/hide_logo/check_list.txt)
         i = sys.argv.index("--list")
