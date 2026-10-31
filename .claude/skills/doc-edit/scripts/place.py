@@ -7,12 +7,13 @@ Refuses if V1 or A3-A9 already hold clips; --replace clears those tracks (after 
 --fill (after a re-plan with new footage): keeps every existing item, places only the plan's clips whose V1 range
 is still empty (+ their A1 if free), removes the markers of those slots only; audio tracks untouched.
 --fill --until <s>: only slots starting before <s> (e.g. a re-cut opening, the rest of the film's empty slots wait).
---skip-intro (default of a new video, user 2026-10-23): nothing before the plan's intro end; the user and Claude cut
-the intro by hand later.
---intro (/doc-edit intro, user 2026-10-25): only 0:00 -> the plan's intro end, on V1 / A1 / A3-A9 + its markers; that
-range must be empty; the intro music (its source file, user 2026-10-26: no fitted file) goes into bin "7. Open" as
-intro.py's bar pieces back to back on A7, short fades at the joints, the tail fade on the last, the 1 s from black;
-story 1's bed pre-laps the black before story 1 on A5 (prelap()).
+A new video (user 2026-10-31: intro in the same run, no separate /doc-edit intro) = intro.py, plan.py, then a plain
+place: intro + body at once. The intro music (its source file, user 2026-10-26: no fitted file) goes into bin
+"7. Open" as intro.py's bar pieces back to back on A7, short fades at the joints, the tail fade on the last, the 1 s
+from black; story 1's bed pre-laps the black before story 1 on A5 (prelap()).
+--skip-intro: nothing before the plan's intro end (videos placed before 2026-10-31 left 0:00-intro empty).
+--intro: only 0:00 -> the plan's intro end, on V1 / A1 / A3-A9 + its markers; that range must be empty (an intro
+re-cut, or the videos placed with --skip-intro).
 Every run: items at 0:00 fade in from black EDGE_IN, items at the video end fade out EDGE_OUT (not A2).
 Multi-channel project: plan.json's video_dir D:/Chann_N_*/... -> bins and "Edit" inside bin Chann_N (resolve_ops).
 Audio rules: A3/A4 entry = bed change, the bed alternates A3/A4 with BED_OVERLAP crossfades until the next change;
@@ -46,7 +47,7 @@ ATTACK, RUN = {"attack", "hunt", "chase", "catch", "fight"}, {"run"}  # tag "act
 # untagged clips: the folder / file name (africa AI_copyright\AI\Chạy\...)
 ATTACK_RE, RUN_RE = r"attack|hunt|fight|kill|tấn công|săn", r"(?<![a-z])run|chase|chạy|đuổi"
 _ACTS = {}
-OPEN_BIN = "7. Open"  # intro music (/doc-edit intro)
+OPEN_BIN = "7. Open"  # intro music (intro.py)
 MARK = {"THIEU": "Red", "WEAK": "Yellow", "FALLBACK": "Cyan", "GFX": "Blue"}
 
 
@@ -170,7 +171,7 @@ def audio_events(slots, end):
                 continue
             cue = next(e for s in slots for e in s["audio"] if e.get("path") == p)
             dur = cue["dur"]
-            if tr == 7 and cue.get("pieces"):  # /doc-edit intro: the source's bar pieces back to back, timeline fades
+            if tr == 7 and cue.get("pieces"):  # intro.py: the source's bar pieces back to back, timeline fades
                 t, xs = t0, cue["pieces"]
                 for i, (a, b) in enumerate(xs):
                     ln = min(b - a, t0 + dur - t)
@@ -232,7 +233,7 @@ def skip_intro(slots, t):
 
 
 def only_intro(slots, t):
-    """Slots before the intro end t, the last one trimmed to t (/doc-edit intro, the mirror of skip_intro)."""
+    """Slots before the intro end t, the last one trimmed to t (--intro, the mirror of skip_intro)."""
     return [dict(s, dur=min(s["dur"], t - s["start"])) for s in slots if s["start"] < t - 0.05]
 
 
@@ -307,7 +308,7 @@ def black_fades(video):
 
 
 def prelap(tl, mp, t0, fps, body):
-    """--intro: story 1's bed (its A3/A4 piece at the body start, frame `body`) is heard through the black before it
+    """Intro placed (--intro or a full place): story 1's bed (its A3/A4 piece at the body start, frame `body`) is heard through the black before it
     (plan.py GAP_BLACK): a slice of the same file's end on A5 from PRELAP s before the black to PRELAP s into the bed,
     fading in / out PRELAP (the bed itself fades in 4 s from the body start), at the bed's volume. -> summary."""
     bed = [ti for k in (3, 4) for ti in tl.GetItemListInTrack("audio", k) or [] if abs(int(ti.GetStart()) - t0 - body) <= 1]
@@ -335,15 +336,19 @@ def prelap(tl, mp, t0, fps, body):
     return f"pre-lap: {bed.GetName()} on A5 {a / fps:.1f}-{(int(res[0].GetEnd()) - t0) / fps:.1f}s, black from {black / fps:.1f}s"
 
 
+def intro_end(plan):
+    """Where the body begins: story 1's first shot, or the intro end when that shot was pulled under it (s)."""
+    return max(plan["intro"], next((s["start"] for s in plan["slots"] if not s.get("intro")), plan["intro"]))
+
+
 def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False, fill=False, until=1e9,
          no_intro=False, intro_only=False):
     work = ROOT / ".work" / "doc_edit" / video
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     use_channel(plan.get("video_dir"))  # D:\Chann_N_*\<video>: that channel's bins and "Edit" (multi-channel project)
     slots, end = plan["slots"], plan["end"]
-    if intro_only:  # /doc-edit intro: 0:00 -> intro end on every track, the rest of the timeline untouched
-        # up to where --skip-intro's body begins: story 1's first shot, or the intro end when that shot was pulled under it
-        end = max(plan["intro"], next((s["start"] for s in slots if not s.get("intro")), plan["intro"]))
+    if intro_only:  # --intro: 0:00 -> intro end on every track, the rest of the timeline untouched
+        end = intro_end(plan)
         slots = only_intro(slots, end)
         print(f"--intro: V1/A1/A3-A9/markers 0:00-{end:.1f}s only")
     if no_intro:
@@ -423,7 +428,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
             alt.add(p)
     for e in events:
         # 4. Audio/Ambience | Music | SFX by track; the intro's music -> "7. Open" (user 2026-10-25)
-        need[OPEN_BIN if intro_only and e[0] == 7 else audio_bin(e[0])].add(e[3])
+        need[OPEN_BIN if e[0] == 7 and (intro_only or len(e) > 5) else audio_bin(e[0])].add(e[3])  # len 6 = intro piece
     items, seen = {}, {}
     for name, paths in need.items():
         b = ensure_bin(mp, name)
@@ -522,8 +527,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
             why += (" | loại: " + ", ".join(f"{k} {n}" for k, n in s["rej"].items())) if s["status"] == "THIEU" and s.get("rej") else ""
             tl.AddMarker(a, MARK[s["status"]], f"{s['status']} #{s['slot']}", (s["need"] + why)[:240], b - a,
                          f"doc_edit:slot{s['slot']}")
-    if intro_only:
-        print(prelap(tl, mp, t0, fps, f(end)))
+    if intro_only or any(len(e) > 5 for e in events):  # --intro, or a full place with intro.py's pieces (len 6)
+        print(prelap(tl, mp, t0, fps, f(intro_end(plan))))
     print(f"edge fades (from / to black): {edge_fades(tl, t0, fps, f(plan['end']))} items")
     pm.SaveProject()
     from dvr_cowork.resolve_ops import CHANNEL_ENV, channel_bin

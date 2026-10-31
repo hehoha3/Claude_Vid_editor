@@ -9,8 +9,36 @@ import json, os, subprocess, sys, time
 T = [time.time()]   # phase marks for the timing line
 
 import numpy as np
-import torch
-from scipy.ndimage import binary_dilation, gaussian_filter
+from scipy.ndimage import binary_dilation, binary_fill_holes, gaussian_filter
+
+
+def glyphs(luma, box):
+    """Logo pixels inside `box` (x0, y0, x1, y1 of the frames `luma` [t, y, x]): Otsu split of the temporal median
+    (the logo is the bright, steady part; semi-transparent letters too), holes filled (the dark letters inside the BBC
+    squares). A box 3x the logo height made the model repaint background and left a blurred patch (2026-10-31): only
+    the glyphs (+ dilation) go to the model. No clear bright part (contrast < 30, or > 70% of the box) -> whole box."""
+    x0, y0, x1, y1 = box
+    med = np.median(luma[:, y0:y1, x0:x1], axis=0)
+    v = np.sort(med.ravel())
+    best, thr = -1.0, None
+    for t in np.unique(np.percentile(v, np.arange(5, 96, 2.5))):
+        lo, hi = v[v < t], v[v >= t]
+        if len(lo) and len(hi) and (s := len(lo) * len(hi) * (hi.mean() - lo.mean()) ** 2) > best:
+            best, thr, gap = s, t, hi.mean() - lo.mean()
+    g = binary_fill_holes(binary_dilation(med >= thr, iterations=1)) if thr is not None and gap >= 30 else None
+    return g if g is not None and g.mean() <= 0.7 else np.ones_like(med, bool)
+
+
+if sys.argv[1:] == ["--selftest"]:
+    f = np.random.default_rng(0).integers(0, 120, (6, 40, 120)).astype(np.float32)   # moving dark background
+    f[:, 10:30, 10:30] = 240; f[:, 15:25, 15:25] = 60       # one "B" square, dark letter inside
+    f[:, 14:26, 40:44] = 230                                 # a thin "E" stroke
+    m = glyphs(f, (5, 5, 60, 35))   # box-relative: frame (y, x) -> m[y - 5, x - 5]
+    assert m[5:25, 5:25].all() and m[9:21, 30:34].sum() == 0 and m[9:21, 35:39].all(), "glyph mask"
+    assert glyphs(np.full((6, 40, 120), 200, np.float32), (5, 5, 60, 35)).all(), "flat box -> whole box"
+    sys.exit(print("selftest ok"))
+
+import torch  # noqa: E402
 
 REPO = r"D:\tools\minimax_remover"
 sys.path.insert(0, REPO)
@@ -21,7 +49,7 @@ from transformer_minimax_remover import Transformer3DModel  # noqa: E402
 TOKENS, CTX, DILATE, OVER = 4300, 48, 2, 4   # token budget per window, context px around logo, mask grow px, min overlap
 # calibration knobs. A/B vs ground truth 2026-10-15 (3 clips, fake logo box on real content): 6 steps 37 s err 8.6,
 # 4 st 32 s 8.1, 3 st 29 s 7.9, 2 st 27 s 7.7, texture/motion equal; crop 256x160 26 s but err 10.1 -> kept 336x192
-STEPS = int(os.environ.get("MM_STEPS", 3))
+STEPS = int(os.environ.get("MM_STEPS", 2))   # 2 = default since 2026-10-31 (best err in the A/B, ~3 s less)
 MIN_W, MIN_H = map(int, os.environ.get("MM_CROP", "336x192").split("x"))
 src, dst, start, end, *boxes = sys.argv[1:]
 boxes = [[int(v) for v in b.split(",")] for b in boxes]
@@ -56,8 +84,10 @@ k = 1 if m <= WIN else -(-(m - OVER) // (WIN - OVER))
 starts = [round(i * (m - WIN) / (k - 1)) for i in range(k)] if k > 1 else [0]
 ov = WIN - max(b - a for a, b in zip(starts, starts[1:])) if k > 1 else 0   # crossfade length
 mask = np.zeros((ch, cw), bool)
+luma = seg[::4].mean(axis=-1) if os.environ.get("MM_MASK") != "box" else None   # MM_MASK=box: whole box (smears)
 for b in boxes:
-    mask[max(b[1] - cy, 0):b[3] - cy, max(b[0] - cx, 0):b[2] - cx] = True
+    bx = (max(b[0] - cx, 0), max(b[1] - cy, 0), b[2] - cx, b[3] - cy)
+    mask[bx[1]:bx[3], bx[0]:bx[2]] = True if luma is None else glyphs(luma, bx)
 mask = binary_dilation(mask, iterations=DILATE)
 
 T.append(time.time())

@@ -167,7 +167,7 @@ def status():
             d = last_decision(c, v)
             prompts = vdir / "missing_prompts.txt"
             if st.startswith("planned") and not place_of(v):  # place.py writes project.txt
-                st, nxt = "planned, not placed", "/doc-edit <audios> (A2 + place --skip-intro)"
+                st, nxt = "planned, not placed", "/doc-edit <audios> (A2 + intro music + place)"
             elif st.startswith("planned, prompts out") and (not d or d[1] < dt.datetime.fromtimestamp(
                     prompts.stat().st_mtime).isoformat(timespec="seconds")):
                 st, nxt = "WAITING_FOR_USER", "user: Case 1 (clips in _check) or Case 2 (fill THIẾU)"
