@@ -540,14 +540,14 @@ def intro_outro(slots, music_end):
 
 
 def intro_music(slots, work, intro):
-    """/doc-edit intro (user 2026-10-25): <work>/intro_music.json = one track fitted to 0:00 -> story 1 (intro.py fit).
+    """Intro music (user 2026-10-25; part of the new-video run since 2026-10-31): <work>/intro_music.json = one track fitted to 0:00 -> story 1 (intro.py fit).
     It replaces every A7 cue of the intro and ends where story 1 starts: intro end = music end."""
     p = work / "intro_music.json"
     if not p.exists():
-        return "intro music: library pick (no /doc-edit intro yet)"
+        return "intro music: library pick (intro.py not run yet)"
     j = json.loads(p.read_text("utf-8"))
     if "pieces" not in j:  # old fitted-file json (before 2026-10-26): library pick until intro.py runs again
-        return "intro music: STALE intro_music.json (fitted file) -> /doc-edit intro again"
+        return "intro music: STALE intro_music.json (fitted file) -> run intro.py again"
     for s in slots:
         if s.get("intro"):
             s["audio"] = [e for e in s["audio"] if e["track"] != 7]
@@ -556,7 +556,7 @@ def intro_music(slots, work, intro):
     f = next((s for s in slots if not s.get("intro")), None)  # body start, as intro.py story1()
     story1 = j["len"] if not f else intro if f["filter"].get("sp") == ["none"] else f["start"]
     return (f"intro music: {Path(j['source']).name} fitted to {tc(j['len'])} ({j['how']})"
-            + (f"; STALE: story 1 now starts {tc(story1)} -> /doc-edit intro again" if abs(story1 - j["len"]) > 0.1 else ""))
+            + (f"; STALE: story 1 now starts {tc(story1)} -> run intro.py again" if abs(story1 - j["len"]) > 0.1 else ""))
 
 
 def intro_beats(slots, intro, opening="landscape"):
@@ -567,7 +567,7 @@ def intro_beats(slots, intro, opening="landscape"):
         return "intro beat: no A7 music under the intro (spec: A7 cue on the first intro shot); cuts as written"
     t_m, e = cue
     try:  # whole track (<= 4 min): a slow 15 s opening alone gives no tempo
-        if e.get("pieces"):  # /doc-edit intro: the source's bar pieces as A7 plays them (no fitted file)
+        if e.get("pieces"):  # intro.py: the source's bar pieces as A7 plays them (no fitted file)
             import numpy as np
             a = beats.decode(e["path"])
             a = np.concatenate([a[int(x * beats.SR):int(y * beats.SR)] for x, y in e["pieces"]])[:int(e["dur"] * beats.SR)]
@@ -1377,7 +1377,7 @@ def match_audio(slots, lib, end):
     used, last_music = Counter(), None
     for s in slots:
         for e in s["audio"]:
-            if e["kw"] == ["off"] or e.get("fixed"):  # fixed = /doc-edit intro's fitted music, never re-matched
+            if e["kw"] == ["off"] or e.get("fixed"):  # fixed = intro.py's fitted music, never re-matched
                 continue
 
             def key(a):  # most keyword hits, then least used (variety); music (user 2026-10-24: the best fit, never
@@ -1640,7 +1640,7 @@ def main(folder, sem=True):
     if errs:  # every problem at once: fix them all in one edit, then re-run
         raise SystemExit(f"{len(errs)} spec errors:\n" + "\n".join(errs))
     match_audio(slots, load_audio(), end)  # before the footage: the intro cuts follow the intro music
-    imsg = intro_music(slots, work, intro)  # /doc-edit intro: the chosen track replaces the intro's A7 cues
+    imsg = intro_music(slots, work, intro)  # intro.py: the chosen track replaces the intro's A7 cues
     bmsg = intro_beats(slots, intro, meta["opening"])
     for s in slots:
         s["vo"] = any(a < s["start"] + s["dur"] and s["start"] < b for a, b in vo)

@@ -1,5 +1,6 @@
-r"""/doc-edit intro (user 2026-10-25): the intro's music, fitted so it ends where story 1 starts; then plan.py cuts
-the intro shots on its hits / bars and place.py --intro lays 0:00 -> story 1 on "Edit" (music on A7, bin "7. Open").
+r"""Intro music (user 2026-10-25; part of the /doc-edit new-video run since 2026-10-31, no separate command): fitted
+so it ends where story 1 starts; then plan.py cuts the intro shots on its hits / bars and place.py lays it with the
+body (music on A7, bin "7. Open"; --intro = only 0:00 -> story 1, for a re-cut).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py <video>                 pick the best track + fit it
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py <video> "<music file>"  fit the user's track

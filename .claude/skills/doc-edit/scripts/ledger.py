@@ -2,7 +2,7 @@
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py check <video> [--ws <workspace>] [--project <Resolve project>]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py show [<workspace>]
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline <name>]
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline <name>] [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py --selftest
 
 Workspace = a channel folder holding one folder per video (D:\\Chann_shadowCanopy\\demo_4\\audios ...). Workspaces are
@@ -13,7 +13,7 @@ its library id (content hash; a hide-logo `_nologo` copy counts as its original)
 .work/doc_edit/ledgers/<workspace>.json. A new video goes on top; re-checking a video updates it in place.
 Ban for video V = clips + open_clips of the `recent` (config, default 6) newest OTHER videos of V's workspace.
 done (= /doc-edit done): final check, licensed music of Edit (+ Open if it exists) (license paths), render Edit ->
-<video>/Done_<video>.mp4 (preset "YouTube 1080 HEVC"). Works in a day project (the channel's own "Edit"). Resolve stays
+<video>/Done_<video>.mp4 (preset "YouTube 1080 HEVC") -> YouTube upload (dvr_cowork.youtube). Works in a day project (the channel's own "Edit"). Resolve stays
 open; the user moves the folder into _done himself (user 2026-10-26). Videos in _done keep their workspace.
 """
 import json, os, re, sys
@@ -335,10 +335,11 @@ def rerender(video, ws=None, proj=None, timeline="Edit"):
     render_done(project, vdir, timeline, f"Done_{project.GetName()}_v{n}")
 
 
-def done(video, ws=None, proj=None, timeline="Edit"):
+def done(video, ws=None, proj=None, timeline="Edit", thumb=None, publish_at=None):
     """A finished video (user 2026-10-26: Master / Open deleted, no quit, no move): final check-timelines, licensed
     music of Edit (+ Open) -> <video folder>/audio_licenses.md, render <timeline> (preset "YouTube 1080 HEVC") as
-    <video folder>/Done_<video>.mp4 and wait. Resolve stays open on the user's timeline; the user moves the folder into
+    <video folder>/Done_<video>.mp4 and wait, then upload it to the channel's YouTube (user 2026-10-31,
+    dvr_cowork.youtube). Resolve stays open on the user's timeline; the user moves the folder into
     _done. Project: --project, else the one place.py wrote in .work/doc_edit/<video>/project.txt (day project
     vid_DDMMYY/Chann_N), else <video>."""
     from dvr_cowork.resolve_conn import connect
@@ -357,7 +358,13 @@ def done(video, ws=None, proj=None, timeline="Edit"):
             raise SystemExit(f'Resolve project "{proj}" not found: nothing changed')
     licenses(project, vdir)
     render_done(project, vdir, timeline, f"Done_{vdir.name}")
-    handoff(f"done {vdir.name} ({ws_of(vdir)}): rendered Done_{vdir.name}.mp4 (timeline {timeline}); folder move = user")
+    try:
+        from dvr_cowork import youtube
+        yt = youtube.upload(vdir, thumb, publish_at=publish_at)
+    except Exception as e:  # quota / network: the render stands, upload again by hand
+        yt = f"youtube: upload FAILED ({e}); retry: python -m dvr_cowork.youtube upload \"{vdir}\""
+    print(yt)
+    handoff(f"done {vdir.name} ({ws_of(vdir)}): rendered Done_{vdir.name}.mp4 (timeline {timeline}); {yt}; folder move = user")
     print(f"done {vdir.name}: rendered, Resolve left open; move {vdir} into {DONE} yourself")
 
 
@@ -429,7 +436,9 @@ if __name__ == "__main__":
     elif a[:1] == ["check"] and len(a) >= 2:
         check(a[1], ws, proj)
     elif a[:1] == ["done"] and len(a) >= 2:
-        done(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else "Edit")  # user 2026-10-26
+        done(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else "Edit",  # user 2026-10-26
+             a[a.index("--thumb") + 1] if "--thumb" in a else None,
+             a[a.index("--publish-at") + 1] if "--publish-at" in a else None)
     elif a[:1] == ["rerender"] and len(a) >= 2:
         rerender(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else "Edit")
     elif a[:1] == ["show"]:

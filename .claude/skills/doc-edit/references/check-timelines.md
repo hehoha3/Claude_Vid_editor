@@ -27,7 +27,7 @@ propose `place.py --fill`).
 Run it right away: no "exported?" question, no confirmation (the user's "done" is the go). Several videos -> one
 after another. Works in a day project (`vid_DDMMYY`: project + channel from `.work/doc_edit/<video>/project.txt`).
 
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <name>]
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <name>] [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]
 
 `--project` (also on `check`) when the Resolve project is not named like the folder and has no project.txt
 (amazon_1 = "build_agent"). The render makes it long (a 60 min 4K timeline): run it with `run_in_background`.
@@ -44,8 +44,14 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
    already there -> not rendered again. Subtitle tracks off for the render, back on after (no subtitles in the file).
    Before it, `place.black_fades` checks the 4 V1 black fades and puts back a missing one (`black fades <video>: ...`
    line; `NOT SET` -> say so, the render has no fade there).
+4. Upload (user 2026-10-31): `Done_<video>.mp4` -> the YouTube channel `input/youtube_channels.json` maps the
+   workspace's `Chann_N` to (`dvr_cowork.youtube upload`): title = the video name for now (no description / tags
+   yet), English, Pets & Animals, not for kids, private (unaudited API project). `--thumb` = the image the user gives
+   (D:\Thumbs\...). `--publish-at` = "đăng vào 18 giờ" (PC time): private now, YouTube makes it public then
+   (a time already past -> no upload, ask again). Once per video (`.work/doc_edit/<video>/youtube.json`); a `--thumb` later on an uploaded video
+   sets only the thumbnail. Chann_N not mapped / not logged in / failed -> `youtube:` line says so, render stays.
 Resolve stays open; no relink, no folder move: the user moves the folder into `_done` himself (user 2026-10-26).
 
 After it: `hide_logo.py --pending`; copies listed -> ask only "Bạn có muốn ghi đè các file trong folder _nologo lên
 các file gốc của chúng không?"; "có" -> `hide_logo.py --overwrite-all`. Reply: the license list (file -> license path,
-missing ones), the `render:` line, the overwrite question.
+missing ones), the `render:` line, the `youtube:` line (link; private -> the user checks Studio), the overwrite question.
