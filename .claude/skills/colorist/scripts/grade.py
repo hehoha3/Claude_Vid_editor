@@ -17,16 +17,16 @@ Method (demo_2, 2026-10-09; simulated grade matched Resolve stills within 0.01):
   sim hides speculars: ~3x more clip in Resolve). Bright-sky shots (p50 > 0.7) stay bright on purpose.
 Output: .work/grade/<project>/plan.json (+ sheet.jpg: 6 shots, ungraded top / graded bottom).
 """
-import datetime as dt, hashlib, importlib.util, json, subprocess, sys
+import datetime as dt, hashlib, json, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[4]
-sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/doc-edit/scripts"), str(ROOT / ".claude/skills/scan-source/scripts")]
-_s = importlib.util.spec_from_file_location("ml", ROOT / "luts" / "make_luts.py")
-ml = importlib.util.module_from_spec(_s); _s.loader.exec_module(ml)
+sys.path[:0] = [str(Path(__file__).resolve().parent), str(ROOT), str(ROOT / ".claude/skills/doc-edit/scripts"),
+                str(ROOT / ".claude/skills/scan-source/scripts")]
+import make_luts as ml  # noqa: E402
 
 FR = ROOT / ".work" / "grade" / "frames"
 W, H = 160, 90
@@ -38,7 +38,7 @@ LIM = dict(p1=(0.0, 0.06), crush=(0.0, 6.0), p99=(0.72, 0.975), con=(0.25, 0.75)
            clip=(0.0, 1.0))  # 160x90 sim hides specular highlights: 0.7 % here was 2-3.4 % in Resolve (demo_5)
 SATMIN = 0.75  # never strip more than 25 % saturation: a lush shot cut to 0.65 reads grey / fake
 # per light group: where every shot lands after CDL + LUT (from the group's raw medians, clamped to the house range;
-# Dusk keeps >= 90 % of its saturation, luts/README.md)
+# Dusk keeps >= 90 % of its saturation, references/luts.md)
 TGT = {"Day": lambda m: dict(p99=0.91, p50=float(np.clip(m["p50"], 0.34, 0.42)), sat=float(np.clip(m["sat"], 0.30, 0.38))),
        "Golden": lambda m: dict(p99=0.91, p50=float(np.clip(m["p50"], 0.32, 0.40)), sat=float(np.clip(m["sat"], 0.31, 0.38))),
        "Dusk": lambda m: dict(p99=float(np.clip(m["p99"] * 1.1, 0.65, 0.85)), p50=float(np.clip(m["p50"], 0.14, 0.24)),

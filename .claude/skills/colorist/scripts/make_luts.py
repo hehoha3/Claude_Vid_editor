@@ -1,10 +1,12 @@
 """Generate the Amazona documentary LUT library (.cube, 33^3, Rec.709 gamma 2.4 in -> out).
 Creative LUTs: apply AFTER the shot is balanced (exposure/WB), as a node or group-post node.
-Run: .venv/Scripts/python.exe luts/make_luts.py   (writes next to this file)"""
+Run: .venv/Scripts/python.exe .claude/skills/colorist/scripts/make_luts.py
+     (writes straight into Resolve's LUT folder Amazona\\, then project.RefreshLUTList() or restart Resolve)
+grade.py / match.py import LUTS + grade() from here; design rules in ../references/luts.md."""
 import numpy as np, pathlib
 
 N = 33
-OUT = pathlib.Path(__file__).parent
+OUT = pathlib.Path(r"C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\LUT\Amazona")
 
 # name: description, params
 #  con/pivot: S-contrast about pivot; lift: black lift; shoulder: highlight roll-off start (1=off)
@@ -98,15 +100,15 @@ def grade(c, p):
 def write_cube(name, p):
     g = np.linspace(0, 1, N)
     b, gg, r = np.meshgrid(g, g, g, indexing="ij")                    # r fastest in file order
-    rgb = np.stack([r, gg, b], -1).reshape(-1, 3)
-    out = grade(rgb, p)
+    out = grade(np.stack([r, gg, b], -1).reshape(-1, 3), p)
     with open(OUT / f"{name}.cube", "w", newline="\n") as f:
-        f.write(f'TITLE "{name}"\n# {p["desc"]}\nLUT_3D_SIZE {N}\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1\n')
-        for o in out: f.write("%.6f %.6f %.6f\n" % tuple(o))
+        np.savetxt(f, out, fmt="%.6f", comments="",
+                   header=f'TITLE "{name}"\n# {p["desc"]}\nLUT_3D_SIZE {N}\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1')
     return out
 
 
 if __name__ == "__main__":
+    OUT.mkdir(parents=True, exist_ok=True)
     ident = np.stack(np.meshgrid(*[np.linspace(0, 1, 17)] * 3, indexing="ij"), -1).reshape(-1, 3)
     for name, p in LUTS.items():
         write_cube(name, p)
@@ -115,3 +117,4 @@ if __name__ == "__main__":
         y = o @ np.array([0.2126, 0.7152, 0.0722])
         assert np.isfinite(grade(ident, p)).all() and (np.diff(y) >= -1e-6).all(), name
         print(f"{name}: black {y[0]:.3f} mid {y[32]:.3f} white {y[-1]:.3f}  max neutral drift {np.abs(o - y[:, None]).max():.3f}")
+    print("->", OUT, "| Resolve: project.RefreshLUTList() or restart")

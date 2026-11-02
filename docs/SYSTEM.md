@@ -48,7 +48,7 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
 | `.secrets/youtube/` | `client_secret.json`, `channels.json` (Chann_N → channel ID), `tokens/` | không |
 | `.work/automation/jobs.sqlite3` | Trạng thái video, quyết định Case 1 / 2, log ghi Resolve (SQLite, tự tạo) | không |
 | `.work/gemini/`, `.work/seo/cache/` | Cache + log token Gemini; kết quả tìm trend YouTube (7 ngày) | không |
-| `luts/` | 7 LUT AMZ + `make_luts.py` | có |
+| `C:\ProgramData\...\Support\LUT\Amazona\` | 7 LUT AMZ, máy mới tự tạo: `python .claude/skills/colorist/scripts/make_luts.py` | không |
 | `config.toml` | Đường dẫn, workspace, thông số Whisper / vo-sync | có |
 | `tests/test_pipeline.py` | Test end-to-end (mock Resolve) + chạy self-test của mọi script | có |
 | `.work/library/` | Index thư viện + tag + cache YOLO / màu nền của team | không, gói team (mục 11) |

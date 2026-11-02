@@ -39,7 +39,7 @@ Skills load on demand (listed by the harness).
    for flagged rows); prefer `--stats` numbers, max ~6 images per pass.
 7. Advice: observation (numbers/frames) -> Resolve action with starting values -> why -> 1-2 alternatives +
    trade-offs. Mark "(Studio)" features. Say what is uncertain ("nghe lại cut ở 04:12").
-8. LUT/look/grade work (also inside doc-edit): load `colorist` first, follow `luts/README.md`.
+8. LUT/look/grade work (also inside doc-edit): load `colorist` first, follow its `references/luts.md`.
 9. Anything unclear (intent, scope, which file/video/timeline) -> ask before acting; never guess.
 10. Preflight every task, in ONE call, only what it needs: Resolve work -> `dvr_cowork info` (Resolve up, right
    project, timeline exists); library/audio -> `Z:\Unseen\Amazona` (africa: its roots); AI clips -> `D:\AI_video`; a video ->

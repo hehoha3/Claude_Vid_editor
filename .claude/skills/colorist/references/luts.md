@@ -1,12 +1,15 @@
 # Amazona LUT library (Rec.709 gamma 2.4 in -> out, 33^3 .cube)
 
-Creative LUTs for AI/real rainforest clips. Apply on a shot that is already balanced (exposure/WB): for a whole edit
-use `.claude/skills/colorist/scripts/grade.py` (per-shot CDL + these LUTs per light group).
-Regenerate / tweak: `.venv/Scripts/python.exe luts/make_luts.py` (params in `LUTS` dict), then copy the .cube files to
-`C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\LUT\Amazona\` (same names) and run `project.RefreshLUTList()`.
+Creative LUTs for AI/real rainforest clips, installed in
+`C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\LUT\Amazona\` (Resolve name `Amazona/<LUT>.cube`).
+`/doc-edit color` (light.py) does NOT use them (CDL only); `grade.py` / `match.py` put them on the Color Group post-clip
+node. Apply on a shot that is already balanced (exposure/WB).
+Regenerate / tweak: params in `LUTS` of `scripts/make_luts.py`, then
+`.venv/Scripts/python.exe .claude/skills/colorist/scripts/make_luts.py` (writes straight into that folder, same names)
+and `project.RefreshLUTList()`.
 
-**Any LUT / look work: load skill `colorist` first** (non-negotiables + `references/looks.md`, `ai-footage.md`) and judge
-on real frames with numbers (luma p1/p99, contrast, mean sat vs the ungraded clip), not on the ramp self-check alone.
+Judge on real frames with numbers (luma p1/p99, contrast, mean sat vs the ungraded clip), not on the ramp self-check
+alone (non-negotiables in SKILL.md, `looks.md`, `ai-footage.md`).
 
 ## Design rules (v2, 2026-10-09 - v1 looked hazy and old)
 - Clean blacks: lift 0-0.006. Haze belongs in a gradient window on the far background, never a global lift

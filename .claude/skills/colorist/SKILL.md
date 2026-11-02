@@ -9,7 +9,7 @@ Read only the reference that fits the question:
 - `references/pipeline.md` - color management, scopes, node tree template, primaries/secondaries tools
 - `references/looks.md` - aesthetic principles, story color scripting, wildlife/environment recipes
 - `references/ai-footage.md` - problems specific to generated clips and how to fix them
-- `luts/README.md` (workspace root) - the channel's AMZ LUT library, its design rules, rebuild/install
+- `references/luts.md` - the channel's AMZ LUT library (`scripts/make_luts.py`), its design rules, rebuild/install
 
 ## Non-negotiables
 1. Balance before look: neutral, matched base (exposure, white balance, contrast) on its own nodes before any creative
