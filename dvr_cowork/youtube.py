@@ -15,13 +15,14 @@ not for kids, PRIVACY. Uploaded once: .work/doc_edit/<video>/youtube.json.
 import json
 import re
 import sys
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import InstalledAppFlow, WSGITimeoutError
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -35,6 +36,7 @@ CHANNELS = SECRETS / "channels.json"  # {"Chann_1": "<channel id>"}
 # an unaudited API project gets its uploads locked private anyway; switch to "public" after the YouTube audit
 PRIVACY = "private"
 THUMB_MAX = 2 * 1024 * 1024  # thumbnails.set limit
+LOGIN_TIMEOUT = 300  # s to finish the browser login
 
 
 def my_channels(creds):
@@ -59,8 +61,29 @@ def saved(path):
 
 def login():
     flow = InstalledAppFlow.from_client_secrets_file(str(SECRET), SCOPES)
-    # select_account: the account / brand account chooser every time; consent: a refresh token on every login
-    creds = flow.run_local_server(port=0, access_type="offline", prompt="select_account consent", open_browser=True)
+    out = {}
+
+    def wait():
+        # select_account: the account / brand account chooser every time; consent: a refresh token on every login
+        try:
+            out["creds"] = flow.run_local_server(port=0, access_type="offline", prompt="select_account consent",
+                                                 open_browser=True, timeout_seconds=LOGIN_TIMEOUT)
+        except Exception as e:
+            out["err"] = e
+
+    # on Windows Ctrl+C never breaks the blocking handle_request(): wait in a daemon thread, poll from the main one
+    t = threading.Thread(target=wait, daemon=True)
+    t.start()
+    try:
+        while t.is_alive():
+            t.join(0.5)
+    except KeyboardInterrupt:
+        sys.exit("login stopped (Ctrl+C): nothing saved")
+    if isinstance(out.get("err"), WSGITimeoutError):
+        sys.exit(f"no login within {LOGIN_TIMEOUT // 60} min: nothing saved, run `login` again")
+    if "err" in out:
+        raise out["err"]
+    creds = out["creds"]
     chans = my_channels(creds)
     if not chans:
         sys.exit("logged in, but the account picked has no YouTube channel: nothing saved")
