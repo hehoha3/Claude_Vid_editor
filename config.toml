@@ -1,0 +1,12 @@
+[resolve]
+render_preset = "YouTube 1080 HEVC"
+# Existing repo's Resolve 21.1 notes say exclusive. If your installed API differs,
+# verify the official local Scripting/README.txt and change this before placing.
+# Every append checks actual start/end and aborts on a mismatch; never retries by deleting.
+source_end = "exclusive"
+# script_api = 'C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting'
+# script_lib = 'C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionscript.dll'
+
+[audio]
+shot_db = -12.0
+music_db = -24.0

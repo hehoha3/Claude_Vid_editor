@@ -1,0 +1,18 @@
+---
+name: create-doc-mov
+description: Write an original full-AI mountain wildlife survival film for 8–11 minutes or a longer requested duration, with a 30s dramatic hook, 30s introduction, dense English narration, full Vietnamese translation and four synchronized Markdown files. Use for /create-doc-mov or requests to create/revise the story. Stop before voice generation; the user generates the numbered MP3s.
+---
+
+# Create a mountain survival story
+
+Read [storycraft.md](references/storycraft.md), [source-contract.md](references/source-contract.md) and [reference-analysis.md](references/reference-analysis.md). Use the examples for schema only; never reuse their event chain as a template for every film.
+
+1. Resolve the exact video folder and requested duration. Accept 8, 11 or longer minutes. If absent use 8 minutes and state that assumption. Runtime includes both opening sections. Run `python -m dvr_cowork init "<video>" --minutes 8 --title "<title>"` once. Existing source: revise the source, not generated outputs. Once voice or shots are issued, preserve that version; use a new folder for an incompatible rewrite.
+2. Design one central survival question and a clear visual payoff. Write a cause-and-effect beat outline, cast IDs, exact counts, readable markings, geography/route and consistent light. Include hunger/safety motives without invented claims about real animal thoughts. Label the film as an AI dramatization. Check biological/geographical facts with primary sources before presenting them as factual narration; the reference videos are narrative examples, not scientific evidence.
+3. Write hook first: 00:00–00:30, five 6s unresolved danger shots with continuous narration. Each slot is a teaser placeholder; generated body sources are selected after QC. Write 00:30–01:00 setup establishing place, individuals and route while advancing danger. Do not repeat the hook's narration or immediately resolve its promise.
+4. Write the full story into `.production/story.json`: every scene changes the situation; every generated shot specifies a single action, cause, terrain interaction, start/end state, camera, cast and four beats. Assign `hook_role` and `spoiler:false` only to strong, unresolved body moments. Supply at least one candidate for threat, vulnerability, pursuit, obstacle and unanswered. The hook voice must remain accurate over those candidate classes. Every shot lasts 6–9s; every scene's shots cover its duration exactly.
+5. Write naturally connected English voice paragraphs and complete Vietnamese translations. One source voice block becomes **one nonblank physical transcript line = one MP3**, not one sentence by default. It may contain several connected sentences. Multiple blocks in a scene use consecutive lines; blank lines separate scenes, so rendered Markdown paragraph count is not the MP3 count. Budget `runtime_minutes × calibrated_wpm × 0.85–0.92` words, then use actual compiler timings. At 145wpm, 8min ≈986–1067 words; 11min ≈1356–1467. These are planning estimates, not guarantees for TTS.
+6. Run `python -m dvr_cowork build "<video>"`, then `validate`. Fix every error. Read the built hook/setup, compare narration to visible events and the payoff, and inspect the full slot coverage. The compiler checks numerical consistency; you judge narrative quality and factual claims.
+7. Return the concept, brief opening/story summary, actual runtime/word/voice-block/shot counts and links to exactly four Markdown files. State where to save `audios/mp3/1.mp3…N.mp3`. **Stop here**; do not generate voice, enter a service, create shots or start Resolve editing.
+
+When the user returns with voice, route to doc-edit; do not rewrite approved narration to hide a timing problem.

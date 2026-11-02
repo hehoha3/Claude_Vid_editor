@@ -1,0 +1,602 @@
+[
+  {
+    "path": ".claude/agents/tagger.md",
+    "bytes": 363,
+    "sha256": "5456717bf2985aac6977ef355a995b9dda09a550aa393b20bc6fc705da5b7495"
+  },
+  {
+    "path": ".claude/commands/project-status.md",
+    "bytes": 448,
+    "sha256": "082a163868ae589d5626abd86ee7c9f35be8100bbb1a8d34f2f4fe4897834e95"
+  },
+  {
+    "path": ".claude/commands/review-frame.md",
+    "bytes": 738,
+    "sha256": "0fb44f57b3317dc39fcbca15112e008a3e937f203b2da360baaba1a4b847442c"
+  },
+  {
+    "path": ".claude/commands/sync-vo.md",
+    "bytes": 1245,
+    "sha256": "488f5bce82519e40a77bc36e9bb5953489978f86311095482d9a77060ee04724"
+  },
+  {
+    "path": ".claude/settings.json",
+    "bytes": 772,
+    "sha256": "f548ecbd9bc3b98fe0888b0b335f9311190a6553728608664d394cee1901de58"
+  },
+  {
+    "path": ".claude/skills/audio-expert/SKILL.md",
+    "bytes": 4409,
+    "sha256": "ae9652b09c1f5472a35566bf795bd1d6bd725d7f959a8d2cdb1670adf0f8ed8b"
+  },
+  {
+    "path": ".claude/skills/audio-expert/references/philosophy.md",
+    "bytes": 1793,
+    "sha256": "0c9843a3763ea2111d35323fc931f484f7a07aa95b4966192a370c9bb52c47b3"
+  },
+  {
+    "path": ".claude/skills/audio-expert/references/sonic_grammar.md",
+    "bytes": 1992,
+    "sha256": "c2528296b292bd82b5a9bf954d1ae4f4f3ec050fff7a740ed67295ed23b6741d"
+  },
+  {
+    "path": ".claude/skills/audio-expert/scripts/execute.py",
+    "bytes": 8467,
+    "sha256": "601808e76f1469efd31cc4a12d9048251b28441a2dbbbc89ff37287d9fba070d"
+  },
+  {
+    "path": ".claude/skills/audio-expert/scripts/index.py",
+    "bytes": 5954,
+    "sha256": "8625a04d2d59985c31eca38397c10d20a063823f1d12d3e8cd8ff4cd8c13e937"
+  },
+  {
+    "path": ".claude/skills/audio-expert/scripts/plan.py",
+    "bytes": 11268,
+    "sha256": "14d3f99744190d7eeb6d2a2dd5a03a11a07c7da7b47225d58cb5a6a51770f73b"
+  },
+  {
+    "path": ".claude/skills/colorist/SKILL.md",
+    "bytes": 5964,
+    "sha256": "1eb5efcc91a68bb4372915d6dfc4f0154411fa064fd2f6e68b1ab49c2aa08efa"
+  },
+  {
+    "path": ".claude/skills/colorist/references/ai-footage.md",
+    "bytes": 2331,
+    "sha256": "4dab4424402666f8311ecbe01d8a31e6eec4e423e95be37c1013fe5f6cd2d5c6"
+  },
+  {
+    "path": ".claude/skills/colorist/references/looks.md",
+    "bytes": 5159,
+    "sha256": "9a12e4d4336b662b661ad6265fa3c425e3faba1cdf14b063026608ce34f6a337"
+  },
+  {
+    "path": ".claude/skills/colorist/references/pipeline.md",
+    "bytes": 5954,
+    "sha256": "cc2f3698d4ac5de2f635fdbf6962d437023fb97784aae1792dae2d5585a2a9af"
+  },
+  {
+    "path": ".claude/skills/colorist/scripts/dry_preview.py",
+    "bytes": 1637,
+    "sha256": "082f15a3b181ff4fc8f5106766f3b6e4643d0f356bf99f84e7dc9bfdde23592e"
+  },
+  {
+    "path": ".claude/skills/colorist/scripts/grade.py",
+    "bytes": 17673,
+    "sha256": "9d2c654cb590c462cdca97cb3252fa9c57b274fac1d913f071416430816c9b4e"
+  },
+  {
+    "path": ".claude/skills/colorist/scripts/light.py",
+    "bytes": 20270,
+    "sha256": "9ae5cb938e17359f741440b9e3b0ce6e0fe2f770be3a639887b55b89aed59a3b"
+  },
+  {
+    "path": ".claude/skills/colorist/scripts/match.py",
+    "bytes": 38313,
+    "sha256": "c972c4c48945e3dc0904a5511d702f875ad7c3cd3d1841323e04155017a447e2"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/SKILL.md",
+    "bytes": 9466,
+    "sha256": "df5cba3e75777830a83016930324f6d0613c943296184a488463cb8e3762e68a"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/references/formats.md",
+    "bytes": 5260,
+    "sha256": "add63d82d870879befea5b0ad40486635546c2fee0e249f9e504e07d8c7b4287"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/references/production.md",
+    "bytes": 5689,
+    "sha256": "ca4ee511efc89630ff4b67d5593b4e4ae734f3135d9ac8736500ff6620fb15b1"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/references/storycraft.md",
+    "bytes": 3685,
+    "sha256": "8e13e3e4b99ccf2330f1084a020cd2660885bcc616544cdf54f1281143159a8a"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/references/timing-and-voice.md",
+    "bytes": 3037,
+    "sha256": "e444cd665ac3b3446a03757bbdfb0b1e532f1ef2250b5ee22e4454dcad6a8ef8"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/scripts/build_four_files.py",
+    "bytes": 23540,
+    "sha256": "6b3c7e1ee66e274893ef54fb466d73ff1b1588596a81c7e62cab6098f7835835"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/scripts/check_refs.py",
+    "bytes": 2691,
+    "sha256": "2e18b093fd4e1071d261140d3a3c209a433a651e8534332cfc1649008ddd7165"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/scripts/genmax_audio.py",
+    "bytes": 3367,
+    "sha256": "f3673f6446653a88f4ba83a936fe957db20e23299c986c20664bd33b97f02358"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/scripts/new_video.py",
+    "bytes": 3010,
+    "sha256": "dccb4c18c9b7f1cfd2c8ab377bb543df0443cfb375c4a0958ae7b40ba6bdc7e4"
+  },
+  {
+    "path": ".claude/skills/create-doc-mov/scripts/validate_four_files.py",
+    "bytes": 7344,
+    "sha256": "1c2d70fb976a073fbc14356f2dfd4b85fb309f5607ed99b619e52fa5cee2df0e"
+  },
+  {
+    "path": ".claude/skills/doc-edit/SKILL.md",
+    "bytes": 12879,
+    "sha256": "43c8fc4842340503e8b1cfb5d90137c767e1b757f8d0c04458b875ddf016af63"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/biome-story-pacing.md",
+    "bytes": 2593,
+    "sha256": "72a711d6c5cf0e0a0b3e31172bda86e1877fffc0ff903a4b82529bdd2b579198"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/check-timelines.md",
+    "bytes": 4839,
+    "sha256": "19abef092b397207d06781eb588f1195d821bdbdfe3ec23bfab2e68023ad30d3"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/edit-grammar.md",
+    "bytes": 25990,
+    "sha256": "5f83591559cd020e1b0226bbf6d141a7d133b764210487ef257f749e5edf2799"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/intro.md",
+    "bytes": 2791,
+    "sha256": "bddef1373078a7de1da4f30f34929e6f208e9416fcb562a16f4d818a6982f3ba"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/missing-prompts.md",
+    "bytes": 9441,
+    "sha256": "9c05ad2977bcb58de5c44449b669119c9741b18f6be1e7f19be0e0a58e5dd037"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/new-video.md",
+    "bytes": 20110,
+    "sha256": "80ddfe35d97a83960484e3463791ad6b350d02cf5f168f4ea3ac095cc5c358da"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/place-fill.md",
+    "bytes": 2574,
+    "sha256": "dbc4e3de40ca7bbb15015406b83781a306edf5ac1a8b10fe5d2044637f3bda5a"
+  },
+  {
+    "path": ".claude/skills/doc-edit/references/reframe.md",
+    "bytes": 1029,
+    "sha256": "cbee36e9d1c250a912dc5fa6507ef69f2a5c29596a1c9699f80cac427c36b12e"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/beats.py",
+    "bytes": 7383,
+    "sha256": "585f09908ce82007ffa8431b9959767e86f3da5c2b295337790b95ce339a421f"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/bench_story_first.py",
+    "bytes": 5242,
+    "sha256": "ea29730b0baf94214080d41277b716cc876394ebf5803c87a17554a311f272f5"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/fallback_swap.py",
+    "bytes": 8639,
+    "sha256": "547b968d41edfec6542aabe6bf5f6215ad9b6de253774c42baf47861c73368b2"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/intro.py",
+    "bytes": 15623,
+    "sha256": "7ff66179413ac269c33d9b73dadc7bb0bb3d8a7bce19439f1c3f9fae62361a01"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/ledger.py",
+    "bytes": 24222,
+    "sha256": "bbad8996e049afcfad50dc1ca721b79ca1b979c0e06bc699c4f6c5b4de553c20"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/missing.py",
+    "bytes": 21857,
+    "sha256": "e82052d0f377965c8c6b51880ec5efef33c18dcf42baf0c9ff9eac38f91966f1"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/place.py",
+    "bytes": 35251,
+    "sha256": "ae5bfb832df27d95de24c56585a216f6ba152b8a3d85712c1912c8783567af49"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/plan.py",
+    "bytes": 145917,
+    "sha256": "db1326a51f14c1c68242bce169555a144bcfa4da9796cfb715df074b15881818"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/reframe.py",
+    "bytes": 12723,
+    "sha256": "df74d523895c63b45c980c9a4b1d95ee59b2e979e9b711a44b72e2bb11acf62c"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/state.py",
+    "bytes": 7746,
+    "sha256": "ef4492c85e29df0c1877dab47a40b7f541ed5120945f03117b4b8a445ead73f8"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/story.py",
+    "bytes": 23200,
+    "sha256": "73b76ef981a84541a450f2d52f162853d05e88ce329f20bf229ff3385498f553"
+  },
+  {
+    "path": ".claude/skills/doc-edit/scripts/yolo.py",
+    "bytes": 5208,
+    "sha256": "9e395c8df724344ed870e188bf7ba8c393cc77cbcf7167f147fc05e51caa4c97"
+  },
+  {
+    "path": ".claude/skills/edit-craft/SKILL.md",
+    "bytes": 5381,
+    "sha256": "53b7bc61cc7175fccda7d844ca7a943e107cb4c271457abdc0f278b3ddf6cebd"
+  },
+  {
+    "path": ".claude/skills/edit-craft/references/delivery.md",
+    "bytes": 1724,
+    "sha256": "aea7ac19801ae1a05538cd56d692111a77c077e45a7a9a181e8fe9bc27111867"
+  },
+  {
+    "path": ".claude/skills/gemini-assist/SKILL.md",
+    "bytes": 3899,
+    "sha256": "37aaf46d4a26fcf9ee44d1b0b610a8667a0577f65829b8ed7458b8e63b446e90"
+  },
+  {
+    "path": ".claude/skills/gemini-assist/scripts/gemini_bridge.py",
+    "bytes": 10063,
+    "sha256": "6fe074343c535f7756fd318fc20be85928cdc2435f1559705e55b9530153c3d5"
+  },
+  {
+    "path": ".claude/skills/gemini-assist/scripts/test_gemini_bridge.py",
+    "bytes": 1514,
+    "sha256": "03dd5f9002f88679e51385230284297ef9781b3b11f5b69fd1390cb2c99933af"
+  },
+  {
+    "path": ".claude/skills/hide-logo/SKILL.md",
+    "bytes": 3545,
+    "sha256": "e1d2361436342d8a1dbe2bc03f6e7af279d0a7bfa0df9a444220c27619b73e29"
+  },
+  {
+    "path": ".claude/skills/hide-logo/logos/bbc.npy",
+    "bytes": 2408,
+    "sha256": "05a3c36b878f79cb215f7a87d9b775de6569a1495759a115d5d7ef7482e9f211"
+  },
+  {
+    "path": ".claude/skills/hide-logo/references/notes.md",
+    "bytes": 3631,
+    "sha256": "7bec76c766a2d9c02909d92e956ca1f05fba1151a47a3e346b331d2ba957baed"
+  },
+  {
+    "path": ".claude/skills/hide-logo/scripts/hide_logo.py",
+    "bytes": 49861,
+    "sha256": "680f3e80f096cb580ca5c7a2acb158e6ce4ff7d7e7fafd6b18bc183c8c79a71f"
+  },
+  {
+    "path": ".claude/skills/hide-logo/scripts/minimax_worker.py",
+    "bytes": 9423,
+    "sha256": "818d59b117dcd21ff83cc43aa6d6a0c58e98fd0d47578de196455f905de9b578"
+  },
+  {
+    "path": ".claude/skills/memory-find/SKILL.md",
+    "bytes": 597,
+    "sha256": "56c7fa03d05a11700a761e22147c5e97200364c37e72e670c9fdb4aabca60ef0"
+  },
+  {
+    "path": ".claude/skills/memory-save/SKILL.md",
+    "bytes": 945,
+    "sha256": "5d1e3ed9c36ef3008c3dbea3c83b9e16d3d282c393508e60391303a715b6fe3a"
+  },
+  {
+    "path": ".claude/skills/process-ai-video/SKILL.md",
+    "bytes": 3467,
+    "sha256": "7121e070076457a7577cd4181937d101dfc5aa3a562dd6ab3d69b3f1163620cb"
+  },
+  {
+    "path": ".claude/skills/process-ai-video/scripts/process_ai_video.py",
+    "bytes": 15461,
+    "sha256": "06acba0daacf154cdbd3ea0235c25a71d9ac4c8bb529f3b8865195640d0f30ac"
+  },
+  {
+    "path": ".claude/skills/resolve-api/SKILL.md",
+    "bytes": 4251,
+    "sha256": "d13bd0a69b985686cfc786a736ba928cff86f5849dea86d17b0fbd2c1a77a208"
+  },
+  {
+    "path": ".claude/skills/scan-source/SKILL.md",
+    "bytes": 3484,
+    "sha256": "20849a107c92891539503a71c67f35494cd9820d395bcfea15584ba18739fb57"
+  },
+  {
+    "path": ".claude/skills/scan-source/scripts/scan_source.py",
+    "bytes": 16550,
+    "sha256": "03df01a8a7ff2d52e43888176b931a59e4e9c7bebf71b004b80e17dcd2591b3f"
+  },
+  {
+    "path": ".claude/skills/tag-source/SKILL.md",
+    "bytes": 6049,
+    "sha256": "8894fa19fd05232716ffd36c5bc9b1070b5b3fefa169541d6cc46853178c3a61"
+  },
+  {
+    "path": ".claude/skills/tag-source/scripts/make_africa_ai_folders.ps1",
+    "bytes": 1343,
+    "sha256": "cf464e7fb6e4f6aeb9a0bb8b21179da2c7fb22dd774d8197790fd670a6fe3ebc"
+  },
+  {
+    "path": ".claude/skills/tag-source/scripts/organize.py",
+    "bytes": 10846,
+    "sha256": "3a3a4e37dd85b7ad25febf21c8fa3145442dd89126043d4b877c1dcb57912996"
+  },
+  {
+    "path": ".claude/skills/tag-source/scripts/tag_source.py",
+    "bytes": 18715,
+    "sha256": "462128133a50fa55e51320070e966b0059aed48eb259fb96c7427fdcf1777e97"
+  },
+  {
+    "path": ".claude/skills/tag-source/tagger_prompt.md",
+    "bytes": 4889,
+    "sha256": "47f126b2feb88f45a433f86f88abc71aa222894ca0c1445d41fc7a83b394a218"
+  },
+  {
+    "path": ".claude/skills/thumbnail/SKILL.md",
+    "bytes": 4803,
+    "sha256": "fcebdc16740b5fb1ced2f1c04bdc7a2f40b147848339f69f07778de844747330"
+  },
+  {
+    "path": ".claude/skills/thumbnail/assets/layout-A-guide.png",
+    "bytes": 56970,
+    "sha256": "079b24440c91cd7b80bf858326a3f44538da7c481e2415daa03a4e4cf74e21b4"
+  },
+  {
+    "path": ".claude/skills/thumbnail/assets/layout-B-guide.png",
+    "bytes": 57060,
+    "sha256": "8950fac9de61e56cf3de15b0e1a1f2388112805e27b226e38c2fe40fbd3e9775"
+  },
+  {
+    "path": ".claude/skills/thumbnail/references/look-ref.png",
+    "bytes": 2087577,
+    "sha256": "4ee99cc13c07b52da901b95b389353556f22ce673f44a046fb679a74e896e575"
+  },
+  {
+    "path": ".claude/skills/thumbnail/references/visual-dna.md",
+    "bytes": 2342,
+    "sha256": "bf12c4c688466d630e8df5c39fdce1e20967addee0df0d63f1cf318b45ae2079"
+  },
+  {
+    "path": ".claude/skills/thumbnail/scripts/thumb.py",
+    "bytes": 19152,
+    "sha256": "5a112a34b62180ce6493e8a89277bec9f9756e017b8b268f1d833f39154dc532"
+  },
+  {
+    "path": ".work/tools/cleanup_workspace.py",
+    "bytes": 5859,
+    "sha256": "6656807e259e0ee893785ff0ce2ecacbfd0b451b9f1b9cceb2423ea2889763c1"
+  },
+  {
+    "path": ".work/tools/library_db.py",
+    "bytes": 9557,
+    "sha256": "9a48501c2f202b20ca376fa04e1ce774fea430ed423b60ec4cf63d0353a4715e"
+  },
+  {
+    "path": ".work/tools/memory_gateway.py",
+    "bytes": 14584,
+    "sha256": "a2a05ddffa87ab12b4649e5a6251229d619fe32ddc81beeb7983bed1b1196dac"
+  },
+  {
+    "path": ".work/tools/team_data.py",
+    "bytes": 9265,
+    "sha256": "b6fb8662db5958e552bf84e6e8d4ff1be23bef90cf2ded0b2175f58d45a00954"
+  },
+  {
+    "path": "CLAUDE.md",
+    "bytes": 6421,
+    "sha256": "c7fc94e6df17d1b4b07a63571c90420ed65333ef92a524f45cf8650d8da0955e"
+  },
+  {
+    "path": "README.md",
+    "bytes": 13034,
+    "sha256": "07c2ede134fef3af8ae67ffa1578dd8529be6fbf736c27d69da745c7ade07a64"
+  },
+  {
+    "path": "config.toml",
+    "bytes": 2387,
+    "sha256": "2c45419686e30e33257f680da334effcc1c7af324012a6f04b9d04afec98fad4"
+  },
+  {
+    "path": "docs/SYSTEM.md",
+    "bytes": 26436,
+    "sha256": "7ed4577ece31c2ae108acb376803937e1eb1f0eb6237372d01cd4e6cfb9439f6"
+  },
+  {
+    "path": "dvr.cmd",
+    "bytes": 59,
+    "sha256": "f8e901aba92138c9ccb92abc96e52c58500681fd820968992431c5876a72d546"
+  },
+  {
+    "path": "dvr_cowork/__init__.py",
+    "bytes": 119,
+    "sha256": "cb833da880e47cd8c0987e778053c873b808078a47fffb4b9b71a049f45695e7"
+  },
+  {
+    "path": "dvr_cowork/__main__.py",
+    "bytes": 48,
+    "sha256": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d"
+  },
+  {
+    "path": "dvr_cowork/align.py",
+    "bytes": 8344,
+    "sha256": "3bda810e8555d1a8a9e63cb84fe796836480e355c4b27e1a0c6cc0ec234fe757"
+  },
+  {
+    "path": "dvr_cowork/cli.py",
+    "bytes": 22630,
+    "sha256": "7c760cf4012a93d9564c36ffed3439ebaac49834152125185fd7b65ef4c9ae3c"
+  },
+  {
+    "path": "dvr_cowork/config.py",
+    "bytes": 2407,
+    "sha256": "ebbfddf34e2002b9246179726bc9ef8f7833bbdbd07f0a6f16bd75ef6be01679"
+  },
+  {
+    "path": "dvr_cowork/jobs.py",
+    "bytes": 20401,
+    "sha256": "2708e8221803456a4c92b7cf66183f09d7dcb399c63632c8ce98257e304e6a6c"
+  },
+  {
+    "path": "dvr_cowork/layout.py",
+    "bytes": 4480,
+    "sha256": "147699b5940396f580536793827e1c945cfb4fea9325b09cc156de13a6a66071"
+  },
+  {
+    "path": "dvr_cowork/report.py",
+    "bytes": 4967,
+    "sha256": "d3848f79dbb8793bf0f60c7a82e2aef66b4de31abbdf33eba0f071cbe56c7974"
+  },
+  {
+    "path": "dvr_cowork/resolve_conn.py",
+    "bytes": 2902,
+    "sha256": "243506c9dc6ff62d9e8a5de26a02daef6006a3c5981faeafd45f0184946afcb1"
+  },
+  {
+    "path": "dvr_cowork/resolve_ops.py",
+    "bytes": 24556,
+    "sha256": "08c75e78b2307186a2673e48e3abd519ba393adc18787af3f5c26ab6f93aa2b1"
+  },
+  {
+    "path": "dvr_cowork/stills.py",
+    "bytes": 1714,
+    "sha256": "60b33f477fbede105161bdfcde71abf87e89bebccae1be401f278a70eb171dd8"
+  },
+  {
+    "path": "dvr_cowork/textnorm.py",
+    "bytes": 1506,
+    "sha256": "b001018c4b6f21688fa3f3dcad99876eca9d1c24250ec57664953f128817ec23"
+  },
+  {
+    "path": "dvr_cowork/timecode.py",
+    "bytes": 1375,
+    "sha256": "d633da0b78be9e854d27fd1fec05d2fd3a77c4b59c36ffda57e1641625603c4c"
+  },
+  {
+    "path": "dvr_cowork/timestamps.py",
+    "bytes": 3347,
+    "sha256": "4a2aea61ad05e15da8d69956311fac5f50e725eb7fd0039e1a46cb9963babd8f"
+  },
+  {
+    "path": "dvr_cowork/transcribe.py",
+    "bytes": 5342,
+    "sha256": "216a5cd8fa0e586dcc1cf8a3f6a40720eff3f874942821a09567d3368a2470aa"
+  },
+  {
+    "path": "dvr_cowork/vosync.py",
+    "bytes": 5628,
+    "sha256": "8fbebf453247ee6139d80a74628b863c63abe4b53eaa9d95d7d37035648d9cc8"
+  },
+  {
+    "path": "dvr_cowork/youtube.py",
+    "bytes": 8871,
+    "sha256": "973ff286897e2e100f0075265be06bbbd158ce19f561597d51b5944764442c52"
+  },
+  {
+    "path": "examples/timestamps_example.txt",
+    "bytes": 432,
+    "sha256": "3723753c31364420e882c15f18aa051f1c7ae5a80c16bcbe8087e9d2ba61b819"
+  },
+  {
+    "path": "inapp/DVR_VO_Sync_apply_last_plan.py",
+    "bytes": 1815,
+    "sha256": "ef537ff07979275073a1594497f510b007a963c8cfbca00c1bfd0139f3490848"
+  },
+  {
+    "path": "install_inapp.ps1",
+    "bytes": 675,
+    "sha256": "576553e4100413cdbf2febd58208ecbd77660b96b15b06b4a741a67bd83e48b5"
+  },
+  {
+    "path": "luts/AMZ_01_Natural_Canopy.cube",
+    "bytes": 970491,
+    "sha256": "20e6cc99daf50d9ee2a4cd115a2e3bedc4c2093d67778903996c44e226760c3d"
+  },
+  {
+    "path": "luts/AMZ_02_Clear_Daylight.cube",
+    "bytes": 970474,
+    "sha256": "32be11411d0371cb7c1b2a084af43f2765f43397258ab35533367f65514d3d4b"
+  },
+  {
+    "path": "luts/AMZ_03_Misty_Dawn.cube",
+    "bytes": 970478,
+    "sha256": "3d8b25374d7e37de69ea4c51b7a7b78273107162e5e6fec96303fda61577890d"
+  },
+  {
+    "path": "luts/AMZ_04_Swamp_Olive.cube",
+    "bytes": 970467,
+    "sha256": "1d9de45f2c9f6ba479b90ca6fe9f7e2734f82e5ea028c9ff7e961c2c96f2ae48"
+  },
+  {
+    "path": "luts/AMZ_05_Tension_Stalk.cube",
+    "bytes": 970473,
+    "sha256": "3a849f90ef9a57d0115f9ce5a14a7d9390bc6b06ccead168c387c494b03a74e7"
+  },
+  {
+    "path": "luts/AMZ_06_Golden_Release.cube",
+    "bytes": 970479,
+    "sha256": "c6b51e3ae3fcccad61d5e29f866a276f3cab98cacaaac52dda241fa34571e9ba"
+  },
+  {
+    "path": "luts/AMZ_07_Dusk_Night.cube",
+    "bytes": 970470,
+    "sha256": "62342de4069ab19da9717199706c6a272c47bb609048ace59119f83545a21608"
+  },
+  {
+    "path": "luts/README.md",
+    "bytes": 2418,
+    "sha256": "23c2ab1a954f983fe2835b058eadbee55361c3421512fa99671186efe5a35a97"
+  },
+  {
+    "path": "luts/make_luts.py",
+    "bytes": 7220,
+    "sha256": "4dbfd63fefabc0c58741fc0fe19b4235f4502d085bef850b15aee621f85434d5"
+  },
+  {
+    "path": "pyproject.toml",
+    "bytes": 732,
+    "sha256": "3fff9e249fd2b16a2d1b6e7fd9c060767d9094add52241c17f912dc8a952dd47"
+  },
+  {
+    "path": "setup.ps1",
+    "bytes": 3873,
+    "sha256": "d9f527217bf396a5e70d82f1ceaec0a5b9c3307ed917e7d34ad01a5999ef5460"
+  },
+  {
+    "path": "tests/__init__.py",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "tests/test_pipeline.py",
+    "bytes": 23881,
+    "sha256": "6e43a470c2031dc7a4250c3f79314a48ac38d84190d42822516b1f5c19a496a6"
+  }
+]

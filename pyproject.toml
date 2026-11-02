@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dvr-mountain-ai"
+version = "2.0.0"
+description = "Full-AI mountain wildlife stories, numbered shots, narration and Resolve assembly"
+requires-python = ">=3.11"
+dependencies = ["Pillow>=10,<13"]
+
+[project.optional-dependencies]
+youtube = ["google-api-python-client>=2,<3", "google-auth-oauthlib>=1,<2"]
+
+[project.scripts]
+dvr = "dvr_cowork.cli:main"
+
+[tool.setuptools]
+packages = ["dvr_cowork"]
