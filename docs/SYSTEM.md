@@ -18,6 +18,8 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
           ├─► DaVinci Resolve (Scripting API): timeline, media pool, marker, grade, render
           ├─► thư viện: Z:\ (footage thật, nhạc, SFX: chỉ đọc), D:\AI_video (clip AI)
           ├─► .work/ (index + tag, cache, beat sheet, spec, plan, ledger, memory)
+          ├─► Gemini API (rẻ, chỉ đọc; dvr_cowork/gemini.py): dịch phụ đề VI, nháp prompt shot thiếu, SEO; Claude duyệt
+          ├─► YouTube Data API: tìm trend (title, từ khoá, tags nhiều view) + upload private
           └─► PostgreSQL dvr_library (tuỳ chọn: bản sao để truy vấn)
 ```
 
@@ -28,7 +30,8 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
    shot, đặt nhạc/SFX theo luật dựng, chấm điểm hàng nghìn clip, đặt lên timeline. Claude chỉ đọc vài dòng tóm tắt.
 3. **Mọi clip được "nhìn" một lần.** Tag-source lưu những gì thấy trong clip thành tag. Lúc dựng không xem lại video,
    không nghe audio.
-4. **Mỗi bước có cổng duyệt.** Claude dừng sau mỗi bước; việc phá huỷ phải có "yes".
+4. **Mỗi bước có cổng duyệt.** Claude dừng sau mỗi bước; việc phá huỷ phải có "yes". Hai lệnh gộp nhiều bước
+   (3 phase, mục 5): `/scan-source /tag-source và tiếp` và `/doc-edit color n done`.
 5. **Không mất dữ liệu.** Backup timeline trước khi đổi lớn, `Z:` chỉ đọc, Claude không tự xoá file.
 
 ## 2. Bản đồ thư mục
@@ -41,7 +44,10 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
 | `.claude/commands/` | Lệnh nhanh `/project-status`, `/review-frame`, `/sync-vo` | có |
 | `.claude/settings.json` | Quyền chung (hỏi trước `place.py`, `--replace`, `grade.py apply`...; cấm SendKeys) + hook in handoff | có |
 | `.claude/settings.local.json` | Quyền riêng từng người | không |
-| `dvr_cowork/` | Thư viện Python: kết nối Resolve, vo-sync, `info/at/find/offline/frames/backups`, `backup_timeline` | có |
+| `dvr_cowork/` | Thư viện Python: kết nối Resolve, vo-sync, `info/at/find/offline/frames/backups`, `backup_timeline`; `jobs.py` (trạng thái từng video), `youtube.py` (upload), `seo.py` (title / description / tags) | có |
+| `.secrets/youtube/` | `client_secret.json`, `channels.json` (Chann_N → channel ID), `tokens/` | không |
+| `.work/automation/jobs.sqlite3` | Trạng thái video, quyết định Case 1 / 2, log ghi Resolve (SQLite, tự tạo) | không |
+| `.work/gemini/`, `.work/seo/cache/` | Cache + log token Gemini; kết quả tìm trend YouTube (7 ngày) | không |
 | `luts/` | 7 LUT AMZ + `make_luts.py` | có |
 | `config.toml` | Đường dẫn, workspace, thông số Whisper / vo-sync | có |
 | `tests/test_pipeline.py` | Test end-to-end (mock Resolve) + chạy self-test của mọi script | có |
@@ -56,7 +62,7 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
 | `.work/tag_source/` | Contact sheet (`sheets/`), batch tag `batch_NN.json` + `_result.json` | không |
 | `.work/grade/`, `.work/hide_logo/`, `.work/process_ai_video/` | Plan màu + cache frame; registry logo; log xử lý clip AI | không |
 | `.work/scripts/` | Script dùng một lần (dọn bằng `cleanup_workspace.py`) | không |
-| `.models/` | Model Whisper, YOLO, e5 (setup tự tải) | không |
+| `.models/` | Model Whisper, YOLO, e5 (tự tải lần đầu) | không |
 | `input/` | Tài liệu riêng của bạn (kế hoạch, mẫu) | không |
 
 **Ổ đĩa và vùng (region).** Mỗi video thuộc một vùng; plan, fill và prompt chỉ dùng footage của vùng đó:
@@ -166,12 +172,20 @@ audios/ (screenplay + timestamp EN/VI + mp3/1..n)
   │   missing.py ──► missing_prompts.txt (1 prompt / slot THIẾU)
   ▼
  intro.py tự chọn nhạc intro → plan.py → place.py: backup → intro + thân phim cùng lúc (V1 + A1 + A3-A9 + marker)
-  │ bạn tạo clip AI → logo / delogo → ingest --fill (scan + tag + organize + plan + place --fill)
-  │ reframe · audio-expert · color (light pass)
+  │ ── PHASE 1 dừng: chờ bạn tạo clip AI theo missing_prompts.txt
+  │ bạn tạo clip AI → logo / delogo
+  │ PHASE 2 `/scan-source /tag-source và tiếp` = ingest --fill (scan + tag + organize + plan + place --fill)
+  │ ── dừng: bạn xem timeline + logo; reframe · audio-expert nếu cần
   ▼
- done: render Done_<project>.mp4 (preset "YouTube 1080 HEVC", tắt phụ đề) → license → ledger → relink
-       → đóng Resolve → chuyển thư mục vào _done
+ PHASE 3 `/doc-edit color n done`: color (light pass) ‖ seo.py (song song, không đụng Resolve)
+   seo.py: spec.txt (# FILM, # BIBLE, # CAST) + YouTube search (video dài nhiều view 90 ngày) → Gemini → 3 title
+           trend cao nhất, luôn dạng "WILD <VÙNG> | ... | Wildlife Documentary" (title 1 = hút view nhất = title
+           chính) + description (chapters, ghi rõ có AI) + tags
+   done: license → ledger → render Done_<video>.mp4 (preset "YouTube 1080 HEVC", tắt phụ đề) → upload PRIVATE,
+         không thumbnail. Resolve vẫn mở; bạn tự chuyển thư mục vào _done
 ```
+Trạng thái từng video (`python -m dvr_cowork.jobs status`) nằm trong `.work/automation/jobs.sqlite3`: Python tự ghi,
+Claude chỉ đọc vài dòng. Mỗi lúc chỉ một script được ghi vào Resolve (khoá), hai kênh chạy lần lượt.
 
 ### 5.1 story.py: từ truyện ra spec
 
@@ -264,7 +278,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 
 | Skill | Làm gì | Script chính | Ghi vào |
 |---|---|---|---|
-| `doc-edit` | Narration → brief → beat sheet → plan → place; missing-prompts, logo, delogo, ingest, fill, color, reframe, status, check-timelines, done | `story.py`, `plan.py`, `place.py`, `missing.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline Edit, `.work/doc_edit/` |
+| `doc-edit` | Narration → brief → beat sheet → plan → place; missing-prompts, logo, delogo, ingest, fill, color, reframe, status, check-timelines, done, seo, color n done | `story.py`, `plan.py`, `place.py`, `missing.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline Edit, `.work/doc_edit/` |
 | `tag-source` | Agent tagger nhìn 4 frame/clip một lần → tag; xếp clip AI mới vào thư mục loài | `tag_source.py`, `organize.py` | `.work/library/` |
 | `scan-source` | Cập nhật index sau khi thêm/đổi/xoá file | `scan_source.py` | `.work/library/` |
 | `process-ai-video` | Làm clip AI trông như quay thật, cắt character sheet đầu clip | `process_ai_video.py` | Ghi đè clip trong `D:\AI_video` |
@@ -275,7 +289,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | `edit-craft` | Kiến thức dựng: nhịp, điểm cắt, J/L cut, xuất YouTube | — | — |
 | `resolve-api` | Lưu ý khi viết script cho Resolve | — | — |
 | `memory-find` / `memory-save` | Tìm / lưu memory dự án | `memory_gateway.py` | `.work/knowledge/` |
-| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
+| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager. Tự được gọi bởi `seo.py`, `missing.py --draft`, `translate_vi.py` (create-doc-mov), bạn không cần gõ `/gemini-assist` | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
 
 ## 9. An toàn
 
@@ -299,6 +313,9 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | Cache: Whisper, YOLO, vector caption, màu nền, LUFS, vector memory | Lần sau nhanh (plan ~20-60 s cho ~1000 shot) |
 | PostgreSQL cho câu hỏi xuyên video | Một câu SQL thay vì script quét JSON |
 | Preflight một lệnh; việc bị chặn không thử lại | Không mất lượt vô ích |
+| SEO: Python lọc trend + dựng description, Gemini flash-lite viết (~2k token vào, ~1k ra), Claude chỉ duyệt 3 title | Việc viết dài chuyển sang model rẻ; ~300 / 10.000 quota YouTube mỗi ngày, cache 7 ngày |
+| Dịch VI (`translate_vi.py`, glossary tên loài do Claude đưa) và nháp prompt THIẾU (`missing.py --draft`) bằng gemini-3.5-flash; Claude đọc và sửa từng dòng, QC chặn chữ chỉ hướng trên động tác đứng yên | Phần viết dài nhất chuyển sang Gemini; Claude chỉ đọc + sửa. flash bận → flash-lite một lần (in ra để duyệt kỹ hơn) |
+| Gemini không tag, không plan / fill: tag vẫn là Sonnet nhìn ảnh, plan / fill là Python có luật cứng | Không đổi chất lượng lấy vài token |
 
 ## 11. Dữ liệu của team: chia sẻ code, giữ riêng dữ liệu
 

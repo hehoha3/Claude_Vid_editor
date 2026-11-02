@@ -5,6 +5,9 @@ description: Re-index the source libraries (real footage, AI clips, audio) after
 
 # Scan source
 
+`/scan-source /tag-source và tiếp` (user 2026-10-31) = phase 2 of a video: run doc-edit `ingest --fill` instead
+(doc-edit SKILL.md), then stop for the user's review.
+
 The **user sorts the files**; this skill only syncs the indexes (no vision, no file moves, 0 tokens beyond stdout).
 Z: is read-only: its indexes live in `.work/library/` (also SFX / Sound). Never open a `_library.json` whole.
 

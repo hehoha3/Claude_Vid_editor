@@ -176,7 +176,7 @@ def build(src_path, out, check=False):
         l["n"] = n
         l["d"] = len(l["en"].split()) * 60 / wpm + 0.4
         if not l["vi"] or l["vi"] == l["en"] or l["vi"].isascii():
-            err.append(f"line {n}: Vietnamese missing or untranslated: {l['vi'][:60]!r}")
+            err.append(f"line {n}: Vietnamese missing or untranslated: {l['vi'][:60]!r} (translate_vi.py fills it)")
     status = f"PLANNED — onsets estimated from word counts at {wpm:.0f} wpm (+0.4 s per block); not yet conformed to audio"
     meas = None
     if "--mp3" in sys.argv:

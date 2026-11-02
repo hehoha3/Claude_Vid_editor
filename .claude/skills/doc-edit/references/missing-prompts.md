@@ -25,7 +25,17 @@ re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply bel
    - **Shot roles**: `predator_burst` `prey_escape` `relationship_wide` `reaction` `obstacle` `reacquisition`
      `aftermath` `environmental_speed`; outside chases `action` `establishing` `detail`. Each prompt adds a role,
      angle or information the others lack; never 10 prompts that differ by one adjective.
-3. Write `.work/doc_edit/<video>/prompts.txt` (overwrite; Write tool): `## G<n>` / `## W<n>` (or `## +<species>` extra group),
+3. **Gemini drafts, Claude reviews** (user 2026-11-01): `missing.py <video> --draft [--range=A-B]` sends the groups
+   (step 1 facts), the screenplay around each group's times, the cast bible + spec LOOK / CAST lines and THIS file to
+   gemini-3.5-flash (busy -> flash-lite once, the stdout names the model), writes its answer as prompts.txt (an older
+   one -> `prompts_prev.txt`) and runs the QC at once. Then Claude reads EVERY prompt of prompts.txt against step 2
+   and the brief (in context in a new-video run; else `.work/gemini/<video>/story.txt`, the excerpt Gemini got) and
+   fixes with Edit, or rewrites a whole group with Write. Check each one: truth (species, count, sex, age, no outcome
+   the story lacks), the event and coverage (`others there`), a different role / framing / angle per clip (Gemini
+   repeats one still shot with new adjectives: rewrite), vector = where the animal travels (a still animal = `static`,
+   no direction words on rises / rests / reaches), one axis across a chase, place + light the same as the scene
+   (dusk: the animal still clearly lit), biology, relationship_wide max one. flash-lite wrote it -> read harder.
+   Gemini failed -> write prompts.txt yourself as below. Format of `.work/doc_edit/<video>/prompts.txt` (overwrite): `## G<n>` / `## W<n>` (or `## +<species>` extra group),
    then per clip (= one 10 s generated video, format user 2026-10-22) a line `<role> <vector> | <camera> | <place> |
    <light>` and 2-4 beat lines `a-bs: ...` running 0-10 s without gaps. The script wraps camera / place / light in
    the fixed header "Photorealistic wildlife documentary video, 10 seconds, 16:9, shot on <camera>, <place>, <light>,
@@ -79,8 +89,8 @@ re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply bel
      but not as the story needs: write exactly what was missing (the sex, the hidden pose, the miss). The `--check`
      gates refuse prompts that break the truth.
    - No gore, no blood, no text; environment groups (`## G` with sp=none) describe the place only, no animal.
-4. `missing.py <video> --check`: QC gates (role/vector valid and stated, no contradicting direction, no
-   reversal/orbit/slow motion, biome words, biology, species named, near-duplicates, budget) + a preview of roles
+4. `missing.py <video> --check`: QC gates (role/vector valid and stated, no contradicting direction, no direction on
+   a still action, no reversal/orbit/slow motion, biome words, biology, species named, near-duplicates, budget) + a preview of roles
    per group. Fix every error in prompts.txt, re-run.
 5. `missing.py <video> --write` (re-runs the gates, refuses on errors) -> `<video>/missing_prompts.txt` (numbered
    prompts `1. ` .. with their beats, under `## THIEU` then `## WEAK`, no group headers, numbering runs on; user rules 2026-10-09 / 10-22 / 10-27) + `.work/doc_edit/<video>/shot_manifest.csv` (row n = prompt n:

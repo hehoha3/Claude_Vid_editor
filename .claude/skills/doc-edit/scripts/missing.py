@@ -1,6 +1,7 @@
 """doc-edit: prompts for the THIẾU and WEAK slots of plan.json, to generate the missing / better footage.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>                 # list groups
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --draft         # Gemini writes prompts.txt, QC
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --check         # QC gates + preview
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --write         # QC, render prompts
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py --selftest
@@ -8,7 +9,8 @@
 List mode groups THIẾU slots by character tag + species + action + setting + light and suggests how many
 clips to generate (one generated clip ~CLIP_YIELD s of usable footage, cut into several shots), with the story
 sentences of the group and the other characters' footage status in them (coverage: a chase whose hunter is
-already OK needs only the prey clips). Claude writes .work/doc_edit/<video>/prompts.txt:
+already OK needs only the prey clips). --draft: Gemini writes .work/doc_edit/<video>/prompts.txt, Claude reviews and
+fixes every prompt (user 2026-11-01; Gemini down -> Claude writes it):
     ## G3
     prey_escape L>R | long telephoto lens with natural handheld tracking | <place> | bright daylight   <- one clip
     0-2s: <what happens, English>          <- beats, contiguous 0..CLIP_S s
@@ -52,6 +54,13 @@ NO_GAIT = {"sloth": ("run", "sprint", "gallop", "charge"), "snake": ("run", "spr
            "python": ("run", "sprint", "leg", "gallop"), "anaconda": ("run", "sprint", "leg", "gallop"),
            "fish": ("run", "walk", "sprint")}
 NEG = re.compile(r"\b(?:no|not|never|without|avoid)\b[^,.;]*", re.I)  # "no reversing, no snow" are fine
+# a direction glued to a non-travel verb ("rises left to right", "motionless right to left"): written to pass the
+# vector gate, it makes the generator slide a still animal (Gemini draft 2026-11-01); still animal = vector static.
+# Gaze is fine ("crouches, watching left to right": eyeline), so look / watch / face / turn are not in the list, and
+# the direction must sit in the same clause (no comma between)
+STILL_DIR = re.compile(r"\b(?:rises?|rising|crouch\w*|rest\w*|motionless|remains?|stays?|reach\w*|lowers?|lowering|"
+                       r"settles?|settling|sits?|sitting|freez\w*|frozen|still|pauses?|listen\w*|lifts?|lifting)\b"
+                       r"[^.,;]{0,30}?\b(?:from )?(?:left to right|right to left|away to (?:the )?upper (?:right|left))")
 DUP = 0.9  # two prompts of one group this similar = the same shot twice
 
 
@@ -108,6 +117,8 @@ def lint(species, role, vec, text, truth=None):
         if vec in OPPOSITE and OPPOSITE[vec] in pos:
             errs.append(f"vector {vec} contradicted by '{OPPOSITE[vec]}'")
     errs += [f"motion: '{w}'" for w in BAD_MOVE if w in pos]
+    errs += [f"vector: '{m[0]}' gives a still action a direction (travel verb, or vector static)"
+             for m in STILL_DIR.finditer(pos)]
     errs += [f"biome: '{w}'" for w in BAD_ENV if re.search(rf"\b{w}", pos)]
     for animal, gaits in NO_GAIT.items():
         if animal in species:
@@ -269,7 +280,102 @@ def main(video, mode, rng=None):
     print("groups without prompts:", missing)
 
 
+DRAFT_TASK = """Write the file prompts.txt for every group of groups.txt (G = THIEU, W = WEAK), following missing-prompts.md steps 2-3 exactly: event, coverage, shot roles, one species per clip, vector, chase camera DNA, biome lock, biology, story truth, opening groups.
+Use story.txt (the screenplay around the groups' times; each block headed by the [group ids] it belongs to) and bible.txt (cast, sex, age, count, look); never invent animals, counts, injuries or outcomes; a near miss stays a miss.
+Per group exactly the clip count of its '-> N clips', each clip a different role / framing / angle.
+Vector = where the animal TRAVELS: a clip whose animal does not travel is 'static' and its beats carry no direction; write the direction only on a travel verb ("walks left to right"), never on rises / rests / crouches / settles / reaches / remains.
+A group of a still animal (look, rest): vary distance, height, lens, foreground, body part and what the stillness shows (ears, breath, eye, tense legs), never the same shot with other adjectives.
+Twilight / dusk / night: the light still shows the whole animal clearly (warm low light, rim light), never "light completely fades".
+Output ONLY the file text: '## <group id>', then per clip one line 'role vec | camera | place | light' and 2-4 beat lines 'a-bs: ...' running 0-10s without gaps. Name the species and the truth (sex / age) in the beats, write the vector out ("left to right"). No other text, no code fences."""
+
+
+def brief_blocks(text):
+    """brief.md -> [(start s, end s, block text)]: screenplay beats '**NNN · a–b**' and scene headings '### ... (a–b)'."""
+    timed = re.compile(r"^(?:\*\*\d+\s*·\s*|#{2,4} .*\()(\d+:[\d.]+)\s*[–-]\s*(\d+:[\d.]+)")
+    out, cur = [], None
+    for line in text.splitlines():
+        m = timed.match(line)
+        if m or line.startswith("## "):
+            if cur:
+                out.append((cur[0], cur[1], "\n".join(cur[2]).strip()))
+            cur = (secs(m[1]), secs(m[2]), [line]) if m else None
+        elif cur:
+            cur[2].append(line)
+    if cur:
+        out.append((cur[0], cur[1], "\n".join(cur[2]).strip()))
+    return out
+
+
+def bible_of(text):
+    """The cast section of brief.md ('## Animal bible', '## Species, sex, young ... locks', ...)."""
+    m = re.search(r"^## [^\n]*(?:bible|locks|cast)[^\n]*\n(.*?)(?=^## |\Z)", text, re.M | re.S | re.I)
+    return m[1].strip() if m else ""
+
+
+def story_of(gs, span, blocks):
+    """Every screenplay block within 10 s of a group's slots, ONCE, in film order, headed by its group ids (one block
+    per group before: 80 WEAK groups re-sent the same scenes, past the bridge's input cap)."""
+    used = {}
+    for g in gs:
+        for n in g["slots"]:
+            a, b = span[n]
+            for i, (x, y, _) in enumerate(blocks):
+                if x < b + 10 and y > a - 10:
+                    used.setdefault(i, {})[g["id"]] = 1
+    return "\n\n".join(f"[{' '.join(used[i])}]\n{blocks[i][2]}" for i in sorted(used))
+
+
+def draft(video, rng=None):
+    """Gemini writes prompts.txt (user 2026-11-01); Claude then reviews every prompt and fixes it (missing-prompts.md)."""
+    from dvr_cowork.gemini import ask
+    work = ROOT / ".work" / "doc_edit" / video
+    plan = json.loads((work / "plan.json").read_text("utf-8"))
+    slots = plan["slots"]
+    if rng:
+        a, b = (secs(x) for x in rng.split("-"))
+        slots = [s for s in slots if a <= s.get("start", 0) < b]
+    gs = groups(slots) + groups(slots, "WEAK", "W")
+    if not gs:
+        return print("draft: no THIEU / WEAK slots, nothing to write")
+    brief = (work / "brief.md").read_text("utf-8")
+    blocks, span = brief_blocks(brief), {s["slot"]: (s.get("start", 0), s.get("start", 0) + s["dur"]) for s in slots}
+    g_txt = [f"REGION {plan.get('region', 'amazon')}"]
+    spec = (work / "spec.txt").read_text("utf-8") if (work / "spec.txt").exists() else ""
+    look = [l for l in spec.splitlines() if re.match(r"# (LOOK|BIOME|BIBLE|CAST) ", l)]
+    for g in gs:
+        tag, sp, act, st, li = g["key"]
+        a, b = min(span[n][0] for n in g["slots"]), max(span[n][1] for n in g["slots"])
+        g_txt.append(f"## {g['id']} [{tag}] sp={sp} act={act or '-'} set={st or '-'} light={li or '-'} | {g['status']} "
+                     f"{tc(a)}-{tc(b)} -> {g['clips']} clips | others there: {g['others'] or '-'} | truth "
+                     + (" ".join(f"{t}={','.join(v)}" for t, v in g["truth"].items() if v) or "-")
+                     + (f" | refused in library: {g['refused']}" if g["refused"] else "")
+                     + "\n  needs: " + " / ".join(g["needs"][:6]))
+    gdir = ROOT / ".work" / "gemini" / video
+    gdir.mkdir(parents=True, exist_ok=True)
+    files = {"groups.txt": "\n".join(g_txt), "story.txt": story_of(gs, span, blocks),
+             "bible.txt": bible_of(brief) + ("\n\nSPEC LINES:\n" + "\n".join(look) if look else "")}
+    for k, v in files.items():
+        (gdir / k).write_text(v, "utf-8")
+    rules = Path(__file__).parents[1] / "references" / "missing-prompts.md"
+    text, st = ask(DRAFT_TASK, [rules] + [gdir / k for k in files], thinking="medium", max_tokens=32000,
+                   max_input=200000, model="gemini-3.5-flash")  # story <= brief.md (~90k) + rules 11k + groups
+    text = re.sub(r"^```\w*\n|\n```\s*$", "", text.strip())
+    out = work / "prompts.txt"
+    if out.exists():
+        out.replace(work / "prompts_prev.txt")
+    out.write_text(text + "\n", "utf-8")
+    print(f"draft {video}: {len(gs)} groups, {sum(g['clips'] for g in gs)} clips asked, {st['model']} in {st.get('in', 0)} "
+          f"out {st.get('out', 0) + st.get('thoughts', 0)} tokens -> {out}")
+
+
 def selftest():
+    br = ("# T\n## Animal bible\n| JG | jaguar |\n## Timed screenplay\n### 1.1 — Bank (01:30–02:30)\nA jaguar walks.\n"
+          "**002 · 02:30.0–03:00.0** — The stalk.\n  12 02:31.0 4.0s vo3.0 | It lowers.\n## Mix\nx\n")
+    bl = brief_blocks(br)
+    assert [(a, b) for a, b, _ in bl] == [(90, 150), (150, 180)] and "It lowers." in bl[1][2] and "Mix" not in bl[1][2], bl
+    assert bible_of(br) == "| JG | jaguar |"
+    st = story_of([{"id": "G1", "slots": [1, 2]}, {"id": "W1", "slots": [3]}], {1: (95, 99), 2: (151, 153), 3: (100, 104)}, bl)
+    assert st.count("A jaguar walks.") == 1 and st.startswith("[G1 W1]\n") and "\n\n[G1]\n**002" in st, st
     sl = [{"slot": 1, "status": "THIEU", "dur": 3.0, "need": "[C] Mèo lao", "filter": {"sp": ["golden cat"], "act": ["run"]}},
           {"slot": 2, "status": "THIEU", "dur": 4.0, "need": "[C] Mèo chạy", "filter": {"sp": ["golden cat"], "act": ["run"]}},
           {"slot": 3, "status": "OK", "dur": 2.0, "need": "x", "filter": {}},
@@ -305,8 +411,13 @@ def selftest():
            ("jaguar", "predator_burst", "L>R", good + ", snow on the ground"),                  # biome
            ("sloth", "action", "L>R", "A single sloth sprints left to right along a branch"),   # biology
            ("jaguar", "predator_burst", "L>R", "A single ocelot runs left to right")]           # wrong species
+    bad += [("agouti", "action", "L>R", "A single agouti rises onto its hind legs from left to right to listen"),
+            ("agouti", "action", "R>L", "A single agouti walks right to left, then remains crouched and motionless right to left")]
     for a in bad:
         assert lint(*a), f"lint passed {a}"
+    assert lint("agouti", "action", "L>R", "A single agouti walks left to right, stops and listens, still facing "
+                "the camera") == []  # a direction on the travel verb, stillness without one: fine
+    assert lint(*good_args) == [] if (good_args := ("jaguar", "predator_burst", "L>R", good)) else 0
     # story truth: a lioness / calf group must name them; no kill unless out=kill; slot refusals summed per group
     tr = {"sex": ["female"], "age": [], "out": []}
     ln = "A single adult lioness crouches low in tall grass, watching left to right"
@@ -327,5 +438,13 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
     rng = next((x[8:] for x in sys.argv if x.startswith("--range=")), None)
-    selftest() if "--selftest" in sys.argv else main(
-        a[0], "write" if "--write" in sys.argv else "check" if "--check" in sys.argv else "list", rng)
+    if "--selftest" in sys.argv:
+        selftest()
+    elif "--draft" in sys.argv:
+        draft(a[0], rng)
+        try:  # QC of the draft right away: Claude fixes what it names, then reviews every prompt
+            main(a[0], "check", rng)
+        except (SystemExit, AssertionError) as e:
+            print(e)
+    else:
+        main(a[0], "write" if "--write" in sys.argv else "check" if "--check" in sys.argv else "list", rng)

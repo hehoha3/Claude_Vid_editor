@@ -21,7 +21,8 @@ everything you need.
 
 Scripts (run with `.venv\Scripts\python.exe`, from the workspace root):
 `build_four_files.py SRC OUT [--check | --report | --mp3 DIR | --selftest]`, `check_refs.py DOI… ["query"] [--abstract]`,
-`new_video.py CHANN:TYPE… [--date DDMMYY] [--apply | --selftest]` and `genmax_audio.py AUDIOS [--profile P] [--go]`.
+`new_video.py CHANN:TYPE… [--date DDMMYY] [--apply | --selftest]`, `translate_vi.py SRC --glossary "…" [--dry]` and
+`genmax_audio.py AUDIOS [--profile P] [--go]`.
 
 ## Pick the job
 
@@ -31,8 +32,8 @@ rebuilds, re-runs the validator. If it stops on a block that no longer fits, spl
 or move its pin, rebuild. Report the PASS line and any onset that moved past its scene's hooks (`--report`).
 
 **B. Revise / upgrade an existing film** (keep every line byte-identical unless the user asks): read
-[production.md](references/production.md), `--report` for the timing table, edit the source with Edit, `--check`,
-build. Prove the narration did not change: `cmp` old/new transcript.md and diff the timestamp text with onsets
+[production.md](references/production.md), `--report` for the timing table, edit the source with Edit (a rewritten
+EN line: empty its VI, then `translate_vi.py` as in C 4b), `--check`, build. Prove the narration did not change: `cmp` old/new transcript.md and diff the timestamp text with onsets
 stripped. A film without a source file: rebuild one from its transcript + timestamp first (scenes = blank-line groups).
 
 **C. New film(s):** the user writes `/create-doc-mov Chann1 sẽ làm về <topic> trong khoảng 1h, Chann2 sẽ làm <topic>
@@ -47,9 +48,17 @@ then one review stop (step 7) with a summary per film. For every film:
 2. Research: `check_refs.py` every DOI (and `--abstract` when a sentence carries a number). Say only what the source
    supports; write each source's limit in SP_HEAD. No thoughts, kinship, kills or "deciding" without evidence.
 3. Cast bible (male / female / young, markers, continuity limit, one-line metaphor).
-4. Write the source: scenes, `EN || VI` lines, then the shot list of every scene, pins, `need:` MUST / ALT /
-   PENDING, alternates (EN + VI) for uncertain outcomes. Draft lines first and use `--report` to see where the voice
-   falls before writing shots; write `{{shot:…}}` placeholders instead of typed times.
+4. Write the source: scenes, `EN ||` lines (VI left empty: Gemini translates, step 4b), then the shot list of every
+   scene, pins, `need:` MUST / ALT / PENDING, alternates (EN; their VI by hand) for uncertain outcomes. Draft lines
+   first and use `--report` to see where the voice falls before writing shots; write `{{shot:…}}` placeholders
+   instead of typed times.
+   4b. **Vietnamese by Gemini** (user 2026-11-01): `scripts\translate_vi.py <src> --glossary "<english>=<tiếng Việt>;
+   …"` (every species + place of the BIBLE, one Vietnamese name each, e.g. `spectacled caiman=cá sấu caiman kính`).
+   It fills only empty / untranslated VI, never touches EN, weight or pin, and prints only the new lines with a FLAG
+   or a glossary name as `n | EN => VI` (user 2026-11-02; every line in `.work/gemini/<video>/review.txt`, open it
+   only when the user asks or flash-lite wrote it). Read the printed ones: meaning complete, glossary names, young =
+   "con non / chim non" of the right animal, spelling and diacritics, the narrator's calm tone; fix with Edit in the
+   source. `batch N failed` -> re-run once for the rest. Gemini failed -> write the VI yourself.
 5. `--check` until there are no ERRORs or WARNs, then build (the validator runs inside the build; it must PASS).
 6. Organize: `<video>\audios` must hold exactly the four `.md` files (one glob per film). A copy that landed anywhere
    else (workspace, `.work`, another video) is moved in with Python `Path` and checked after; never overwrite one there.

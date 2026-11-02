@@ -62,7 +62,7 @@ def selftest():
             (t / p).mkdir(parents=True)
         assert used_today("301026", [t / "Chann_1_x", t / "Chann_2_y"], t / "work") == 4
         assert used_today("311026", [t / "Chann_1_x"], t / "nowork") == 0
-    print("selftest PASS")
+    print("selftest ok")
 
 
 if __name__ == "__main__":

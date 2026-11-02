@@ -1,11 +1,13 @@
 ---
 name: doc-edit
-description: Documentary edit in Resolve, one step per command - new video(s) (narration A2 + plan + missing prompts + intro music + place of intro and body; several channels' videos in parallel in one day project), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU (tier 4 stand-ins), color, place, reframe, check-timelines, done, status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source ai, /tag-source", "xong video".
+description: Documentary edit in Resolve, one step per command - new video(s) (narration A2 + plan + missing prompts + intro music + place of intro and body; several channels' videos in parallel in one day project), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU (tier 4 stand-ins), color, place, reframe, check-timelines, done, seo (YouTube title / description / tags), "color n done" (color + render + private upload), status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source ai, /tag-source", "/scan-source /tag-source và tiếp", "xong video".
 ---
 
 # Doc edit
 
 - One video, one command per step: the user calls each step (user 2026-10-18: no "tiếp" chain, no "next step" line).
+  Two chains only (user 2026-10-31, 3 phases): `/scan-source /tag-source và tiếp` = `ingest --fill` -> stop for
+  review (timeline + logos); `/doc-edit color n done` = color -> seo -> done (render + private upload).
 - Scripts do the heavy work: read only stdout (`| tail` / `grep` the summary lines). Media is never rendered except by
   `done`.
 - Goal: picture + narrator let the viewer follow who does what; with eyes closed the sound still carries it.
@@ -101,9 +103,11 @@ sounds come from the screenplay and the footage, never from the biome name.
 | `/doc-edit fill [--sub mm:ss]` ("lấp slot thiếu") | `plan.py <folder> [--late-sub --late-sub-t=<s>]` or `--sub-all` -> `place.py <video> --fill` (backup; `references/place-fill.md`) | THIẾU left (timecodes), placed, backup |
 | `/doc-edit fill-THIEU [<video>]` (= "Sử dụng các option thay thế các slot THIEU"; user 2026-10-26: only on this command / phrase, never on its own, never in `fill`) | `plan.py <folder> --sub-broad` (`--sub-all` + tier 4: species itself > same library folder > birds / butterflies / insects / frogs > landscape; slot light first, any light last; FALLBACK "late substitute (broad)", cyan) -> `place.py <video> --fill` | slots filled (timecode -> clip), the off-light / off-setting ones to check, THIẾU left |
 | `/doc-edit fallback-species [<video>] [mm:ss-mm:ss]` (user 2026-10-29: "thay các slot FALLBACK bằng shot cùng loài") | `scripts/fallback_swap.py <video> --range=A-B` dry run, then `--apply` (backup `Edit_bak_fbspecies_*`): each FALLBACK V1 shot -> a clip of the slot's species (else its family), action / setting ignored; hand-changed shots and the intro -> story 1 fade shots untouched; Teal | swapped, left alone (hand), KEEP (no clip) |
-| `/doc-edit ingest --fill [--sub mm:ss]` | `ingest`, then `fill` in one go (no stop between); `--sub` as in `fill` | tagged, filed, THIẾU left, placed, gaps left |
+| `/doc-edit ingest --fill [--sub mm:ss]` (also `/scan-source /tag-source và tiếp`) | `ingest`, then `fill` in one go (no stop between); `--sub` as in `fill`; then stop: the user reviews the timeline + logos | tagged, filed, THIẾU left, placed, gaps left |
 | `/doc-edit place` | `references/place-fill.md` | backup, placed, max deviation, gaps, audio, failures, markers |
 | `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; one space per story, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`), several per story | ranges, story spread before -> after, AI clips toned down, intro count, the frames checked |
+| `/doc-edit color n done [<video>]` ("color và done") | `seo.py` in the background (no Resolve) while `color` runs as above; color found a broken shot / a problem -> stop, report, no render; else `done` (check-timelines.md): render + upload private, no thumbnail | color reply + SEO 3 titles + done reply |
+| `/doc-edit seo [<video>] [--force]` | `python -m dvr_cowork.seo <video folder>` (check-timelines.md "SEO") | 3 titles (the chosen one), FLAG lines |
 | `/doc-edit status` | `state.py status`: every video of every channel, its stage, the command to call next (files only, no Resolve) | the table |
 | `/doc-edit reframe [<video>]` | `references/reframe.md` | |
 | `/doc-edit check-timelines`, `/doc-edit done` ("xong video") | `references/check-timelines.md` | |

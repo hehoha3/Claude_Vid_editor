@@ -74,6 +74,16 @@ def intro_end(project):
     return 0.0
 
 
+def is_africa(project):
+    """Golden grass / burnt grass exists in Africa films only (user 2026-11-02): the spec's '# REGION africa'."""
+    import plan as P
+    for d in (ROOT / ".work" / "doc_edit").iterdir():
+        sp = d / "spec.txt"
+        if sp.exists() and P.same_project(project, d.name):
+            return bool(re.search(r"^#\s*REGION\s+africa", sp.read_text("utf-8"), re.M | re.I))
+    return False
+
+
 def tint(st):
     """Colour of the near-grey pixels, normalised (None: nothing grey in the frame; foliage is never a cast)."""
     return None if st["neutral"] is None else st["neutral"] / max(float(st["neutral"].mean()), 1e-3)
@@ -238,7 +248,7 @@ def plan():
         r["c1"] = G.cdl(r["img"], c["slope"], c["offset"], c["power"], c["sat"])
         r["f1"], r["gd"] = G.stats(r["c1"]), M.ground(r["c1"])
         r["ok"] = dry_ok(r, tags)
-    n_dry = dry_pass(rows)
+    n_dry = dry_pass(rows) if is_africa(project.GetName()) else 0
     for r in rows:
         c, f, ai, intro = r["c"], r["f"], r["ai"], r["intro"]
         n_ai += ai and c["sat"] < 0.99
