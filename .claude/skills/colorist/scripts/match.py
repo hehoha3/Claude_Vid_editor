@@ -24,6 +24,7 @@ they survive every re-plan. LUT files: ProgramData ...\\LUT\\Amazona\\match\\<pr
 import datetime as dt
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -266,6 +267,8 @@ def grab(r):
         if not fr:
             return None
         np.save(p, np.stack(fr))
+    else:
+        os.utime(p)  # in use: light.py drops cache files untouched for CACHE_DAYS
     return np.load(p).reshape(-1, 3).astype(np.float32) / 255
 
 

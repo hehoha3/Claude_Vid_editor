@@ -18,7 +18,7 @@ class ResolveConnectionError(Exception):
 HELP = """DaVinci Resolve is not reachable.
   1. Open DaVinci Resolve and load your project.
   2. Preferences > System > General > "External scripting using" = Local, then restart Resolve.
-  3. Use 64-bit Python 3.11/3.12 (the .venv created by setup.ps1).
+  3. Use 64-bit Python 3.11/3.12 (the .venv of README step 2).
   4. Still failing? Use in-app mode: run install_inapp.ps1 once, then in Resolve
      Workspace > Scripts > Utility > DVR_VO_Sync_apply_last_plan  (applies the last analyzed plan)."""
 

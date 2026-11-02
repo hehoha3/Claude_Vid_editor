@@ -44,13 +44,25 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
    already there -> not rendered again. Subtitle tracks off for the render, back on after (no subtitles in the file).
    Before it, `place.black_fades` checks the 4 V1 black fades and puts back a missing one (`black fades <video>: ...`
    line; `NOT SET` -> say so, the render has no fade there).
-4. Upload (user 2026-10-31): `Done_<video>.mp4` -> the YouTube channel `input/youtube_channels.json` maps the
-   workspace's `Chann_N` to (`dvr_cowork.youtube upload`): title = the video name for now (no description / tags
-   yet), English, Pets & Animals, not for kids, private (unaudited API project). `--thumb` = the image the user gives
+4. Upload (user 2026-10-31): `Done_<video>.mp4` -> the YouTube channel `.secrets/youtube/channels.json` maps the
+   workspace's `Chann_N` to (`dvr_cowork.youtube upload`): title / description / tags from `youtube_meta.json` (SEO
+   below, run it BEFORE `ledger.py done` when the file is missing), English, Pets & Animals, not for kids, private
+   (unaudited API project), no thumbnail unless the user gives one. `--thumb` = the image the user gives
    (D:\Thumbs\...). `--publish-at` = "đăng vào 18 giờ" (PC time): private now, YouTube makes it public then
    (a time already past -> no upload, ask again). Once per video (`.work/doc_edit/<video>/youtube.json`); a `--thumb` later on an uploaded video
    sets only the thumbnail. Chann_N not mapped / not logged in / failed -> `youtube:` line says so, render stays.
 Resolve stays open; no relink, no folder move: the user moves the folder into `_done` himself (user 2026-10-26).
+
+## SEO: `python -m dvr_cowork.seo <video folder> [--force]` (user 2026-10-31, replaces vidIQ)
+YouTube Data API trend search (~300 quota units, cached 7 days) + one Gemini call -> `.work/doc_edit/<video>/
+youtube_meta.json`: the 3 most trending titles (user 2026-10-31, no curiosity rule), always
+`WILD <REGION> | <Gemini's middle part> | Wildlife Documentary` (seo.full_title), description
+(chapters from the spec, AI disclosure), tags <= 500 chars, synthetic. Claude reads only the stdout lines: each title
+must be true to the film (no species, kill, fight or "only / first / biggest" claim the film does not show). Claude
+picks the best true one (user 2026-11-02: click pull + fit to the whole film, not the trend order) and sets it with
+`--pick N` before the upload (youtube.py reads the meta at upload time). `FLAG` lines -> fix or tell the user. Reply:
+the 3 titles ranked best first, the one used + one line why (the user may switch: `--pick N`, or Studio after the
+upload), and the reminder "Thông tin tài sản: Web" in Studio.
 
 After it: `hide_logo.py --pending`; copies listed -> ask only "Bạn có muốn ghi đè các file trong folder _nologo lên
 các file gốc của chúng không?"; "có" -> `hide_logo.py --overwrite-all`. Reply: the license list (file -> license path,

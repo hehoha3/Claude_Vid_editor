@@ -15,6 +15,9 @@ dependencies = [
     "fastembed>=0.9,<0.10",     # multilingual-e5-small: memory gateway search + plan semantic tie-break
     "sqlite-vec>=0.1.9,<0.2",   # vector table in .work/memory/knowledge.db
     "psycopg[binary]>=3.2,<4",  # .work/tools/library_db.py: Postgres mirror of the footage library
+    "google-api-python-client>=2.100,<3",  # dvr_cowork.youtube / seo: upload + trend search
+    "google-auth-oauthlib>=1.2,<2",        # YouTube OAuth login
+    "keyring>=25,<26",                     # Gemini API key in Windows Credential Manager
 ]
 
 [project.scripts]

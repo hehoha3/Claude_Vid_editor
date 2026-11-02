@@ -87,7 +87,7 @@ def load_model(cfg: dict):
     try:
         from faster_whisper import WhisperModel
     except ImportError as e:
-        raise RuntimeError("faster-whisper is not installed. Run setup.ps1 first.") from e
+        raise RuntimeError("faster-whisper is not installed: .venv\\Scripts\\python.exe -m pip install -e . (README 2)") from e
     w = cfg["whisper"]
     kw = dict(device=w["device"], compute_type=w["compute_type"], download_root=str(models_dir(cfg)))
     if int(w.get("cpu_threads") or 0) > 0:

@@ -491,10 +491,13 @@ def test_script_selftests():
     """Every skill / tool script with a --selftest (no Resolve, no Postgres, no model downloads) passes it."""
     import subprocess
     root = Path(__file__).resolve().parent.parent
-    files = sorted(root.glob(".claude/skills/*/scripts/*.py")) + [root / ".work/tools/library_db.py", root / "dvr_cowork/jobs.py"]
+    files = sorted(root.glob(".claude/skills/*/scripts/*.py")) + [root / ".work/tools/library_db.py", root / "dvr_cowork/jobs.py",
+                                                                    root / "dvr_cowork/seo.py"]
     files = [f for f in files if f.exists() and "--selftest" in f.read_text("utf-8")]
+    own = {"minimax_worker.py": Path(r"D:\tools\minimax_remover\venv\Scripts\python.exe")}  # scripts with their own venv
+    files = [f for f in files if f.name not in own or own[f.name].exists()]  # that venv missing on this PC -> skipped
     for f in files:
-        r = subprocess.run([sys.executable, str(f), "--selftest"], capture_output=True, text=True, encoding="utf-8",
+        r = subprocess.run([str(own.get(f.name, sys.executable)), str(f), "--selftest"], capture_output=True, text=True, encoding="utf-8",
                            errors="replace", cwd=root, timeout=300)
         assert r.returncode == 0 and "selftest ok" in r.stdout, f"{f.relative_to(root)}:\n{r.stdout[-800:]}{r.stderr[-1500:]}"
     print(f"  {len(files)} scripts ok")

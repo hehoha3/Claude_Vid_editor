@@ -379,7 +379,8 @@ def handoff(line, path=None):
         return
     s = p.read_text("utf-8")
     s = re.sub(r"(?m)^Updated: .*$", f"Updated: {date.today()}", s, count=1)
-    s = s.replace("Last completed:\n\n", f"Last completed:\n\n- {date.today()} {line}\n", 1)
+    # header may carry a note: "Last completed (newest first, ...):" (it did, so every done skipped it until 2026-10-31)
+    s = re.sub(r"(?m)^(Last completed[^\n]*:\n\n?)", lambda m: f"{m[1]}- {date.today()} {line}\n", s, count=1)
     p.write_text(s, "utf-8")
 
 
@@ -423,6 +424,9 @@ def selftest():
     h.write_text("# H\n\nUpdated: 2000-01-01\n\nLast completed:\n\n- old\n", "utf-8")
     handoff("done v (W)", h)
     assert h.read_text("utf-8") == f"# H\n\nUpdated: {date.today()}\n\nLast completed:\n\n- {date.today()} done v (W)\n- old\n"
+    h.write_text("Last completed (newest first):\n- old\n", "utf-8")  # the real header has a note, no blank line
+    handoff("done v", h)
+    assert h.read_text("utf-8") == f"Last completed (newest first):\n- {date.today()} done v\n- old\n", h.read_text("utf-8")
     print("selftest ok")
 
 

@@ -5,8 +5,9 @@ import numpy as np
 from PIL import Image, ImageDraw
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import grade as G, match as M
-proj = sys.argv[1]
-d = Path(".work/grade") / proj
+import os
+proj = sys.argv[1]  # the project; with DVR_CHANNEL set: its <project>_<channel> plan (light.pkey)
+d = Path(".work/grade") / (f"{proj}_{os.environ['DVR_CHANNEL']}" if os.environ.get("DVR_CHANNEL") else proj)
 pl = json.loads((d / "light_plan.json").read_text("utf-8"))["shots"]
 from grade import timeline
 _, _, _, rows = timeline()

@@ -79,7 +79,7 @@ def cmd_doctor(args, cfg):
             line("OK", f"{mod} {getattr(m, '__version__', '')}")
         except ImportError:
             ok = False
-            line("FAIL", f"{mod} missing -> run setup.ps1")
+            line("FAIL", f"{mod} missing -> run: .venv\\Scripts\\python.exe -m pip install -e . (README 2)")
     md = models_dir(cfg)
     has_model = any(md.rglob("model.bin"))
     line("OK" if has_model else "WARN",

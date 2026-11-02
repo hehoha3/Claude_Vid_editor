@@ -5,10 +5,10 @@ r"""YouTube Data API (user 2026-10-31): OAuth login, channel check, upload of a 
     .venv/Scripts/python.exe -m dvr_cowork.youtube upload <video folder> [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"] [--dry]
 
 One OAuth token = one channel (the account / brand account picked in the browser): run `login` once per channel.
-Client: input/client_secret.json (Desktop app). Tokens: input/youtube_tokens/<channel id>.json (input/ is
-gitignored). Never prints the client secret or any token.
+Client: .secrets/youtube/client_secret.json (Desktop app). Tokens: .secrets/youtube/tokens/<channel id>.json
+(.secrets/ is gitignored). Never prints the client secret or any token.
 upload (also run by /doc-edit done after the render): <video folder>/Done_<video>.mp4 -> the channel that
-input/youtube_channels.json maps the workspace's Chann_N to; title / description / tags / synthetic (AI footage
+.secrets/youtube/channels.json maps the workspace's Chann_N to; title / description / tags / synthetic (AI footage
 disclosure) from .work/doc_edit/<video>/youtube_meta.json (else title = the video name), English, Pets & Animals,
 not for kids, PRIVACY. Uploaded once: .work/doc_edit/<video>/youtube.json.
 """
@@ -28,9 +28,10 @@ from googleapiclient.http import MediaFileUpload
 from .config import ROOT
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"]
-SECRET = ROOT / "input" / "client_secret.json"
-TOKENS = ROOT / "input" / "youtube_tokens"
-CHANNELS = ROOT / "input" / "youtube_channels.json"  # {"Chann_1": "<channel id>"}
+SECRETS = ROOT / ".secrets" / "youtube"  # not input/ (user 2026-10-31: input/ = files the user sends to read)
+SECRET = SECRETS / "client_secret.json"
+TOKENS = SECRETS / "tokens"
+CHANNELS = SECRETS / "channels.json"  # {"Chann_1": "<channel id>"}
 # an unaudited API project gets its uploads locked private anyway; switch to "public" after the YouTube audit
 PRIVACY = "private"
 THUMB_MAX = 2 * 1024 * 1024  # thumbnails.set limit
@@ -63,7 +64,7 @@ def login():
     chans = my_channels(creds)
     if not chans:
         sys.exit("logged in, but the account picked has no YouTube channel: nothing saved")
-    TOKENS.mkdir(exist_ok=True)
+    TOKENS.mkdir(parents=True, exist_ok=True)
     for title, cid in chans:
         (TOKENS / f"{cid}.json").write_text(creds.to_json(), "utf-8")
         print(f"channel: {title} | id: {cid} | token saved")
