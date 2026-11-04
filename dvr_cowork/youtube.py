@@ -29,6 +29,8 @@ from googleapiclient.http import MediaFileUpload
 from .config import ROOT
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"]
+# user 2026-11-03: `youtube` lets us edit an uploaded video (schedule publishAt); only new logins ask for it, old tokens keep working
+LOGIN_SCOPES = SCOPES + ["https://www.googleapis.com/auth/youtube"]
 SECRETS = ROOT / ".secrets" / "youtube"  # not input/ (user 2026-10-31: input/ = files the user sends to read)
 SECRET = SECRETS / "client_secret.json"
 TOKENS = SECRETS / "tokens"
@@ -47,7 +49,7 @@ def my_channels(creds):
 
 def saved(path):
     """A saved token, refreshed (and re-saved) when expired; None when it needs a new login."""
-    creds = Credentials.from_authorized_user_file(str(path), SCOPES)
+    creds = Credentials.from_authorized_user_file(str(path))  # the scopes saved in the file (a refresh asks for those)
     if not creds.has_scopes(SCOPES):
         return None
     if not creds.valid:
@@ -60,7 +62,7 @@ def saved(path):
 
 
 def login():
-    flow = InstalledAppFlow.from_client_secrets_file(str(SECRET), SCOPES)
+    flow = InstalledAppFlow.from_client_secrets_file(str(SECRET), LOGIN_SCOPES)
     out = {}
 
     def wait():
@@ -136,7 +138,8 @@ def upload(vdir, thumb=None, dry=False, publish_at=None):
     publish_at "YYYY-MM-DD HH:MM" (this PC's time zone): private now, public then (YouTube's schedule).
     -> line (also for a skip)."""
     vdir = Path(vdir)
-    video, work = vdir / f"Done_{vdir.name}.mp4", ROOT / ".work" / "doc_edit" / vdir.name
+    from .videokey import video_key
+    video, work = vdir / f"Done_{vdir.name}.mp4", ROOT / ".work" / "doc_edit" / video_key(vdir)
     mark, cid = work / "youtube.json", channel_of(vdir)
     if mark.exists():
         up = json.loads(mark.read_text("utf-8"))

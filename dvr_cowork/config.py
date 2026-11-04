@@ -51,6 +51,7 @@ DEFAULTS: dict = {
         "work_dir": ".work",
         "models_dir": ".models",
         "ai_video": r"D:\AI_video",  # AI-generated clips root, differs per machine (config.toml)
+        "audio_lib": r"D:\Audio_lib",  # Epidemic Sound / Suno downloads (audio-expert fetch.py), per machine
     },
 }
 

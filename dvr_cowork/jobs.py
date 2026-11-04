@@ -290,6 +290,17 @@ def reject(video, fragment, why):
     print(f"{video}: clips matching {fragment!r} are never planned again ({why})")
 
 
+def generated(video):
+    """Content hashes of the clips `jobs check <video>` accepted from _check (Case 1): the clips generated for this
+    video. place.py imports them into the channel's "7. Open" (user 2026-11-02); organize renames / moves the files,
+    so the hash (scan_source.fast_hash), not the name, finds them."""
+    try:
+        with db() as c:
+            return {r[0] for r in c.execute("select hash from checked where video=? and status='ok'", (video,))}
+    except sqlite3.Error:
+        return set()
+
+
 def rejected(video):
     """Lower-case path fragments the user rejected for <video> (plan.py drops those clips; hard gates unchanged)."""
     try:
@@ -375,6 +386,10 @@ def selftest():
         assert last_decision(c, "v1")[0] == "FILL_EXISTING"
     reject("v1", r"Jaguar\run_3", "wrong species")
     assert rejected("v1") == [r"jaguar\run_3"] and rejected("v2") == []
+    with db() as c:  # clips jobs check accepted for v1 -> place.py imports them into "7. Open"
+        c.execute("insert into checked values('h1','v1',?,1,'ok','',?)", (r"D:\AI_video\_check\Hwange-001.mp4", now()))
+        c.execute("insert into checked values('h2','v1','D:/x/bad.mp4',1,'broken','eof',?)", (now(),))
+    assert generated("v1") == {"h1"} and generated("v2") == set()
     writer_begin("vid_1", "Chann_1", "Edit", "Edit_bak_x")  # lock taken by this process; a second call reuses it
     writer_begin("vid_1", "Chann_1", "Edit", "Edit_bak_y")
     assert writer_busy() is None
@@ -403,6 +418,9 @@ def main(argv):
     if "--selftest" in argv:
         return selftest()
     cmd = a[0] if a else "status"
+    if cmd in ("decide", "check", "fill-report", "reject") and len(a) > 1:
+        from .videokey import video_key
+        a[1] = video_key(a[1])  # same video name in two channels -> <video>__Chann_N (DVR_CHANNEL or the key itself)
     if cmd == "status":
         status()
     elif cmd == "decide":

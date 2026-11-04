@@ -23,11 +23,11 @@ description: Finish a YouTube wildlife thumbnail from an image the user gives - 
    p50 0.34 / sat 0.50) with one measured correction, Montserrat Black white text auto-sized, thin outline, light
    shadow, red line under the text, logo top-left. Headline block sits LOW: red line bottom 108 px (at 3840) above the
    frame edge = the left margin (`--bottom N` moves it; larger = higher).
-   **Africa** (user 2026-10-22): file name with `_africa_` -> automatic golden-hour savannah ADN of the user's
-   reference frame (bright luminous lime-gold grass, lifted shadows, warm light; target p50 0.58 / sat 0.59, NOT the
-   old muddy olive soft/vivid looks). One look, one file per logo: auto WB keeps warmth, WARM Photo Filter warming85
-   20, yellows +8, greens +10, gamma 1.3, curve 3, BG_DARKEN 0 (`AFRICA`, `AFRICA_TARGET` in thumb.py; `--warm`,
-   `--yellow-sat`, `--green-sat`, `--gamma`, `--curve`, `--bg-ev` override).
+   **Africa** (user 2026-11-03): file name with `_africa_` -> TWO runs per logo (the bare AFRICA defaults are too
+   yellow, midtone cast -B 0.19), same image / headline / logo / prefix; exposure stays auto:
+   - base (`<stem>`): `--vibrance 40 --warm 0 --yellow-sat 0 --wb 0,0,10` (soft olive-gold grass, cast ~-B 0.09);
+   - `_v2`: same + `--curve 7 --yellow-sat 8` (slightly more contrast and yellow), on the moved source.
+   The rest comes from `AFRICA` in thumb.py (greens +10, gamma 1.3, curve 3, BG_DARKEN 0). Reply with both files.
 2. JSON: `warnings` empty, `final_vs_target` close (within ~0.03 / 0.05).
 3. Look at `<folder>\<final>` once. QC: who does what in 1 s; text / line / logo cover no face, mouth, claw or contact
    point; no halo or ugly cast; anatomy believable.

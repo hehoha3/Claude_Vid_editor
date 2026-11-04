@@ -1,6 +1,6 @@
 """audio-expert index: every audio root of scan-source -> .work/audio_expert/audio_index.jsonl (incremental).
-Amazona audio paths are relative to AUDIO; the read-only roots (Z:\\Unseen\\SFX, Sound) are stored as
-absolute paths (AUDIO / abs == abs). Files gone from the library indexes are dropped.
+Amazona audio paths are relative to AUDIO; the other roots (Z:\\Unseen\\SFX, audio_lib = Epidemic / Suno) are
+stored as absolute paths (AUDIO / abs == abs). Files gone from the library indexes are dropped.
 
     .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/index.py          # add new files, profile music
     .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/index.py --selftest
@@ -18,7 +18,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
 from scan_source import ROOTS, audio_blocked, index_of  # noqa: E402
-CATEGORY = {"sfx": "nature_sound", "sound": "tense_music"}  # read-only root -> folder rule ("animal" root dropped 2026-10-20)
+CATEGORY = {"sfx": "nature_sound"}  # flat root -> folder rule ("animal" dropped 2026-10-20, "sound" 2026-11-04);
+# audio_lib keeps <category>/ folders like AUDIO, so its own path is the folder rule
 AUDIO = Path(r"Z:\Unseen\Amazona\audio")
 OUT = ROOT / ".work" / "audio_expert" / "audio_index.jsonl"
 SR, STEP = 8000, 5
@@ -56,7 +57,7 @@ def profile(path, step=STEP):
 def classify(rel):
     p = rel.replace("\\", "/").lower()
     top = p.split("/")[0]
-    if top in ("tense_music", "openning") or any(m in p for m in MUSIC_NAMES):
+    if top in ("tense_music", "openning", "music", "intro") or any(m in p for m in MUSIC_NAMES):
         return "music", 7, ["tension"] if top != "ambience_sound" else ["calm"]
     if top == "sxf":
         sub = "riser" if "riser" in p else "hit" if "hit" in p or "drop" in p or "impact" in p else \
@@ -72,14 +73,14 @@ def files():
     """-> {index path: (folder path for classify(), library entry)} over all audio roots."""
     out = {}
     for key, (root, kind, _) in ROOTS.items():
-        if kind != "audio":
+        if kind != "audio" or not index_of(root).exists():
             continue
         lib = json.loads(index_of(root).read_text("utf-8"))["clips"]
         for c in (lib.values() if isinstance(lib, dict) else lib):
             if audio_blocked(c["path"]):
                 continue
             out[c["path"] if root == AUDIO else str(root / c["path"])] = (
-                c["path"] if root == AUDIO else f"{CATEGORY[key]}/{c['path']}", c)
+                c["path"] if root == AUDIO or key not in CATEGORY else f"{CATEGORY[key]}/{c['path']}", c)
     return out
 
 
@@ -122,6 +123,7 @@ def selftest():
     assert round(db(t[:n])) == -20 and db(t[n:]) < -90
     assert classify("tense_music\\x.mp3")[0] == "music" and classify("SXF\\336 SFX\\RISERS\\a.wav")[0] == "sfx_riser"
     assert classify("Nature_sound\\forest_ambience\\walk-on-leaves.mp3")[0] == "natural_event"
+    assert classify("music\\DonDap_KichTinh\\x [es-1a2b3c4d].mp3")[0] == "music"  # audio_lib (fetch.py)
     print("selftest ok")
 
 

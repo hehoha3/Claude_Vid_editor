@@ -15,6 +15,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import place, plan  # noqa: E402
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
+from dvr_cowork.videokey import video_key  # noqa: E402
 from dvr_cowork.resolve_ops import (_norm, backup_timeline, clip_fps, find_bin, find_timeline, get_project,  # noqa: E402
                                     pool_root, use_channel)
 
@@ -32,11 +33,11 @@ COLOR = "Teal"
 
 
 def main(apply):
-    p = json.loads((ROOT / ".work/doc_edit" / VIDEO / "plan.json").read_text("utf-8"))
+    p = json.loads((ROOT / ".work/doc_edit" / video_key(VIDEO) / "plan.json").read_text("utf-8"))
     use_channel(p["video_dir"])
     slots = [s for s in p["slots"] if s["status"] == "FALLBACK" and T0 - 0.1 <= s["start"] < T1]
     edge = (p["intro"] - 2.1, p["intro"] + 0.7) if p.get("intro") else (-1, -1)  # last intro / first story-1 shot: fades
-    pt = ROOT / ".work/doc_edit" / VIDEO / "project.txt"
+    pt = ROOT / ".work/doc_edit" / video_key(VIDEO) / "project.txt"
     want = pt.read_text("utf-8").split("/")[0].strip() if pt.exists() else VIDEO
     clips = plan.load_clips(p["region"])
     pool = [c for c in clips if c["tags"].get("species") and not c["tags"].get("issues") and not c.get("hold")

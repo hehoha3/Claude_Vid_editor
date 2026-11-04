@@ -14,7 +14,8 @@ from black; story 1's bed pre-laps the black before story 1 on A5 (prelap()).
 --skip-intro: nothing before the plan's intro end (videos placed before 2026-10-31 left 0:00-intro empty).
 --intro: only 0:00 -> the plan's intro end, on V1 / A1 / A3-A9 + its markers; that range must be empty (an intro
 re-cut, or the videos placed with --skip-intro).
-Every run: items at 0:00 fade in from black EDGE_IN, items at the video end fade out EDGE_OUT (not A2).
+Every run: items at 0:00 fade in from black EDGE_IN, items at the video end fade out EDGE_OUT (not A2); then
+black_fades() checks the 4 V1 black fades (intro end out + story 1 in too) and reads them back.
 Multi-channel project: plan.json's video_dir D:/Chann_N_*/... -> bins and "Edit" inside bin Chann_N (resolve_ops).
 Audio rules: A3/A4 entry = bed change, the bed alternates A3/A4 with BED_OVERLAP crossfades until the next change;
 A5 / A7 run from their slot until the next entry on that track, 'off', or the timeline end (looped by
@@ -28,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
+from dvr_cowork.videokey import video_key  # noqa: E402
 from dvr_cowork.resolve_ops import (_norm, audio_bin, clip_fps, ensure_audio_track, ensure_bin, find_bin, pool_root, use_channel,  # noqa: E402
                                     find_clip, find_timeline, get_project, timeline_fps)
 
@@ -260,10 +262,11 @@ def edge_fades(tl, t0, fps, end):
 def black_fades(video):
     """The 4 black fades on V1 of <video>'s "Edit" (user rule): from black on the first shot + story 1's first shot, to
     black on the last intro shot + the last shot (intro ones: plan.json fade_in / fade_out, else 2.5 / 1.5 s). Only a
-    missing / shorter fade is set, then read back and saved. Called by ledger.render_done before every render and by
+    missing / shorter fade is set, then read back and saved. Called at the end of every main() run, by
+    ledger.render_done before every render and by
     hide_logo --overwrite-all after it reopens the project (2026-10-30: V1 fades were lost on that reopen). -> line."""
     from dvr_cowork.resolve_ops import CHANNEL_ENV, find_timeline
-    plan = json.loads((ROOT / ".work" / "doc_edit" / video / "plan.json").read_text("utf-8"))
+    plan = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))
     m, env = re.search(r"(?i)\bchann_(\d+)", plan.get("video_dir", "")), os.environ.get(CHANNEL_ENV)
     if m:  # this video's channel, whatever was set before (overwrite-all walks several videos)
         os.environ[CHANNEL_ENV] = f"Chann_{m[1]}"
@@ -343,7 +346,7 @@ def intro_end(plan):
 
 def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False, fill=False, until=1e9,
          no_intro=False, intro_only=False):
-    work = ROOT / ".work" / "doc_edit" / video
+    work = ROOT / ".work" / "doc_edit" / video_key(video)
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     use_channel(plan.get("video_dir"))  # D:\Chann_N_*\<video>: that channel's bins and "Edit" (multi-channel project)
     slots, end = plan["slots"], plan["end"]
@@ -415,10 +418,19 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         print("cleared:", full)
     ensure_audio_track(tl, 9, 2, print)
 
-    # import every needed file once, into its bin
+    # import every needed file once, into its bin; clips generated for this video (Case 1: jobs check accepted them
+    # from _check) -> the channel's "7. Open" (user 2026-11-02), every other clip -> 1-3 by action
+    from dvr_cowork.jobs import generated
+    gen = generated(video_key(video))
+    if gen:  # by content hash: organize renamed the clips; only the AI folder is hashed (the NAS is not read)
+        sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
+        from scan_source import fast_hash
+        ai = str(Path(load_config()["paths"]["ai_video"])).lower()
+        gen = {p for p in {s["path"] for s in vids} if str(p).lower().startswith(ai) and Path(p).is_file()
+               and fast_hash(Path(p)) in gen}
     need = defaultdict(set)
     for s in vids:
-        need[video_bin(s)].add(s["path"])
+        need[OPEN_BIN if s["path"] in gen else video_bin(s)].add(s["path"])
     # alternatives (user 2026-10-21): the next-best clips of every slot, THIẾU ones too, go into the same bins so the
     # user can swap a shot by hand; imported only, never placed. Old plan.json without "alts" -> nothing extra.
     chosen, alt = {_norm(s["path"]) for s in slots if "path" in s}, set()
@@ -550,6 +562,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
                 gaps.append(f"{int(e / f(1)) // 60:02d}:{e / f(1) % 60:04.1f}")
             e = max(e, int(t.GetEnd()) - t0)
         print(f"V1 still empty: {len(gaps)} gaps" + (": " + " ".join(gaps[:40]) if gaps else ""))
+    print(black_fades(video))  # user 2026-11-03: the 4 black fades after every place / fill, not only at render
 
 
 def selftest():

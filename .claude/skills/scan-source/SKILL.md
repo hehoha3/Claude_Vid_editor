@@ -15,8 +15,10 @@ Z: is read-only: its indexes live in `.work/library/` (also SFX / Sound). Never 
     .venv/Scripts/python .claude/skills/scan-source/scripts/scan_source.py ai        # or one root name below
 
 - Video roots belong to a region (`REGION` in scan_source.py; `/doc-edit <audios> <region>` uses only its own).
-- Audio roots are shared (user 2026-10-20): `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `Z:\Unseen\Sound`. New audio
-  root = a line in ROOTS + plan.py CATEGORY (+ audio-expert index.py CATEGORY).
+- Audio roots are shared (user 2026-10-20): `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `audio_lib` (config.toml
+  `paths.audio_lib`, default `D:\Audio_lib`: Epidemic / Suno downloads by audio-expert fetch.py, 2026-11-04;
+  `Z:\Unseen\Sound` dropped). New audio root = a line in ROOTS; a flat root also needs plan.py + audio-expert index.py
+  CATEGORY.
 - Unreachable root -> skipped ("NOT REACHABLE"), index untouched. `__MACOSX` folders and `._*` files ignored.
 
 | root | index | folders |
@@ -28,6 +30,7 @@ Z: is read-only: its indexes live in `.work/library/` (also SFX / Sound). Never 
 | `africa_ai_check` `D:\AI_video\_africa` (africa, ai) | `africa_ai_check_library.json` | (2026-10-22) `_check\` new, `<species>\` filed by `organize.py --africa`; kept out of the `ai` index |
 | `savannah` `Z:\Unseen\savannah` (africa, real) | `savannah_library.json` | scenery, `subject` = landscape |
 | `Z:\Unseen\Amazona\audio` | `.work/library/audio_library.json` | `<category>/` as the user names them (ambience_sound, Nature_sound, tense_music...) |
+| `audio_lib` `D:\Audio_lib` | `.work/library/Audio_lib_library.json` | same `<category>/` rule: `music/<mood>/`, `intro/`, `Nature_sound/`, `SXF/`, `ambience_sound/` (audio-expert `references/online_sources.md`) |
 
 Entries are keyed by content hash: moved / renamed files keep their entry (and the older vision tags of 62 video
 clips). Per file: path, folder fields (video: subject, action, setting_folder; audio: category), duration, video specs

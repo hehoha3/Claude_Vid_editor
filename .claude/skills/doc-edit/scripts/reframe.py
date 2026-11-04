@@ -102,7 +102,8 @@ def main(video, apply):
     import plan as P
     import yolo
 
-    slots = json.loads((ROOT / ".work" / "doc_edit" / video / "plan.json").read_text("utf-8"))["slots"]
+    from dvr_cowork.videokey import video_key
+    slots = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))["slots"]
     cfg = load_config()
     pm, project = get_project(connect(cfg))
     tl = find_timeline(project, cfg["resolve"]["timeline_name"])

@@ -156,10 +156,9 @@ def cmd_finish(a):
     warm = a.warm if a.warm is not None else (AFRICA["warm"] if africa else 0)
     a.bg_ev = a.bg_ev if a.bg_ev is not None else (AFRICA["bg_ev"] if africa else 0.0)
     a.yellow_sat = a.yellow_sat if a.yellow_sat is not None else (AFRICA["yellow_sat"] if africa else -5)
-    if africa:
-        for k, dflt in (("green_sat", 0), ("gamma", 1.1), ("curve", 6)):
-            if getattr(a, k) == dflt:
-                setattr(a, k, AFRICA[k])
+    for k, dflt in (("green_sat", 0), ("gamma", 1.1), ("curve", 6)):  # None = not passed; a typed value always wins
+        if getattr(a, k) is None:
+            setattr(a, k, AFRICA[k] if africa else dflt)
     x, y, cw, ch = [int(v) for v in a.crop.split(",")] if a.crop else crop_169(d["width"], d["height"])
     lay = LAYOUT[a.layout]
     lines = a.text.replace("\\n", "\n").split("\n")
@@ -317,11 +316,11 @@ def main():
     f.add_argument("--warm", type=int, help="WARM photo filter (warming85) density 0-100; default 26 when the "
                                             "file name has _africa_, else 0")
     f.add_argument("--exposure", type=float, help="BRIGHTNESS EV; default auto toward look-ref")
-    f.add_argument("--gamma", type=float, default=1.1, help="BRIGHTNESS gamma (>1 lifts shadows)")
+    f.add_argument("--gamma", type=float, help="BRIGHTNESS gamma (>1 lifts shadows); default 1.1, africa 1.3")
     f.add_argument("--vibrance", type=int, help="VIBRANCE (saturation = half); default auto toward look-ref")
-    f.add_argument("--curve", type=int, default=6, help="S-curve strength (0 = flat)")
+    f.add_argument("--curve", type=int, help="S-curve strength (0 = flat); default 6, africa 3")
     f.add_argument("--yellow-sat", type=int, help="HSL yellows saturation; default -5, africa +12")
-    f.add_argument("--green-sat", type=int, default=0)
+    f.add_argument("--green-sat", type=int, help="HSL greens saturation; default 0, africa +10")
     f.add_argument("--subject-ev", type=float, default=0.15)
     f.add_argument("--bg-ev", type=float, help="BG_DARKEN EV; default 0, africa -0.15")
     f.add_argument("--bg-sat", type=int, default=0)

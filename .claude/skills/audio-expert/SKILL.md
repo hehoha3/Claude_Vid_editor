@@ -1,6 +1,6 @@
 ---
 name: audio-expert
-description: Sound design on timeline "Edit" - sound map from story + narrator, picks music / natural sound / SXF from the library, places them frame-exact on A5-A9 with backup and rollback. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", or a thin music bed. Never touches V1 or A1-A4; no EQ/ducking/loudness.
+description: Sound design on timeline "Edit" (music / natural sound / SXF on A5-A9, backup + rollback) and library gaps from Epidemic Sound / Suno into D:\Audio_lib. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", "tải nhạc Epidemic", "tạo nhạc Suno", audio THIẾU after a plan. Never V1 / A1-A4.
 ---
 
 # Audio expert (V1: selection + placement)
@@ -33,6 +33,7 @@ Data in `.work/audio_expert/`: `audio_index.jsonl` (never open whole; filter in 
 |---|---|
 | learn | refresh `learning_plan.md` / `learning_log.md` (evidence-based: read / observed / verified / unsure) |
 | index | `.venv/Scripts/python.exe .claude/skills/audio-expert/scripts/index.py` (incremental; music gets a waveform arc; nothing is "listened") |
+| fetch | library gap -> Epidemic / Suno -> `scripts/fetch.py` -> audio_lib; read `references/online_sources.md` first (cost order, queries, layout) |
 | analyze | screenplay + timestamp + `.work/voice_<audio>/plan.json` (speech windows) -> `<video>/sound_map.json` |
 | plan | write `<video>/cues.txt` (format in its header), then `scripts/plan.py <video> --run <id>` -> placement_plan.json, placement_report.md, mix_notes.md |
 | execute | `scripts/execute.py <video> <run_id> [--replace]` (backup, A5-A9 only, readback, journal, re-run safe); `--rollback` removes only journaled items |
@@ -48,8 +49,8 @@ Data in `.work/audio_expert/`: `audio_index.jsonl` (never open whole; filter in 
 - Music: pick by waveform arc and natural end; cut before its end -> fade note. Stop music before an attack, let body
   sound carry it; no happy music after an escape. Reuse a track only as a named motif (M-calm = hypnotic journey,
   M-danger = suspicions, M-drop = sub drop at act changes).
-- Species sounds: the library has none (no monkey, elephant, duiker or eagle calls). Never pass a bird or generic hit
-  off as a species voice; list missing sounds in the report.
+- Species sounds: Z:\Unseen\SFX has some (lion, hyena, hippo, elephant, baboon...); a missing one -> Epidemic
+  SearchSoundEffects (mode fetch), never a bird or generic hit passed off as a species voice; still missing -> report.
 - Evidence labels: music = `waveform_analysis` (mood from filename), else `filename_only`, confidence <= 0.6. Never
   say "listened". Confidence below ~0.6 on a cue that matters -> leave the slot empty, say so.
 - Starting level and 0-4 s edge fades reuse doc-edit's TARGET / FADE tables (place.py) so new clips do not bury the

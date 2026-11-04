@@ -18,7 +18,7 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
           ├─► DaVinci Resolve (Scripting API): timeline, media pool, marker, grade, render
           ├─► thư viện: Z:\ (footage thật, nhạc, SFX: chỉ đọc), D:\AI_video (clip AI)
           ├─► .work/ (index + tag, cache, beat sheet, spec, plan, ledger, memory)
-          ├─► Gemini API (rẻ, chỉ đọc; dvr_cowork/gemini.py): dịch phụ đề VI, nháp prompt shot thiếu, SEO; Claude duyệt
+          ├─► Gemini API (rẻ, chỉ đọc; dvr_cowork/gemini.py): dịch phụ đề VI, SEO; Claude duyệt (prompt shot thiếu: Claude tự viết, 2026-11-02)
           ├─► YouTube Data API: tìm trend (title, từ khoá, tags nhiều view) + upload private
           └─► PostgreSQL dvr_library (tuỳ chọn: bản sao để truy vấn)
 ```
@@ -75,7 +75,7 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
 | `africa_ai` | `...\AAA Trên cạn\AI_copyright` | AI | africa |
 | `africa_ai_check` | `D:\AI_video\_africa` (`_check` = clip mới) | AI | africa |
 | `savannah` | `Z:\Unseen\savannah` | cảnh đồng cỏ | africa |
-| `audio`, `sfx`, `sound` | `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `Z:\Unseen\Sound` (nhạc theo mood) | âm thanh | chung |
+| `audio`, `sfx`, `audio_lib` | `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `D:\Audio_lib` (Epidemic / Suno, nhạc theo mood; thay `Z:\Unseen\Sound` từ 2026-11-04) | âm thanh | chung |
 
 Thư mục kênh: `D:\Chann_<n>_<tên>\<video>\audios\` (đầu vào), `_done\` (video xong), `_pushed\` (của bạn, Claude
 không đụng).
@@ -136,7 +136,7 @@ kể). Character lock chỉ in khi đổi. Phần sau là Visual Edit Plan, bỏ
  "filter": {"sp": ["capybara"], "act": ["run","swim"], "size": ["medium"], "no": ["caiman"]},
  "status": "OK", "path": "D:\\AI_video\\capybara\\...mp4", "intro": true, "vo": true, "rej": {"resting": 18},
  "audio": [{"track": 6, "kw": ["footsteps"], "status": "OK", "path": "Z:\\Unseen\\SFX\\shared_footsteps_walk_grass_01.mp3"},
-           {"track": 7, "kw": ["epic"], "span": 79.1, "status": "OK", "path": "Z:\\Unseen\\Sound\\DonDap_KichTinh\\..."}]}
+           {"track": 7, "kw": ["epic"], "span": 79.1, "status": "OK", "path": "D:\\Audio_lib\\music\\DonDap_KichTinh\\..."}]}
 ```
 `rej` = bao nhiêu clip đúng loài bị từ chối vì sai truyện (đang nằm nghỉ, sai giới tính, có cảnh giết...).
 `<video>\plan.md` là bảng dễ đọc của cùng dữ liệu cho bạn duyệt.
@@ -289,7 +289,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | `edit-craft` | Kiến thức dựng: nhịp, điểm cắt, J/L cut, xuất YouTube | — | — |
 | `resolve-api` | Lưu ý khi viết script cho Resolve | — | — |
 | `memory-find` / `memory-save` | Tìm / lưu memory dự án | `memory_gateway.py` | `.work/knowledge/` |
-| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager. Tự được gọi bởi `seo.py`, `missing.py --draft`, `translate_vi.py` (create-doc-mov), bạn không cần gõ `/gemini-assist` | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
+| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager. Tự được gọi bởi `seo.py`, `translate_vi.py` (create-doc-mov), bạn không cần gõ `/gemini-assist` | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
 
 ## 9. An toàn
 
@@ -314,7 +314,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | PostgreSQL cho câu hỏi xuyên video | Một câu SQL thay vì script quét JSON |
 | Preflight một lệnh; việc bị chặn không thử lại | Không mất lượt vô ích |
 | SEO: Python lọc trend + dựng description, Gemini flash-lite viết (~2k token vào, ~1k ra), Claude chỉ duyệt 3 title | Việc viết dài chuyển sang model rẻ; ~300 / 10.000 quota YouTube mỗi ngày, cache 7 ngày |
-| Dịch VI (`translate_vi.py`, glossary tên loài do Claude đưa) và nháp prompt THIẾU (`missing.py --draft`) bằng gemini-3.5-flash; Claude đọc và sửa từng dòng, QC chặn chữ chỉ hướng trên động tác đứng yên | Phần viết dài nhất chuyển sang Gemini; Claude chỉ đọc + sửa. flash bận → flash-lite một lần (in ra để duyệt kỹ hơn) |
+| Dịch VI (`translate_vi.py`, glossary tên loài do Claude đưa) bằng gemini-3.5-flash; Claude đọc và sửa từng dòng. Prompt THIẾU / WEAK: Claude tự viết bằng generator ngân hàng câu `.work/scripts/gen_prompts_<video>.py` (user 2026-11-02: Gemini vượt giới hạn input với ~700 prompt), QC chặn chữ chỉ hướng trên động tác đứng yên | Dịch: flash bận → flash-lite một lần. Prompt: chạy lại generator không tốn token |
 | Gemini không tag, không plan / fill: tag vẫn là Sonnet nhìn ảnh, plan / fill là Python có luật cứng | Không đổi chất lượng lấy vài token |
 
 ## 11. Dữ liệu của team: chia sẻ code, giữ riêng dữ liệu

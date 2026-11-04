@@ -2,7 +2,7 @@
 """Keep the source indexes in sync with what the user sorted on disk. No vision, no file moves.
 
     scan_source.py            scan all roots
-    scan_source.py video|ai|audio|africa_video|africa_ai|africa_ai_check|savannah|sfx|sound
+    scan_source.py video|ai|audio|africa_video|africa_ai|africa_ai_check|savannah|sfx|audio_lib
 
 video  Z:\\Unseen\\Amazona\\video  real stock footage  <subject>/ = still, <subject>/action/ = action,
                                                       birds/ insects/ flat, landscape/<setting>/
@@ -13,7 +13,8 @@ africa_ai_check  <ai_video>\\_africa                 Africa AI clips (user 2026-
                                                       <species>/ = filed by organize.py --africa; excluded from `ai`
 savannah      Z:\\Unseen\\savannah                    real landscape footage (subject = landscape)
 audio  Z:\\Unseen\\Amazona\\audio  music / ambience    <category>/
-sfx / sound  Z:\\Unseen\\SFX, Sound   (user 2026-10-20: the audio roots of every region; more will be added)
+sfx    Z:\\Unseen\\SFX               (user 2026-10-20: the audio roots of every region; more will be added)
+audio_lib  config.toml paths.audio_lib  Epidemic / Suno downloads (default D:\\Audio_lib), <category>/ like audio
 Video roots belong to one region (REGION: amazon | africa, user 2026-10-20: /doc-edit <audios> <region> uses only
 that region's footage); audio roots are shared by every region.
 Drive Z: is READ + COPY only (user rule 2026-10-11). Every index lives in the workspace, .work/library/<name>_library.json
@@ -33,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from dvr_cowork.config import load_config  # noqa: E402
 AFRICA = Path(r"Z:\Unseen\Động vật\AAA Trên cạn")
 AI_VIDEO = Path(load_config()["paths"]["ai_video"])  # config.toml, per machine
+AUDIO_LIB = Path(load_config()["paths"]["audio_lib"])  # config.toml, per machine (writable D:, not the NAS)
 # name -> (root, media kind, source label stored on every clip)
 ROOTS = {"video": (Path(r"Z:\Unseen\Amazona\video"), "video", "real"),
          "ai": (AI_VIDEO, "video", "ai"),                                 # _africa inside it = africa_ai_check
@@ -42,8 +44,9 @@ ROOTS = {"video": (Path(r"Z:\Unseen\Amazona\video"), "video", "real"),
          "savannah": (Path(r"Z:\Unseen\savannah"), "video", "real"),
          "audio": (Path(r"Z:\Unseen\Amazona\audio"), "audio", None),
          "sfx": (Path(r"Z:\Unseen\SFX"), "audio", None),                 # animal foley + species calls (English names)
-         "sound": (Path(r"Z:\Unseen\Sound"), "audio", None)}             # licensed music, <mood>/ folders
-# "animal" (Z:\Unseen\Sound Animal V1) dropped 2026-10-20: gone from Z:; its old index file is unused.
+         "audio_lib": (AUDIO_LIB, "audio", None)}  # Epidemic / Suno downloads (fetch.py): <category>/ like `audio`
+# "animal" (Z:\Unseen\Sound Animal V1) dropped 2026-10-20, "sound" (Z:\Unseen\Sound, licensed music) dropped
+# 2026-11-04 (user: no longer used; music now comes from Epidemic / Suno into audio_lib); old index files unused.
 # video root -> region (user 2026-10-20); everything used so far (Amazon, Congo...) = amazon. Audio roots: no region.
 REGION = {"video": "amazon", "ai": "amazon", "africa_video": "africa", "africa_ai": "africa",
           "africa_ai_check": "africa", "savannah": "africa"}

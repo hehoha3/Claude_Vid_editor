@@ -1,6 +1,6 @@
 ---
 name: doc-edit
-description: Documentary edit in Resolve, one step per command - new video(s) (narration A2 + plan + missing prompts + intro music + place of intro and body; several channels' videos in parallel in one day project), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU (tier 4 stand-ins), color, place, reframe, check-timelines, done, seo (YouTube title / description / tags), "color n done" (color + render + private upload), status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source ai, /tag-source", "/scan-source /tag-source và tiếp", "xong video".
+description: Documentary edit in Resolve, one step per command - new video(s), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU, color, place, reframe, check-timelines, done, seo, "color n done", status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source /tag-source và tiếp", "xong video".
 ---
 
 # Doc edit
@@ -29,6 +29,10 @@ with the sub-bins 1-7 and its own timeline "Edit" in `Chann_N/6. Timeline`. The 
 (resolve_ops `use_channel`); every other Resolve command of a video runs with `DVR_CHANNEL=Chann_N` in front
 (`DVR_CHANNEL=Chann_2 .venv/Scripts/python.exe -m dvr_cowork info`, light.py, reframe.py, audio-expert ...). Two
 "Edit" and no channel -> the script stops (never a guess). A project without `Chann_*` bins works as before.
+Same video folder name in two channels (user 2026-11-02, intended: `vid_021126` -> `africa_021126_1` in Chann_1 and
+Chann_2; from 2026-11-03 `vid_DDMMYY_1`): work key `<video>__Chann_N` (`dvr_cowork/videokey.py`) for
+`.work/doc_edit/<key>` and the vo-sync job `.work/<key>_mp3`, from the audios path by itself; a bare name needs
+`DVR_CHANNEL=Chann_N` (or pass the key: `missing.py africa_021126_1__Chann_2`), else the script stops.
 Parallel: the file work of each video (brief, beats, plan, prompts) in its own agent at once; Resolve writes
 (vo-sync, place, intro, color) one at a time: they share the current timeline / bin of one Resolve.
 ## After the prompts: Case 1 / Case 2 per video (user 2026-10-30, `input/Claude_Vid_editor_V2_Architecture_*.md`)
@@ -43,8 +47,9 @@ with `jobs decide <video> ingest|fill-existing "<their words>"`:
   `still copying` -> wait, ask again; `broken` -> list them for the user to remove before ingest (never imported);
   `SHARED _check` -> ask which clip is whose.
   Clip -> video / slot: `shot_manifest.csv` (`save_folder`, `slots`) is the hint, the Resolve timeline the truth; unclear
-  which video a clip is for -> list the files, ask. Only open gaps are filled, hand edits kept. THIẾU left -> report,
-  wait (never `fill-THIEU` on its own). Called again = only the new files.
+  which video a clip is for -> list the files, ask. The clips `jobs check` accepted for a video are imported into ITS
+  channel's `Chann_N/7. Open` (user 2026-11-02; `jobs.generated`, place.py), then placed into the open gaps; hand
+  edits kept. THIẾU left -> report, wait (never `fill-THIEU` on its own). Called again = only the new files.
 - **Case 2** ("không generate nữa, fill THIẾU bằng footage có sẵn") = the yes for `/doc-edit fill-THIEU <video>` of the
   named video(s), no second ask. What is still THIẾU comes from Resolve (`dvr_cowork gaps` + markers), not the old plan.
   Truth gates never loosen (species, sex / age the story needs, outcome, day / night, screen direction): no true clip
@@ -72,8 +77,9 @@ videos before).
 | amazon | `Z:\Unseen\Amazona\video` + `D:\AI_video` |
 | africa | `Z:\Unseen\Động vật\AAA Trên cạn` (footage; its `AI_copyright\` = AI clips; `bản quyền\` = whole films, NEVER used: plan.py load_clips skips them, user 2026-10-28) + `Z:\Unseen\savannah` (scenery) + `D:\AI_video\_africa` (Africa AI clips, root `africa_ai_check`; user 2026-10-22: new clips in `_africa\_check`, filed into `_africa\<species>` like Amazon's `D:\AI_video`) |
 
-- Audio roots shared: `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `Z:\Unseen\Sound` (a new root = scan_source ROOTS +
-  plan.py CATEGORY).
+- Audio roots shared: `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `audio_lib` (`D:\Audio_lib`: Epidemic / Suno,
+  A7 music by mood; `Z:\Unseen\Sound` dropped 2026-11-04). A new root = scan_source ROOTS (+ plan.py CATEGORY if flat).
+  Plan prints `audio thieu` -> fill it with audio-expert mode fetch, then plan again.
 - Africa `logo` / `delogo` / process-ai-video work on `D:\AI_video\_africa\_check`; ingest files them with
   `organize.py --africa --apply` (folders: tag-source `scripts\make_africa_ai_folders.ps1`). Clips kept in `_check` are
   planned at most WEAK, as for Amazon.

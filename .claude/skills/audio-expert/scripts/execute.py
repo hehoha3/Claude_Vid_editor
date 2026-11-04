@@ -96,7 +96,8 @@ def main(video, run, replace, rollback):
 
     have = {(n, int(i.GetStart()) - t0, int(i.GetEnd()) - t0) for n in range(5, 10)
             for i in tl.GetItemListInTrack("audio", n) or []}
-    cache_p = ROOT / ".work" / "doc_edit" / video / "loudness.json"
+    from dvr_cowork.videokey import video_key
+    cache_p = ROOT / ".work" / "doc_edit" / video_key(video) / "loudness.json"
     cache = json.loads(cache_p.read_text("utf-8")) if cache_p.exists() else {}
     ok = skipped = 0
     failed, vol_fail = [], 0

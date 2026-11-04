@@ -202,7 +202,8 @@ def cmd_gaps(args, cfg):
     project, bad = _project(cfg), []
     root = work_root(cfg) / "doc_edit"
     if args.video:
-        pf = root / args.video / "plan.json"
+        from .videokey import video_key
+        pf = root / video_key(args.video) / "plan.json"
     else:
         key = f"{project.GetName()}/{os.environ.get('DVR_CHANNEL', '')}".rstrip("/").lower()
         pf = next((p.parent / "plan.json" for p in root.glob("*/project.txt")

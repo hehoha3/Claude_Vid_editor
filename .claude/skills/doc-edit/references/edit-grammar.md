@@ -241,7 +241,7 @@ good clips to WEAK.
 - A6: natural sound of what is on screen, this slot only (`A6=birds`, `A6=leaves`).
 - A7: music cue, plays once from this slot until the next A7 entry, `A7=off`, or file end. Library mood:
   `calm` (gentle, peaceful), `neutral`/`observe`, `mystery`/`wonder`/`explore`, `tense`/`danger`/`stalk`,
-  `chase`/`action`/`epic` (licensed music in Z:\Unseen\Sound, by mood folder) plus the older `tense` tracks.
+  `chase`/`action`/`epic` (Epidemic / Suno music in D:\Audio_lib\music, by mood folder) plus the older `tense` tracks.
   Folder `opening` is reserved for timeline "Open", never used here.
 - Keywords that exist (others come back as audio THIẾU): beds/layers `forest`, `birds`, `insects`, `crickets`,
   `night`, `water`, `stream`, `rain`, `wind`, `thunder`, `fire`; animal foley `breathing`, `growl`, `attack`,

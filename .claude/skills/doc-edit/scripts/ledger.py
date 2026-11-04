@@ -45,10 +45,16 @@ def ws_of(video_dir):
 
 
 def find_video(video, ws=None):
-    """Folder of <video> inside the workspaces or their _done (case-insensitive). Same name twice -> --ws needed."""
+    """Folder of <video> inside the workspaces or their _done (case-insensitive). Same name in two channels -> the key
+    <video>__Chann_N, DVR_CHANNEL or --ws picks the channel (user 2026-11-02)."""
+    from dvr_cowork.videokey import channel_of, split
+    video, ch = split(video)
     hits = [b / d.name for r in roots() if not ws or r.name.lower() == ws.lower()
             for b in (r, r / DONE) if b.is_dir()
             for d in b.iterdir() if d.is_dir() and not os.path.isjunction(d) and d.name.lower() == video.lower() != DONE]
+    ch = ch or os.environ.get("DVR_CHANNEL")
+    if len(hits) > 1 and ch:
+        hits = [h for h in hits if (channel_of(ws_of(h)) or "").lower() == ch.lower()]
     if len(hits) != 1:
         raise SystemExit(f'video "{video}": {"not found" if not hits else "in several workspaces"} '
                          f"({', '.join(map(str, hits)) or ', '.join(r.name for r in roots())}); pass --ws <workspace>")
@@ -172,7 +178,7 @@ def _current(pm):
 
 
 LICENSES = ROOT / ".work" / "audio_licenses.md"
-LICENSED_ROOT = norm(r"Z:\Unseen\Sound") + os.sep  # licensed music library: a file here without a row = warning
+LICENSED_ROOT = norm(load_config()["paths"]["audio_lib"]) + os.sep  # Epidemic / Suno: no sidecar / row = warning
 MUSIC_ROOT = norm(r"D:\Music") + os.sep  # intro music (intro.py MUSIC_DIRS), Pixabay: no row/license = warning too
 
 
@@ -197,6 +203,16 @@ def pixabay_row(p):
     get = lambda key: next((t[i + 1] for i, x in enumerate(t[:-1]) if x.startswith(key)), "")
     author = re.sub(r"-\d+$", "", get("Licensor's Username").rstrip("/").rsplit("/", 1)[-1])
     return [p, str(lic), get("Audio File Title"), author]
+
+
+def sidecar_row(p):
+    """Epidemic / Suno track (audio-expert fetch.py) -> [file, <stem>.license.txt, title, author] from the
+    "Key: value" lines of that txt beside it, else None."""
+    lic = Path(p).with_suffix(".license.txt")
+    if not lic.exists():
+        return None
+    kv = dict(x.split(": ", 1) for x in lic.read_text("utf-8", "replace").splitlines() if ": " in x)
+    return [p, str(lic), kv.get("Title", ""), kv.get("Author", "")]
 
 
 def license_rows(text):
@@ -243,7 +259,7 @@ def licenses(project, vdir, fname="audio_licenses.md"):
     if cur:
         project.SetCurrentTimeline(cur)
     for p in used:
-        if norm(p) not in rows and (r := pixabay_row(p)):
+        if norm(p) not in rows and (r := pixabay_row(p) or sidecar_row(p)):
             rows[norm(p)] = r
     lic = sorted(((p, rows[norm(p)]) for p in used if norm(p) in rows),
                  key=lambda x: min(a for sp in used[x[0]].values() for a, _ in sp))  # film order
@@ -257,7 +273,8 @@ def licenses(project, vdir, fname="audio_licenses.md"):
         return f"{spans} - {title} - {c[1]}"
 
     md = [f"# License nhạc của {project.GetName()} (timeline Edit + Open, {date.today()})\n",
-          "Envato Elements: mỗi license chỉ cho một project, đăng ký lại cho video này.\n"]
+          "Envato Elements: mỗi license chỉ cho một project, đăng ký lại cho video này.\n",
+          "Epidemic Sound: kênh YouTube phải được whitelist trong tài khoản Epidemic, nếu không sẽ bị Content ID claim.\n"]
     md += [f"- {line(p, c)}" for p, c in lic]
     if nolic:
         md += ["\n## Chưa có license\n"] + [f"- {p}" for p in nolic]
@@ -280,9 +297,10 @@ def render_done(project, out_dir, timeline="Edit", name=None):
     if (Path(out_dir) / f"{name}.mp4").exists():
         print(f"render: {name}.mp4 already in {out_dir}, not rendered again")
         return
-    if (ROOT / ".work" / "doc_edit" / Path(out_dir).name / "plan.json").exists():  # the 4 black fades, before any render
+    from dvr_cowork.videokey import video_key
+    if (ROOT / ".work" / "doc_edit" / video_key(out_dir) / "plan.json").exists():  # the 4 black fades, before any render
         import place
-        print(place.black_fades(Path(out_dir).name))
+        print(place.black_fades(video_key(out_dir)))
     tl = find_timeline(project, timeline)  # day project: the channel's own one (DVR_CHANNEL)
     if not tl:
         raise SystemExit(f'no timeline "{timeline}" to render: nothing changed')
@@ -345,7 +363,8 @@ def done(video, ws=None, proj=None, timeline="Edit", thumb=None, publish_at=None
     from dvr_cowork.resolve_conn import connect
     from dvr_cowork.resolve_ops import use_channel
     vdir = find_video(video, ws)
-    pt = ROOT / ".work" / "doc_edit" / vdir.name / "project.txt"
+    from dvr_cowork.videokey import video_key
+    pt = ROOT / ".work" / "doc_edit" / video_key(vdir) / "project.txt"
     proj = proj or (pt.read_text("utf-8").strip().split("/")[0] if pt.exists() else vdir.name)
     check(video, ws, proj)  # final ledger record of Edit (+ Open); sets the channel of a day project
     use_channel(vdir)

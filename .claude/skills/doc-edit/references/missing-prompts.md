@@ -25,17 +25,16 @@ re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply bel
    - **Shot roles**: `predator_burst` `prey_escape` `relationship_wide` `reaction` `obstacle` `reacquisition`
      `aftermath` `environmental_speed`; outside chases `action` `establishing` `detail`. Each prompt adds a role,
      angle or information the others lack; never 10 prompts that differ by one adjective.
-3. **Gemini drafts, Claude reviews** (user 2026-11-01): `missing.py <video> --draft [--range=A-B]` sends the groups
-   (step 1 facts), the screenplay around each group's times, the cast bible + spec LOOK / CAST lines and THIS file to
-   gemini-3.5-flash (busy -> flash-lite once, the stdout names the model), writes its answer as prompts.txt (an older
-   one -> `prompts_prev.txt`) and runs the QC at once. Then Claude reads EVERY prompt of prompts.txt against step 2
-   and the brief (in context in a new-video run; else `.work/gemini/<video>/story.txt`, the excerpt Gemini got) and
-   fixes with Edit, or rewrites a whole group with Write. Check each one: truth (species, count, sex, age, no outcome
-   the story lacks), the event and coverage (`others there`), a different role / framing / angle per clip (Gemini
-   repeats one still shot with new adjectives: rewrite), vector = where the animal travels (a still animal = `static`,
-   no direction words on rises / rests / reaches), one axis across a chase, place + light the same as the scene
-   (dusk: the animal still clearly lit), biology, relationship_wide max one. flash-lite wrote it -> read harder.
-   Gemini failed -> write prompts.txt yourself as below. Format of `.work/doc_edit/<video>/prompts.txt` (overwrite): `## G<n>` / `## W<n>` (or `## +<species>` extra group),
+3. **Claude writes every prompt, never Gemini** (user 2026-11-02). Hundreds of slots: a bank generator
+   `.work/scripts/gen_prompts_<video>.py` (model: `gen_prompts_africa021126.py`): per group a bank = species-specific
+   openers that name the truth (sex / age / count) + the act family's middle / end beats (own beats where the family
+   does not fit, e.g. birds have no ears), the screenplay's places and light, one travel axis per chase (`vecs=`);
+   combined so no two prompts of a group repeat; `--thieu` = only the G groups (THIẾU first, then the full file).
+   Check the banks against step 2: truth (no outcome the story lacks: KILL words like "catching the light" trip the
+   gate), event and coverage (`others there`), a different role / framing / angle per clip, vector = where the animal
+   travels (still = `static`, no direction on rises / rests / reaches), place + light the same as the scene (dusk:
+   the animal still clearly lit), biology, relationship_wide max one; spot-read a few rendered prompts per family.
+   Format of `.work/doc_edit/<video>/prompts.txt` (overwrite): `## G<n>` / `## W<n>` (or `## +<species>` extra group),
    then per clip (= one 10 s generated video, format user 2026-10-22) a line `<role> <vector> | <camera> | <place> |
    <light>` and 2-4 beat lines `a-bs: ...` running 0-10 s without gaps. The script wraps camera / place / light in
    the fixed header "Photorealistic wildlife documentary video, 10 seconds, 16:9, shot on <camera>, <place>, <light>,

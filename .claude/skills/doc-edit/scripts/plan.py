@@ -36,6 +36,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/scan-source/scripts")]
 from dvr_cowork.timestamps import parse_timestamp_file, to_vo_start  # noqa: E402
 from dvr_cowork.timecode import parse_clock  # noqa: E402
+from dvr_cowork.videokey import split as split_key, video_key  # noqa: E402  same name in two channels -> <video>__Chann_N
 from scan_source import REGIONS, ROOTS, audio_blocked, index_of, video_roots  # noqa: E402
 import beats  # noqa: E402
 import ledger  # noqa: E402
@@ -1307,7 +1308,8 @@ EN_WORDS = {"mưa": "rain", "gió": "wind", "lửa": "fire", "nước chảy": "
             "voi": "elephant", "đại bàng": "eagle", "cheetah": "big cat", "crocodile": "caiman", "dondap_kichtinh": "chase action epic intense",
             "rinhrap_nguyhiem": "tense danger stalk suspense", "emdiu_thugian": "calm gentle peaceful",
             "trungtinh_quansat": "neutral observe", "bian_khampha": "mystery explore wonder"}
-CATEGORY = {"sfx": "Nature_sound", "sound": "music"}  # read-only roots -> AUDIO_POOL category (new audio root -> add it)
+CATEGORY = {"sfx": "Nature_sound"}  # flat roots -> AUDIO_POOL category; audio / audio_lib: <category>/ folder
+# (Z:\Unseen\Sound "music" dropped 2026-11-04: music = audio_lib/music/<mood>/ from Epidemic / Suno)
 # Foley / SFX (A6, A8, A9) never substitute (user rule 2026-10-11): every keyword must hit, and a file naming an
 # animal is only used on a slot of that animal or a close relative (no house-fly wings on an eagle, no hoof
 # footsteps on a jaguar). No such file -> audio THIẾU, reported in the plan reply; the user downloads one or drops it.
@@ -1357,7 +1359,7 @@ def kin(sp):
 def load_audio():
     out = []
     for name, (root, kind, _) in ROOTS.items():
-        if kind != "audio":
+        if kind != "audio" or not index_of(root).exists():  # audio_lib not scanned yet on this machine
             continue
         for a in json.loads(index_of(root).read_text("utf-8"))["clips"].values():
             if audio_blocked(a["path"]):
@@ -1507,23 +1509,30 @@ def write_md(path, title, slots):
 
 
 def same_project(name, video):
-    """Resolve project of <video>: its name, or the channel form 'c2_africa1' for folder africa_1 (c2_amazon2 ...)."""
+    """Resolve project of <video> (a name, a <name>__Chann_N key or the video folder): its name, the channel form
+    'c2_africa1' for folder africa_1 (c2_amazon2 ...), or a day project holding one video per channel: vid_DDMMYY or
+    vid_DDMMYY_N (user 2026-11-02: vid_021126 -> africa_021126_1, from 2026-11-03 vid_031126_1 -> africa_031126_1)
+    whose date is in the video's name, or the project place.py wrote into project.txt."""
+    v = split_key(video)[0].lower()
     norm = lambda x: re.sub(r"^c\d+_", "", x.lower()).replace("_", "")  # noqa: E731
-    # day project vid_DDMMYY with one video per channel (user 2026-10-25): place.py wrote "<project>/<channel>"
-    pf = ROOT / ".work" / "doc_edit" / video / "project.txt"
-    here = f"{name}/{os.environ.get('DVR_CHANNEL', '')}".lower()
-    return name.lower() == video.lower() or norm(name) == video.lower().replace("_", "") or \
-        (pf.exists() and pf.read_text("utf-8").strip().lower() == here)
+    day = re.fullmatch(r"vid_(\d{6})(?:_\d+)?", name.lower())
+    if name.lower() == v or norm(name) == v.replace("_", "") or (day and day[1] in v):
+        return True
+    pf = ROOT / ".work" / "doc_edit" / video_key(video) / "project.txt"
+    return pf.exists() and pf.read_text("utf-8").strip().lower() == f"{name}/{os.environ.get('DVR_CHANNEL', '')}".lower()
 
 
 def open_uses(video):
-    """Parts of clips on timeline Open of Resolve project <video> (must be the open one; nothing is switched)."""
+    """Parts of clips on timeline Open of Resolve project <video> (the video folder; must be the open project)."""
     try:
         from dvr_cowork.config import load_config
         from dvr_cowork.resolve_conn import connect
+        from dvr_cowork.resolve_ops import use_channel
+        use_channel(video)  # day project: that channel's timeline Open
         pr = connect(load_config()).GetProjectManager().GetCurrentProject()
         if not pr or not same_project(pr.GetName(), video):
-            return {}, f"open: not read (Resolve project {pr and pr.GetName()!r} is not {video!r}); Open parts not reserved"
+            return {}, (f"open: not read (Resolve project {pr and pr.GetName()!r} is not {Path(video).name!r}); "
+                        "Open parts not reserved")
         u = ledger.timeline_uses(pr, "Open")
     except Exception as e:  # noqa: BLE001  Resolve closed: plan still works, says so
         return {}, f"open: not read ({e}); Open parts not reserved"
@@ -1539,7 +1548,7 @@ def open_bin(video):
         from dvr_cowork.resolve_ops import find_bin, pool_root, use_channel
         use_channel(video)
         pr = connect(load_config()).GetProjectManager().GetCurrentProject()
-        if not pr or not same_project(pr.GetName(), video.name):
+        if not pr or not same_project(pr.GetName(), video):
             return set(), f"7. Open: not read (Resolve project {pr and pr.GetName()!r} is not {video.name!r})"
         b = find_bin(pool_root(pr.GetMediaPool()), OPEN_BIN)
         stack, out = [b] if b else [], set()
@@ -1569,7 +1578,7 @@ def narration(folder, wait=True):
     assert len(audio) <= 1, f"several narration audios in {folder}"
     if (folder / "mp3").is_dir():  # one file per sentence (user 2026-10-16): vo-sync job <video>_mp3
         audio = [folder / "mp3"]
-        job = f"{folder.parent.name}_mp3"
+        job = f"{video_key(folder.parent)}_mp3"
     else:
         job = audio and audio[0].stem
     vp = ROOT / ".work" / str(job) / "plan.json"
@@ -1594,7 +1603,7 @@ def main(folder, sem=True):
     folder = Path(folder)
     cues, vo, vmsg = narration(folder)
     video = folder.parent
-    work = ROOT / ".work" / "doc_edit" / video.name
+    work = ROOT / ".work" / "doc_edit" / video_key(video)
     spec = Path(SPEC) if SPEC else work / "spec.txt"
     assert spec.exists(), f"write {spec} first"
     end, intro, blocks = parse_spec(spec.read_text("utf-8"))
@@ -1609,7 +1618,7 @@ def main(folder, sem=True):
     story_rules(slots, meta)
     clips = load_clips(region)
     from dvr_cowork.jobs import rejected  # user feedback (V2 spec PR 4): clips rejected for this video, never again
-    if rej := rejected(video.name):
+    if rej := rejected(video_key(video)):
         n = len(clips)
         clips = [c for c in clips if not any(x in c["abs"].lower() for x in rej)]
         print(f"rejected by the user for {video.name}: {n - len(clips)} clips out ({len(rej)} fragments)")
@@ -1653,7 +1662,7 @@ def main(folder, sem=True):
     ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))],
                      "--yolo-cached" in sys.argv or region == "africa")
     smsg = semantic(slots, pool) if sem else "semantic: off (--no-sem); tags only"
-    taken, omsg = open_uses(video.name)
+    taken, omsg = open_uses(video)
     obin, obmsg = open_bin(video)
     for c in pool:
         c["open"] = c["abs"].lower() in obin
@@ -1947,6 +1956,8 @@ def selftest():
     one = {1: [("*", "a", "any", {}, [])], 2: [("5", "b", "any", {}, []), ("*", "c", "any", {}, [])]}
     assert intro == 25 and [x["intro"] for x in build([0.0, 20.0], 30.0, one, intro)] == [True, True, False]
     assert same_project("c2_africa1", "africa_1") and same_project("Amazon_2", "amazon_2") and not same_project("c2_africa2", "africa_1")
+    assert same_project("vid_021126", "africa_021126_1") and same_project("vid_031126_1", "africa_031126_1")  # day
+    assert not same_project("vid_031126_1", "africa_041126_1__Chann_1")  # projects (user 2026-11-02): date must match
     sq = build([0.0], 20.0, {1: [("8x3", "a", "any", {}, [{"track": 6, "kw": ["x"]}]), ("*x4", "b", "any", {}, [])]})
     assert len(sq) == 7 and abs(sum(x["dur"] for x in sq) - 20) < 0.05 and [bool(x["audio"]) for x in sq[:3]] == [1, 0, 0]
     assert len({x["dur"] for x in sq[3:]}) == 4  # uneven parts

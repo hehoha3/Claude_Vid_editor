@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 from dvr_cowork.config import load_config  # noqa: E402
+from dvr_cowork.videokey import video_key  # noqa: E402
 
 AI = Path(load_config()["paths"]["ai_video"])
 SHOW = 8  # items listed per group, the rest counted
@@ -30,7 +31,7 @@ def timelines(video, audios=None):
         from dvr_cowork.cli import _items, _timelines
         from dvr_cowork.resolve_conn import connect
         from dvr_cowork.resolve_ops import use_channel
-        pj = ROOT / ".work" / "doc_edit" / video / "plan.json"
+        pj = ROOT / ".work" / "doc_edit" / video_key(audios and Path(audios).parent or video) / "plan.json"
         use_channel(audios or (json.loads(pj.read_text("utf-8")).get("video_dir") if pj.exists() else None))
         pr = connect(load_config()).GetProjectManager().GetCurrentProject()
         if not pr or not plan.same_project(pr.GetName(), video):
@@ -43,7 +44,7 @@ def timelines(video, audios=None):
 
 def files(video, audios):
     vdir = Path(audios).parent if audios else None
-    work = ROOT / ".work" / "doc_edit" / video
+    work = ROOT / ".work" / "doc_edit" / video_key(audios and Path(audios).parent or video)
     out = {f"_check/{p.name}": p.stat().st_size for p in (AI / "_check").glob("*") if p.is_file()}
     out |= {f"_nologo/{p.name}": p.stat().st_size for p in (AI / "_nologo").glob("*") if p.is_file()}
     out |= {f"_africa/_check/{p.relative_to(AI / '_africa' / '_check')}": p.stat().st_size
@@ -66,7 +67,7 @@ def short(keys, d=None):
 
 
 def main(cmd, video, step=None, audios=None):
-    p = ROOT / ".work" / "doc_edit" / video / "state.json"
+    p = ROOT / ".work" / "doc_edit" / video_key(audios and Path(audios).parent or video) / "state.json"
     if cmd == "snap":
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps({"step": step, "at": dt.datetime.now().isoformat(timespec="seconds"), "audios": audios,
@@ -108,7 +109,7 @@ def stage(vdir, done):
     if any(vdir.glob("Done_*.mp4")):
         return "rendered", "/doc-edit done"
     miss = vdir / "missing_prompts.txt"
-    st = ROOT / ".work" / "doc_edit" / vdir.name / "state.json"
+    st = ROOT / ".work" / "doc_edit" / video_key(vdir) / "state.json"
     last = json.loads(st.read_text("utf-8")).get("step") if st.exists() else None
     if last in ("P6", "color"):
         return "coloured", "/doc-edit done"

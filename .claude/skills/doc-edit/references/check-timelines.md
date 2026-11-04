@@ -35,7 +35,7 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
 1. Final check-timelines (ledger).
 2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of "Edit" (+ "Open" if it
    still exists) is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
-   license txt beside the file (`*-<id>-license.txt`, `*-<id>.txt` or any txt naming the id: `ledger.pixabay_license`); files under `Z:\Unseen\Sound` or `D:\Music` with no license -> warn.
+   license txt beside the file (`*-<id>-license.txt`, `*-<id>.txt` or any txt naming the id: `ledger.pixabay_license`), or for Epidemic / Suno files the `<stem>.license.txt` that audio-expert fetch.py writes (`ledger.sidecar_row`); files under `D:\Audio_lib` or `D:\Music` with no license -> warn.
    `<video folder>\audio_licenses.md` = one line per licensed file, film order:
    `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined),
    then the missing ones. No `licenses\` folder, no pdf copies. Envato licenses are per project: remind the user.

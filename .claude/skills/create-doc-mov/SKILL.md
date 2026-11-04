@@ -1,6 +1,6 @@
 ---
 name: create-doc-mov
-description: "Write, upgrade or re-time the four files of a long-form (30–60+ min) Africa / Amazon / Congo wildlife documentary in D:\\Chann_*\\<video>\\audios — Film_Slug_Screenplay_EN.md, transcript.md (English narrator lines for Genmax, one line = one mp3), Film_Slug_Timestamp_EN_VI.md (full Vietnamese translation on the same onsets) and Film_Slug_Visual_Edit_Plan_EN.md (per-shot cut map). Use for /create-doc-mov, a new film concept or script (\"viết kịch bản phim mới\", \"tạo Screenplay / transcript / Timestamp / Visual_Edit_Plan\"), revising or production-upgrading those files (cut map, voice-free passages, intro second by second, footage MUST/ALT/PENDING), or conforming them to real 1.mp3…N.mp3 durations (\"căn lại timestamp theo mp3\"); after the user's review it voices transcript.md in Genmax (one line = one mp3, mp3.zip -> audios\\mp3) and runs /doc-edit on those videos. The only skill allowed to write narration. Not for doc-edit steps that only read these files (plan, place, fill, color)."
+description: "The only narration writer: the four files (Screenplay, transcript.md, Timestamp_EN_VI, Visual_Edit_Plan) of a 30–60+ min Africa / Amazon wildlife film in <video>\\audios: write, upgrade, or re-time to real 1..N.mp3; after the user's review: voicing + /doc-edit. Use for /create-doc-mov, \"viết kịch bản phim mới\", \"tạo Screenplay / transcript / Timestamp\", \"căn lại timestamp theo mp3\". Not for doc-edit steps that only read them."
 ---
 
 # create-doc-mov
@@ -43,8 +43,10 @@ runtime in minutes (1h = 60, 30p = 30); ask if any is unclear. Name + create the
 the order given), then the same with `--apply` (creates `<video>\audios` + `.work\doc_edit\<video>`, prints OK).
 Set `target: <minutes>` in the source header. Several films = write them one after another, each through steps 1–6,
 then one review stop (step 7) with a summary per film. For every film:
-1. Read [storycraft.md](references/storycraft.md) and production.md. One central question, 3–5 stories that each
-   answer a different part; Story 1 fastest, its first attack ~3–4 min in.
+1. Read [storycraft.md](references/storycraft.md) and production.md. Format (user 2026-11-03; not given -> ask):
+   **(1) central question** (3–5 stories, each answers a part) or **(2) multi-story** (3–5 stories, linked or not, each
+   its own question + ending). Both: Story 1 = 8–15 min, fast action within its first 30 s, first attack by ~03:00;
+   intro + Story 1 mostly strong motion shots; no slow motion in shot text (feeds AI prompts), animals always moving (storycraft.md "Motion").
 2. Research: `check_refs.py` every DOI (and `--abstract` when a sentence carries a number). Say only what the source
    supports; write each source's limit in SP_HEAD. No thoughts, kinship, kills or "deciding" without evidence.
 3. Cast bible (male / female / young, markers, continuity limit, one-line metaphor).
@@ -98,7 +100,7 @@ line/word count, voice share, MUST / PENDING scenes, planned vs conformed.
 
 - Genmax ≈ 150 wpm (measured). Channel films: 2,850–3,450 words / 60 min ≈ 35–40 % voice; the validator warns
   under 55 % — state the share, the cut map carries the rest. Only use timing-and-voice.md if the user wants another density.
-- Intro 00:00–01:30: 00:00–00:15 gentle, slow shots of place and animal routine **under soft music** (the intro
+- Intro 00:00–01:30: 00:00–00:15 gentle shots of place and animals moving in routine **under soft music** (the intro
   track, low, no drums); 00:15–01:15 the drum rises, cuts on the beat grid, action teasers at 136–150 % (first 5 and
   last 2 intro shots calm) using other frames than their story shots, no kill; 01:15–01:30 breath. Fade from black on
   the first shot, to black on the last intro shot, 0.6 s black slug, Story 1's first shot fades in. `/doc-edit intro`

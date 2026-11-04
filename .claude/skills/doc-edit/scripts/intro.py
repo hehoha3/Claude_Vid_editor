@@ -25,7 +25,10 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 sys.path.insert(0, str(HERE))
-MUSIC_DIRS = [Path(r"D:\Music")]  # user 2026-10-25: intro music outside the indexed library
+sys.path.insert(0, str(ROOT))
+from dvr_cowork.config import load_config  # noqa: E402
+# user 2026-10-25: intro music outside the indexed library; audio_lib/intro = Epidemic / Suno intros (fetch.py, 2026-11-04)
+MUSIC_DIRS = [Path(r"D:\Music"), Path(load_config()["paths"]["audio_lib"]) / "intro"]
 EXTS = {".mp3", ".wav", ".m4a", ".flac", ".aac", ".ogg"}
 HINT = re.compile(r"open|intro|trailer|epic|tense|tension|suspense|dread|action|drum|war|dark|myster")
 RECENT = 6  # user 2026-10-30: never the intro music of the 6 latest videos of the same channel (Chann_N)
@@ -102,7 +105,7 @@ def candidates():
     from scan_source import audio_blocked
     music = [str(p) for d in MUSIC_DIRS if d.is_dir() for p in d.rglob("*") if p.suffix.lower() in EXTS
              and not audio_blocked(str(p))]
-    lic = [p for p in music if ledger.pixabay_license(p)]
+    lic = [p for p in music if ledger.pixabay_license(p) or ledger.sidecar_row(p)]
     if len(lic) < len(music):
         print(f"no license, skipped: {', '.join(Path(p).name for p in music if p not in lic)}")
     if lic:
@@ -178,9 +181,10 @@ def story1(vdir):
     """Where the body starts (s) = intro end = music end, from the spec + narration: story 1 opening on a landscape is
     pulled to '# INTRO' by plan.py intro_outro() (and place --skip-intro starts there); else its first shot's start."""
     import plan
+    from dvr_cowork.videokey import video_key
     folder = next(d for d in vdir.iterdir() if d.is_dir() and any("timestamp" in p.name.lower() for p in d.glob("*.md")))
     cues, vo, _ = plan.narration(folder)
-    spec = (ROOT / ".work" / "doc_edit" / vdir.name / "spec.txt").read_text("utf-8")
+    spec = (ROOT / ".work" / "doc_edit" / video_key(vdir) / "spec.txt").read_text("utf-8")
     end, intro, blocks = plan.parse_spec(spec)
     slots = plan.build([c.t for c in cues], end or vo[-1][1] + 2.0, blocks, intro)
     f = next(s for s in slots if not s.get("intro"))
@@ -188,8 +192,9 @@ def story1(vdir):
 
 
 def main(video, music=None):
-    sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
-    work = ROOT / ".work" / "doc_edit" / video
+    sys.path[:0] = [str(ROOT / ".claude/skills/scan-source/scripts"), str(ROOT)]
+    from dvr_cowork.videokey import video_key
+    work = ROOT / ".work" / "doc_edit" / video_key(video)
     pj = json.loads((work / "plan.json").read_text("utf-8"))
     vdir = Path(pj["video_dir"])
     T = story1(vdir)
@@ -231,7 +236,7 @@ def main(video, music=None):
     print(f"music: {Path(music).name} ({p['len']:.0f}s, {p['bpm']} BPM, bar {bar:.2f}s) -> {len(pieces)} pieces "
           f"on A7, {T:.2f}s ({how})")
     import ledger
-    r = ledger.pixabay_row(music)
+    r = ledger.pixabay_row(music) or ledger.sidecar_row(music)
     print(f"license: {r[1]} ({r[2]} + {r[3]}) -> audio_licenses.md at check-timelines / done" if r else
           "license: NONE found beside the track (not Pixabay?): check .work/audio_licenses.md before done")
 

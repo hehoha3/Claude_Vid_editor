@@ -106,9 +106,11 @@ late: the timestamps or the take need a look), `boundary_uncertain` (old style: 
    chase, release / sad -> calm), strike = A7 off on the shot before (+ riser after a build) + A8 hit + `# TURN`,
    chase start A8 whoosh, A6 natural sound from the act (footsteps, grass, drinking, eating, water, wings, breathing;
    >= 8 s apart). A token written on the beat or the line always wins. Yours: one beat per screenplay beat or per
-   change of emotion inside it; 2-4 pool lines per beat in story order with changing sizes (establish -> subject ->
-   reaction -> payoff); `N:` lines for what a sentence must open on (the strike, the reveal, story 1's landscape);
-   side lines only in quiet beats. The expand line names beats that repeat one line 3+ times: give them more lines.
+   change of emotion inside it; at least 4 pool lines per beat that has more shots than lines, in story order with
+   changing sizes (establish -> subject -> reaction -> payoff); `N:` lines for what a sentence must open on (the
+   strike, the reveal, story 1's landscape); side lines only in quiet beats. A line may come back, but expand keeps 3
+   other shots between two uses (user 2026-11-02, `SPACING`); its `shot line back within 3 shots` line names the beats
+   with too few lines: add lines there, expand again, before plan.py.
    Exact lengths, `12x4 same` chains, GFX: write those sentences as a `raw` beat. Spec line format (raw beats, and
    what expand writes):
 

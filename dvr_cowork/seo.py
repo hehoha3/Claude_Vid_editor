@@ -208,7 +208,8 @@ def assemble(g, f, channel):
 
 def run(vdir, force=False):
     vdir = Path(vdir)
-    work = ROOT / ".work" / "doc_edit" / vdir.name
+    from dvr_cowork.videokey import video_key
+    work = ROOT / ".work" / "doc_edit" / video_key(vdir)
     meta_f = work / "youtube_meta.json"
     if meta_f.exists() and not force:
         return f"seo: {meta_f.name} already there (title: {json.loads(meta_f.read_text('utf-8'))['title']}), --force to redo"
@@ -238,7 +239,8 @@ def run(vdir, force=False):
 
 
 def pick(vdir, n):
-    meta_f = ROOT / ".work" / "doc_edit" / Path(vdir).name / "youtube_meta.json"
+    from dvr_cowork.videokey import video_key
+    meta_f = ROOT / ".work" / "doc_edit" / video_key(vdir) / "youtube_meta.json"
     meta = json.loads(meta_f.read_text("utf-8"))
     new = meta["titles"][n - 1]["text"]
     meta["description"] = meta["description"].replace(meta["title"], new, 1)

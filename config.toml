@@ -36,6 +36,7 @@ color_pushed = "Pink"
 work_dir = ".work"
 models_dir = ".models"
 ai_video = 'D:\AI_video'      # AI-generated clips root on THIS machine (Z:\Unseen is the shared read-only drive)
+audio_lib = 'D:\Audio_lib'    # Epidemic Sound / Suno downloads on THIS machine (audio-expert scripts/fetch.py)
 
 [workspaces]
 # Channel folders, one sub folder per video (D:\Chann_shadowCanopy\demo_4\audios ...). Every folder matching a glob is
