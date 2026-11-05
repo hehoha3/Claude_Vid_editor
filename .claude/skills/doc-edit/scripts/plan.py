@@ -3,10 +3,9 @@
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py <audios-folder>
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest
 
-Clips on timelines Edit/Open of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never
+Clips on timeline Edit (older ledgers: + Open) of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never
 matched on slots starting before BAN_UNTIL (15:00); later slots may use any clip (in-video REUSE_* limits still hold).
-Edit + Open of this video share one reuse budget: parts already on "Open" (read from Resolve when the open project is
-this video) count toward REUSE_MAX and are never shown again on Edit.
+One timeline per video: "Edit" (user 2026-11-05; timeline "Open" is gone, old ledgers keep their open_clips bans).
 
 spec.txt lives in .work/doc_edit/<video>/ (video = parent of the audios folder). Format:
     # END 29:50                optional timeline end; default = end of last sentence + 2 s
@@ -1522,23 +1521,6 @@ def same_project(name, video):
     return pf.exists() and pf.read_text("utf-8").strip().lower() == f"{name}/{os.environ.get('DVR_CHANNEL', '')}".lower()
 
 
-def open_uses(video):
-    """Parts of clips on timeline Open of Resolve project <video> (the video folder; must be the open project)."""
-    try:
-        from dvr_cowork.config import load_config
-        from dvr_cowork.resolve_conn import connect
-        from dvr_cowork.resolve_ops import use_channel
-        use_channel(video)  # day project: that channel's timeline Open
-        pr = connect(load_config()).GetProjectManager().GetCurrentProject()
-        if not pr or not same_project(pr.GetName(), video):
-            return {}, (f"open: not read (Resolve project {pr and pr.GetName()!r} is not {Path(video).name!r}); "
-                        "Open parts not reserved")
-        u = ledger.timeline_uses(pr, "Open")
-    except Exception as e:  # noqa: BLE001  Resolve closed: plan still works, says so
-        return {}, f"open: not read ({e}); Open parts not reserved"
-    return u, f"open: {sum(map(len, u.values()))} parts of {len(u)} clips on timeline Open reserved (same reuse budget)"
-
-
 def open_bin(video):
     """Lower-case paths of the videos in bin "7. Open" (the channel's one in a day project) of the open Resolve project
     of <video> (a Path, D:\\Chann_N_*\\<video>); empty set + why when Resolve is closed or another project is open."""
@@ -1662,14 +1644,13 @@ def main(folder, sem=True):
     ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))],
                      "--yolo-cached" in sys.argv or region == "africa")
     smsg = semantic(slots, pool) if sem else "semantic: off (--no-sem); tags only"
-    taken, omsg = open_uses(video)
     obin, obmsg = open_bin(video)
     for c in pool:
         c["open"] = c["abs"].lower() in obin
     s2 = next((t for k, t in meta["stories"] if k == 2), end)  # intro + story 1 = 0:00 -> story 2
     for s in slots:
         s["open_ok"] = s["start"] < s2
-    match(slots, pool, taken, meta["look"])
+    match(slots, pool, None, meta["look"])
     hmsg = highlights(slots, pool, meta.get("action"))
     varmsg = vary(slots, pool)
     wmsg = fix_water(slots, pool, load_audio(), end)
@@ -1710,7 +1691,6 @@ def main(folder, sem=True):
     print(imsg)
     print(bmsg)
     print(ymsg)
-    print(omsg)
     s1 = next((t for k, t in meta["stories"] if k == 1), intro)
     ob = {c["abs"]: c for c in pool if c.get("open")}
     land = [s for s in slots if s1 <= s["start"] < s2 and s.get("path") and s["src"] != "GFX"

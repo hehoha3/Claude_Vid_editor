@@ -1,4 +1,4 @@
-"""Remove what the workspace no longer needs (updated 2026-10-24). Dry run by default; --apply deletes (the user runs
+"""Remove what the workspace no longer needs (updated 2026-11-05). Dry run by default; --apply deletes (the user runs
 it: Claude never deletes files). Files are unlinked one by one, folders removed with rmdir once empty (never rmtree).
 Only paths inside this repo are touched (never D:, Z:, library, knowledge, memory, ledgers, tag sheets, the plan.json
 of finished videos: plan.py's music history, the Postgres mirror and bench_story_first read them). Work of the active
@@ -62,6 +62,17 @@ TARGETS = [  # (path, why)
     (W / "process_ai_video" / "run_check.txt", "process-ai-video one-off output"),
     (W / "tmp_vosync_check", "vosync.py test files (2026-10-23)"),
     (W / "tmp_story_test", "story.py benchmark on africa_3 (2026-10-24, results in the handoff)"),
+    # 2026-11-05: dvr_8p merged into dvr_cowork (fullai/, profile.py, prompt_rules.py, one CLI); these are its leftovers
+    (ROOT / "dvr8.cmd", "old dvr_8p launcher (now .\\dvr.cmd ai ...)"),
+    (ROOT / "dvr_8p", "old engine folder (moved to dvr_cowork/fullai)"),
+    (ROOT / "dvr_cowork" / "fullai" / "resolve_conn.py", "copy of dvr_cowork/resolve_conn.py (same code, unused)"),
+    (ROOT / "dvr_cowork" / "fullai" / "__main__.py", "old `python -m dvr_8p` entry (now `python -m dvr_cowork ai`)"),
+    (ROOT / "dvr_cowork.egg-info", "stale pip metadata (pip install -e . writes a fresh one)"),
+    (ROOT / "__pycache__", "bytecode of the moved dvr_profile.py / prompt_rules.py"),
+    (ROOT / "tests", "only __pycache__ left (the old test_pipeline.py is gone)"),
+    (ROOT / "docs" / "8p", "merged into README.md + docs/SYSTEM.md"),
+    *[(p, "merged into references/full-ai.md") for d in ("doc-edit", "create-doc-mov")
+      for p in sorted((ROOT / ".claude" / "skills" / d / "references").glob("8p-*.md"))],
     (ROOT / ".claude" / "skills" / "hide-logo" / "run.sh", "in git, unused: calls python3 outside .venv"),
     (ROOT / ".claude" / "skills" / "hide-logo" / "evals", "in git, unused: evals of the old marker-based hide-logo"),
 ]

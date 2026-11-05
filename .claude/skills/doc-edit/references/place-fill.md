@@ -19,11 +19,10 @@ alternative clips per slot (THIẾU slots too; plan.py `ALTS`) into bins 1-3, ne
 (`alternatives in bins 1-3: N` line).
 Backs up "Edit" (`Edit_bak_place_<stamp>`), imports used files into video bins by what the clip shows (user
 2026-10-22, real and AI alike): tag action attack / hunt / fight -> `2. Attack_roll`, run -> `3. Run_roll` (attack wins),
-everything else -> `1. Other_roll` (untagged: words in folder / file name, e.g. `Chạy`); clips generated for this
-video (Case 1: accepted by `jobs check <video>`) -> the channel's `7. Open` instead (user 2026-11-02; plan.py reads that
+everything else -> `1. Other_roll` (untagged: words in folder / file name, e.g. `Chạy`); every clip of the intro (0:00 -> story 1) -> the channel's `7. Open` instead (user 2026-11-05; plan.py reads that
 bin for the intro + story 1 from the first plan on, day project `vid_DDMMYY[_N]` included); `place.py --rebin` re-sorts the
-clips already in those three bins (media pool only, timeline untouched); 4. Audio/Ambience (A3-A6), /Music (A7), /SFX (A8-A9) (a file already anywhere in 4. Audio is reused), places
-V1 frame-exact (WEAK yellow) + A1 + A3-A9 (crossfades, fades, starting Clip Volume), markers: red
+clips already in those three bins (media pool only, timeline untouched); 4. Audio/Ambience (A3-A6), /Music (A7, the intro music too), /SFX (A8-A9) (a file already anywhere in 4. Audio is reused), places
+V1 frame-exact (WEAK yellow) + A3-A9 (A1 stays empty, user 2026-11-05) (crossfades, fades, starting Clip Volume), markers: red
 THIẾU (note = shot needed), yellow WEAK, blue GFX. A2 never touched. V1/A3-A9 not empty -> it stops: say what is
 there and ask before `--replace` (clears those tracks after the backup; destructive, CLAUDE.md rule 2).
 `--video-only` = V1 + A1 + markers. `--a1-only` = A1 of AI clips only (A1 must be empty, no backup).

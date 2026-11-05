@@ -1,10 +1,14 @@
-"""dvr - DaVinci Resolve co-worker CLI.
+"""python -m dvr_cowork - DaVinci Resolve co-worker CLI, one entry point for both video types (user 2026-11-05).
 
+  dvr ai <cmd> <video>         full-AI 8-15p engine (dvr_cowork.fullai.cli; `dvr ai -h` lists its steps)
+  dvr profile detect|context|backfill|list ...   which type a video is, the step's numbers + reference
+  dvr youtube login|remove|channels|upload|seo|trends|reference ...
+  dvr jobs status|decide|check|fill-report|reject|metrics ...
   dvr doctor
   dvr info
   dvr frames --at 01:10 02:05 [--stats]
   dvr prefetch
-  dvr at 21:09 05:12 [--tl Open] [--audio] [--near 1]
+  dvr at 21:09 05:12 [--tl Edit] [--audio] [--near 1]
   dvr find shot_028 capybara
   dvr offline [--relink D:/old_folder D:/new_folder [--apply]]
   dvr vo-sync run     AUDIO TIMESTAMPS [--dry-run] [--on-overlap push|trim|abort] [--markers] [--force-clear] [--no-backup]
@@ -232,7 +236,7 @@ def cmd_find(args, cfg):
     from .timecode import fmt_seconds
     keys = [k.lower() for k in args.fragments]
     hits = 0
-    for tl in _timelines(_project(cfg), {"edit", "open"}):
+    for tl in _timelines(_project(cfg), {"edit"}):
         for tr, s, e, _src, p in _items(tl):
             if any(k in p.lower() for k in keys):
                 hits += 1
@@ -403,7 +407,7 @@ def build_parser():
     g.add_argument("--tl", default="Edit", help="timeline name (default Edit)")
     g.add_argument("--video", help="doc-edit video whose plan.json gives the THIEU slots (default: from project.txt)")
     g.set_defaults(fn=cmd_gaps)
-    fd = sub.add_parser("find", help="where files matching path fragments sit on Edit + Open")
+    fd = sub.add_parser("find", help="where files matching path fragments sit on Edit")
     fd.add_argument("fragments", nargs="+")
     fd.set_defaults(fn=cmd_find)
     o = sub.add_parser("offline", help="offline media of the open project; --relink OLD NEW swaps a path prefix")
@@ -449,10 +453,18 @@ def build_parser():
     return p
 
 
+# One CLI (user 2026-11-05): `python -m dvr_cowork <group> ...` runs the sub-tool, everything else is a Resolve tool.
+GROUPS = {"ai": ".fullai.cli", "profile": ".profile", "youtube": ".youtube", "jobs": ".jobs"}
+
+
 def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] in GROUPS:
+        from importlib import import_module
+        return import_module(GROUPS[argv[0]], __package__).main(argv[1:]) or 0
     args = build_parser().parse_args(argv)
     cfg = load_config(args.config)
     from .align import AlignError

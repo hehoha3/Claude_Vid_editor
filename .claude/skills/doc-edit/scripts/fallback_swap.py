@@ -1,7 +1,7 @@
 """/doc-edit fallback-species (user 2026-10-29): swap the FALLBACK V1 shots (scenery / other species) of a range for a
 clip of the slot's own species (or its family when the library has none), action and setting ignored. Item ranges
 unchanged; shots the user changed by hand (file or source-in differs from plan.json) are left alone; the last intro
-shot / first story-1 shot keep their black fades. Swapped items Teal, reused frames zoom 1.15, AI clips get A1 at -12 dB.
+shot / first story-1 shot keep their black fades. Swapped items Teal, reused frames zoom 1.15, A1 stays empty (place.A1_UNTIL).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=00:00-08:00]           # dry run
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=...] --apply   # backup Edit_bak_fbspecies_<stamp>, swap
@@ -130,7 +130,7 @@ def main(apply):
         new.SetClipColor(COLOR)
         if n:
             new.SetProperty("ZoomX", 1.15) and new.SetProperty("ZoomY", 1.15)
-        if c["source"] == "ai":
+        if c["source"] == "ai" and a < place.A1_UNTIL:  # footage+AI A1 stays empty (2026-11-05)
             au = put(mp, tl, it, 2, ra, rb - ra, sin, fps)
             a1_n += bool(au and au.SetProperty("AudioVolume", place.A1_DB))
         done += 1

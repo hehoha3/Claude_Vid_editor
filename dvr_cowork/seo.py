@@ -1,7 +1,7 @@
 r"""YouTube SEO for a finished video (user 2026-10-31): trend research with the YouTube Data API, text by Gemini.
 
-    .venv/Scripts/python.exe -m dvr_cowork.seo <video folder> [--force]   -> .work/doc_edit/<video>/youtube_meta.json
-    .venv/Scripts/python.exe -m dvr_cowork.seo <video folder> --pick 2    the 2nd title option becomes the title
+    .venv/Scripts/python.exe -m dvr_cowork youtube seo <video folder> [--force]   -> .work/doc_edit/<video>/youtube_meta.json
+    .venv/Scripts/python.exe -m dvr_cowork youtube seo <video folder> --pick 2    the 2nd title option becomes the title
     .venv/Scripts/python.exe -m dvr_cowork.seo --selftest
 
 1. Film facts from .work/doc_edit/<video>/spec.txt (# FILM, # REGION, # INTRO, # BIBLE = chapters, # CAST = species):
@@ -84,7 +84,7 @@ def youtube_client(vdir):
             yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
             chans = yt.channels().list(part="snippet", id=cid).execute().get("items", []) if cid else []
             return yt, chans[0]["snippet"]["title"] if chans else ""
-    sys.exit("seo: no valid YouTube token: run `python -m dvr_cowork.youtube login` once")
+    sys.exit("seo: no valid YouTube token: run `python -m dvr_cowork youtube login --key Chann_N` once")
 
 
 def search(yt, q):

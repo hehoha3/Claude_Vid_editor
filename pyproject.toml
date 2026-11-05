@@ -24,4 +24,7 @@ dependencies = [
 dvr = "dvr_cowork.cli:main"
 
 [tool.setuptools]
-packages = ["dvr_cowork"]
+packages = ["dvr_cowork", "dvr_cowork.fullai"]
+
+[tool.setuptools.package-data]
+"dvr_cowork.fullai" = ["config.toml"]

@@ -50,7 +50,8 @@ ROOTS = {"video": (Path(r"Z:\Unseen\Amazona\video"), "video", "real"),
 # video root -> region (user 2026-10-20); everything used so far (Amazon, Congo...) = amazon. Audio roots: no region.
 REGION = {"video": "amazon", "ai": "amazon", "africa_video": "africa", "africa_ai": "africa",
           "africa_ai_check": "africa", "savannah": "africa"}
-REGIONS = ("amazon", "africa")
+REGIONS = ("amazon", "africa", "himalaya")  # user 2026-11-05: amazon = jungle (Amazon, Congo), africa = desert /
+# savanna, himalaya = snow / high mountains (no footage roots yet: every slot THIẾU), ocean later
 # user rule 2026-10-11: drive Z: is READ + COPY only - nothing is ever written, moved or deleted on it (save() refuses)
 WORK = Path(__file__).resolve().parents[4] / ".work" / "library"
 EXTS = {"video": {".mp4", ".mov", ".mxf", ".mkv", ".m4v"}, "audio": {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}}

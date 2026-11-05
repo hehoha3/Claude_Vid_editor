@@ -24,7 +24,7 @@ The intro runs 0:00 -> story 1 (`# INTRO` / `# STORY 1`, 1:30-2:00 by the screen
    beats part / spec, re-run.
 3. Placed with the body by `place.py <video>` (backup; the music's source file on A7 from 0:00 as its pieces back to
    back, short fades at the bar joints, the tail fade on the last, the 1 s from black; story 1's bed pre-lap on A5;
-   imported into bin "7. Open"). A user's other track or an intro re-cut later: `intro.py <video> "<file>"`, `plan.py`,
+   imported into bin "4. Audio/Music", user 2026-11-05). A user's other track or an intro re-cut later: `intro.py <video> "<file>"`, `plan.py`,
    then the intro range must be emptied first (destructive: list the items, the user's yes, backup) and
    `place.py <video> --intro`.
 

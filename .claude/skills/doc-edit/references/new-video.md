@@ -19,7 +19,11 @@ which, stop. Then:
   2026-10-16; already cut, nothing to blade). Same preflight call (user 2026-10-23: the user cannot see broken
   files): count of `mp3\*.mp3` = English timestamp lines (africa_3: 123 passages vs 395 sentence files) and
   `find "<folder>/mp3" -name '*.mp3' -size -2000c` (ElevenLabs failures are 1686-byte files); any hit -> list every
-  number at once, stop. vo-sync also decodes all files first and names every unreadable one. Old style (one narration `.mp3`/`.wav` in the folder, Whisper cuts it)
+  number at once, stop. vo-sync also decodes all files first and names every unreadable one.
+  **Conform first** (user 2026-11-05): a create-doc-mov film (`.work/doc_edit/<key>/four_files.src.md`) without
+  `durations.json` beside it was never conformed to the real mp3: before vo-sync run create-doc-mov job A,
+  `.claude/skills/create-doc-mov/scripts/build_four_files.py <src> "<folder>" --mp3 "<folder>/mp3"` (PASS line;
+  a STOP = report it, no vo-sync), so the timestamp file holds the real onsets. Never after A2 is placed. Old style (one narration `.mp3`/`.wav` in the folder, Whisper cuts it)
   still works when there is no `mp3\`.
 - No narration yet (the user often plans before the ElevenLabs audio exists) -> B only; plan.py estimates the
   speech spans from the text. The reply says A2 waits for the audio.
@@ -165,8 +169,8 @@ late: the timestamps or the take need a look), `boundary_uncertain` (old style: 
      missing prompts name the sex / age.
    - `hook blueprint:` must say ok for an intro > 0:30.
    - Ledger: clips of the last 6 checked videos of the workspace are never matched on slots before 15:00
-     (any clip after it, user 2026-10-25); `recent ledger` line = slots lost before 15:00, by character. Inside one video a clip may serve 3 slots over Edit + Open together, each a different part,
-     >= 2 min apart (edit-grammar Source); parts already on "Open" are read from Resolve (`open:` line).
+     (any clip after it, user 2026-10-25); `recent ledger` line = slots lost before 15:00, by character. Inside one video a clip may serve 3 slots on Edit, each a different part,
+     >= 2 min apart (edit-grammar Source).
    - Character WEAK slots (top 3 candidates in stdout): in a new-video run keep plan.py's pick (speed; the user
      reviews plan.md), except those starting before 1:30: judge them always by the opening's hard rejects and
      continuity. In `/doc-edit plan` judge all: keep, `pin=<fragment>`, or `pin=none` (THIẾU); re-run.
@@ -208,8 +212,8 @@ As soon as A2 is on and plan.json written:
    `intro music:` / `intro beat:` / `intro outro:` + the HOOK line). Intro THIẾU / WEAK go into the missing prompts
    (`missing.py <video> --range=00:00-<story 1>` when the full prompt file is already out: say it overwrote it, and
    keep a copy of the old one in `.work/doc_edit/<video>/`).
-2. `place.py <video>` (no flag): intro + body in one go on empty tracks (not empty -> stop, report); the intro music
-   goes to bin "7. Open", story 1's bed pre-laps the black.
+2. `place.py <video>` (no flag): intro + body in one go on empty tracks (not empty -> stop, report); the intro's shots
+   go to bin "7. Open", its music to "4. Audio/Music" (user 2026-11-05), story 1's bed pre-laps the black.
 Place waits for A to finish (the two never write to Resolve at once); Resolve not on `<video>` -> no place, say so.
 The reply starts with the place lines (backup, V1 placed, red THIẾU markers), then the intro music (top 5, license,
 fit, cuts on the beat, joints to listen to), then parts 1-4 above. No "next step" line: the user calls the next

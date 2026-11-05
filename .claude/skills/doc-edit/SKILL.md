@@ -1,9 +1,38 @@
 ---
 name: doc-edit
-description: Documentary edit in Resolve, one step per command - new video(s), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU, color, place, reframe, check-timelines, done, seo, "color n done", status. Use for /doc-edit, "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source /tag-source và tiếp", "xong video".
+description: Documentary edit in Resolve for two video types of any region (amazon / africa / himalaya) - footage+AI 1-3h (footage library + AI clips; new video(s), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU, color, place, reframe, check-timelines, done, seo, "color n done", status) and full-AI 8-15p (every shot generated, `dvr_cowork ai`; voice -> prompts, shots -> whole film on Edit, review, done). Use for /doc-edit, a pasted video path `D:\Chann_*\<video>` (finds its audios / voice / shots folders itself), "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source /tag-source và tiếp", "voice xong / shots xong", "xong video".
 ---
 
 # Doc edit
+
+## Pasted path -> find the video's folders first (user 2026-11-04)
+The user often pastes just a path (`/doc-edit D:\Chann_1_shadowCanopy\vid_021126_1`), sometimes a sub-folder or a
+file inside it. Work out the folders yourself instead of asking for the "right" path:
+1. Video folder = the pasted path, or its nearest parent that is `D:\Chann_*\<video>` (holds `audios\`, `shots\` or
+   `.production\`). `_pushed` / `_done` in the path -> stop (CLAUDE.md rule 5).
+2. One call maps where the media really sit (count per folder, `_pushed` never entered):
+   `find "<video>" -maxdepth 3 \( -name _pushed -prune \) -o -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.mp4" -o -iname "*.mov" -o -iname "*.zip" \) -printf "%h\n" | sort | uniq -c`
+   (zips: list them by name, never extract on your own).
+3. Then the type below decides what the folders feed: footage+AI -> `<video>\audios` is the `<audios-folder>` of
+   new-video.md (a pasted video folder = `/doc-edit <video>\audios`); full-AI -> `references/full-ai.md` (`voice\`
+   or `audios\mp3\`, `shots\`).
+Media that are not where the step reads them (MP3s outside `audios\` / `voice\`, shots outside `shots\`, only a zip,
+two candidate sets such as `shots\` + `shots_old\`) -> one AskUserQuestion listing each candidate (path, count,
+missing / extra numbers against what the step needs, newest date) and the fix: copy that set into the folder the step
+reads (Python `shutil.copy2`, source kept, never moved / renamed / mixed), or the user moves it. After the yes copy,
+verify the count, go on. A name like `_old` is no proof either way: never pick a set by guessing (rule 9).
+
+## Video type first (user 2026-11-05: one engine `dvr_cowork`, region independent of type)
+One call decides it, never the folder name, species, minutes or channel:
+`.venv/Scripts/python.exe -m dvr_cowork profile detect "<video>"` -> `profile` + `engine` + `region` (descriptor
+`video.project.json` when the film has one, else the engine's own files; `unknown` -> ask, rule 9; both engines'
+files -> it stops).
+- **full_ai_mountain** (full-AI 8-15p, any region) -> `references/full-ai.md` only (`dvr_cowork profile context
+  "<video>" --phase <step>` = the pinned numbers); nothing below this section applies.
+- **footage_ai_long** (footage+AI 1-3h) -> everything below.
+- **ocean_long** is reserved and disabled: the router refuses it; never route an ocean film to another engine.
+- Neither, or a bare `/doc-edit status`: `state.py status`, plus `dvr_cowork ai status <folder>` of each
+  `D:\Chann_*\<video>` holding `.production\` outside `_done`. Still unclear -> ask (CLAUDE.md rule 9).
 
 - One video, one command per step: the user calls each step (user 2026-10-18: no "tiếp" chain, no "next step" line).
   Two chains only (user 2026-10-31, 3 phases): `/scan-source /tag-source và tiếp` = `ingest --fill` -> stop for
@@ -12,15 +41,17 @@ description: Documentary edit in Resolve, one step per command - new video(s), p
   `done`.
 - Goal: picture + narrator let the viewer follow who does what; with eyes closed the sound still carries it.
 - Replies in Vietnamese, short: result lines, problems, what the user must check.
-- Resolve steps need project `<video>` or the day project `vid_DDMMYY` open (`dvr_cowork info` once per session; else
+- Resolve steps need project `<video>` or the day project `vid_DDMMYY` (footage+AI) open (`dvr_cowork info` once per session; else
   stop, ask). One failing clip never stops a step (name it).
 - Calling a step's command = the user's yes for the change its row names (CLAUDE.md rule 2); anything else destructive
   (`--replace`, `--force-clear`) still needs an explicit yes.
 - Parallel: narration A runs in the background while B plans; tag batches = up to 4 background agents; delogo and
   `apply` of many batches in the background. Never poll; act on the notification.
 
-Tracks of "Edit": A1 AI-clip audio of V1 at -12 dB (shots before 08:00 only; place.py A1_UNTIL) · A2 narrator only · A3/A4 bed (alternating, 4 s crossfades,
-~-32 LUFS, original files) · A5 extra environment · A6 natural · A7 music · A8/A9 SXF.
+Tracks of "Edit" (the one timeline + `Edit_bak_*`): A1 empty (user 2026-11-05; place.py A1_UNTIL = 0, older videos
+keep theirs) · A2 narrator only · A3/A4 bed (alternating, 4 s crossfades, ~-32 LUFS, original files) · A5 extra
+environment · A6 natural · A7 music · A8/A9 SXF. Bins: `7. Open` = the intro's shots (0:00 -> story 1) only; every
+music / sound file -> `4. Audio/*` (the intro music too).
 
 ## Day project, one video per channel (user 2026-10-25)
 Project `vid_DDMMYY` (vid_251026 = 25/10/2026) holds one video per channel: top bins `Chann_1`, `Chann_2` ... each
@@ -36,7 +67,7 @@ Chann_2; from 2026-11-03 `vid_DDMMYY_1`): work key `<video>__Chann_N` (`dvr_cowo
 Parallel: the file work of each video (brief, beats, plan, prompts) in its own agent at once; Resolve writes
 (vo-sync, place, intro, color) one at a time: they share the current timeline / bin of one Resolve.
 ## After the prompts: Case 1 / Case 2 per video (user 2026-10-30, `input/Claude_Vid_editor_V2_Architecture_*.md`)
-`/doc-edit <audios...>` ends when each video's `missing_prompts.txt` + `shot_manifest.csv` are out: reply per video
+`/doc-edit <audios...>` ends when each video's `missing-prompt.csv` is out: reply per video
 THIẾU count + timecode ranges + prompt numbers, then wait. Waiting never turns into a fallback; Claude never opens
 Muse / Chrome or generates footage (the user does, by hand). State (`dvr_cowork/jobs.py`, SQLite, Python only):
 `python -m dvr_cowork.jobs status` = each recent video's stage (WAITING_FOR_USER until a decision), decision, last
@@ -46,9 +77,9 @@ with `jobs decide <video> ingest|fill-existing "<their words>"`:
   video(s), after `jobs check <video>`: only new files that finished copying (size stable, the last second decodes);
   `still copying` -> wait, ask again; `broken` -> list them for the user to remove before ingest (never imported);
   `SHARED _check` -> ask which clip is whose.
-  Clip -> video / slot: `shot_manifest.csv` (`save_folder`, `slots`) is the hint, the Resolve timeline the truth; unclear
+  Clip -> video / slot: `missing-prompt.csv` (`shot_id` = group + slot, `animal`) is the hint, the Resolve timeline the truth; unclear
   which video a clip is for -> list the files, ask. The clips `jobs check` accepted for a video are imported into ITS
-  channel's `Chann_N/7. Open` (user 2026-11-02; `jobs.generated`, place.py), then placed into the open gaps; hand
+  channel's bins (intro shots -> `7. Open`, the rest 1-3 by action; place.py), then placed into the open gaps; hand
   edits kept. THIẾU left -> report, wait (never `fill-THIEU` on its own). Called again = only the new files.
 - **Case 2** ("không generate nữa, fill THIẾU bằng footage có sẵn") = the yes for `/doc-edit fill-THIEU <video>` of the
   named video(s), no second ask. What is still THIẾU comes from Resolve (`dvr_cowork gaps` + markers), not the old plan.
@@ -67,14 +98,15 @@ with `jobs decide <video> ingest|fill-existing "<their words>"`:
 - Cost check (user asks, or after a rule change): `jobs metrics --days=7` = Claude tokens per day (this workspace,
   subagents included) + Resolve writes per script (median time, FAILED, interrupted).
 
-## Region (user 2026-10-20)
-`/doc-edit <audios-folder> [amazon|africa]`: the video folder's name says it (`amazon_3`, `africa_251026`, user
-2026-10-25); neither name nor word -> ask, never guess. It becomes the spec's first line
+## Region (user 2026-10-20; himalaya 2026-11-05)
+`/doc-edit <audios-folder> [amazon|africa|himalaya]`: the video folder's name says it (`amazon_3`, `africa_251026`,
+`himalaya_051126_1`; old `congo_*` = amazon); neither name nor word -> ask, never guess. It becomes the spec's first line
 `# REGION <region>`; plan, fill and missing-prompts then use only that region's footage (no line = amazon, the
 videos before).
 | region | footage roots |
 |---|---|
 | amazon | `Z:\Unseen\Amazona\video` + `D:\AI_video` |
+| himalaya | none yet: every slot THIẾU -> prompts (AI clips into `D:\AI_video\_himalaya\_check`) |
 | africa | `Z:\Unseen\Động vật\AAA Trên cạn` (footage; its `AI_copyright\` = AI clips; `bản quyền\` = whole films, NEVER used: plan.py load_clips skips them, user 2026-10-28) + `Z:\Unseen\savannah` (scenery) + `D:\AI_video\_africa` (Africa AI clips, root `africa_ai_check`; user 2026-10-22: new clips in `_africa\_check`, filed into `_africa\<species>` like Amazon's `D:\AI_video`) |
 
 - Audio roots shared: `Z:\Unseen\Amazona\audio`, `Z:\Unseen\SFX`, `audio_lib` (`D:\Audio_lib`: Epidemic / Suno,
@@ -100,6 +132,7 @@ sounds come from the screenplay and the footage, never from the biome name.
 ## Commands
 | command (user's words) | runs | reply |
 |---|---|---|
+| `/doc-edit <video folder>` of a full-AI film | `references/full-ai.md` from its state: voice -> prompts, stop; shots complete -> whole film on Edit, stop for review | that file's replies |
 | `/doc-edit <audios-folder> [<audios-folder> ...]` | `references/new-video.md` per video: A narration (background) + B plan + prompts in parallel, then intro music picked by itself (`references/intro.md`, user 2026-10-31: no separate intro command) and place of intro + body on empty tracks; several folders = one agent per video for B, A / place one after the other | place lines + new-video reply per video |
 | `/doc-edit plan` | re-plan after beat / spec edits or new clips: B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
 | `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`; a range -> `missing.py <video> --range=A-B` (same flag on `--check` / `--write`) | prompts reply |
@@ -113,7 +146,7 @@ sounds come from the screenplay and the footage, never from the biome name.
 | `/doc-edit place` | `references/place-fill.md` | backup, placed, max deviation, gaps, audio, failures, markers |
 | `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; one space per story, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`), several per story | ranges, story spread before -> after, AI clips toned down, intro count, the frames checked |
 | `/doc-edit color n done [<video>]` ("color và done") | `seo.py` in the background (no Resolve) while `color` runs as above; color found a broken shot / a problem -> stop, report, no render; else `done` (check-timelines.md): render + upload private, no thumbnail | color reply + SEO 3 titles + done reply |
-| `/doc-edit seo [<video>] [--force]` | `python -m dvr_cowork.seo <video folder>` (check-timelines.md "SEO") | 3 titles (the chosen one), FLAG lines |
+| `/doc-edit seo [<video>] [--force]` | `python -m dvr_cowork youtube seo <video folder> [--force]` (check-timelines.md "SEO") | 3 titles (the chosen one), FLAG lines |
 | `/doc-edit status` | `state.py status`: every video of every channel, its stage, the command to call next (files only, no Resolve) | the table |
 | `/doc-edit reframe [<video>]` | `references/reframe.md` | |
 | `/doc-edit check-timelines`, `/doc-edit done` ("xong video") | `references/check-timelines.md` | |

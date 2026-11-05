@@ -105,6 +105,18 @@ def build(rows, index, fps, end_s, a2, prof):
     return sorted(out, key=lambda p: (p["timeline_start_frame_relative"], p["track_index"])), bad
 
 
+def clashes(plan, snap):
+    """Placements overlapping an item already on their track (A5-A9) -> ["<id> / <existing name>", ...]."""
+    out = []
+    for p in plan:
+        a, b = p["timeline_start_frame_relative"], p["timeline_end_frame_relative_exclusive"]
+        tr = p["track_index"]
+        for x, y, name in snap["audio"].get(tr, snap["audio"].get(str(tr), [])):
+            if x < b and a < y and (x, y) != (a, b):
+                out.append(f'{p["placement_id"]} / A{tr} {name}')
+    return out
+
+
 def snapshot(tl, fps):
     t0 = int(tl.GetStartFrame())
     snap = {"fps": fps, "start_frame": t0, "end_rel": int(tl.GetEndFrame()) - t0, "audio": {}, "video1": []}
@@ -171,6 +183,7 @@ def main(video, run):
         return cache[e["asset_id"]]
 
     plan, bad = build(rows, index, rate, end_s, a2, prof)
+    bad += [f"overlaps existing item {c}" for c in clashes(plan, snap)]  # e.g. 8p hook music on A7
     for p in plan:  # media must exist
         if not Path(p["source_path"]).exists():
             bad.append(f'{p["placement_id"]}: media missing {p["source_path"]}')
@@ -207,6 +220,8 @@ def selftest():
     assert m["timeline_end_frame_relative_exclusive"] == 40 * 24 and not m["natural_end"]
     assert next(p for p in plan if p["track_index"] == 6)["shift_s"] == -6.0
     assert resolve_asset("hit", idx)["asset_id"] == "h"
+    snap = {"audio": {7: [[0, 30 * 24, "intro.mp3"]], 8: []}}
+    assert clashes(plan, snap) == ["s1_L001 / A7 intro.mp3"] and clashes([hit], snap) == []
     print("selftest ok")
 
 

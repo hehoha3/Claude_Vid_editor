@@ -25,6 +25,14 @@ release); silence is a choice (pre-attack, aftermath), not a gap to fill.
 Doc-edit output on A6-A9 may be replaced after the backup (`--replace`); anything the user placed by hand on A5-A9 is
 protected: ask first. Never timeline "Master".
 
+**Full-AI 8-15p videos** (user 2026-11-05: lighter than footage+AI, `dvr_cowork ai finish` places song + wind +
+birds by itself, doc-edit `references/full-ai.md` B; audio-expert only for a fetch or when the user asks for more):
+same Edit layout; `<video>` = `<folder name>__Chann_N`, every script with
+`DVR_CHANNEL=Chann_N`. A3/A4 = the engine's wind beds, A5 = its birds, A7/A8 under the 30 s hook = its intro song: `execute.py
+... --additive` (keeps every existing item, refuses an overlap; never `--replace`). Beats from `audios/visual_plan.md` +
+screenplay. Only licensed files (`D:\Audio_lib`, fetched with their `.license.txt`); a missing sound -> mode fetch from
+Epidemic without asking.
+
 ## Modes
 Data in `.work/audio_expert/`: `audio_index.jsonl` (never open whole; filter in Python), `learning_plan.md`,
 `style_profile.json`, `feedback.jsonl`, `<video>/cues.txt`, `<video>/sound_map.json`, `<video>/runs/<run_id>/...`.

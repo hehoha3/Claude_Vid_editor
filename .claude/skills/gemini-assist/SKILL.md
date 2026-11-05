@@ -44,7 +44,9 @@ for real reasoning (thoughts are billed as output); raise `--max-tokens` only af
    `[?]` items are checked or dropped, never passed on as fact.
 5. Gemini may never write Resolve timelines, move media, change `.claude/skills`, or render. All DaVinci actions
    remain in current project skills and Python engine.
-6. Do not invoke Gemini for simple file copying, import, scan, rename, FFmpeg, generation, or regular expressions.
+6. Do not invoke Gemini for simple file copying, import, scan, rename, FFmpeg, generation, or regular expressions,
+   nor for anything Python answers: video type / profile, timing, numbering, validation, status (`dvr_cowork
+   profile`, `dvr_cowork ai`, `dvr_cowork jobs`). create-doc-mov films (both types): Claude writes all EN and VI itself; never Gemini (user 2026-11-05).
 7. No discussion loops between Claude and Gemini. One Gemini attempt per task, unless explicitly re-requested.
 8. If the bridge returns an error, report it without retrying blindly (it never retries itself).
 9. Keep the two videos' inputs/results independently scoped. Do not mix channel IDs or `THIEU` slots.

@@ -9,7 +9,7 @@ is still empty (+ their A1 if free), removes the markers of those slots only; au
 --fill --until <s>: only slots starting before <s> (e.g. a re-cut opening, the rest of the film's empty slots wait).
 A new video (user 2026-10-31: intro in the same run, no separate /doc-edit intro) = intro.py, plan.py, then a plain
 place: intro + body at once. The intro music (its source file, user 2026-10-26: no fitted file) goes into bin
-"7. Open" as intro.py's bar pieces back to back on A7, short fades at the joints, the tail fade on the last, the 1 s
+"4. Audio/Music" (user 2026-11-05) as intro.py's bar pieces back to back on A7, short fades at the joints, the tail fade on the last, the 1 s
 from black; story 1's bed pre-laps the black before story 1 on A5 (prelap()).
 --skip-intro: nothing before the plan's intro end (videos placed before 2026-10-31 left 0:00-intro empty).
 --intro: only 0:00 -> the plan's intro end, on V1 / A1 / A3-A9 + its markers; that range must be empty (an intro
@@ -38,7 +38,7 @@ TARGET = {3: -32, 4: -32, 5: -34, 6: -28, 7: -26, 8: -22, 9: -22}
 BED_OVERLAP = 4.0
 SFX_TAIL = 2.0  # s an A8/A9 hit may run past the end of its slot
 A1_DB = -12  # AI clips bring their own audio to A1, this much below the clip level (user rule 2026-10-09)
-A1_UNTIL = 480.0  # s: A1 only for shots starting before 08:00; later AI clips get no A1 audio (user 2026-10-28)
+A1_UNTIL = 0.0  # s: footage+AI A1 stays empty (user 2026-11-05; was 08:00). Items already on A1 are never removed
 FADE = {3: 4.0, 4: 4.0, 5: 2.0, 6: 0.5, 7: 3.0, 8: 0.0, 9: 0.0}
 EDGE_IN, EDGE_OUT = 1.0, 3.0  # s: the video opens from black / ends to black on every track but A2 (user 2026-10-26)
 BIRD_ON, BIRD_OFF = 30.0, 30.0  # s: a birds bed = one bird file this long, then the non-bird bed, next time another bird (user 2026-10-27)
@@ -49,7 +49,7 @@ ATTACK, RUN = {"attack", "hunt", "chase", "catch", "fight"}, {"run"}  # tag "act
 # untagged clips: the folder / file name (africa AI_copyright\AI\Chạy\...)
 ATTACK_RE, RUN_RE = r"attack|hunt|fight|kill|tấn công|săn", r"(?<![a-z])run|chase|chạy|đuổi"
 _ACTS = {}
-OPEN_BIN = "7. Open"  # intro music (intro.py)
+OPEN_BIN = "7. Open"  # footage+AI only: the shots of the intro (0:00 -> story 1), user 2026-11-05
 MARK = {"THIEU": "Red", "WEAK": "Yellow", "FALLBACK": "Cyan", "GFX": "Blue"}
 
 
@@ -418,19 +418,12 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         print("cleared:", full)
     ensure_audio_track(tl, 9, 2, print)
 
-    # import every needed file once, into its bin; clips generated for this video (Case 1: jobs check accepted them
-    # from _check) -> the channel's "7. Open" (user 2026-11-02), every other clip -> 1-3 by action
-    from dvr_cowork.jobs import generated
-    gen = generated(video_key(video))
-    if gen:  # by content hash: organize renamed the clips; only the AI folder is hashed (the NAS is not read)
-        sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
-        from scan_source import fast_hash
-        ai = str(Path(load_config()["paths"]["ai_video"])).lower()
-        gen = {p for p in {s["path"] for s in vids} if str(p).lower().startswith(ai) and Path(p).is_file()
-               and fast_hash(Path(p)) in gen}
+    # import every needed file once, into its bin: the intro's shots (0:00 -> story 1) -> the channel's "7. Open",
+    # every other clip -> 1-3 by action (user 2026-11-05)
+    iend = intro_end(plan)
     need = defaultdict(set)
     for s in vids:
-        need[OPEN_BIN if s["path"] in gen else video_bin(s)].add(s["path"])
+        need[OPEN_BIN if s["start"] < iend else video_bin(s)].add(s["path"])
     # alternatives (user 2026-10-21): the next-best clips of every slot, THIẾU ones too, go into the same bins so the
     # user can swap a shot by hand; imported only, never placed. Old plan.json without "alts" -> nothing extra.
     chosen, alt = {_norm(s["path"]) for s in slots if "path" in s}, set()
@@ -439,8 +432,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
             need[video_bin({"source": src, "path": p})].add(p)
             alt.add(p)
     for e in events:
-        # 4. Audio/Ambience | Music | SFX by track; the intro's music -> "7. Open" (user 2026-10-25)
-        need[OPEN_BIN if e[0] == 7 and (intro_only or len(e) > 5) else audio_bin(e[0])].add(e[3])  # len 6 = intro piece
+        need[audio_bin(e[0])].add(e[3])  # 4. Audio/Ambience | Music | SFX by track, the intro's music too (2026-11-05)
     items, seen = {}, {}
     for name, paths in need.items():
         b = ensure_bin(mp, name)

@@ -6,7 +6,7 @@ Only when the user asks (any time, any number of times). Video = this conversati
 
 - Workspaces = folders matching config.toml `[workspaces] globs` (default `D:\Chann_*`), one sub folder per video;
   new channel = new folder. `--ws` only when two workspaces hold a video of the same name.
-- Reads every video track of "Edit" + "Open" of Resolve project `<video>` (loads it if another is open, switches
+- Reads every video track of "Edit" of Resolve project `<video>` (loads it if another is open, switches
   back). plan.json is not used: hand swaps count, unused plan clips don't. Id = library content hash; a `_nologo`
   copy = its original.
 - `.work/doc_edit/ledgers/<workspace>.json`: new video on top, re-check updates in place. Plan ban = Edit + Open
@@ -33,8 +33,7 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
 (amazon_1 = "build_agent"). The render makes it long (a 60 min 4K timeline): run it with `run_in_background`.
 
 1. Final check-timelines (ledger).
-2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of "Edit" (+ "Open" if it
-   still exists) is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
+2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of "Edit" is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
    license txt beside the file (`*-<id>-license.txt`, `*-<id>.txt` or any txt naming the id: `ledger.pixabay_license`), or for Epidemic / Suno files the `<stem>.license.txt` that audio-expert fetch.py writes (`ledger.sidecar_row`); files under `D:\Audio_lib` or `D:\Music` with no license -> warn.
    `<video folder>\audio_licenses.md` = one line per licensed file, film order:
    `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined),
@@ -45,7 +44,7 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
    Before it, `place.black_fades` checks the 4 V1 black fades and puts back a missing one (`black fades <video>: ...`
    line; `NOT SET` -> say so, the render has no fade there).
 4. Upload (user 2026-10-31): `Done_<video>.mp4` -> the YouTube channel `.secrets/youtube/channels.json` maps the
-   workspace's `Chann_N` to (`dvr_cowork.youtube upload`): title / description / tags from `youtube_meta.json` (SEO
+   workspace's `Chann_N` to (`dvr_cowork youtube upload --apply`): title / description / tags from `youtube_meta.json` (SEO
    below, run it BEFORE `ledger.py done` when the file is missing), English, Pets & Animals, not for kids, private
    (unaudited API project), no thumbnail unless the user gives one. `--thumb` = the image the user gives
    (D:\Thumbs\...). `--publish-at` = "đăng vào 18 giờ" (PC time): private now, YouTube makes it public then
@@ -53,7 +52,7 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
    sets only the thumbnail. Chann_N not mapped / not logged in / failed -> `youtube:` line says so, render stays.
 Resolve stays open; no relink, no folder move: the user moves the folder into `_done` himself (user 2026-10-26).
 
-## SEO: `python -m dvr_cowork.seo <video folder> [--force]` (user 2026-10-31, replaces vidIQ)
+## SEO: `python -m dvr_cowork youtube seo <video folder> [--force | --pick N]` (user 2026-10-31, replaces vidIQ)
 YouTube Data API trend search (~300 quota units, cached 7 days) + one Gemini call -> `.work/doc_edit/<video>/
 youtube_meta.json`: the 3 most trending titles (user 2026-10-31, no curiosity rule), always
 `WILD <REGION> | <Gemini's middle part> | Wildlife Documentary` (seo.full_title), description

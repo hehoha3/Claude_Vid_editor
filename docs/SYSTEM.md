@@ -1,7 +1,38 @@
 # Hệ thống Claude Video Editor: bên trong hoạt động thế nào
 
-Cài đặt và dùng hằng ngày: [README](../README.md). File này dành cho người muốn hiểu hệ thống: nó làm gì ở từng bước,
-dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào, và vì sao nó rẻ.
+Cài đặt và dùng hằng ngày: [README](../README.md). Phần "Đọc trước" ngay dưới viết cho mọi người. Từ mục 1 trở đi
+dành cho người muốn hiểu sâu hoặc sửa hệ thống.
+
+## Đọc trước: hệ thống giống một đoàn làm phim nhỏ
+
+Hãy hình dung một đoàn làm phim nhỏ, ai cũng có việc riêng:
+
+| Trong đoàn phim | Trong hệ thống | Làm gì |
+|---|---|---|
+| **Đạo diễn** | Bạn | Chọn đề tài, tạo giọng đọc và clip AI, duyệt bản dựng |
+| **Biên kịch + dựng phim chính** | Claude | Viết kịch bản, quyết định shot nào kể chuyện gì, nhận xét, sửa theo lời bạn |
+| **Thợ phụ làm việc tay chân** | Các "script" Python trong thư mục `dvr_cowork` và `.claude\skills` | Đo giọng đọc, chấm điểm hàng nghìn clip, đặt lên timeline, chỉnh màu, xuất phim. Chạy rất nhanh, chỉ báo lại vài dòng |
+| **Thủ kho** | Thư mục `.work\library` | Sổ ghi mọi clip trong kho: con gì, đang làm gì, ánh sáng ra sao. Mỗi clip chỉ cần "xem" một lần |
+| **Người ghi chép** | Thư mục `.work\knowledge` | Nhớ các quyết định, quy tắc bạn đã dặn, video nào đang ở bước nào |
+| **Phòng dựng** | DaVinci Resolve | Nơi phim thật sự được ghép lại. Claude điều khiển Resolve qua "cửa sau" (scripting), không bấm chuột thay bạn |
+| **Trợ lý viết nháp** | Gemini | Viết nháp SEO cho rẻ; Claude luôn duyệt lại |
+| **Đăng bài** | YouTube | Tìm video đang hot; đăng video ở chế độ riêng tư |
+
+**Vì sao làm vậy?** Claude giỏi suy nghĩ nhưng mỗi chữ nó đọc đều tốn tiền. Vì thế việc lặp lại, máy móc giao cho
+script; Claude chỉ đọc bản tóm tắt ngắn rồi ra quyết định. Kết quả là nhanh, rẻ, và Claude không phải xem lại từng
+clip mỗi lần dựng.
+
+**Hai loại video đi hai con đường:**
+- **footage+AI (1–3 giờ)**: kịch bản → giọng đọc → Claude tìm footage trong kho cho từng câu → chỗ nào không có thì
+  viết câu lệnh để bạn tạo clip AI → lấp vào → chỉnh màu → xuất phim.
+- **full-AI (8–15 phút)**: kịch bản → giọng đọc → Claude viết câu lệnh cho **mọi** shot → bạn tạo hết → Claude ghép cả
+  phim (mở đầu 30 giây gay cấn, câu chuyện, nhạc, tiếng gió, chim hót) → bạn xem → xuất phim (không chỉnh màu).
+
+**Những gì an toàn tuyệt đối:** ổ `Z:` (kho chung) chỉ đọc; Claude không tự xoá file nào; trước khi sửa lớn luôn có
+bản sao lưu timeline; video chỉ đăng ở chế độ riêng tư; thư mục `_pushed` không ai đụng vào.
+
+**Mọi thứ chạy qua một lệnh duy nhất**: `.\dvr.cmd ...` (hoặc `.venv\Scripts\python.exe -m dvr_cowork ...`). Bạn
+hầu như không cần gõ nó: Claude tự gọi.
 
 ## 1. Bức tranh tổng thể
 
@@ -9,7 +40,7 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
  Bạn (chat tiếng Việt, gọi từng bước)
    │
    ▼
- Claude Code ──luôn nạp──► CLAUDE.md (10 luật) + memory cá nhân + handoff (trạng thái dở dang)
+ Claude Code ──luôn nạp──► CLAUDE.md (11 luật) + memory cá nhân + handoff (trạng thái dở dang)
    │
    ├─ skill ──► .claude/skills/<skill>/SKILL.md (+ references/, chỉ nạp khi dùng)
    ├─ subagent ──► .claude/agents/tagger.md (Sonnet nhìn ảnh để tag footage, chỉ Read + Write)
@@ -18,7 +49,7 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
           ├─► DaVinci Resolve (Scripting API): timeline, media pool, marker, grade, render
           ├─► thư viện: Z:\ (footage thật, nhạc, SFX: chỉ đọc), D:\AI_video (clip AI)
           ├─► .work/ (index + tag, cache, beat sheet, spec, plan, ledger, memory)
-          ├─► Gemini API (rẻ, chỉ đọc; dvr_cowork/gemini.py): dịch phụ đề VI, SEO; Claude duyệt (prompt shot thiếu: Claude tự viết, 2026-11-02)
+          ├─► Gemini API (rẻ, chỉ đọc; dvr_cowork/gemini.py): SEO; Claude duyệt (prompt shot thiếu: Claude tự viết, 2026-11-02; VI của Timestamp: Claude tự viết, 2026-11-05)
           ├─► YouTube Data API: tìm trend (title, từ khoá, tags nhiều view) + upload private
           └─► PostgreSQL dvr_library (tuỳ chọn: bản sao để truy vấn)
 ```
@@ -44,13 +75,15 @@ dữ liệu nằm ở đâu và trông ra sao, plan chọn clip theo luật nào
 | `.claude/commands/` | Lệnh nhanh `/project-status`, `/review-frame`, `/sync-vo` | có |
 | `.claude/settings.json` | Quyền chung (hỏi trước `place.py`, `--replace`, `grade.py apply`...; cấm SendKeys) + hook in handoff | có |
 | `.claude/settings.local.json` | Quyền riêng từng người | không |
-| `dvr_cowork/` | Thư viện Python: kết nối Resolve, vo-sync, `info/at/find/offline/frames/backups`, `backup_timeline`; `jobs.py` (trạng thái từng video), `youtube.py` (upload), `seo.py` (title / description / tags) | có |
+| `dvr_cowork/` | Engine Python duy nhất, một CLI `python -m dvr_cowork` (`.\dvr.cmd`): kết nối Resolve, vo-sync, `info/at/find/offline/frames/backups`, `backup_timeline`; `jobs.py` (trạng thái từng video, khoá ghi Resolve), `profile.py` (loại + vùng của video), `prompt_rules.py` (luật prompt chung), `youtube.py` (login / remove / channels / upload cả hai loại), `seo.py` (SEO footage+AI) | có |
+| `dvr_cowork/fullai/` | Engine full-AI 8-15p (`.\dvr.cmd ai ...`): story → voice → prompts → shots → hook → âm thanh → render; `config.toml` riêng (gain, bộ khoá prompt theo vùng); `tests/` (mock Resolve) | có |
+| `config/profiles/` | Profile có phiên bản: `footage_ai_long.v2` (1-3h), `full_ai_mountain.v2` (8-15p, mọi vùng), `ocean_long` (tắt); v1 chỉ cho phim đã ghim | có |
 | `.secrets/youtube/` | `client_secret.json`, `channels.json` (Chann_N → channel ID), `tokens/` | không |
 | `.work/automation/jobs.sqlite3` | Trạng thái video, quyết định Case 1 / 2, log ghi Resolve (SQLite, tự tạo) | không |
 | `.work/gemini/`, `.work/seo/cache/` | Cache + log token Gemini; kết quả tìm trend YouTube (7 ngày) | không |
 | `C:\ProgramData\...\Support\LUT\Amazona\` | 7 LUT AMZ, máy mới tự tạo: `python .claude/skills/colorist/scripts/make_luts.py` | không |
 | `config.toml` | Đường dẫn, workspace, thông số Whisper / vo-sync | có |
-| `tests/test_pipeline.py` | Test end-to-end (mock Resolve) + chạy self-test của mọi script | có |
+| `dvr_cowork/fullai/tests/` | Test full-AI + profile + YouTube (mock Resolve, FFmpeg thật); script của skill có `--selftest` riêng | có |
 | `.work/library/` | Index thư viện + tag + cache YOLO / màu nền của team | không, gói team (mục 11) |
 | `.work/tools/` | `memory_gateway.py`, `library_db.py` (PostgreSQL), `cleanup_workspace.py`, `team_data.py` | có |
 | `.work/knowledge/` | Ghi chú memory dự án (Markdown, mở bằng Obsidian) | không, gói team |
@@ -184,7 +217,7 @@ audios/ (screenplay + timestamp EN/VI + mp3/1..n)
    done: license → ledger → render Done_<video>.mp4 (preset "YouTube 1080 HEVC", tắt phụ đề) → upload PRIVATE,
          không thumbnail. Resolve vẫn mở; bạn tự chuyển thư mục vào _done
 ```
-Trạng thái từng video (`python -m dvr_cowork.jobs status`) nằm trong `.work/automation/jobs.sqlite3`: Python tự ghi,
+Luồng trên là **footage+AI 1-3h**; full-AI: mục 5.4. Trạng thái từng video (`.\dvr.cmd jobs status`) nằm trong `.work/automation/jobs.sqlite3`: Python tự ghi,
 Claude chỉ đọc vài dòng. Mỗi lúc chỉ một script được ghi vào Resolve (khoá), hai kênh chạy lần lượt.
 
 ### 5.1 story.py: từ truyện ra spec
@@ -231,11 +264,38 @@ shot ≤ 2 s 0 % → 30 %, `# TURN` 0 → 11, SFX 5 → 27, âm thanh tự nhiê
 
 ### 5.3 Track của timeline Edit
 
-A1 tiếng clip AI (-12 dB) · A2 narrator (mỗi câu một item) · A3/A4 nền ambience (luân phiên, crossfade 4 s) · A5 lớp
-môi trường · A6 âm thanh tự nhiên · A7 nhạc · A8/A9 SFX. Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú =
-shot cần), vàng WEAK, xanh GFX. Bin video theo hành động: `1. Other_roll`, `2. Attack_roll`, `3. Run_roll`; âm thanh
-trong `4. Audio/...`; mọi timeline (trừ Master) trong `6. Timeline`: bin tạo nếu thiếu, gom lại mỗi lần script tạo
-backup (`dvr_cowork.resolve_ops.tidy_timelines`; `.\dvr.cmd timelines` gom ngay).
+Mỗi video **một timeline "Edit"** (+ backup `Edit_bak_*`, giữ 3 cái mới nhất; user 2026-11-05). A1 footage+AI để
+trống (video đặt trước 2026-11-05 giữ A1 cũ; `place.py A1_UNTIL = 0`), full-AI = tiếng của chính mỗi shot (-12 dB) · A2
+narrator (mỗi câu một item) · A3/A4 nền ambience (luân phiên, crossfade 4 s) · A5 lớp môi trường / chim · A6 âm thanh
+tự nhiên · A7 nhạc · A8/A9 SFX. Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh
+GFX. Bin video theo hành động: `1. Other_roll`, `2. Attack_roll`, `3. Run_roll`; `7. Open` chỉ footage+AI = các shot
+của intro (0:00 → story 1); mọi nhạc / âm thanh trong `4. Audio/...` (cả nhạc intro); timeline trong `6. Timeline`
+(`.\dvr.cmd timelines` gom ngay).
+
+### 5.4 Full-AI 8-15p (`dvr_cowork/fullai`)
+
+```
+/create-doc-mov Chann_N  → ai next-video (<vùng>_DDMMYY_N) → ai init --region (ghim profile) → story.json → build
+  │ bạn tạo voice\1..N.mp3 (1 file = 1 dòng không trống của transcript.md)
+/doc-edit <video>        → ai voice-ready --apply: conform → A2 + SRT (backup) → prompt cho MỌI slot ngoài hook
+  │ ── dừng: bạn tạo shots\1..M.mp4 (số file = số prompt; M không nhất thiết = N)
+/doc-edit <video>        → ai shots-ready --apply: ingest (số, decode, duration, hash) → thân phim V1/A1 → contact sheet
+  │                        Claude xem ảnh, đánh dấu hook_ok + đoạn sạch → ai finish <bài intro> --apply:
+  │                        hook 30 s (10-12 cut 2-4 s) → intro lên V1 → nhạc A7/A8 + gió A3/A4 + chim A5 → check
+  │ ── dừng: bạn review (không chỉnh màu)
+/doc-edit done <video>   → ai done --apply: kiểm tra Edit thật → render (không ghi đè, _v2) → ai render-status
+                           → (tuỳ chọn) youtube seo → youtube upload (preview) → --apply sau khi bạn duyệt
+```
+Mỗi phim ghim profile vào `video.project.json` + `.production/profile.lock.json`: sửa profile của workspace không làm
+phim đang làm thay đổi. Bộ khoá prompt theo vùng (`motion`, `color`) nằm trong `fullai/config.toml`
+`[prompts.regions.<vùng>]`: có `himalaya`; `amazon` / `africa` chưa có thì `prompts` dừng và Claude nhắc bạn. Mọi lần
+ghi Resolve đều cộng thêm (không xoá, không ripple), có backup và journal, giữ chung khoá ghi với footage+AI.
+
+Kiểm thử trên Resolve thật (một project mới, trước khi làm hàng loạt): info → voice --apply (đúng bin/track, A2 đủ,
+SRT đúng giờ; sai `source_end` thì dừng ngay với backup + journal) → prompts → ingest khi cố ý thiếu file (phải báo
+đúng số) → shots-ready → finish → chạy lại (phải `placed 0`) → sửa tay một shot rồi chạy lại (phải dừng, giữ chỉnh
+sửa) → done --apply → render-status VERIFIED → done lần nữa tạo `_v2`. Test mô phỏng không chứng minh codec, SRT
+append hay hành vi audio của mọi phiên bản Resolve.
 
 ## 6. Memory: Claude nhớ bằng gì
 
@@ -278,7 +338,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 
 | Skill | Làm gì | Script chính | Ghi vào |
 |---|---|---|---|
-| `doc-edit` | Narration → brief → beat sheet → plan → place; missing-prompts, logo, delogo, ingest, fill, color, reframe, status, check-timelines, done, seo, color n done | `story.py`, `plan.py`, `place.py`, `missing.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline Edit, `.work/doc_edit/` |
+| `doc-edit` | footage+AI: narration → brief → beat sheet → plan → place; missing-prompts, logo, delogo, ingest, fill, color, reframe, status, check-timelines, done, seo, color n done. full-AI: `references/full-ai.md` (voice → prompts → shots → cả phim → done) | `story.py`, `plan.py`, `place.py`, `missing.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline Edit, `.work/doc_edit/` |
 | `tag-source` | Agent tagger nhìn 4 frame/clip một lần → tag; xếp clip AI mới vào thư mục loài | `tag_source.py`, `organize.py` | `.work/library/` |
 | `scan-source` | Cập nhật index sau khi thêm/đổi/xoá file | `scan_source.py` | `.work/library/` |
 | `process-ai-video` | Làm clip AI trông như quay thật, cắt character sheet đầu clip | `process_ai_video.py` | Ghi đè clip trong `D:\AI_video` |
@@ -289,13 +349,13 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | `edit-craft` | Kiến thức dựng: nhịp, điểm cắt, J/L cut, xuất YouTube | — | — |
 | `resolve-api` | Lưu ý khi viết script cho Resolve | — | — |
 | `memory-find` / `memory-save` | Tìm / lưu memory dự án | `memory_gateway.py` | `.work/knowledge/` |
-| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager. Tự được gọi bởi `seo.py`, `translate_vi.py` (create-doc-mov), bạn không cần gõ `/gemini-assist` | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
+| `gemini-assist` | Ý kiến thứ hai từ Gemini (REST API, chỉ đọc, không tool, không web); key trong Windows Credential Manager. Tự được gọi bởi `seo.py`, bạn không cần gõ `/gemini-assist` | `gemini_bridge.py` | `.work/gemini/` (cache, `usage.jsonl`) |
 
 ## 9. An toàn
 
 - **CLAUDE.md**: "yes" trước mọi việc phá huỷ (gọi lệnh của một bước = đồng ý cho đúng thay đổi của bước đó); chỉ đổi
   đúng thứ được nói (một shot = thay một item, không plan/place lại); `Z:` chỉ đọc; không tự xoá file; không đụng
-  `Master` và `_pushed`; preflight trước mỗi việc; việc bị từ chối không thử lại y hệt.
+  `_pushed`; preflight trước mỗi việc; việc bị từ chối không thử lại y hệt.
 - **`.claude/settings.json`**: luôn hỏi trước `place.py`, `--replace`, `grade.py apply`, `reframe --apply`, xoá
   clip/timeline; cấm gửi phím tắt.
 - **Backup**: `Edit_bak_<loại>_<giờ>` (bin `6. Timeline`) trước vo-sync, place, reframe, màu, audio-expert. Khôi phục
@@ -314,7 +374,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | PostgreSQL cho câu hỏi xuyên video | Một câu SQL thay vì script quét JSON |
 | Preflight một lệnh; việc bị chặn không thử lại | Không mất lượt vô ích |
 | SEO: Python lọc trend + dựng description, Gemini flash-lite viết (~2k token vào, ~1k ra), Claude chỉ duyệt 3 title | Việc viết dài chuyển sang model rẻ; ~300 / 10.000 quota YouTube mỗi ngày, cache 7 ngày |
-| Dịch VI (`translate_vi.py`, glossary tên loài do Claude đưa) bằng gemini-3.5-flash; Claude đọc và sửa từng dòng. Prompt THIẾU / WEAK: Claude tự viết bằng generator ngân hàng câu `.work/scripts/gen_prompts_<video>.py` (user 2026-11-02: Gemini vượt giới hạn input với ~700 prompt), QC chặn chữ chỉ hướng trên động tác đứng yên | Dịch: flash bận → flash-lite một lần. Prompt: chạy lại generator không tốn token |
+| Dịch VI: Claude tự viết toàn bộ trong source (user 2026-11-05, không Gemini). Prompt THIẾU / WEAK: Claude tự viết bằng generator ngân hàng câu `.work/scripts/gen_prompts_<video>.py` (user 2026-11-02: Gemini vượt giới hạn input với ~700 prompt), QC chặn chữ chỉ hướng trên động tác đứng yên | Prompt: chạy lại generator không tốn token |
 | Gemini không tag, không plan / fill: tag vẫn là Sonnet nhìn ảnh, plan / fill là Python có luật cứng | Không đổi chất lượng lấy vài token |
 
 ## 11. Dữ liệu của team: chia sẻ code, giữ riêng dữ liệu
@@ -338,14 +398,18 @@ gói không chứa đủ mọi file với đúng kích thước. Sau `import`: `
 ## 12. Bảo trì và mở rộng
 
 ```powershell
-.venv\Scripts\python.exe -m tests.test_pipeline            # test + self-test của 19 script, ~10 s
+.venv\Scripts\python.exe -m unittest discover -s dvr_cowork\fullai\tests -t .   # full-AI + profile + YouTube, ~40 s
+.venv\Scripts\python.exe .claude\skills\doc-edit\scripts\plan.py --selftest          # mỗi script skill có --selftest
 .venv\Scripts\python.exe .work\tools\cleanup_workspace.py  # rác có thể xoá (dry run; --apply = xoá, bạn chạy)
 .venv\Scripts\python.exe .claude\skills\doc-edit\scripts\plan.py <audios> --spec=<file> --out=<thư mục>   # thử spec khác, không đụng plan thật
 .venv\Scripts\python.exe .claude\skills\doc-edit\scripts\bench_story_first.py <video>   # so luật chọn shot mới với plan cũ
 ```
 - **Thêm footage**: `/scan-source` → `/tag-source`. Đổi tên/chuyển file ngoài pipeline làm clip "offline" trong
   project cũ (`.\dvr.cmd offline --relink`).
-- **Thêm root / vùng**: `scan_source.py` `ROOTS` + `REGION`; root âm thanh mới thêm `CATEGORY` trong `plan.py`.
+- **Thêm root / vùng**: `scan_source.py` `ROOTS` + `REGION` (+ `REGIONS`); root âm thanh mới thêm `CATEGORY` trong
+  `plan.py`. Vùng mới cho full-AI: thêm vào `regions` của profile (phiên bản mới) + `[prompts.regions.<vùng>]` (motion,
+  color) trong `dvr_cowork/fullai/config.toml`.
+- **Thêm kênh YouTube**: `.\dvr.cmd youtube login --key Chann_N` (README mục 3.2).
 - **Thêm loài Africa**: `AFRICA_FOLDERS` (scan_source), `KIN` (plan.py, tiếng gọi họ hàng), thư mục AI
   (`tag-source/scripts/make_africa_ai_folders.ps1`).
 - **Đổi luật nhịp / âm thanh của beat**: bảng `EMO`, `NAT`, `SIDE_*` trong `story.py` (chạy lại `--selftest`).

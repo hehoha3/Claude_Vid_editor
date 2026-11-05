@@ -176,7 +176,7 @@ def build(src_path, out, check=False):
         l["n"] = n
         l["d"] = len(l["en"].split()) * 60 / wpm + 0.4
         if not l["vi"] or l["vi"] == l["en"] or l["vi"].isascii():
-            err.append(f"line {n}: Vietnamese missing or untranslated: {l['vi'][:60]!r} (translate_vi.py fills it)")
+            err.append(f"line {n}: Vietnamese missing or untranslated: {l['vi'][:60]!r} (Claude writes it, SKILL.md C 4b)")
     status = f"PLANNED — onsets estimated from word counts at {wpm:.0f} wpm (+0.4 s per block); not yet conformed to audio"
     meas = None
     if "--mp3" in sys.argv:
@@ -258,7 +258,7 @@ def build(src_path, out, check=False):
                 return stamp(shot_at[v]["t"])
             if k == "line":
                 return stamp(lines[int(v) - 1]["t"])
-            return {"budget": f"{words:,} words in {len(lines)} Genmax blocks ≈ {voiced / 60:.1f} min of voice "
+            return {"budget": f"{words:,} words in {len(lines)} voice blocks ≈ {voiced / 60:.1f} min of voice "
                               f"({voiced / TARGET:.0%} of runtime); the other {(TARGET - voiced) / 60:.1f} min are the picture-and-sound "
                               f"passages listed under every scene",
                     "status": status, "lastend": stamp(last_end)}[k]
@@ -274,7 +274,7 @@ def build(src_path, out, check=False):
         "\n\n".join("\n".join(l["en"] for l in sc["lines"]) for sc in scenes if sc["lines"]) + "\n", encoding="utf-8")
 
     ts = [f"# {meta['title']} — Timestamp EN / VI", "",
-          f"{status}. One onset per Genmax block (1.mp3 … {len(lines)}.mp3). "
+          f"{status}. One onset per voice block (1.mp3 … {len(lines)}.mp3). "
           f"{sum(1 for l in lines if l['pin'])} onsets are locked to picture events; the others float inside their scene "
           f"and are re-timed by `build_four_files.py --mp3 <mp3 folder>` once the audio exists.", "",
           "## English", ""]

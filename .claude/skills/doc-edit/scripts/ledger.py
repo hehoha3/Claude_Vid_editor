@@ -8,7 +8,7 @@
 Workspace = a channel folder holding one folder per video (D:\\Chann_shadowCanopy\\demo_4\\audios ...). Workspaces are
 found by the globs of config.toml [workspaces] (default D:\\Chann_*): a new channel = a new folder, nothing else to set.
 check (= /doc-edit check-timelines, any time, as often as wanted): reads every video track of the timelines "Edit"
-and "Open" of Resolve project <video> (loads it if another project is open, then switches back), maps each file to
+of Resolve project <video> (loads it if another project is open, then switches back), maps each file to
 its library id (content hash; a hide-logo `_nologo` copy counts as its original) and stores them in
 .work/doc_edit/ledgers/<workspace>.json. A new video goes on top; re-checking a video updates it in place.
 Ban for video V = clips + open_clips of the `recent` (config, default 6) newest OTHER videos of V's workspace.
@@ -101,7 +101,7 @@ def library():
 def _tls(project):
     """Timelines Edit / Open of the video: in a day project the channel's own ones (DVR_CHANNEL), never both "Edit"."""
     from dvr_cowork.resolve_ops import find_timeline
-    return [t for name in ("Edit", "Open") if (t := find_timeline(project, name))]  # find_timeline: exact name
+    return [t for name in ("Edit",) if (t := find_timeline(project, name))]  # find_timeline: exact name
 
 
 def timeline_files(video):
@@ -163,7 +163,7 @@ def check(video, ws=None, proj=None):  # proj: Resolve project name when it diff
         fields[field] = sorted({g for g in got.values() if g})
         miss[field] = sorted(os.path.basename(p) for p, g in got.items() if not g)
     led = record(ws_of(vdir), vdir.name, fields)
-    for field, name in (("clips", "Edit"), ("open_clips", "Open")):
+    for field, name in (("clips", "Edit"),):
         if field in fields:
             print(f'{vdir.name}: timeline "{name}" {len(fields[field])} clips recorded'
                   + (f" | not in the library index (file gone / renamed outside the pipeline, offline on the timeline): "

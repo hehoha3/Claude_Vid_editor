@@ -33,7 +33,7 @@ keep each side's screen direction consistent (e.g. predator always left-to-right
 
 ## Reference film: WILD JAVARÍ (Nature's Tether, 2.8M views in 7 days), shape for a ~30 min single-hero film
 1. Cold open on the climax image (black jaguar in the anaconda's coil) + title card, no outcome: the question is
-   planted in seconds. This belongs to timeline "Open", never "Edit".
+   planted in seconds. It sits at the head of "Edit" (the one timeline).
 2. Place + hero: aerial over the valley, the hero emerging from shade; narration claims his power in three realms
    (ground, water, trees), foreshadows "another hunter is waiting".
 3. Skill showcase: a hunt in his strongest place (canopy): stillness before the spring, fast burst, prey scatters.

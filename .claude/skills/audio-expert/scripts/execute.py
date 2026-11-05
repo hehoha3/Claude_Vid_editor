@@ -1,6 +1,9 @@
 """audio-expert execute: placement_plan.json -> timeline "Edit" (A5-A9 only), with backup, readback and journal.
 
-    .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/execute.py <video> <run_id> [--replace] [--rollback]
+    .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/execute.py <video> <run_id> [--replace] [--rollback] [--additive]
+
+- --additive (8p videos): nothing is cleared; existing A5-A9 items (the engine's hook music on A7) stay and a
+  placement overlapping one refuses the run before any write.
 
 - Refuses on stale timeline (A2 / V1 differ from timeline_snapshot_before.json) and on timeline "Master".
 - Backup = DuplicateTimeline "<name>_bak_audio_<stamp>" before any write. A1-A4 and V1 are never touched.
@@ -27,7 +30,7 @@ dp = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(dp)  # TARGET, FADE, loudness (main() is guarded)
 
 
-def main(video, run, replace, rollback):
+def main(video, run, replace, rollback, additive=False):
     rd = ROOT / ".work" / "audio_expert" / video / "runs" / run
     plan = json.loads((rd / "placement_plan.json").read_text("utf-8"))["placements"]
     before = json.loads((rd / "timeline_snapshot_before.json").read_text("utf-8"))
@@ -63,8 +66,13 @@ def main(video, run, replace, rollback):
         raise SystemExit("stale: A2 changed since the plan was made; re-run plan.py")
     if cur["video1"] != before["video1"]:
         raise SystemExit("stale: V1 changed since the plan was made; re-run plan.py")
+    if additive:  # 8p: A7 holds the engine's hook music; keep every existing item, refuse only real overlaps
+        clash = pl.clashes(plan, snap)
+        if clash:
+            raise SystemExit(f"--additive: placements overlap existing items {clash[:5]}; fix cues.txt, re-run plan.py")
+        replace = False
     busy = {f"A{n}": len(v) for n, v in snap["audio"].items() if n in (6, 7, 8, 9) and v}
-    if busy and not replace and not log_p.exists():
+    if busy and not replace and not additive and not log_p.exists():
         raise SystemExit(f"A6-A9 not empty {busy}; re-run with --replace (cleared after the backup)")
 
     mp = project.GetMediaPool()
@@ -159,4 +167,4 @@ def main(video, run, replace, rollback):
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
-    main(a[0], a[1], "--replace" in sys.argv, "--rollback" in sys.argv)
+    main(a[0], a[1], "--replace" in sys.argv, "--rollback" in sys.argv, "--additive" in sys.argv)

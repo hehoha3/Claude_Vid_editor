@@ -165,7 +165,8 @@ def status():
                 continue
             st, nxt = stage(vdir, False)
             d = last_decision(c, v)
-            prompts = vdir / "missing_prompts.txt"
+            prompts = next((vdir / n for n in ("missing-prompt.csv", "missing_prompts.txt") if (vdir / n).exists()),
+                           vdir / "missing-prompt.csv")
             if st.startswith("planned") and not place_of(v):  # place.py writes project.txt
                 st, nxt = "planned, not placed", "/doc-edit <audios> (A2 + intro music + place)"
             elif st.startswith("planned, prompts out") and (not d or d[1] < dt.datetime.fromtimestamp(

@@ -7,7 +7,7 @@ starts from the user's own edits, less typing).
 
 Snapshot = items of timelines Edit + Open (track, start, end, file; read only, the user's timeline restored) when
 the open Resolve project holds <video> (own project, or day project vid_DDMMYY: only its Chann_N timelines), files of
-D:/AI_video/_check and _nologo, and the mtimes of the files the user edits (spec.txt, plan.md, missing_prompts.txt, the hide-logo check list, the audios folder). Stored in
+D:/AI_video/_check and _nologo, and the mtimes of the files the user edits (spec.txt, plan.md, missing-prompt.csv, the hide-logo check list, the audios folder). Stored in
 .work/doc_edit/<video>/state.json; diff prints the last step and every change, grouped, short.
 """
 import datetime as dt, json, sys
@@ -23,7 +23,7 @@ SHOW = 8  # items listed per group, the rest counted
 
 
 def timelines(video, audios=None):
-    """{"Edit": {"V1@12.00": "file | end 15.20"}, "Open": {...}} or a note why Resolve was not read. The open project
+    """{"Edit": {"V1@12.00": "file | end 15.20"}} or a note why Resolve was not read. The open project
     must hold <video>: its own project, or the day project vid_DDMMYY (place.py's project.txt, plan.same_project) where
     only the video's channel timelines are read (DVR_CHANNEL from its D:/Chann_N_* path, never the other "Edit")."""
     try:
@@ -37,7 +37,7 @@ def timelines(video, audios=None):
         if not pr or not plan.same_project(pr.GetName(), video):
             return f"not read (open project {pr and pr.GetName()!r} does not hold {video!r})"
         return {t.GetName(): {f"{tr}@{a:.2f}": f"{Path(p).name} | end {b:.2f}" for tr, a, b, _, p in _items(t)}
-                for t in _timelines(pr, {"edit", "open"})}
+                for t in _timelines(pr, {"edit"})}
     except Exception as e:  # noqa: BLE001  Resolve closed: files are still compared
         return f"not read ({e})"
 
@@ -51,7 +51,7 @@ def files(video, audios):
             for p in (AI / "_africa" / "_check").rglob("*") if p.is_file()}  # Africa holding folder (user 2026-10-22)
     watch = [work / "spec.txt", ROOT / ".work" / "hide_logo" / "check_list.txt"]
     if vdir:
-        watch += [vdir / "plan.md", vdir / "missing_prompts.txt", *Path(audios).rglob("*")]
+        watch += [vdir / "plan.md", vdir / "missing-prompt.csv", vdir / "missing_prompts.txt", *Path(audios).rglob("*")]
     return out | {f"mtime {p}": round(p.stat().st_mtime) for p in watch if p.is_file()}
 
 
@@ -108,7 +108,8 @@ def stage(vdir, done):
         return "no plan", "/doc-edit <audios-folder>"
     if any(vdir.glob("Done_*.mp4")):
         return "rendered", "/doc-edit done"
-    miss = vdir / "missing_prompts.txt"
+    # missing-prompt.csv since 2026-11-05; videos planned before keep missing_prompts.txt
+    miss = next((vdir / n for n in ("missing-prompt.csv", "missing_prompts.txt") if (vdir / n).exists()), vdir / "missing-prompt.csv")
     st = ROOT / ".work" / "doc_edit" / video_key(vdir) / "state.json"
     last = json.loads(st.read_text("utf-8")).get("step") if st.exists() else None
     if last in ("P6", "color"):

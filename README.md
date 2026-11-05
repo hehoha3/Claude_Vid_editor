@@ -1,191 +1,376 @@
-# Claude Video Editor: trợ lý hậu kỳ phim tài liệu thiên nhiên trong DaVinci Resolve
+# Claude Video Editor: hướng dẫn cho người mới
 
-Claude Code + script Python dựng phim tài liệu kiểu BBC Earth (footage thật + clip AI, giọng đọc ElevenLabs/Genmax).
-Bạn đưa kịch bản và giọng đọc. Claude đặt narration và phụ đề, chọn footage theo câu chuyện, viết prompt cho shot
-thiếu, xoá logo, chỉnh màu, render, viết title / description / tags và upload lên YouTube ở chế độ private.
-Gemini làm 3 việc viết dài để Claude đỡ tốn: dịch phụ đề tiếng Việt, viết nháp prompt cho shot thiếu, viết SEO. Claude
-duyệt và sửa mọi thứ Gemini viết.
+Hệ thống này giúp bạn làm **phim tài liệu thiên nhiên kiểu BBC Earth** cho các kênh YouTube trong phần mềm dựng phim
+**DaVinci Resolve**. Bạn trò chuyện với **Claude** (một trợ lý AI) bằng tiếng Việt. Claude tự làm phần lớn công
+việc nặng, và dừng lại ở những chỗ cần bạn quyết định.
 
-Muốn hiểu bên trong: [docs/SYSTEM.md](docs/SYSTEM.md).
+Bạn **không cần biết lập trình**. Bạn chỉ cần: cài đặt một lần theo mục 2, rồi mỗi ngày gõ vài câu lệnh ngắn như
+trong mục 5.
+
+**Mục lục**
+1. [Hệ thống làm gì cho bạn](#1-hệ-thống-làm-gì-cho-bạn)
+2. [Cài đặt lần đầu](#2-cài-đặt-lần-đầu-khoảng-1-giờ)
+3. [Kết nối Gemini và YouTube](#3-kết-nối-gemini-và-youtube-tuỳ-chọn)
+4. [Thư mục và tên gọi](#4-thư-mục-và-tên-gọi)
+5. [Làm một video mỗi ngày](#5-làm-một-video-mỗi-ngày)
+6. [Những câu bạn hay nói với Claude](#6-những-câu-bạn-hay-nói-với-claude)
+7. [Gặp lỗi thì làm gì](#7-gặp-lỗi-thì-làm-gì)
+8. [Bảo trì](#8-bảo-trì-dọn-dẹp-cập-nhật)
+9. [Từ điển nhỏ](#9-từ-điển-nhỏ)
 
 ---
 
-## 1. Cần cài trước
+## 1. Hệ thống làm gì cho bạn
 
-| Thứ | Cách cài |
+| Bạn làm | Claude làm |
 |---|---|
-| Windows 10/11 | |
-| DaVinci Resolve 19+ (Studio khuyên dùng) | Mở Resolve > Preferences > System > General > **External scripting using = Local**, rồi tắt mở lại Resolve |
-| Python 3.12 (64-bit) | python.org > Downloads. Lúc cài **tick ô "Add python.exe to PATH"** |
-| Git | `winget install Git.Git` |
-| ffmpeg | `winget install Gyan.FFmpeg` |
-| Claude Code | `npm i -g @anthropic-ai/claude-code` (cần Node.js: `winget install OpenJS.NodeJS.LTS`), hoặc bản desktop / VS Code |
-| Ổ mạng chung map thành `Z:` | Thư viện footage thật, nhạc, SFX. **Chỉ đọc + copy** |
-| GPU NVIDIA | Không bắt buộc (dùng cho YOLO, bước 2.4) |
+| Nói chủ đề / kênh muốn làm | Tìm video đang hot trên YouTube, đưa 3 ý tưởng, viết kịch bản |
+| Tạo **giọng đọc** (ElevenLabs) theo kịch bản | Đặt giọng đọc + phụ đề tiếng Việt lên phim |
+| Tạo **clip AI** (Veo / Kling) theo câu lệnh Claude đưa | Chọn footage đúng câu chuyện, viết câu lệnh (prompt) cho shot còn thiếu |
+| Xem phim và nói chỗ cần sửa | Đặt hình, nhạc, tiếng động, chỉnh màu, sửa theo lời bạn |
+| Bấm duyệt | Xuất file phim, viết tiêu đề / mô tả / tags, đăng lên YouTube ở chế độ **riêng tư** |
 
-Cài xong thì **đóng hết PowerShell, mở lại** để máy nhận lệnh mới.
+**Hai loại video.** Video nào cũng thuộc một trong hai loại:
 
-## 2. Cài đặt (một lần, khoảng 15 phút)
+| Loại | Dài | Hình ảnh từ đâu |
+|---|---|---|
+| **footage+AI** | 1–3 giờ | Kho footage quay thật của nhóm, thêm clip AI cho chỗ còn thiếu |
+| **full-AI** | 8–15 phút | Toàn bộ shot do bạn tạo bằng AI theo câu lệnh của Claude |
 
-Mở **PowerShell** và gõ từng dòng, chờ dòng trước chạy xong.
+**Bốn vùng.** Loại nào cũng làm được ở vùng nào:
 
-**2.1 Tải code**
+| Vùng | Là gì |
+|---|---|
+| `amazon` | Rừng rậm (Amazon, Congo) |
+| `africa` | Sa mạc, đồng cỏ savanna châu Phi |
+| `himalaya` | Núi tuyết, núi cao, băng tuyết quanh năm |
+| `ocean` | Đại dương (chưa làm) |
+
+> Video full-AI ở vùng `amazon` / `africa` còn thiếu "bộ khoá câu lệnh" (quy định chung cho mọi prompt của vùng đó).
+> Khi bạn làm loại này, Claude sẽ nhắc bạn bổ sung trước.
+
+---
+
+## 2. Cài đặt lần đầu (khoảng 1 giờ)
+
+Làm **một lần** trên mỗi máy. Đi lần lượt từng bước, xong bước này mới sang bước sau.
+
+### Cách mở PowerShell và dán lệnh
+
+Phần lớn việc cài đặt là **gõ lệnh vào PowerShell** (một cửa sổ chữ của Windows):
+1. Bấm nút **Start** (logo Windows), gõ `PowerShell`, bấm vào **Windows PowerShell**.
+2. Copy một lệnh trong hướng dẫn này (bôi đen, Ctrl+C).
+3. Trong cửa sổ PowerShell, **bấm chuột phải** để dán, rồi bấm **Enter**.
+4. Chờ tới khi hiện lại dòng có dấu `>` ở cuối, rồi mới dán lệnh tiếp theo.
+
+Chữ đỏ hiện ra nghĩa là có lỗi: chụp màn hình gửi cho người hỗ trợ, hoặc xem mục 7.
+
+### 2.1 Cài phần mềm cần có
+
+| Phần mềm | Cách cài | Ghi chú |
+|---|---|---|
+| **DaVinci Resolve** 19 trở lên (bản Studio tốt hơn) | Tải ở blackmagicdesign.com | Xem bước 2.2 |
+| **Python 3.12** | python.org > Downloads > Windows. Lúc cài **nhớ tick ô "Add python.exe to PATH"** | Quên tick thì gỡ ra cài lại |
+| **Git** | Dán vào PowerShell: `winget install Git.Git` | |
+| **ffmpeg** (xử lý âm thanh / video) | `winget install Gyan.FFmpeg` | |
+| **Node.js** (để chạy Claude) | `winget install OpenJS.NodeJS.LTS` | |
+| **Claude Code** | `npm i -g @anthropic-ai/claude-code` | Hoặc cài **VS Code** rồi thêm extension "Claude Code" |
+| Ổ mạng chung **`Z:`** | Nhờ người quản lý map giúp | Kho footage, nhạc, tiếng động của nhóm. **Chỉ đọc** |
+
+Cài xong: **đóng hết cửa sổ PowerShell, mở cửa sổ mới**, để máy nhận các phần mềm vừa cài.
+
+### 2.2 Chỉnh DaVinci Resolve (2 việc)
+
+1. **Cho phép điều khiển tự động**: mở Resolve > menu **DaVinci Resolve** > **Preferences** > tab **System** >
+   **General** > mục **External scripting using** chọn **Local** > Save. Tắt Resolve rồi mở lại.
+2. **Tạo preset xuất phim**: mở một project bất kỳ > trang **Deliver** (biểu tượng tên lửa ở dưới cùng) > chọn
+   preset **YouTube** > Format **MP4**, Codec **H.265** > bấm **...** cạnh tên preset > **Save As New Preset**, đặt tên
+   đúng **`YouTube 1080 HEVC`**. Thiếu preset này thì Claude không xuất phim được.
+
+### 2.3 Tải hệ thống về máy
+
+Dán từng dòng:
 ```powershell
 git clone https://github.com/hehoha3/Claude_Vid_editor.git D:\Claude_editor
 cd D:\Claude_editor
 ```
+Đúng: có thư mục `D:\Claude_editor` chứa nhiều file.
 
-**2.2 Tạo môi trường Python riêng (`.venv`)**
+### 2.4 Cài phần Python (khoảng 10 phút)
+
 ```powershell
 py -3.12 -m venv .venv
 .venv\Scripts\python.exe -m pip install --upgrade pip
 .venv\Scripts\python.exe -m pip install -e .
-```
-
-**2.3 Tải model (khoảng 1 GB, chỉ một lần)**
-```powershell
 .venv\Scripts\python.exe -m dvr_cowork prefetch
 .venv\Scripts\python.exe .work\tools\memory_gateway.py selftest
 ```
+Lệnh thứ 4 tải bộ nhận dạng giọng nói (khoảng 1 GB), nên có thể mất vài phút.
 
-**2.4 YOLO (chỉ khi có GPU NVIDIA, khoảng 3 GB)**. Không có GPU thì bỏ qua bước này, plan vẫn chạy bằng tag.
+*(Chỉ khi máy có card đồ hoạ NVIDIA, không có thì bỏ qua)* bộ nhận diện con vật (YOLO, khoảng 3 GB):
 ```powershell
 .venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cu128
 .venv\Scripts\python.exe -m pip install "ultralytics>=8.4"
 .venv\Scripts\yolo.exe settings "weights_dir=D:\Claude_editor\.models" "runs_dir=D:\Claude_editor\.work\yolo_runs" sync=False
 ```
 
-**2.5 Đường dẫn của máy bạn**: mở `config.toml` bằng Notepad, sửa `ai_video` (thư mục clip AI, mặc định
-`D:\AI_video`) và `[workspaces] globs` (thư mục kênh, mặc định `D:\Chann_*`).
+### 2.5 Khai báo thư mục của máy bạn
 
-**2.6 Kiểm tra**: mở Resolve + một project, rồi:
-```powershell
-.venv\Scripts\python.exe -m tests.test_pipeline
-.\dvr.cmd doctor
-```
-Thấy `[OK]` ở dòng Resolve là xong.
+Mở file `D:\Claude_editor\config.toml` bằng **Notepad** (chuột phải > Open with > Notepad). Tìm và sửa nếu máy bạn
+khác:
+- `ai_video = 'D:\AI_video'`: nơi bạn lưu clip AI.
+- `audio_lib = 'D:\Audio_lib'`: nơi lưu nhạc / tiếng động tải về (Epidemic Sound, Suno).
+- `globs = ['D:\Chann_*']`: nơi chứa các thư mục kênh.
 
-**2.7 Dữ liệu của team** (không có trong git). Xin trưởng nhóm file `team_data_<ngày>.zip`, rồi:
+Lưu file (Ctrl+S). Để nguyên mặc định cũng được nếu máy bạn dùng đúng các ổ đĩa đó.
+
+### 2.6 Lấy dữ liệu của nhóm
+
+Kho footage đã được "xem" và gắn nhãn sẵn, đóng gói trong một file zip. Xin trưởng nhóm file `team_data_<ngày>.zip`,
+chép vào `D:\`, rồi chạy (đổi tên file cho đúng):
 ```powershell
 .venv\Scripts\python.exe .work\tools\team_data.py import D:\team_data_20261024.zip
 .venv\Scripts\python.exe .work\tools\memory_gateway.py index
 ```
-Team mới chưa có gói: bỏ qua, chạy `/scan-source` rồi `/tag-source` để tạo thư viện riêng.
+Nhóm mới, chưa có gói: bỏ qua bước này. Sau khi cài xong, nói với Claude `/scan-source` rồi `/tag-source` để Claude tự
+xem kho footage (lâu, chỉ làm một lần).
 
-### Có dùng database hay không?
+### 2.7 Kiểm tra mọi thứ đã chạy
 
-| Cách | Cần làm gì | Khi nào chọn |
-|---|---|---|
-| **Không database** (mặc định) | Không làm gì thêm. Thư viện là file JSON trong `.work\library\`; trạng thái video và memory là SQLite, tự tạo, không cần cài | Hầu hết mọi người |
-| **Có PostgreSQL** (tuỳ chọn) | Làm mục 6 | Bạn muốn tự hỏi nhanh kiểu "clip sư tử cái nào chưa dùng trong 6 video gần nhất" |
+Mở DaVinci Resolve và mở một project bất kỳ, rồi:
+```powershell
+cd D:\Claude_editor
+.\dvr.cmd doctor
+.venv\Scripts\python.exe -m unittest discover -s dvr_cowork\fullai\tests -t .
+```
+Đúng: lệnh `doctor` có dòng Resolve ghi **`[OK]`**; lệnh thứ ba kết thúc bằng chữ **`OK`**.
 
-## 3. Gemini và YouTube (dịch, prompt, SEO, upload)
+### 2.8 Mở Claude lần đầu
 
-Không có Gemini thì Claude tự dịch và tự viết prompt như trước (tốn hơn); không có YouTube thì bước SEO và upload
-bỏ qua. Mọi bước dựng vẫn chạy.
+```powershell
+cd D:\Claude_editor
+claude
+```
+Lần đầu Claude yêu cầu đăng nhập tài khoản Anthropic: làm theo hướng dẫn trên màn hình. Thấy ô để gõ chữ là xong.
+Từ giờ, mỗi lần làm việc chỉ cần hai dòng trên. Dùng VS Code: **File > Open Folder > `D:\Claude_editor`**, rồi mở
+khung Claude ở cạnh màn hình.
 
-### 3.1 Gemini API key (miễn phí, khoảng 2 phút)
-1. Vào **https://aistudio.google.com/apikey**, đăng nhập bằng Gmail.
-2. Bấm **Create API key**, rồi bấm nút copy.
-3. Trong PowerShell (ở `D:\Claude_editor`):
+---
+
+## 3. Kết nối Gemini và YouTube (tuỳ chọn)
+
+Không có hai thứ này thì vẫn dựng phim bình thường. Chỉ khác là: thiếu Gemini thì Claude tự dịch / tự viết (tốn hơn
+một chút); thiếu YouTube thì không tự tìm trend và không tự đăng video.
+
+### 3.1 Gemini (miễn phí, khoảng 2 phút)
+
+Gemini là một AI khác của Google. Claude nhờ Gemini viết nháp những đoạn dài, ví dụ SEO, cho đỡ tốn.
+1. Vào **https://aistudio.google.com/apikey**, đăng nhập Gmail, bấm **Create API key**, bấm nút copy.
+2. Trong PowerShell (đang ở `D:\Claude_editor`):
    ```powershell
    .venv\Scripts\python.exe .claude\skills\gemini-assist\scripts\gemini_bridge.py setup-key
    ```
-   Dán key bằng chuột phải, rồi Enter. **Màn hình sẽ không hiện chữ**, đó là bình thường.
-4. Kiểm tra:
-   ```powershell
-   .venv\Scripts\python.exe .claude\skills\gemini-assist\scripts\gemini_bridge.py check
-   ```
-   Thấy `"ok": true` là xong. Key được cất trong Windows Credential Manager, không nằm trong file nào, không lên git.
+   Bấm chuột phải để dán key, rồi Enter. **Màn hình không hiện chữ khi dán: bình thường.**
+3. Kiểm tra: `.venv\Scripts\python.exe .claude\skills\gemini-assist\scripts\gemini_bridge.py check`. Thấy
+   `"ok": true` là xong. Key được cất an toàn trong Windows, không nằm trong file nào.
 
-### 3.2 YouTube Data API (khoảng 10 phút, một lần)
-1. Vào **https://console.cloud.google.com**, bấm chọn project ở góc trên > **New Project** > đặt tên > Create.
-2. Ô tìm kiếm phía trên: gõ **YouTube Data API v3** > **Enable**.
-3. Menu **Google Auth Platform** (hoặc "OAuth consent screen") > Get started: điền tên app, Gmail của bạn, chọn
-   **External** > Create. Vào **Audience** > **Test users** > **Add users**: thêm Gmail sở hữu kênh YouTube.
-4. **Clients** > **Create client** > loại **Desktop app** > Create > **Download JSON**.
-5. Tạo thư mục `D:\Claude_editor\.secrets\youtube\`, chép file vừa tải vào, đổi tên thành `client_secret.json`.
-6. Đăng nhập **từng kênh** (trình duyệt mở ra; chọn đúng tài khoản / kênh; gặp "Google hasn't verified this app" thì
-   bấm Continue):
-   ```powershell
-   .venv\Scripts\python.exe -m dvr_cowork.youtube login
-   ```
-   Màn hình in `channel: <tên> | id: UC...`. Kênh thứ hai thì chạy lại lệnh và chọn kênh đó.
-7. Tạo file `.secrets\youtube\channels.json` bằng Notepad, ghép thư mục kênh với ID vừa in:
-   ```json
-   {"Chann_1": "UCxxxxxxxxxxxxxxxxxxxxxx", "Chann_2": "UCyyyyyyyyyyyyyyyyyyyyyy"}
-   ```
-8. Kiểm tra: `.venv\Scripts\python.exe -m dvr_cowork.youtube channels` in ra đủ các kênh.
+### 3.2 YouTube (khoảng 15 phút, một lần)
 
-Ghi chú: project chưa được YouTube audit thì video upload luôn là **private**. Bạn tự bật public hoặc đặt lịch
-trong Studio, và chọn **Thông tin tài sản: Web** (API không đặt được). Quota miễn phí 10.000/ngày: một lần upload
-khoảng 1.600, một lần tìm trend SEO khoảng 300 (kết quả cache 7 ngày).
+**a) Tạo "chìa khoá" Google** (làm một lần cho cả nhóm kênh):
+1. Vào **https://console.cloud.google.com**, đăng nhập Gmail. Ở góc trên, bấm chọn project > **New Project** > đặt
+   tên bất kỳ > **Create**.
+2. Ô tìm kiếm phía trên: gõ **YouTube Data API v3** > bấm vào kết quả > **Enable**.
+3. Menu bên trái **Google Auth Platform** (hoặc "OAuth consent screen") > **Get started**: điền tên app, chọn Gmail
+   của bạn, chọn **External** > **Create**. Vào **Audience** > **Test users** > **Add users**: thêm Gmail đang sở hữu
+   các kênh YouTube.
+4. **Clients** > **Create client** > loại **Desktop app** > **Create** > **Download JSON**.
+5. Tạo thư mục `D:\Claude_editor\.secrets\youtube\`, chép file vừa tải vào, đổi tên thành **`client_secret.json`**.
 
-## 4. Chuẩn bị một video
-
+**b) Đăng nhập từng kênh.** Mỗi kênh mang một số: kênh 1 là `Chann_1`, kênh 2 là `Chann_2`...
+```powershell
+.\dvr.cmd youtube login --key Chann_1
 ```
-D:\Chann_<số>_<tên kênh>\        <- một kênh (ví dụ D:\Chann_1_shadowCanopy)
-    <video>\audios\              <- ví dụ amazon_301026\audios
-        <Tên>_Screenplay_EN.md         kịch bản theo beat
-        <Tên>_Timestamp_EN_VI.md       mỗi câu một dòng [mm:ss.s], phần ## English + ## Vietnamese (thành phụ đề)
-        <Tên>_Visual_Edit_Plan_EN.md   tuỳ chọn
-        mp3\1.mp3, 2.mp3 ...           giọng đọc, file n = dòng timestamp n
-    _done\                       <- bạn tự chuyển video xong vào đây
-    _pushed\                     <- của riêng bạn, Claude không bao giờ đụng
-```
-Bốn file trên do skill `/create-doc-mov` viết. Tên vùng nằm trong tên thư mục video (`amazon_...`, `africa_...`).
-Nhiều kênh trong một ngày dùng chung project Resolve `vid_DDMMYY` (mỗi kênh một bin `Chann_N` và timeline Edit riêng).
+- Trình duyệt mở ra: chọn đúng tài khoản / kênh. Gặp "Google hasn't verified this app" thì bấm **Continue**.
+- Xong, hệ thống **tự tạo thư mục kênh** theo tên kênh, ví dụ kênh "Wild Peril" thành `D:\Chann_1_WildPeril`. Có sẵn
+  thư mục `D:\Chann_1_...` tên khác thì nó tự đổi tên (đóng Resolve / cửa sổ thư mục đang mở nó trước).
+- Muốn dừng giữa chừng: bấm **Ctrl+C**. Không đăng nhập trong 5 phút thì tự dừng. Dừng thì không lưu gì.
+- Kênh tiếp theo: chạy lại với `Chann_2`, `Chann_3`...
 
-## 5. Làm một video: 3 lệnh, 2 lần dừng
+**c) Xem các kênh đã gắn:** `.\dvr.cmd youtube channels`
 
-Mở Claude trong `D:\Claude_editor` (gõ `claude`), mở project trong Resolve, rồi:
-
-| Phase | Bạn gõ | Claude làm | Rồi bạn |
-|---|---|---|---|
-| 1 | `/doc-edit D:\Chann_1_shadowCanopy\amazon_301026\audios` (2 kênh: thêm đường dẫn thứ hai) | Narration lên A2 + phụ đề, đọc kịch bản, plan, đặt intro + thân phim, viết `missing_prompts.txt` cho các shot THIẾU. **Dừng** | Tạo clip AI theo prompt, lưu vào `D:\AI_video\_check`; có logo thì `/doc-edit logo` + `/doc-edit delogo` |
-| 2 | `/scan-source /tag-source và tiếp` | Quét + tag clip mới, xếp vào thư mục loài, lấp slot THIẾU. **Dừng** | Xem timeline, xử lý logo còn sót; tuỳ chọn `/doc-edit reframe`, `/audio-expert` |
-| 3 | `/doc-edit color n done` | Chỉnh màu; cùng lúc tìm trend YouTube và nhờ Gemini viết 3 title trend cao nhất dạng `WILD AMAZON \| ... \| Wildlife Documentary` (title 1 = hút view nhất, được dùng), description, tags; render `Done_<video>.mp4`; upload **private, không thumbnail** | Xem trong YouTube Studio, đặt thumbnail, đặt lịch / public |
-
-Không tạo clip nữa mà muốn lấp THIẾU bằng footage có sẵn: `/doc-edit fill-THIEU <video>`.
-Muốn đổi title: nói "dùng title 2", hoặc `.venv\Scripts\python.exe -m dvr_cowork.seo <thư mục video> --pick 2`.
-
-Lệnh lẻ (khi cần): `/doc-edit plan`, `/doc-edit missing-prompts [mm:ss-mm:ss]`, `/doc-edit fill`, `/doc-edit color`,
-`/doc-edit seo`, `/doc-edit done`, `/doc-edit status` (video nào đang ở bước nào), `/thumbnail`, `/review-frame 01:10`.
-
-**Sửa nhỏ, nói tự nhiên**: "shot ở 21:38 có logo góc trên trái", "đổi shot ở 00:43 vì có cá sấu", "đoạn 12:00-14:00
-phải căng hơn", "ở 12:30 đang là clip gì?", "nhớ là ..." (lưu vào memory dự án).
-
-**plan.md**: **OK** = khớp; **WEAK** (vàng) = nên xem; **THIẾU** (đỏ) = cần clip AI; **FALLBACK** = shot thay thế.
-
-## 6. PostgreSQL (tuỳ chọn)
-
-JSON trong `.work\library\` vẫn là dữ liệu gốc; PostgreSQL chỉ là bản sao để hỏi nhanh.
-1. Cài PostgreSQL 18 (bộ cài EDB, bỏ Stack Builder). Mở pgAdmin > Databases > Create > Database: `dvr_library`.
-2. Tạo file `%APPDATA%\postgresql\pgpass.conf`, một dòng: `localhost:5432:dvr_library:postgres:<mật khẩu>`.
-3. Thêm biến môi trường người dùng `LIBRARY_DB` = `host=localhost dbname=dvr_library user=postgres`.
-4. `.venv\Scripts\python.exe .work\tools\library_db.py sync` (Claude tự chạy lại sau khi tag hoặc plan).
-
-## 7. Luật an toàn (Claude luôn tuân theo)
-
-- Việc phá huỷ (xoá clip/track, đặt lại timeline, áp grade): Claude liệt kê trước và chờ bạn nói "yes". Gọi đúng
-  lệnh của một bước = đồng ý cho thay đổi bước đó.
-- Luôn có backup `Edit_bak_*` trước khi đổi lớn. Không đụng timeline **Master**.
-- Ổ `Z:` chỉ đọc. Claude không tự xoá file, chỉ đưa lệnh để bạn chạy. `_pushed` là của bạn.
-- Không bao giờ tự đăng video public. Không chạy git trừ khi bạn yêu cầu.
-
-## 8. Gặp lỗi
-
-| Hiện tượng | Cách xử lý |
+| Muốn | Gõ |
 |---|---|
-| "DaVinci Resolve is not reachable" | Mở Resolve + project; kiểm tra External scripting = Local |
-| `py` không chạy được | Cài lại Python và tick "Add python.exe to PATH"; mở PowerShell mới |
-| Media offline | Nói "relink lại media", hoặc `.\dvr.cmd offline --relink <cũ> <mới> --apply` |
-| `Z:` không thấy | Map lại ổ mạng |
-| `No Gemini API key saved` | Làm lại mục 3.1 |
-| `youtube: ... not logged in` / `token invalid` | `.venv\Scripts\python.exe -m dvr_cowork.youtube login`, chọn đúng kênh |
-| `youtube: no channel for Chann_N` | Thêm `Chann_N` vào `.secrets\youtube\channels.json` |
-| `quotaExceeded` | Hết quota YouTube trong ngày: chờ sang ngày mới (giờ Mỹ) |
-| Resolve chậm dần | Nhiều backup: `.\dvr.cmd backups --keep 3 --apply` |
-| Kiểm tra tổng | `.\dvr.cmd doctor` và `.venv\Scripts\python.exe -m tests.test_pipeline` |
+| Thêm kênh mới (ví dụ kênh 3) | `.\dvr.cmd youtube login --key Chann_3` |
+| Gỡ một kênh khỏi máy | `.\dvr.cmd youtube remove Chann_3` |
+| Kênh báo lỗi đăng nhập (token hỏng) | `.\dvr.cmd youtube remove Chann_3`, rồi `.\dvr.cmd youtube login --key Chann_3` |
+| Gắn số `Chann_3` cho kênh khác | Như dòng trên, lúc đăng nhập chọn kênh mới (thư mục tự đổi tên) |
 
-Bảo trì, thêm root / vùng / loài, chia sẻ dữ liệu team: [docs/SYSTEM.md](docs/SYSTEM.md) mục 11-12.
+Gỡ kênh chỉ xoá trên máy này, thư mục kênh vẫn giữ nguyên. Muốn thu hồi quyền hẳn: vào
+**https://myaccount.google.com/permissions** > gỡ app. Một số `Chann_N` đang dùng thì phải gỡ trước rồi mới gắn lại
+được.
+
+> Video đăng lên luôn ở chế độ **riêng tư (private)**. Bạn tự chọn công khai / hẹn giờ và thumbnail trong YouTube
+> Studio. Mỗi ngày Google cho miễn phí khoảng 6 lần đăng video.
+
+---
+
+## 4. Thư mục và tên gọi
+
+```
+D:\Chann_1_ShadowCanopy\          <- thư mục một kênh (tự tạo khi đăng nhập YouTube)
+    amazon_051126_1\              <- một video: <vùng>_<ngàyThángNăm>_<số thứ tự>
+        audios\                   <- kịch bản (Claude viết) + giọng đọc của bạn
+        voice\                    <- (full-AI) giọng đọc 1.mp3, 2.mp3 ...
+        shots\                    <- (full-AI) clip bạn tạo 1.mp4, 2.mp4 ...
+    _done\                        <- bạn tự kéo video đã xong vào đây
+    _pushed\                      <- thư mục riêng của bạn: Claude không bao giờ đụng vào
+```
+- **Tên video**: `himalaya_051126_2` = vùng himalaya, ngày 05/11/2026, video thứ 2 trong ngày. Claude tự đặt tên.
+- **Giọng đọc**: mỗi dòng của kịch bản là một file, đánh số 1, 2, 3... đúng thứ tự (`1.mp3` = dòng 1).
+- **Clip full-AI**: đặt tên đúng **số câu lệnh**, ví dụ câu lệnh số 7 lưu thành `shots\7.mp4`.
+
+**Trong DaVinci Resolve**, mỗi video có:
+- **Một timeline tên "Edit"**: đây là bản dựng. Các bản sao lưu tên `Edit_bak_...` (Claude tạo trước khi sửa lớn) giúp
+  quay lại khi cần.
+- **Các bin** (thư mục trong Media Pool): `1. Other_roll`, `2. Attack_roll`, `3. Run_roll` (hình theo hành động),
+  `4. Audio` (giọng đọc, nhạc, tiếng động), `5. Graphics` (phụ đề), `6. Timeline`; video footage+AI có thêm
+  `7. Open` chứa các shot của đoạn mở đầu (~1 phút 30).
+- **Các track âm thanh**: A1 tiếng gốc của clip (footage+AI để trống), A2 giọng đọc, A3–A6 không khí / tiếng tự nhiên,
+  A7 nhạc, A8–A9 tiếng động.
+
+---
+
+## 5. Làm một video mỗi ngày
+
+Mở **DaVinci Resolve** (Claude cần Resolve đang mở), rồi mở **Claude** (mục 2.8). Sau đó chỉ cần gõ câu lệnh vào ô
+chat của Claude. Mỗi lệnh bắt đầu bằng dấu `/`. Claude trả lời bằng tiếng Việt và luôn nói rõ bước tiếp theo bạn cần
+làm.
+
+### Bước 0: Kịch bản (cả hai loại)
+
+Gõ: **`/create-doc-mov Chann_1`**. Muốn dựa theo một video mẫu: **`/create-doc-mov Chann_1 <link YouTube>`**.
+
+Claude hỏi loại video + vùng (nếu bạn chưa nói), tìm video đang hot, đưa 3 ý tưởng để bạn chọn, rồi viết kịch bản vào
+`audios\`. Bạn đọc kịch bản rồi **tạo giọng đọc**: mỗi dòng của file `transcript` là một file mp3, đặt tên theo số.
+
+### 5.1 Video footage+AI (1–3 giờ): 3 lần gõ
+
+| Lần | Bạn gõ | Claude làm | Bạn làm tiếp |
+|---|---|---|---|
+| 1 | `/doc-edit D:\Chann_1_ShadowCanopy\amazon_051126_1` | Đặt giọng đọc + phụ đề, chọn footage cho từng câu, dựng intro + thân phim, viết câu lệnh cho các shot **THIẾU**. Rồi dừng | Tạo clip AI theo câu lệnh, lưu vào `D:\AI_video\_check` (africa: `D:\AI_video\_africa\_check`). Clip có logo: gõ `/doc-edit logo` rồi `/doc-edit delogo` |
+| 2 | `/scan-source /tag-source và tiếp` | Xem clip mới, xếp vào kho, lấp vào chỗ THIẾU. Rồi dừng | Xem phim trong Resolve, nói chỗ cần sửa |
+| 3 | `/doc-edit color n done` | Chỉnh màu, viết tiêu đề / mô tả / tags, xuất file phim `Done_<video>.mp4`, đăng YouTube riêng tư | Vào YouTube Studio: thumbnail, công khai / hẹn giờ |
+
+Không muốn tạo clip nữa mà muốn lấp chỗ THIẾU bằng footage có sẵn: gõ `/doc-edit fill-THIEU <video>`.
+
+### 5.2 Video full-AI (8–15 phút): 3 lần gõ
+
+| Lần | Bạn gõ | Claude làm | Bạn làm tiếp |
+|---|---|---|---|
+| 1 | `/doc-edit D:\Chann_3_WildPeril\himalaya_051126_2` (đã có giọng đọc trong `voice\`) | Đặt giọng đọc + phụ đề, viết câu lệnh cho **mọi** shot (file `missing-prompt.csv`). Rồi dừng | Tạo toàn bộ clip theo câu lệnh, lưu vào `shots\` đúng số (`1.mp4`, `2.mp4`...) |
+| 2 | Gõ lại **đúng lệnh trên** | Kiểm tra clip, đặt cả phim lên timeline: 30 giây mở đầu gay cấn, câu chuyện, nhạc, gió, chim hót. Rồi dừng | Xem phim. Shot nào hỏng: "làm lại 3, 7, 12" (Claude đưa lại câu lệnh), tạo lại, ghi đè file cũ |
+| 3 | `/doc-edit done <đường dẫn video>` | Xuất file phim (không chỉnh màu); nếu bạn muốn thì viết SEO và đăng YouTube riêng tư sau khi bạn duyệt | YouTube Studio: thumbnail, công khai / hẹn giờ |
+
+**Mẹo:** lấy đường dẫn video bằng cách mở thư mục video trong Windows, bấm vào thanh địa chỉ ở trên, Ctrl+C, rồi dán
+vào sau `/doc-edit `.
+
+### Xem video đang ở bước nào
+
+Gõ **`/doc-edit status`**. Claude liệt kê mọi video, mỗi video đang ở bước nào và lệnh cần gõ tiếp.
+
+---
+
+## 6. Những câu bạn hay nói với Claude
+
+Nói tự nhiên bằng tiếng Việt, kèm thời điểm (phút:giây) trên timeline:
+
+| Bạn nói | Claude làm |
+|---|---|
+| "ở 12:30 đang là clip gì?" | Cho biết tên clip, nguồn |
+| "đổi shot ở 00:43, đang có cá sấu" | Thay đúng một shot đó |
+| "shot ở 21:38 có logo góc trên trái" | Xoá logo |
+| "đoạn 12:00–14:00 cần căng hơn" | Gợi ý / sửa nhịp, nhạc |
+| "làm lại 3, 7, 12" (full-AI) | Đưa lại câu lệnh cho các shot đó |
+| "dùng title 2" | Đổi tiêu đề YouTube |
+| "nhớ là ..." | Ghi nhớ quy tắc cho các lần sau |
+| `/thumbnail` + kéo ảnh vào | Làm thumbnail 4K có chữ + logo kênh |
+| `/review-frame 01:10` | Nhận xét màu / khung hình tại thời điểm đó |
+| `/research-youtube africa-wildlife` | 20 video nhiều view nhất 10 ngày qua |
+
+**Màu trên timeline / trong plan (footage+AI):** **OK** = khớp câu chuyện; **WEAK** (vàng) = tạm được, nên xem lại;
+**THIẾU** (đỏ) = cần clip AI; **FALLBACK** = shot thay thế gần đúng.
+
+**Claude sẽ hỏi lại** trước khi làm việc có thể mất dữ liệu (xoá clip, đặt lại cả timeline, áp màu...). Bạn trả lời
+"yes" thì nó mới làm. Gọi đúng lệnh của một bước (ví dụ `/doc-edit color`) là bạn đã đồng ý cho bước đó.
+
+---
+
+## 7. Gặp lỗi thì làm gì
+
+Thông thường **Claude tự nói lỗi và cách sửa** bằng tiếng Việt. Một số lỗi hay gặp:
+
+| Thấy | Làm |
+|---|---|
+| "DaVinci Resolve is not reachable" / Claude nói không thấy Resolve | Mở Resolve và mở đúng project; kiểm tra lại bước 2.2 mục 1 |
+| `py` hoặc `python` không chạy | Cài lại Python, **tick "Add python.exe to PATH"**, mở PowerShell mới |
+| Clip trong Resolve báo **Media Offline** (khung đỏ) | Nói với Claude "relink lại media" |
+| Không thấy ổ `Z:` | Map lại ổ mạng (nhờ người quản lý) |
+| `No Gemini API key saved` | Làm lại mục 3.1 |
+| Lỗi đăng nhập YouTube (`not logged in`, `token invalid`, `revoked`) | Bảng ở mục 3.2 c, dòng "token hỏng" |
+| `No full-AI prompt locks for region ...` | Vùng đó chưa có bộ khoá câu lệnh full-AI: nhờ người kỹ thuật thêm (docs/SYSTEM.md mục 12) |
+| `Another writer owns ...` | Claude đang làm một việc khác trong Resolve: chờ xong |
+| `quotaExceeded` | Hết lượt YouTube miễn phí trong ngày: chờ khoảng 14–15 giờ chiều (giờ VN) |
+| Resolve chạy chậm dần | Nói với Claude "dọn bớt backup timeline" |
+| Muốn kiểm tra tổng thể | Chạy lại bước 2.7 |
+
+Vẫn không được: chụp màn hình lỗi, gửi cho Claude (kéo ảnh vào ô chat) hoặc người hỗ trợ.
+
+---
+
+## 8. Bảo trì: dọn dẹp, cập nhật
+
+**Dọn file thừa** (an toàn: lệnh đầu chỉ liệt kê, không xoá gì):
+```powershell
+cd D:\Claude_editor
+.venv\Scripts\python.exe .work\tools\cleanup_workspace.py
+.venv\Scripts\python.exe .work\tools\cleanup_workspace.py --apply
+```
+Xem danh sách ở lệnh đầu trước, thấy ổn mới chạy lệnh thứ hai (xoá thật). Công cụ này không bao giờ đụng vào footage,
+kho dữ liệu của nhóm hay video đang làm.
+
+**Cập nhật bản mới** (khi trưởng nhóm báo có bản mới):
+```powershell
+cd D:\Claude_editor
+git pull
+.venv\Scripts\python.exe -m pip install -e .
+```
+
+**Luật an toàn Claude luôn tuân theo**
+- Ổ `Z:` chỉ đọc, không bao giờ ghi / xoá. Thư mục `_pushed` là của riêng bạn.
+- Claude không tự xoá file: nó đưa lệnh để bạn tự chạy.
+- Luôn sao lưu timeline trước khi sửa lớn.
+- Không bao giờ tự đăng video công khai.
+
+---
+
+## 9. Từ điển nhỏ
+
+| Từ | Nghĩa |
+|---|---|
+| **Claude** | Trợ lý AI bạn trò chuyện để dựng phim |
+| **Lệnh `/...`** | Câu bắt đầu bằng `/` gõ cho Claude, ví dụ `/doc-edit` |
+| **PowerShell** | Cửa sổ gõ lệnh của Windows (chỉ dùng khi cài đặt / bảo trì) |
+| **Project (Resolve)** | Một "hồ sơ" dựng phim trong Resolve; nhiều kênh làm cùng ngày có thể dùng chung một project |
+| **Timeline "Edit"** | Bản dựng phim trong project |
+| **Bin** | Thư mục chứa clip / âm thanh trong Resolve |
+| **Track** | Một "làn" trên timeline: V1 hình, A1–A9 âm thanh |
+| **Footage** | Đoạn phim quay thật trong kho của nhóm |
+| **Clip AI** | Đoạn phim tạo bằng AI (Veo, Kling...) |
+| **Prompt / câu lệnh** | Đoạn mô tả Claude viết để bạn dán vào công cụ tạo clip AI |
+| **THIẾU** | Chỗ trên phim chưa có hình phù hợp |
+| **Render / xuất phim** | Tạo file video hoàn chỉnh `Done_<video>.mp4` |
+| **SEO** | Tiêu đề, mô tả, tags giúp video dễ được tìm thấy trên YouTube |
+| **Chann_N** | Số thứ tự của kênh YouTube trên máy này |
+| **Vùng** | amazon / africa / himalaya / ocean |
+
+Muốn hiểu bên trong hệ thống hoạt động thế nào: [docs/SYSTEM.md](docs/SYSTEM.md).

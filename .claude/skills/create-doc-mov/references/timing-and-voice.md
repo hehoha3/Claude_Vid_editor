@@ -24,7 +24,7 @@ These are estimates; punctuation and TTS speed change them. If the user wants re
 
 ## Measure generated voice when possible
 
-For the user's Genmax workflow, each nonblank transcript line maps in order to 1.mp3, 2.mp3, … N.mp3. Probe each duration, then lay it from the corresponding onset to onset + actual length. Revise the next onset if there is unintended overlap, or edit the voice block/hold if a boundary spills into the next story. Align to picture lock in DaVinci. The optional validator manifest is a JSON array of durations in transcript order, in seconds:
+For the user's recorded voice, each nonblank transcript line maps in order to 1.mp3, 2.mp3, … N.mp3. Probe each duration, then lay it from the corresponding onset to onset + actual length. Revise the next onset if there is unintended overlap, or edit the voice block/hold if a boundary spills into the next story. Align to picture lock in DaVinci. The optional validator manifest is a JSON array of durations in transcript order, in seconds:
 
     [5.42, 7.61, 4.88]
 
