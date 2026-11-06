@@ -18,6 +18,7 @@ dependencies = [
     "google-api-python-client>=2.100,<3",  # dvr_cowork.youtube / seo: upload + trend search
     "google-auth-oauthlib>=1.2,<2",        # YouTube OAuth login
     "keyring>=25,<26",                     # Gemini API key in Windows Credential Manager
+    "scipy>=1.11",                         # hide-logo minimax_worker.py (mask dilation / fill)
 ]
 
 [project.scripts]
