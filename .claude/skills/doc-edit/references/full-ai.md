@@ -26,12 +26,20 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
   per scene after the hook, alternating, 4 s crossfades · A5 birds on calm shots · A7/A8 intro song under the 30 s
   hook · A9 unused. Starting gains in `dvr_cowork/fullai/config.toml`, not a loudness guarantee. Fade handles 2 s.
 - **Runtime** = 30 s hook + 30 s setup + body; every body shot 6–9 s. Hook: 8–15 cuts of 2–4 s (10–12 best) tiling
-  30 s, from body sources, each optionally retimed 1.1–1.25×.
+  30 s minus the black gap, from body sources, each optionally retimed 1.1–1.25×. Black gap (user 2026-11-06, as
+  the 1h films): V1 empty for `[intro] gap_black_s` (0.6 s, `config.toml`) at the window's end, between the last
+  intro cut (to black 1.5 s) and story 1 (from black 2.5 s); `done` allows only this V1 gap. Every black fade on V1
+  (0:00, intro end, story 1, last shot) is set on that shot's A1 too (user 2026-11-06). Sound bridge: A5
+  pre-lap = story 1's bed (`beds.json` first scene) from `[audio] prelap_s` (4 s) before the gap to 4 s into the
+  story, 4 s fades, placed by `music` / `finish`; no birds there. A7 hand-edited -> `music` refuses (no
+  `--replace`): `.work/scripts/add_prelap.py <video> <song> --apply` adds only the pre-lap.
 - **Files**: source `.production/story.json`; `audios/` = `screenplay.md`, `timestamp.md`, `transcript.md`,
   `visual_plan.md`; narrator `voice/1..N.mp3` (legacy `audios/mp3/`); shots `shots/1..M.mp4`; prompts
   `missing-prompt.csv` (19 columns, `shot_id` = file number, `dur_s` = slot + handle) + `lock-assets.md`. The only
   prompt writer: `$E8 prompts` (never missing.py).
-- **Preservation**: numbered file ID = issued prompt ID, never sort order; aliases, missing / extra numbers, corrupt,
+- **Preservation**: numbered file ID = issued prompt ID, never sort order; ID = the file name's trailing number
+  (user 2026-11-06: `7.mp4`, `shot_007.mp4`, `shot-7.mp4`, `S07.mp4` = 7; `.mp4` / `.mp3` alike); duplicate IDs
+  (`7.mp4` + `shot_007.mp4`), 0, missing / extra numbers, corrupt,
   still-copying or undersized files are refused; user media is never renamed. Resolve writes are additive, backed up,
   and hold the one writer lock `.work/automation/resolve_writer.lock` (busy -> wait, never retry in a loop). Never
   clear, ripple, delete, undo, overwrite or silently re-plan. On failure: report backup + journal, never "done".
@@ -65,6 +73,9 @@ Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 st
   -> `$E8 voice --apply` -> `$E8 prompts --reissue` (old manifest kept); list the numbers to regenerate.
 
 ### B. Shots -> the whole film on the timeline (one pass, then stop for review)
+
+User 2026-11-06: "shots generated" = steps 1-4 in one go (story V1/A1 -> hook -> every audio track -> finish),
+never a stop after step 1; one reply at the end. The user's OK on that review = `/doc-edit done` + upload below.
 
 1. `$E8 shots-ready --apply` = ingest (exact IDs, full decode, duration, aspect, audio, hashes; unchanged files
    reused; other names in `shots\` -> stop, the user moves them) -> body on V1 / A1 -> contact sheets.
@@ -100,7 +111,8 @@ the full list back). The user overwrites `shots\N.mp4` -> `shots-ready --apply` 
 `$E8 check`, then `$E8 done --apply`: validates the **live** Edit (hand edits kept), renders with `YouTube 1080 HEVC`,
 never overwrites (`_v2`), returns a job ID. Poll `$E8 render-status` until VERIFIED; RUNNING is never done.
 
-**YouTube** (optional): `$Y seo "<video>"` prints film facts + a trend digest (~200 quota units, cached 7 days; thin
+**YouTube** (user 2026-11-06: part of `done` for full-AI; the user's OK on the review = the upload yes; a time
+given -> `--publish-at <ISO time +07:00>`, none -> private): `$Y seo "<video>"` prints film facts + a trend digest (~200 quota units, cached 7 days; thin
 digest -> once more with `--query "snow leopard mountain goat"`). Write `.production/seo_draft.json`:
 `{"titles":[3 full titles],"pick":1,"hook":"2–3 sentences","summary":"2–3 sentences, no payoff","tags":[20–30],
 "hashtags":[...],"chapters":[optional]}` -> `$Y seo "<video>" --write` builds `youtube_meta.json`; fix every FLAG.

@@ -7,6 +7,7 @@ SCENES, per scene:
   @ 1.4 | 04:30 | 05:30 | Title
   key: value          see, animals, sound, fn, clips, gate, audio, need (MUST/ALT/PENDING ...),
                       lead (s before first voice), tail (hold weight after last line), vend (mm:ss voice end limit),
+                      header first_onset: 12.6 = the first line after the 12 s cold open (films from 2026-11-06),
                       music (intro per-second table), grid (bar start s + bar length s, intro only)
   - dur | size | picture / observable action | A5 natural sound | why the viewer keeps watching | flags
                       dur in s or '*' (= rest of the scene span, once); flags: ! key shot, long (<= 12 s),
@@ -117,7 +118,8 @@ def time_voice(sc, first, err, warn=None, planned=True):
             else:
                 l["fix"] = sc["shots"][k - 1]["t"] + off
     if "fix" not in L[0]:
-        L[0]["fix"] = sc["start"] + (0.6 if first else float(sc.get("lead", 1.5)))
+        # the film's first line: at first_onset (12.6 after a cold open scene 0:00-0:12 without voice), else 0.6 in
+        L[0]["fix"] = max(FIRST_ONSET, sc["start"] + 0.6) if first else sc["start"] + float(sc.get("lead", 1.5))
     anchors = [i for i, l in enumerate(L) if "fix" in l] + [len(L)]
     for a, b in zip(anchors, anchors[1:]):
         t_b = L[b]["fix"] if b < len(L) else vend
@@ -164,10 +166,14 @@ def rests(scenes, lines):
                 sc["rests"].append((a2, b2, shots))
 
 
+FIRST_ONSET = 0.6  # header 'first_onset: 12.6' (user 2026-11-06): the narrator waits for the 12 s cold open
+
+
 def build(src_path, out, check=False):
-    global TARGET
+    global TARGET, FIRST_ONSET
     meta, sec, scenes = parse(Path(src_path).read_text(encoding="utf-8"))
     TARGET = float(meta.get("target", 60)) * 60
+    FIRST_ONSET = float(meta.get("first_onset", 0.6))  # sources before 2026-11-06 keep 0.6
     err, warn = [], []
     check = check or "--report" in sys.argv
     wpm = float(sys.argv[sys.argv.index("--wpm") + 1]) if "--wpm" in sys.argv else 150.0
@@ -199,7 +205,7 @@ def build(src_path, out, check=False):
             err.append(f"{sc['id']}: starts {stamp(sc['start'])}, previous ended {stamp(prev)}")
         prev = sc["end"]
         time_shots(sc, err)
-        time_voice(sc, i == 0, err, warn, planned=not meas)
+        time_voice(sc, not any(x["lines"] for x in scenes[:i]), err, warn, planned=not meas)  # first voiced scene
         if sc["lines"] and sc["lines"][-1]["t"] + sc["lines"][-1]["d"] > (secs(sc["vend"]) if sc.get("vend") else sc["end"]) + 0.05:
             err.append(f"{sc['id']}: last voice block runs past the scene's voice end")
         if not sc.get("need"):
@@ -360,7 +366,7 @@ def build(src_path, out, check=False):
     print(report)
     # the skill's own contract check, run on what was just written
     cmd = [sys.executable, str(Path(__file__).with_name("validate_four_files.py")), str(out),
-           "--target-minutes", f"{TARGET / 60:g}", "--wpm", f"{wpm:g}"]
+           "--target-minutes", f"{TARGET / 60:g}", "--wpm", f"{wpm:g}", "--allow-first-onset", f"{FIRST_ONSET:g}"]
     if meas:
         cmd += ["--durations-json", str(Path(src_path).with_name("durations.json"))]
     r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -415,6 +421,12 @@ def selftest():
         assert "strike at 00:18.0" in sp and "**002 · 00:10.0–00:30.0**" in sp
         vp = (Path(d) / "out" / "Test_Film_Visual_Edit_Plan_EN.md").read_text(encoding="utf-8")
         assert "| 00:00 | 0.1-01 |" in vp and "| MUST | 1.1" in vp
+        cold = SELFTEST.replace("target: 0.5", "target: 0.5\nfirst_onset: 3.6").replace(
+            "@ 0.1 | 00:00 | 00:10 | Open", "@ 0.0 | 00:00 | 00:03 | Cold open\nneed: COLD — story 1's tense moment\n"
+            "- * | ECU | COLD OPEN — story 1's tense moment | impact | hook |\n@ 0.1 | 00:03 | 00:10 | Open")
+        src.write_text(cold, encoding="utf-8")
+        build(src, Path(d) / "out_c")  # 2026-11-06: a voiceless cold open scene, the first line at first_onset
+        assert "[00:03.6] The river is calm." in (Path(d) / "out_c" / "Test_Film_Timestamp_EN_VI.md").read_text(encoding="utf-8")
         bad = SELFTEST.replace("|| @4+0.2", "|| @2+0.1")  # second line pinned 0.1 s after the first: slips 1.7 s
         src.write_text(bad, encoding="utf-8")
         try:

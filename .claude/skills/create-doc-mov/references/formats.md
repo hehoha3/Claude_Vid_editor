@@ -61,7 +61,7 @@ Use:
 
 - Film slug/runtime and thesis.
 - Matching animal bible including male/female/young and each one-line metaphor.
-- Cold-open cut map: 00:00–00:15 gentle animals and landscape under soft music (no drums), 00:15–01:15 naturally rising drum track and coherent strong shots, 01:15–01:30 breath/central question.
+- Intro cut map (user 2026-11-06): 00:00–00:12 cold open (black, riser -> impact, story 1's most tense moment in full-AI; doc-edit builds it, no narrator), 00:12–01:15 the strong intro track (from the impact) under coherent strong teaser shots, narrator from 00:12.6, 01:15–01:30 breath/central question.
 - Track map: A2 narrator; A3 and A4 ambience; A5 actual natural sound; A6 background music; A7 and A8 restrained SFX.
 - Beat table: number/time, clip requirements, species/sex/age and direction, story function, source/continuity gate, audio and optional fallback. Note where voice yields to action.
 - Clip sourcing log specification: clip ID, license, location, exact species, count, age/sex evidence, action and true outcome, duration, direction, light, rights and usable sound.

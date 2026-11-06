@@ -26,7 +26,7 @@ audio:  A3=forest,day A6=bird A8=branch,snap A7=off   (keywords matched against 
 'NxK' / '*xK' = N s (or the rest) as K shots of the same need + filter, uneven lengths, audio on the first part.
 --yolo-cached: use the YOLO cache only (unmeasured clips rank by tags); yolo.py --warm measures the rest.
 """
-import json, os, re, sys
+import functools, json, os, re, sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -35,6 +35,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/scan-source/scripts")]
 from dvr_cowork.timestamps import parse_timestamp_file, to_vo_start  # noqa: E402
 from dvr_cowork.timecode import parse_clock  # noqa: E402
+from dvr_cowork.coldopen import COLD_END  # noqa: E402  user 2026-11-06: the 12 s cold open
 from dvr_cowork.videokey import split as split_key, video_key  # noqa: E402  same name in two channels -> <video>__Chann_N
 from scan_source import REGIONS, ROOTS, audio_blocked, index_of, video_roots  # noqa: E402
 import beats  # noqa: E402
@@ -55,7 +56,7 @@ AGE_CAP = {"young": r"\b(cubs?|calf|calves|foals?|juveniles?|young|youngsters?|b
            "adult": r"\b(adults?|mothers?|bulls?|lioness(es)?|maned|matriarch)\b"}
 # a caught / killed / eaten prey shows an outcome: only where the screenplay confirms it (out=kill) or the line is a
 # meal (act=eat); a near miss or an unknown end never gets it (plan.md 8.1: no kill from another hunt)
-KILL = re.compile(r"\b(kill(s|ed|ing)?|carcass(es)?|corpse|lifeless|catch(es|ing)?|caught|takes? down|brings? down|"
+KILL = re.compile(r"\b(kill(s|ed|ing)?|carcass(es)?|corpse|lifeless|catch(es|ing)?(?!\s+(?:the\s+|its\s+|her\s+|his\s+)?(?:light|sun\w*|glints?|glow|eyes?|breeze|wind|rays?|fur|mane|dust))|caught|takes? down|brings? down|"
                   r"devour\w*|suffocat\w*|prey in (its|her|his) (jaws|mouth)|drags? (the |its )?(prey|kill))\b", re.I)
 STILL = {"rest", "sleep"}  # a clip doing only these never stands in for a stalk / hide / hunt / chase / fight line
 OPP = {"left": "right", "right": "left", "toward": "away", "away": "toward"}
@@ -82,6 +83,17 @@ SUB_BROAD = "--sub-broad" in sys.argv  # tier 4 after --sub-all, never on its ow
 LATE_SUB = LATE_SUB or SUB_BROAD
 LATE_SUB_T = 0.0 if SUB_BROAD else LATE_SUB_T
 SUB_BROAD_MAX = 10
+# user 2026-11-05: a footage+AI film gets prompts for the intro + story 1 only; every THIẾU slot after story 1 is
+# filled at once by the --sub-all + --sub-broad tiers (FALLBACK markers), on every plan run. --no-body-sub: off.
+BODY_SUB = "--no-body-sub" not in sys.argv
+
+
+def subbed(s, broad=False):
+    """Does the late-substitute (broad=False) / broad tier fill this THIẾU slot? Body slots (after story 1: main()
+    sets open_ok False) always; the rest on --late-sub / --sub-all / --sub-broad as before."""
+    if BODY_SUB and s.get("open_ok") is False:
+        return True
+    return SUB_BROAD if broad else LATE_SUB and s["start"] >= LATE_SUB_T
 SUB_GAP, SUB_MAX = 60.0, 8  # late substitutes only (user 2026-10-17, amazon_2): another part of a clip already on the
 # timeline beats unrelated scenery, so the reuse limits loosen from 120 s / 3 uses to 60 s / 4 uses
 # action shots (user rule 2026-10-12): a strike/chase shot prefers a clip that shows action; a same-species clip
@@ -130,13 +142,30 @@ REUSE_MAX, REUSE_GAP, REUSE_PEN, SRC_MARGIN = 6, 90.0, 0.06, 1.0
 SAME_MAX, SAME_GAP, SAME_PEN = 3, 300.0, 0.05
 BAN_UNTIL = 900.0  # user 2026-10-25: ledger clips (last N videos) banned only on slots starting before 15:00, fixed
 OLD_PEN = 0.03  # after it a ledger clip loses to an unused one of similar fit (user 2026-10-25)
-# bin "7. Open" (user 2026-10-26): AI clips the user made for the opening -> intro + story 1, any src, first pick,
+# bin "7. Open" (user 2026-10-26): AI clips the user made for the opening -> intro + story 1, any src, first pick
+# (2026-11-05: not the ones place.py filed there itself, open_placed.txt),
 # repeated OPEN_GAP s apart (other frames first, window()); stand-in passes add OPEN_BONUS
 OPEN_BIN, OPEN_GAP, OPEN_BONUS = "7. Open", 20.0, 0.3
 BIOME_NO = ("autumn", "snow", "conifer", "pine forest", "town", "city", "garden", "airport", "building", "boat",
-            "zoo", "enclosure", "captive", "wildlife park", "bloody", "blood", "pronghorn", "everglades", "florida")
+            "zoo", "enclosure", "captive", "wildlife park", "bloody", "blood", "pronghorn", "everglades", "florida",
+            "eucalyptus", "gum tree", "koala", "kangaroo")
 # caption words excluded for every slot: amazon_2 "dull autumn woodland" for a jungle trail; africa_1 a hippo "in a
-# pond at a wildlife park" and a "bloody leg bone" (screenplays: no blood); a non-tropical channel would make this per workspace
+# pond at a wildlife park" and a "bloody leg bone" (screenplays: no blood); 2026-11-05 a eucalyptus timelapse as the
+# Okavango opener. A non-tropical channel would make this per workspace.
+SCENERY_NO = ("road", "dirt road", "vehicle", "safari vehicle", "jeep", "truck", "car", "tourist", "fence", "power line",
+              "pylon", "telegraph pole")  # landscape slots (sp=none: opener, intro outro, side shots) never show people's things
+
+
+@functools.lru_cache(maxsize=None)
+def words_re(words):
+    """Whole words (+ -s / -es / -y / -ed / -ing): 'male lion' never matches 'female lion', 'zoo' never 'zoom',
+    'snow' still matches 'snowy', 'cub' 'cubs' (2026-11-05: no=male_lion refused every lioness)."""
+    return re.compile(r"\b(?:" + "|".join(re.escape(w.lower()) for w in words) + r")(?:s|es|y|ed|ing)?\b") if words else None
+
+
+def has_word(cap, words):
+    rx = words_re(tuple(words))
+    return bool(rx and rx.search(cap))
 BED_MIN = 20.0  # s: shortest file used as an A3-A5 bed / layer (africa_1: 1-6 s calls were picked and skipped by place)
 WPS = 2.5  # narrator speed (words/s) for VO spans before the audio exists; tune if VO ● looks off after vo-sync
 AUDIO_POOL = {3: ("ambience_sound", "Nature_sound"), 4: ("ambience_sound", "Nature_sound"),
@@ -307,9 +336,14 @@ def build(starts, end, blocks, intro=INTRO_MIN):
     assert sorted(blocks) == list(range(1, len(starts) + 1)), \
         f"spec must cover sentences 1..{len(starts)}, missing {sorted(set(range(1, len(starts) + 1)) - set(blocks))}"
     lead = starts[0] >= OPEN_MIN
+    cold = starts[0] >= COLD_END - 0.05  # user 2026-11-06: narrator after the 12 s cold open (dvr_cowork/coldopen.py)
     bounds = [starts[0] if lead else 0.0] + starts[1:] + [end]
     slots, errs = [], []
-    if lead:
+    if cold:  # reserved: black + impact, then story 1's tense moment in full-AI shots (`coldopen place`); never matched
+        slots.append({"slot": 1, "line": 1, "start": 0.0, "dur": round(starts[0], 2), "src": "GFX", "filter": {},
+                      "need": "COLD OPEN: đen + impact, rồi các shot full-AI của đoạn căng nhất story 1 (dvr_cowork coldopen)",
+                      "audio": [], "intro": True, "cold": True})
+    elif lead:
         need, src, flt = opener or OPENER
         slots.append({"slot": 1, "line": 1, "start": 0.0, "dur": round(starts[0], 2), "need": need, "src": src,
                       "filter": flt, "audio": [], "intro": True, "opener": True})
@@ -337,7 +371,7 @@ def build(starts, end, blocks, intro=INTRO_MIN):
                 t += dur
         assert abs(t - t1) < 1e-6
     assert not errs, "\n".join(errs)
-    if lead and len(slots) > 1:  # beds / music start with the film, under the opener
+    if lead and not cold and len(slots) > 1:  # beds / music start with the film, under the opener (cold open: after it)
         o, f = slots[0], slots[1]
         o["audio"] = [e for e in f["audio"] if e["track"] in (3, 4, 5, 7)]
         f["audio"] = [e for e in f["audio"] if e["track"] not in (3, 4, 5, 7)]
@@ -368,15 +402,17 @@ def check_side(slots):
     assert st <= SIDE_MAX * total, (f"side shots after the intro {st:.0f}s = {st / total:.0%} of footage "
                                     f"(max {SIDE_MAX:.0%}); turn some into character shots, most side time in ## "
                                     + ", ".join(f"{k} ({v:.0f}s)" for k, v in per.most_common(8)))
-    run, run3 = [], []
+    run, run3, long_runs = [], [], []
     for s in body + [{"src": "GFX"}]:  # sentinel closes the last run
         if is_side(s):
             run.append(s); continue
-        assert len(run) <= SIDE_RUN, (f"## {run[0]['line']}-{run[-1]['line']}: {len(run)} side shots in a row "
-                                      f"(max {SIDE_RUN}); put a character shot between them")
+        if len(run) > SIDE_RUN:  # every run at once (2026-11-05: one per plan run cost 3 extra runs)
+            long_runs.append(f"## {run[0]['line']}-{run[-1]['line']} ({len(run)})")
         if len(run) == 3:
             run3.append(run[0])
         run = []
+    assert not long_runs, (f"side shots in a row (max {SIDE_RUN}; put a character shot between them, or tag the "
+                           f"animal with a '# CAST' line): {', '.join(long_runs)}")
     span = body[-1]["start"] + body[-1]["dur"] - body[0]["start"]
     assert len(run3) <= max(1, span // RUN3_EVERY), (
         f"{len(run3)} runs of 3 side shots (## {', '.join(str(r['line']) for r in run3)}); "
@@ -404,6 +440,8 @@ def check_opening(slots, mode="landscape"):
     """Spec check. landscape (legacy default): the film opens on a landscape held a little longer than the shots after it.
     action ('# OPENING action'): the first footage shot is a real event (an animal doing run/fight/attack/hunt/stalk/jump)
     and a wide/medium/aerial shot with an animal that places who is where starts within OPEN_WIDE_T s."""
+    if slots and slots[0].get("cold"):  # the cold open is the opening (coldopen.validate checks its form)
+        return
     sh = [s for s in slots if s["src"] != "GFX"]
     if sh and sh[0].get("opener"):  # build()'s opener: the epic shot; the form rules start after it
         f, size = sh[0]["filter"], set(sh[0]["filter"].get("size", []))
@@ -444,7 +482,7 @@ def snap_intro(slots, intro, m, t_m, opening="landscape"):
     kinds, shifts, left = Counter(), [], []
     for k in range(1, last + 1):
         p, s, b = slots[k - 1], slots[k], slots[k]["start"]
-        if b <= t_m + 0.5 or b in a7:
+        if b <= t_m + 0.5 or b in a7 or p.get("cold"):  # the cold open ends on the narrator, fixed
             continue
         lo, hi = p["start"] + SHOT_MIN, b + s["dur"] - SHOT_MIN
         opts = ([(abs(t - b) - 0.05 * lv, f"hit B{lv}", t) for t, lv in hits if abs(t - b) <= HIT_WIN]
@@ -551,12 +589,19 @@ def intro_music(slots, work, intro):
     for s in slots:
         if s.get("intro"):
             s["audio"] = [e for e in s["audio"] if e["track"] != 7]
+    at = float(j.get("start", 0.0))  # cold open: the music starts on the impact's hit (intro.py)
     slots[0]["audio"].append({"track": 7, "kw": ["intro"], "status": "OK", "path": j["source"], "dur": j["len"],
-                              "fixed": True, "pieces": j["pieces"], "xf": j["xf"], "fade": j["fade"]})
+                              "fixed": True, "pieces": j["pieces"], "xf": j["xf"], "fade": j["fade"], "at": at})
+    if slots[0].get("cold") and j.get("impact"):  # A9: the riser into the impact, the hit on `at`
+        i = j["impact"]
+        slots[0]["audio"].append({"track": 9, "kw": ["impact"], "status": "OK", "path": i["path"], "dur": i["dur"],
+                                  "src_in": i["src_in"], "fixed": True, "fades": [0.08, 0.5]})
     f = next((s for s in slots if not s.get("intro")), None)  # body start, as intro.py story1()
-    story1 = j["len"] if not f else intro if f["filter"].get("sp") == ["none"] else f["start"]
-    return (f"intro music: {Path(j['source']).name} fitted to {tc(j['len'])} ({j['how']})"
-            + (f"; STALE: story 1 now starts {tc(story1)} -> run intro.py again" if abs(story1 - j["len"]) > 0.1 else ""))
+    story1 = j["len"] + at if not f else intro if f["filter"].get("sp") == ["none"] else f["start"]
+    return (f"intro music: {Path(j['source']).name} fitted to {tc(j['len'])} from {tc(at)} ({j['how']})"
+            + (f"; impact {Path(j['impact']['path']).name[:40]} (hit at {tc(at)})" if slots[0].get("cold") and j.get("impact") else "")
+            + ("; COLD OPEN slot but intro_music.json has no impact -> run intro.py again" if slots[0].get("cold") and not j.get("impact") else "")
+            + (f"; STALE: story 1 now starts {tc(story1)} -> run intro.py again" if abs(story1 - j["len"] - at) > 0.1 else ""))
 
 
 def intro_beats(slots, intro, opening="landscape"):
@@ -566,6 +611,7 @@ def intro_beats(slots, intro, opening="landscape"):
     if not cue:
         return "intro beat: no A7 music under the intro (spec: A7 cue on the first intro shot); cuts as written"
     t_m, e = cue
+    t_m += e.get("at", 0.0)  # the music starts on the cold open's hit
     try:  # whole track (<= 4 min): a slow 15 s opening alone gives no tempo
         if e.get("pieces"):  # intro.py: the source's bar pieces as A7 plays them (no fitted file)
             import numpy as np
@@ -581,7 +627,7 @@ def intro_beats(slots, intro, opening="landscape"):
            f"{split_intro(slots, m, t_m)} extra cuts on the music in animal shots (pieces {CUT_MIN}-{CUT_MAX}s)")
     # the intro's last A7 cue ends the intro music (one intro may hold several: africa_4 tense > chase > calm);
     # place.py plays A7 from the file start, e['dur'] long
-    m_end = max(s["start"] + x["dur"] for s in slots if s["start"] < intro for x in s["audio"]
+    m_end = max(s["start"] + x.get("at", 0.0) + x["dur"] for s in slots if s["start"] < intro for x in s["audio"]
                 if x["track"] == 7 and x.get("status") == "OK")
     return msg + "\n" + intro_outro(slots, m_end)
 
@@ -609,7 +655,7 @@ def load_clips(region):
             held = c["path"].replace("\\", "/").startswith("_check/")
             if held and SHOWN & set(t.get("issues") or []):
                 continue
-            if "bản quyền" in c["path"].lower():  # user 2026-10-28: AI_copyrightản quyền films are never planned
+            if "bản quyền" in c["path"].lower():  # user 2026-10-28: AI_copyright\bản quyền films are never planned
                 continue
             if t.get("caption"):
                 c["hold"] = held
@@ -764,9 +810,9 @@ def hard(c, f, own=True):
                 return "species", ""
         elif not set(f["sp"]) & sp:
             return "species", ""
-    if any(x in sp or x.lower() in cap for x in f.get("no", [])):
+    if any(x in sp for x in f.get("no", [])) or has_word(cap, f.get("no", ())):
         return "no", ""
-    if any(w in cap for w in BIOME_NO):  # temperate scenery never passes for a tropical film
+    if has_word(cap, BIOME_NO) or (f.get("sp") == ["none"] and has_word(cap, SCENERY_NO)):  # temperate scenery never passes for a tropical film
         return "biome", ""
     if "light" in f and ("night" in f["light"]) != (t.get("light") == "night"):
         return "night", ""
@@ -1059,11 +1105,11 @@ def match(slots, clips, taken=None, look=None):
                 side[i] = True; budget -= s["dur"]
             take(s, c, cin, status="FALLBACK", fit=round(v, 2),
                  why="same species, other action" if related else "side shot")
-    if LATE_SUB:  # --late-sub: still THIẾU after LATE_SUB_T -> best substitute, tiers: same species (any look) >
+    if LATE_SUB or BODY_SUB:  # --late-sub: still THIẾU after LATE_SUB_T -> best substitute, tiers: same species (any look) >
         # companion species of the same scene > neutral scenery; user-requested, marked FALLBACK "late substitute"
         for s in slots:
             f = s["filter"]
-            if s["status"] != "THIEU" or s["start"] < LATE_SUB_T or s["src"] == "GFX" or f.get("pin") == ["none"]:
+            if s["status"] != "THIEU" or not subbed(s) or s["src"] == "GFX" or f.get("pin") == ["none"]:
                 continue
             want = set(f.get("sp", [])) - {"none"}
             tiers = [want, {x for w in want for x in LATE_COMPANION.get(w, ())}, None]
@@ -1091,13 +1137,14 @@ def match(slots, clips, taken=None, look=None):
                     take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute",
                          tier=("species", "companion", "scenery")[k])  # jobs.py fill-report tiers
                     break
-    if SUB_BROAD:  # tier 4, only on the user's "Sử dụng các option thay thế các slot THIEU" (user 2026-10-26): every
-        # slot still THIẾU gets the nearest clip: the species itself (looser reuse) > kin (same library folder) > birds / butterflies /
-        # insects / frogs > landscape; the slot's light first, any light last; any source; 'no=' / biome still hold
+    if SUB_BROAD or BODY_SUB:  # tier 4: the user's "Sử dụng các option thay thế các slot THIEU" (user 2026-10-26), and the
+        # body after story 1 always (2026-11-05): every slot still THIẾU gets the nearest clip: the species itself (looser
+        # reuse) > kin (same library folder) > birds / butterflies / insects / frogs > landscape; the slot's light first,
+        # any light last; any source; 'no=' / biome still hold
         kin = lambda c: (c.get("subject") or "").lower()  # noqa: E731
         for s in slots:
             f = s["filter"]
-            if s["status"] != "THIEU" or s["src"] == "GFX" or f.get("pin") == ["none"]:
+            if s["status"] != "THIEU" or not subbed(s, True) or s["src"] == "GFX" or f.get("pin") == ["none"]:
                 continue
             want = set(f.get("sp", [])) - {"none"}
             folders = {kin(c) for c in clips if want & set(c["tags"].get("species", []))} - NEUTRAL - {"_check", ""}
@@ -1229,6 +1276,25 @@ def highlights(slots, clips, window=None):
             f"animal intro shots show later story shots / library clips of their own species at {min(HL_SPEEDS):.0%}-{max(HL_SPEEDS):.0%} "
             f"({sum(bool(acts(s) & HL_ACT) for s in hl)} chase/fight); action zone ({'%s-%s s' % window if window else 'shots %d..-%d' % (HL_HEAD + 1, HL_TAIL + 1)}): "
             f"{zstrong[0]} chase/fight + {zstrong[1]} tense of {len(zs)} animal shots; intro THIẾU left: {', '.join(empty) or 'none'}")
+
+
+PICK_KEYS = ("path", "id", "source", "src_in", "src_out", "caption", "reuse", "same", "speed", "highlight", "part",
+             "zoom")
+
+
+def intro_weak(slots):
+    """user 2026-11-05: an intro WEAK pick counts as THIẾU (red marker, a prompt, Case 1 fills the empty range); the
+    pick goes first in alts so place.py still puts it in the bins for a hand swap. The opener (0:00) keeps its pick."""
+    n = 0
+    for s in slots:
+        if s.get("intro") and s.get("status") == "WEAK" and not s.get("opener"):
+            if s.get("path"):
+                s["alts"] = [[s["path"], s.get("source")]] + [a for a in s.get("alts", []) if a[0] != s["path"]]
+            for k in PICK_KEYS:
+                s.pop(k, None)
+            s.update(status="THIEU", why="intro WEAK -> THIẾU (prompt)")
+            n += 1
+    return f"intro WEAK -> THIẾU: {n}"
 
 
 # ------------------------------------------------------------------ zoom + speed (user 2026-10-22, africa_1)
@@ -1541,7 +1607,12 @@ def open_bin(video):
                     if "Video" in str(c.GetClipProperty("Type"))}
     except Exception as e:  # noqa: BLE001  Resolve closed: plan still works, says so
         return set(), f"7. Open: not read ({e})"
-    return out, f"7. Open: {len(out)} videos for the intro + story 1"
+    # user 2026-11-05: only the user's own clips there get the priority; the ones place.py filed (its intro picks)
+    # stay ordinary clips, so a re-plan after place keeps the placed plan (it changed 176 story-1 shots before)
+    pf = ROOT / ".work" / "doc_edit" / video_key(video) / "open_placed.txt"
+    placed = set(pf.read_text("utf-8").split("\n")) if pf.exists() else set()
+    own = out - placed
+    return own, f"7. Open: {len(own)} videos of the user's for the intro + story 1 ({len(out & placed)} placed by place.py: no priority)"
 
 
 def estimate_vo(cues):
@@ -1651,7 +1722,7 @@ def main(folder, sem=True):
     for s in slots:
         s["open_ok"] = s["start"] < s2
     match(slots, pool, None, meta["look"])
-    hmsg = highlights(slots, pool, meta.get("action"))
+    hmsg = highlights(slots, pool, meta.get("action")) + "; " + intro_weak(slots)
     varmsg = vary(slots, pool)
     wmsg = fix_water(slots, pool, load_audio(), end)
     out = Path(OUT) if OUT else None  # --out=<dir>: plan.json + plan.md there (benchmark), the video's untouched
@@ -2003,6 +2074,18 @@ def selftest():
     nj = [{"slot": 1, "dur": 3, "src": "any", "filter": {"sp": ["capybara"], "no": ["jaguar"]}, "start": 0.0}]
     match(nj, mixed)
     assert nj[0]["status"] == "THIEU"
+    # 2026-11-05: body THIẾU (after story 1, open_ok False) always takes the substitute tiers; intro + story 1 stay
+    # THIẾU for prompts; slots without open_ok (benchmarks, old tests) keep the flag-only behaviour
+    assert subbed({"open_ok": False, "start": 10.0}) and subbed({"open_ok": False, "start": 10.0}, True)
+    assert not subbed({"open_ok": True, "start": 10.0}, True) and not subbed({"start": 10.0}, True)
+    iw = [{"slot": 1, "intro": True, "status": "WEAK", "path": "p1", "source": "ai", "alts": [["p2", "real"]]},
+          {"slot": 2, "intro": True, "status": "WEAK", "opener": True, "path": "p0"}, {"slot": 3, "status": "WEAK", "path": "p3"}]
+    assert intro_weak(iw) == "intro WEAK -> THIẾU: 1" and iw[0]["status"] == "THIEU" and "path" not in iw[0]
+    assert iw[0]["alts"][0] == ["p1", "ai"] and iw[1]["status"] == iw[2]["status"] == "WEAK"
+    # whole words (2026-11-05): no=male_lion keeps "female lion"; 'snow' still catches 'snowy'; 'car' never 'carcass'
+    assert not has_word("a female lion stalks", ["male lion"]) and has_word("two male lions spar", ["male lion"])
+    assert has_word("snowy ridge", BIOME_NO) and not has_word("camera zooms on a lion", BIOME_NO)
+    assert not has_word("vultures on a carcass", SCENERY_NO) and has_word("a safari jeep on a dirt road", SCENERY_NO)
     # one long clip: <= REUSE_MAX slots >= REUSE_GAP apart; other parts first, then the same frames, no frame more
     # than SAME_MAX times and those repeats >= SAME_GAP apart; real beats a better AI clip
     long_ = [dict(mk("river", "real", species=[], count="none", shot_size="wide"), duration=30.0)]
@@ -2112,6 +2195,12 @@ def selftest():
     _, _, ob2 = parse_spec("# OPENER Cận mắt sư tử | real | sp=lion size=extreme_close\n## 1\n* | a | real | sp=lion |\n")
     assert build([4.0], 8.0, ob2)[0]["filter"] == {"sp": ["lion"], "size": ["extreme_close"]}
     assert len(build([0.6], 8.0, ob2)) == 1  # older timing (narration from 0:00.6): no opener
+    # 2026-11-06 cold open: narration from 12.6 s -> a reserved GFX slot 0:00-12.6 (black + impact + story-1
+    # shots), never matched; ## 1's beds / music stay on ## 1 (the intro music joins slot 0 with its 'at')
+    co = build([12.6, 18.0], 24.0, ob, 90.0)
+    assert co[0]["cold"] and co[0]["src"] == "GFX" and (co[0]["start"], co[0]["dur"]) == (0.0, 12.6) and not co[0]["audio"]
+    assert [e["track"] for e in co[1]["audio"]] == [3, 7, 8] and co[1]["start"] == 12.6
+    check_opening(co, "landscape")  # no landscape-opener rule after a cold open
     # bin "7. Open" (user 2026-10-26): its AI clip fills a 'real' line in intro + story 1 only, goes first in its band,
     # comes back OPEN_GAP s apart and is not held by the ledger ban
     oc = {"source": "ai", "open": True, "recent": True, "abs": "o", "duration": 10.0, "tags": {}}
@@ -2131,7 +2220,7 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]:
         selftest()
     elif sys.argv[1] == "--species":  # --species jaguar,otter,macaw --region amazon: species tags containing these words
-        words = sys.argv[2].lower().split(",")
+        words = [w for x in sys.argv[2:] if not x.startswith("--") and x.lower() not in REGIONS for w in x.lower().split(",") if w]  # comma or space list
         assert "--region" in sys.argv, f"--species needs --region {'|'.join(REGIONS)}"
         region = sys.argv[sys.argv.index("--region") + 1]
         cnt = Counter((x, c["source"]) for c in load_clips(region) for x in c["tags"].get("species", []) if any(w in x for w in words))

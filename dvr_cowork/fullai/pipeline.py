@@ -296,6 +296,12 @@ def hook_window(plan):
     return min(s["start_f"] for s in h),max(s["end_f"] for s in h)
 
 
+def intro_gap_f(plan):
+    """Frames of black between the intro cuts and story 1 (config [intro] gap_black_s; 0 = cuts tile the window)."""
+    from .core import config
+    return round(float(config().get("intro",{}).get("gap_black_s",0))*plan["fps"])
+
+
 def _hook_cuts(video,plan,media,qc,candidates,intro):
     """v2 intro: cut_min–cut_max s cuts from reviewed, spoiler-free body sources, summing exactly to the hook window.
     One cut per source (no repeated range inside the intro); body slots are untouched. Retime is a cut property:
@@ -304,7 +310,7 @@ def _hook_cuts(video,plan,media,qc,candidates,intro):
     import math
     fps=plan["fps"]
     window=dict(zip(("start_f","end_f"),hook_window(plan)))
-    total=window["end_f"]-window["start_f"]
+    total=window["end_f"]-window["start_f"]-intro_gap_f(plan)  # the black before story 1 stays empty
     lo,hi=math.ceil(intro["cut_min_s"]*fps-1e-6),math.floor(intro["cut_max_s"]*fps+1e-6)
     s0,s1=intro.get("selective_speed_range",[1,1])
     pref=intro.get("preferred_cut_count",[10,12])

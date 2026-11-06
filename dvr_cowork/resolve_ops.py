@@ -419,7 +419,11 @@ def place_subtitles(project, tl, plan, items, fps_tl, fps_clip, log=print, secti
     if not n:
         tl.AddTrack("subtitle")
     media_pool = project.GetMediaPool()
-    media_pool.SetCurrentFolder(ensure_bin(media_pool, "5. Subtitles"))
+    sub_bin = ensure_bin(media_pool, "5. Subtitles")
+    if old := find_clip(sub_bin, str(srt)):  # 2026-11-06: a re-sync re-imported the stale pool item (old times, +1 h)
+        media_pool.DeleteClips([old])
+        log("subtitles: stale .srt pool item replaced")
+    media_pool.SetCurrentFolder(sub_bin)
     clip = (media_pool.ImportMedia([str(srt)]) or [None])[0]
     if not clip or not media_pool.AppendToTimeline([{"mediaPoolItem": clip, "recordFrame": int(tl.GetStartFrame())}]):
         log("subtitles: import/append failed, drag the .srt onto the timeline by hand")

@@ -1,4 +1,4 @@
-"""doc-edit: prompts for the THIẾU and WEAK slots of plan.json, to generate the missing / better footage.
+"""doc-edit: prompts for the THIẾU slots of plan.json (intro + story 1 by default, user 2026-11-05; --range=A-B or --all), to generate the missing footage.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>                 # list groups
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video> --check         # QC gates + preview
@@ -8,8 +8,8 @@
 List mode groups THIẾU slots by character tag + species + action + setting + light and suggests how many
 clips to generate (one generated clip ~CLIP_YIELD s of usable footage, cut into several shots), with the story
 sentences of the group and the other characters' footage status in them (coverage: a chase whose hunter is
-already OK needs only the prey clips). Claude writes .work/doc_edit/<video>/prompts.txt (user 2026-11-02: Claude, not
-Gemini; per video a bank generator in .work/scripts/gen_prompts_<video>.py, one prompt per slot):
+already OK needs only the prey clips). Claude writes .work/doc_edit/<video>/prompts.txt by hand (user 2026-11-02:
+Claude, not Gemini; one prompt per slot; 2026-11-05: intro + story 1 only, so no bank generator):
     ## G3
     prey_escape L>R | side-on 300mm telephoto pan | <place> | bright daylight   <- one clip = prompt k of the group
     - <what happens, English, one beat>                                         <- beats, untimed (the script times them)
@@ -17,7 +17,7 @@ Gemini; per video a bank generator in .work/scripts/gen_prompts_<video>.py, one 
 Prompt k of a group = slot k of the group (extras = the group's longest slot); clip length dur_s = the slot's next
 half second (3.2 -> 3.5, 5 -> 5.5, user 2026-11-05); beats per clip: < 5 s one, < 8 s up to two, else up to four.
 --check / --write run the QC gates (references/missing-prompts.md); --write refuses on errors and writes
-<video>/missing-prompt.csv: the 19-column missing-scenes schema (prompt_rules.COLUMNS), THIEU rows then WEAK.
+<video>/missing-prompt.csv: the 19-column missing-scenes schema (prompt_rules.COLUMNS). <video> = the work key, the video folder or its audios folder.
 """
 import difflib, json, math, re, sys
 from collections import Counter, defaultdict
@@ -30,15 +30,13 @@ from dvr_cowork.config import load_config  # noqa: E402
 from scan_source import ROOTS  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 from plan import AGE_CAP, KILL, SEX_CAP  # noqa: E402  the story-truth words plan.py checks, same in the prompts
-from dvr_cowork.prompt_rules import TAIL, csv_text, dur_s, issues, shot_size  # noqa: E402  shared with full-AI
+from dvr_cowork.prompt_rules import TAIL, csv_text, dur_s, issues, render as render_prompt, shot_size  # noqa: E402  shared with full-AI
 # where the user saves generated clips, per plan.json region: amazon = AI root of this machine (config.toml);
 # africa = D:\AI_video\_africa\_check (user 2026-10-22; organize.py --africa files them into _africa\<species>)
 AI_DIR = {"amazon": load_config()["paths"]["ai_video"], "africa": str(ROOTS["africa_ai_check"][0] / "_check"),
           "himalaya": str(Path(load_config()["paths"]["ai_video"]) / "_himalaya" / "_check")}
 # prompt format (user 2026-11-05, input/SKILL.md formula): header with the clip's own length + untimed beats; the
 # shared TAIL (prompt_rules: moving animals, no stare-down, no contact) closes every prompt. 1h prompts carry no locks.
-HEAD = ("Cinematic wildlife documentary, ultra-photorealistic 4K, {s}single continuous shot, 16:9, shot on {cam}, "
-        "{place}, {light}.")
 BEAT = re.compile(r"-\s+(.+)")
 OLD_BEAT = re.compile(r"\d+(?:\.\d+)?-\d+(?:\.\d+)?s:")
 MAX_BEATS = ((5, 1), (8, 2), (math.inf, 4))  # clip < 5 s: one readable beat; < 8 s: two; longer: four
@@ -63,7 +61,7 @@ NEG = re.compile(r"\b(?:no|not|never|without|avoid)\b[^,.;]*", re.I)  # "no reve
 # Gaze is fine ("crouches, watching left to right": eyeline), so look / watch / face / turn are not in the list, and
 # the direction must sit in the same clause (no comma between)
 STILL_DIR = re.compile(r"\b(?:rises?|rising|crouch\w*|rest\w*|motionless|remains?|stays?|reach\w*|lowers?|lowering|"
-                       r"settles?|settling|sits?|sitting|freez\w*|frozen|still|pauses?|listen\w*|lifts?|lifting)\b"
+                       r"settles?|settling|sits?|sitting|freez\w*|frozen|stands? still|pauses?|listen\w*|lifts?|lifting)\b"
                        r"[^.,;]{0,30}?\b(?:from )?(?:left to right|right to left|away to (?:the )?upper (?:right|left))")
 DUP = 0.9  # two prompts of one group this similar = the same shot twice
 
@@ -170,13 +168,7 @@ def check(p, gs):
 
 def render(r, seconds):
     """Full prompt of one clip for a timeline slot of `seconds` (None = unknown length: no number is printed)."""
-    d = dur_s(seconds) if seconds else None
-    head = HEAD.format(s=f"{d:g}-second " if d else "", cam=r["cam"], place=r["place"], light=r["light"])
-    beats = [b.rstrip(". ") + "." for b in r["beats"]]
-    if d and len(beats) >= 3:  # long clips only: timed beats across the whole clip, no static hold
-        ticks = [round(x * d * 2) / 2 for x in ([0, .3, .7, 1] if len(beats) == 3 else [0, .2, .5, .7, 1])]
-        beats = [f"{ticks[i]:g}-{ticks[i + 1]:g}s: {b}" for i, b in enumerate(beats)]
-    return " ".join([head] + beats + [TAIL])
+    return render_prompt(r["cam"], r["place"], r["light"], r["beats"], dur_s(seconds) if seconds else None)
 
 
 def parse_prompts(text):
@@ -233,6 +225,8 @@ def secs(t):
 def main(video, mode, rng=None):
     global BAD_ENV
     from dvr_cowork.videokey import video_key
+    if Path(video).name.lower() == "audios":  # the audios folder, as plan.py / story.py take it
+        video = str(Path(video).parent)
     work = ROOT / ".work" / "doc_edit" / video_key(video)
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     slots = plan["slots"]
@@ -241,13 +235,14 @@ def main(video, mode, rng=None):
     if rng:  # --range=0:00-6:30: only THIẾU slots starting inside it (user asks per part of the film)
         a, b = (secs(x) for x in rng.split("-"))
         slots = [s for s in slots if a <= s.get("start", 0) < b]
-    gs = groups(slots) + groups(slots, "WEAK", "W")  # always both parts (user 2026-10-27): G<n> THIẾU, W<n> WEAK
+    elif "--all" not in sys.argv:  # user 2026-11-05: prompts for the intro + story 1 only (plan.py open_ok); the body
+        slots = [s for s in slots if s.get("open_ok", True)]  # after story 1 is filled by plan.py (BODY_SUB)
+    gs = groups(slots)  # THIẾU only (user 2026-11-05: no WEAK prompts; an intro WEAK pick is THIẾU in plan.py)
     at = {s["slot"]: s.get("start", 0) for s in slots}
     if mode == "list":
-        for st in ("THIEU", "WEAK"):
-            gg = [g for g in gs if g["status"] == st]
-            print(f"{sum(len(g['slots']) for g in gg)} {st} slots, {sum(g['sec'] for g in gg):.0f}s -> "
-                  f"{len(gg)} groups, {sum(g['clips'] for g in gg)} clips suggested")
+        print(f"{sum(len(g['slots']) for g in gs)} THIEU slots, {sum(g['sec'] for g in gs):.0f}s -> "
+              f"{len(gs)} groups, {sum(g['clips'] for g in gs)} clips suggested"
+              + ("" if rng or "--all" in sys.argv else " (intro + story 1)"))
         for g in gs:
             tag, sp, act, st, li = g["key"]
             print(f"{g['id']} [{tag}] sp={sp} act={act or '-'} set={st or '-'} light={li or '-'} | "
@@ -278,9 +273,8 @@ def main(video, mode, rng=None):
     import ledger  # video folder looked up in the workspaces (plan.json may hold a path from before a rename)
     vdir = Path(plan.get("video_dir", ""))  # plan.json knows the exact folder (same video name in two workspaces)
     out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing-prompt.csv"
-    # one row per prompt (user 2026-11-05): THIEU groups, extras, then WEAK; the 19-column missing-scenes schema
-    order = [g["id"] for g in gs if g["status"] == "THIEU" and g["id"] in p] + extra \
-        + [g["id"] for g in gs if g["status"] == "WEAK" and g["id"] in p]
+    # one row per prompt (user 2026-11-05): THIEU groups, then extras; the 19-column missing-scenes schema
+    order = [g["id"] for g in gs if g["id"] in p] + extra
     need = {s["slot"]: s for s in slots}
     table = []
     for gid in order:
@@ -301,8 +295,8 @@ def main(video, mode, rng=None):
                 "search_keywords": " ".join(x for x in (name if name != "none" else "landscape", r["role"],
                                                         (g["key"][2] if g else ""), shot_size(r["cam"]), r["light"]) if x and x != "-"),
                 "generation_prompt": render(r, sec),
-                "reason": ("THIẾU: không có trong kho" if not g or g["status"] == "THIEU" else "WEAK: clip trong kho chưa đạt")
-                          + (f" (kho bị loại: {refused})" if refused else "")})
+                "reason": ("THIẾU: clip WEAK của intro" if g and any("intro WEAK" in (need[x].get("why") or "") for x in g["slots"])
+                           else "THIẾU: không có trong kho") + (f" (kho bị loại: {refused})" if refused else "")})
     out.write_text(csv_text(table), "utf-8", newline="")
     print(f"{len(table)} prompts in {len(p)} groups -> {out}")
     for g in gs:

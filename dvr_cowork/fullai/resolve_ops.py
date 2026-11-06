@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from .core import (ROOT, Stop, config, resolve_lock, event, frames, lock, object_hash, probe, prod, run,
                    read_json, video_path, write_json, day_project)
-from .pipeline import assert_voice_media, hook_window, ingested_media, subtitle_file
+from .pipeline import assert_voice_media, hook_window, ingested_media, intro_gap_f, subtitle_file
 from ..resolve_conn import connect
 from .story import load_plan
 
@@ -54,6 +54,12 @@ def item_path(item):
     return mp.GetClipProperty("File Path") if mp else ""
 
 
+def fkey(p):
+    """Media-pool lookup key without touching the disk (norm() resolves: one NAS round trip per Z:\\ clip)."""
+    import os
+    return os.path.normcase(os.path.abspath(str(p))) if p else ""
+
+
 class Session:
     def __init__(self,video,resolve=None):
         self.video=video_path(video)
@@ -83,6 +89,7 @@ class Session:
         if self.tl:
             fps=float(self.tl.GetSetting("timelineFrameRate") or self.project.GetSetting("timelineFrameRate"))
             if abs(fps-self.plan["fps"])>.001: raise Stop(f"Timeline fps {fps} != plan fps {self.plan['fps']}")
+        self._clips=None
         self.end_mode=config().get("resolve",{}).get("source_end","exclusive")
         if self.end_mode not in ("exclusive","inclusive"): raise Stop("source_end must be exclusive or inclusive")
 
@@ -131,34 +138,59 @@ class Session:
         self.project.SetCurrentTimeline(self.tl)
         return name
 
+    @property
+    def clips(self):
+        """path -> MediaPoolItem; the whole pool is walked once per run (it was walked once per op)."""
+        if self._clips is None:
+            self._clips={}
+            for c in all_clips(self.mp.GetRootFolder()):
+                self._clips.setdefault(fkey(c.GetClipProperty("File Path")),c)
+        return self._clips
+
+    def preload(self,ops):
+        """One ImportMedia per bin for every file of ops the pool lacks (shots -> 1. Other_roll in one call)."""
+        need={}
+        for op in ops:
+            p=str(Path(op["path"]).resolve())
+            if fkey(p) not in self.clips: need.setdefault(op["bin"],{})[fkey(p)]=p
+        for bin_name,paths in need.items():
+            self.mp.SetCurrentFolder(ensure_bin(self.mp,self.bin(bin_name)))
+            for c in self.mp.ImportMedia(list(paths.values())) or []:
+                self.clips.setdefault(fkey(c.GetClipProperty("File Path")),c)
+            lost=[p for k,p in paths.items() if k not in self.clips]
+            if lost: raise Stop(f"Failed to import {len(lost)} file(s): {lost[:3]}")
+
     def media(self,path,bin_name):
-        key=norm(path)
-        found=next((c for c in all_clips(self.mp.GetRootFolder()) if norm(c.GetClipProperty("File Path"))==key),None)
-        if found: return found
-        self.mp.SetCurrentFolder(ensure_bin(self.mp,self.bin(bin_name)))
-        imported=self.mp.ImportMedia([str(Path(path).resolve())]) or []
-        if len(imported)!=1: raise Stop(f"Failed to import {path}")
-        return imported[0]
+        self.preload([{"path":path,"bin":bin_name}])
+        return self.clips[fkey(Path(path).resolve())]
 
     def bounds(self,kind,track):
         return self.tl.GetItemListInTrack(kind,track) or [] if self.tl else []
 
-    def classify(self,op):
+    def rows(self,kind,track):
+        """One read of a track: (start, end, path, source-in, item) per item."""
+        return [(int(i.GetStart()),int(i.GetEnd()),norm(item_path(i)),int(i.GetLeftOffset()),i)
+                for i in self.bounds(kind,track)]
+
+    def snap(self,ops):
+        """Every track ops touch, read once; pass to classify() instead of re-reading a track per op."""
+        return {(k,t):self.rows(k,t) for k,t in {(op["kind"],op["track"]) for op in ops}}
+
+    def classify(self,op,snap=None):
         if not self.tl: return "add"
         a,b=op["start_f"]+int(self.tl.GetStartFrame()),op["end_f"]+int(self.tl.GetStartFrame())
-        for item in self.bounds(op["kind"],op["track"]):
-            x,y=int(item.GetStart()),int(item.GetEnd())
+        rows=snap[op["kind"],op["track"]] if snap is not None else self.rows(op["kind"],op["track"])
+        for x,y,path,offset,_ in rows:
             if x<b and a<y:
-                same=(x==a and y==b and norm(item_path(item))==norm(op["path"]))
-                fps=float(op["source_fps"])
-                offset=int(item.GetLeftOffset())
-                if same and abs(offset-frames(op.get("source_start_s",0),fps))<=1:
+                same=(x==a and y==b and path==norm(op["path"]))
+                if same and abs(offset-frames(op.get("source_start_s",0),float(op["source_fps"])))<=1:
                     return "already_present"
                 raise Stop(f"Manual/foreign edit conflicts with {op['label']} on {op['kind']} {op['track']}, "
                            f"frame {a}. Kept untouched; inspect the timeline.")
         return "add"
 
-    def append(self,op):
+    def info(self,op):
+        """AppendToTimeline clipInfo of op + the source-in frame it must land on."""
         mp=self.media(op["path"],op["bin"])
         fps=self.plan["fps"]
         raw_fps=mp.GetClipProperty("FPS")
@@ -166,17 +198,43 @@ class Session:
         except (TypeError,ValueError): sfps=float(op["source_fps"])
         if not math.isfinite(sfps) or sfps<=0: raise Stop(f"Invalid imported clip frame rate: {op['label']}")
         start=frames(op.get("source_start_s",0),sfps)
-        duration=op["end_f"]-op["start_f"]
         speed=float(op.get("speed",1.0))  # intro cut retime: source span = timeline duration × speed
-        n=round(duration*speed*sfps/fps)
+        n=round((op["end_f"]-op["start_f"])*speed*sfps/fps)
         end=start+n-(self.end_mode=="inclusive")
+        return {"mediaPoolItem":mp,"mediaType":1 if op["kind"]=="video" else 2,"trackIndex":op["track"],
+                "recordFrame":self.t0+op["start_f"],"startFrame":start,"endFrame":end},start
+
+    def append_many(self,ops,progress,journal,chunk=50):
+        """Unretimed ops in a few AppendToTimeline calls (was one call + readbacks per op). The caller verifies
+        every op afterwards from a fresh read; a short result stops with the backup (rerun resumes: present
+        items are kept)."""
+        self.preload(ops)
+        for i in range(0,len(ops),chunk):
+            part=ops[i:i+chunk]
+            progress["pending"]=[op["label"]+":"+op["kind"] for op in part]; write_json(journal,progress)
+            infos=[self.info(op) for op in part]
+            got=self.mp.AppendToTimeline([c for c,_ in infos]) or []
+            if len(got)!=len(part):
+                raise Stop(f"Append failed: {len(got)}/{len(part)} items from {part[0]['label']}; "
+                           "recover using backup, never clear tracks")
+            for op,(_,start),item in zip(part,infos,got):  # the returned items, no track re-read
+                if abs(int(item.GetLeftOffset())-start)>1: raise Stop(f"Source-in mismatch at {op['label']}")
+                if int(item.GetStart())!=self.t0+op["start_f"] or int(item.GetEnd())!=self.t0+op["end_f"]:
+                    raise Stop(f"Resolve frame convention/conform mismatch at {op['label']}. Partial edit kept with "
+                               "backup. Check source_end and installed Scripting/README.txt; no automatic retry.")
+            progress["completed"]+=progress.pop("pending"); write_json(journal,progress)
+
+    def append(self,op):
+        """One op, read back at once (retimed intro cuts; music / beds)."""
+        clip,start=self.info(op)
+        duration=op["end_f"]-op["start_f"]
+        speed=float(op.get("speed",1.0))
         if speed!=1.0:
             # Appended at source length first, then sped up in place: that span must be free on the track.
             a,b=self.t0+op["start_f"],self.t0+op["start_f"]+math.ceil(duration*speed)
             if any(int(x.GetStart())<b and a<int(x.GetEnd()) for x in self.bounds(op["kind"],op["track"])):
                 raise Stop(f"No free room to retime {op['label']}; kept untouched")
-        result=self.mp.AppendToTimeline([{"mediaPoolItem":mp,"mediaType":1 if op["kind"]=="video" else 2,
-            "trackIndex":op["track"],"recordFrame":self.t0+op["start_f"],"startFrame":start,"endFrame":end}]) or []
+        result=self.mp.AppendToTimeline([clip]) or []
         if len(result)!=1: raise Stop(f"Append failed: {op['label']}; recover using backup, never clear tracks")
         item=result[0]
         if abs(int(item.GetLeftOffset())-start)>1: raise Stop(f"Source-in mismatch at {op['label']}")
@@ -226,7 +284,7 @@ def shot_operations(video):
     if cuts:
         a,b=hook_window(plan)
         edges=[a]+[c["end_f"] for c in cuts]
-        if [c["start_f"] for c in cuts]!=edges[:-1] or edges[-1]!=b:
+        if [c["start_f"] for c in cuts]!=edges[:-1] or edges[-1]!=b-intro_gap_f(plan):
             raise Stop("hook.json cuts do not tile the intro window; rerun hook")
         for c in cuts:
             m=media[str(c["source_prompt"])]
@@ -250,7 +308,8 @@ def shot_operations(video):
 def black_fades(s):
     """The 1h black fades on V1 (user 2026-11-05, same as 1h): from black on the shot at 0:00 (1 s) and on the first
     story shot after the intro (2.5 s), to black on the last intro cut (1.5 s) and on the film's last shot
-    (3 s, at most the shot - 7 f). Only a missing / shorter fade is set, then read back. -> report line."""
+    (3 s, at most the shot - 7 f); the same fades on each one's A1 sound. Only a missing / shorter fade is set,
+    then read back. -> report line."""
     fps=s.plan["fps"]; t0=int(s.tl.GetStartFrame()); f=lambda x:round(x*fps)
     v=sorted(s.bounds("video",1),key=lambda i:int(i.GetStart()))
     if not v: return "black fades: V1 empty"
@@ -258,6 +317,9 @@ def black_fades(s):
     want.append((v[-1],0,min(f(3.0),int(v[-1].GetEnd())-int(v[-1].GetStart())-7)))
     k=next((j for j,i in enumerate(v) if int(i.GetStart())==t0+hook_window(s.plan)[1]),0)
     if k: want+=[(v[k-1],0,f(1.5)),(v[k],f(2.5),0)]  # intro on the timeline: dip to black into the story
+    # A1 (user 2026-11-06): each faded shot's own sound fades with its picture (retimed intro cuts have no A1).
+    a1={(int(i.GetStart()),int(i.GetEnd())):i for i in s.bounds("audio",SHOT_A)}
+    want+=[(a1[key],fi,fo) for it,fi,fo in list(want) if (key:=(int(it.GetStart()),int(it.GetEnd()))) in a1]
     fixed,bad=0,[]
     for it,fi,fo in want:
         g=it.GetFades() or {}
@@ -299,47 +361,53 @@ def apply(video,stage,resolve=None,rehook=False):
             if stage=="shots":
                 voice_receipt=prod(video)/"voice_receipt.json"
                 if not voice_receipt.exists(): raise Stop("Place and verify A2 before placing generated shots")
-                for op in voice_operations(video,s.plan):
-                    if s.classify(op)!="already_present": raise Stop("A2 is incomplete; resume the voice stage first")
+                vops=voice_operations(video,s.plan); vsnap=s.snap(vops)
+                for op in vops:
+                    if s.classify(op,vsnap)!="already_present": raise Stop("A2 is incomplete; resume the voice stage first")
             key=lambda it:(int(it.GetStart()),int(it.GetEnd()),norm(item_path(it)))
             stale=stale_intro(s,video,ops) if rehook and s.tl else []
             gone={key(it) for it in stale}
             # Detect every overlap before changing any bin/track/timeline (stale intro items are replaced below).
-            todo=[] if stale else [op for op in ops if s.classify(op)=="add"]
+            snap=s.snap(ops)
+            todo=[] if stale else [op for op in ops if s.classify(op,snap)=="add"]
             if s.tl:
-                for kind,track in set((op["kind"],op["track"]) for op in ops):
+                for kind,track in snap:
                     expected={(int(s.tl.GetStartFrame())+op["start_f"],int(s.tl.GetStartFrame())+op["end_f"],norm(op["path"]))
                               for op in ops if (op["kind"],op["track"])==(kind,track)}
-                    for item in s.bounds(kind,track):
-                        if key(item) not in expected and key(item) not in gone:
+                    for row in snap[kind,track]:
+                        if row[:3] not in expected and row[:3] not in gone:
                             raise Stop(f"Unexpected existing item on {kind} {track}; preserve it and inspect this project before assembly")
             s.prepare()
             backup=s.backup(stage) if todo or stale else None
             if stale:  # the old intro this engine placed; the backup above is the way back
                 if not s.tl.DeleteClips(stale,False): raise Stop(f"Could not remove the old intro items; backup {backup}")
-                todo=[op for op in ops if s.classify(op)=="add"]
+                snap=s.snap(ops)
+                todo=[op for op in ops if s.classify(op,snap)=="add"]
             journal=prod(video)/f"{stage}_journal.json"
             progress={"status":"WRITING","backup":backup,"plan_hash":object_hash(s.plan),"completed":[]}
             write_json(journal,progress)
-            for op in todo:
-                progress["pending"]={"label":op["label"],"kind":op["kind"],"start_f":op["start_f"],"end_f":op["end_f"]}
-                write_json(journal,progress)
-                item=s.append(op)
-                if op["kind"]=="audio" and op["track"]==SHOT_A:
-                    if not item.SetProperty("AudioVolume",float(config().get("audio",{}).get("shot_db",-12))):
-                        raise Stop("Could not set A1 gain; listen and correct before continuing")
-                progress["completed"].append(op["label"]+":"+op["kind"])
-                progress.pop("pending",None)
-                write_json(journal,progress)
+            s.preload(todo)  # every missing file in one ImportMedia per bin
+            # Retimed intro cuts first, one by one: each needs free room past its end until it is sped up.
+            for op in [o for o in todo if float(o.get("speed",1.0))!=1.0]:
+                progress["pending"]=[op["label"]+":"+op["kind"]]; write_json(journal,progress)
+                s.append(op)
+                progress["completed"]+=progress.pop("pending"); write_json(journal,progress)
+            s.append_many([o for o in todo if float(o.get("speed",1.0))==1.0],progress,journal)
+            snap=s.snap(ops)  # fresh read = the truth for verify, gain and link
             for op in ops:
-                if s.classify(op)!="already_present": raise Stop(f"Post-write verification failed: {op['label']}")
+                if s.classify(op,snap)!="already_present": raise Stop(f"Post-write verification failed: {op['label']}")
+            at={kt:{r[0]:r[4] for r in rows} for kt,rows in snap.items()}
+            db=float(config().get("audio",{}).get("shot_db",-12))
+            for op in todo:
+                if op["kind"]=="audio" and op["track"]==SHOT_A and not at["audio",SHOT_A][s.t0+op["start_f"]].SetProperty("AudioVolume",db):
+                    raise Stop("Could not set A1 gain; listen and correct before continuing")
             if stage=="shots":
-                for op in ops:  # every V1 op that has its A1 twin (retimed intro cuts are muted: no A1)
-                    if op["kind"]!="video" or not any(o["label"]==op["label"] and o["kind"]=="audio" for o in ops): continue
+                twins={op["label"] for op in ops if op["kind"]=="audio"}  # retimed intro cuts are muted: no A1
+                for op in ops:
+                    if op["kind"]!="video" or op["label"] not in twins: continue
                     a=s.t0+op["start_f"]
-                    v=next(t for t in s.bounds("video",1) if int(t.GetStart())==a)
-                    au=next(t for t in s.bounds("audio",SHOT_A) if int(t.GetStart())==a)
-                    if not s.tl.SetClipsLinked([v,au],True): raise Stop(f"Could not link V1/A1: {op['label']}")
+                    if not s.tl.SetClipsLinked([at["video",1][a],at["audio",SHOT_A][a]],True):
+                        raise Stop(f"Could not link V1/A1: {op['label']}")
             subs=s.subtitles() if stage=="voice" else None
             fades=black_fades(s) if stage=="shots" else None
             if not s.pm.SaveProject(): raise Stop("Resolve project could not be saved")
@@ -415,7 +483,9 @@ def live_check(session):
     cursor=t0; rows=[]; matched=0
     for item in video:
         a,b=int(item.GetStart()),int(item.GetEnd())
-        if a!=cursor: raise Stop(f"V1 gap/overlap at frame {cursor-t0} after manual edit")
+        gap=intro_gap_f(s.plan)  # the planned black before story 1 is the one allowed V1 gap
+        if a!=cursor and not (gap and cursor==window-gap and a==window):
+            raise Stop(f"V1 gap/overlap at frame {cursor-t0} after manual edit")
         x,y=(intro["cut_min_s"],intro["cut_max_s"]) if b<=window else (lo,hi)
         if not math.floor(x*fps+1e-6)<=b-a<=math.ceil(y*fps-1e-6):
             raise Stop(f"V1 {'intro cut' if b<=window else 'shot'} at {a-t0} is outside {x:g}–{y:g} seconds (one-frame quantization allowed)")
@@ -520,9 +590,20 @@ def a3_beds(video,plan,intro,wind=None,beds=None,birds=None):
         ops.append({"label":f"Bed {sc['id']}","kind":"audio","track":BED_A if k%2==0 else BED_A+1,"bin":BED_BIN,
                     "path":path,"source_fps":fps,"start_f":a0,"end_f":b0,"source_start_s":0,"db":"wind_db",
                     "fade_in_s":a.get("wind_fade_in_s",fade) if first else xf,"fade_out_s":fade if last else xf})
+    p=frames(a.get("prelap_s",0),fps)
+    if p and scenes:  # 1h pre-lap (user 2026-11-06): story 1's wind on A5 bridges the black gap, intro -> story
+        a0,b0=max(0,cut-intro_gap_f(plan)-p),cut+p
+        src=(beds or {}).get(scenes[0]["id"]) or wind
+        path=bed_file(video,src,(b0-a0)/fps,fps)
+        tail=max(0.0,probe(path)["duration"]-(b0-a0)/fps-0.1)  # the file's end: not the same sound A3 starts with
+        ops.append({"label":f"Prelap {scenes[0]['id']}","kind":"audio","track":BIRD_A,"bin":BED_BIN,"path":path,
+                    "source_fps":fps,"start_f":a0,"end_f":b0,"source_start_s":round(tail,3),"db":"wind_db",
+                    "fade_in_s":a.get("prelap_s"),"fade_out_s":a.get("prelap_s")})
     slots={str(s["prompt_id"]):s for s in plan["slots"] if s["prompt_id"] and s["start_f"]>=cut}
     unknown=set(birds or {})-set(slots)
     if unknown: raise Stop(f"Birds for unknown / hook shots: {sorted(unknown)}")
+    early=[i for i in birds or {} if p and scenes and slots[i]["start_f"]<cut+p]
+    if early: raise Stop(f"Birds on {early} overlap the A5 pre-lap into story 1; pick later calm shots")
     for i,src in sorted((birds or {}).items(),key=lambda kv:slots[kv[0]]["start_f"]):
         sh=slots[i]
         ops.append({"label":f"Birds {i}","kind":"audio","track":BIRD_A,"bin":BED_BIN,

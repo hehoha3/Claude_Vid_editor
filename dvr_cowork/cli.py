@@ -454,7 +454,7 @@ def build_parser():
 
 
 # One CLI (user 2026-11-05): `python -m dvr_cowork <group> ...` runs the sub-tool, everything else is a Resolve tool.
-GROUPS = {"ai": ".fullai.cli", "profile": ".profile", "youtube": ".youtube", "jobs": ".jobs"}
+GROUPS = {"ai": ".fullai.cli", "profile": ".profile", "youtube": ".youtube", "jobs": ".jobs", "coldopen": ".coldopen"}
 
 
 def main(argv=None):

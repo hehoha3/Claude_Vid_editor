@@ -1,6 +1,9 @@
 # Missing footage prompts: `/doc-edit missing-prompts` (shot director V3, user 2026-11-05)
 
-Needs plan.json (SKILL.md B3). The user generates the clips; nothing is generated, imported or placed here.
+Needs plan.json after the intro fit (new-video.md C). The user generates the clips; nothing is generated, imported or
+placed here. **Footage+AI (user 2026-11-05): prompts only for the THIẾU slots of the intro + story 1** (0:00 -> story 2;
+`missing.py` does that by default, `--range=A-B` / `--all` on request); the body after story 1 is filled by plan.py,
+and there are **no WEAK prompts** (an intro WEAK pick is THIẾU in plan.py and gets its prompt as THIẾU).
 In a new-video run (`/doc-edit <audios-folder>`) brief.md (the screenplay) is already in context: use it, never
 re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply below).
 Output (user 2026-11-05): **`<video>/missing-prompt.csv`**, the 19-column missing-scenes schema
@@ -23,10 +26,9 @@ locks.
   beyond the slots: the group's longest slot, no timecode).
 
 ## Steps (1h-footage+AI)
-1. `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <video>`: THIẾU groups `G<n>` and WEAK groups `W<n>`
-   (always both, user 2026-10-27; character + main action, or setting + light), slots, seconds, suggested clip count
-   (= the number of slots: one prompt per slot, user 2026-10-17; = the budget; a WEAK prompt asks for what the
-   picked clip lacks: the sex / age shown, the act, the framing), the
+1. `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/missing.py <key>` (the work key, the video folder or its
+   audios folder): THIẾU groups `G<n>` (character + main action, or setting + light), slots, seconds, suggested clip
+   count (= the number of slots: one prompt per slot, user 2026-10-17; = the budget), the
    story sentences (`## n`), `others there` (the other characters' footage status in those sentences), `truth`
    (sex / age / out of its slots) and `refused in library` (what plan.py's story rules turned down). The `at` line
    lists each slot's start: slot k = prompt k, its length decides the beat count.
@@ -45,16 +47,13 @@ locks.
    - **Shot roles**: `predator_burst` `prey_escape` `relationship_wide` `reaction` `obstacle` `reacquisition`
      `aftermath` `environmental_speed`; outside chases `action` `establishing` `detail`. Each prompt adds a role,
      angle or information the others lack; never 10 prompts that differ by one adjective.
-3. **Claude writes every prompt, never Gemini** (user 2026-11-02). Hundreds of slots: a bank generator
-   `.work/scripts/gen_prompts_<video>.py` (model: `gen_prompts_africa021126.py`; its beats are now untimed `- ` lines);
-   per group a bank = species-specific openers that name the truth (sex / age / count) + the act family's middle /
-   end beats (own beats where the family does not fit, e.g. birds have no ears), the screenplay's places and light,
-   one travel axis per chase (`vecs=`); combined so no two prompts of a group repeat; `--thieu` = only the G groups.
-   Check the banks against step 2: truth (no outcome the story lacks: KILL words like "catching the light" trip the
-   gate), event and coverage (`others there`), a different role / framing / angle per clip, vector = where the animal
-   travels (still = `static`, no direction on rises / reaches), place + light the same as the scene (dusk:
-   the animal still clearly lit), biology, relationship_wide max one; spot-read a few rendered prompts per family.
-   Format of `.work/doc_edit/<video>/prompts.txt` (overwrite): `## G<n>` / `## W<n>` (or `## +<species>` extra group),
+3. **Claude writes every prompt by hand, never Gemini, never a bank generator** (user 2026-11-02 / 2026-11-05: the
+   intro + story 1 hold ~20-60 THIẾU slots; each prompt is written for its slot, which reads better than a combined
+   bank). Check each against step 2: truth (no outcome the story lacks), event and coverage (`others there`), a
+   different role / framing / angle per clip, vector = where the animal travels (still = `static`, no direction on
+   rises / reaches), place + light the same as the scene (dusk: the animal still clearly lit), biology,
+   relationship_wide max one. Eating = "feeds / chews / tears at the grass" (a "bite" trips the contact gate).
+   Format of `.work/doc_edit/<key>/prompts.txt` (overwrite): `## G<n>` (or `## +<species>` extra group),
    then per clip a line `<role> <vector> | <camera> | <place> | <light>` and its beats as `- ` lines (untimed; the
    script times them to `dur_s`). **Beats per clip by `dur_s`**: under 5 s exactly one clean readable beat; 5–7.5 s
    one main beat + at most one secondary reaction; 8 s and longer up to four (timed by the script across the clip).
@@ -118,10 +117,10 @@ locks.
 4. `missing.py <video> --check`: QC gates (role/vector valid and stated, no contradicting direction, no direction on
    a still action, no reversal/orbit/slow motion, biome words, biology, species named, contact / stare / pose words,
    beats per `dur_s`, near-duplicates, budget) + a preview of roles per group. Fix every error in prompts.txt, re-run.
-5. `missing.py <video> --write` (re-runs the gates, refuses on errors) -> `<video>/missing-prompt.csv`: THIEU rows,
-   extras, then WEAK; `shot_id` `G2-S014` (group + slot) or `G2-X3` (extra), `cluster` = group, `tc_in`/`tc_out` =
-   the slot, `dur_s`, `kind=ai_generated`, `mo_ta` = the slot's need (Vietnamese), `reason` = THIẾU / WEAK and what
-   the library refused. stdout gives the save folder per group (= species name for tag-source): put them in the
+5. `missing.py <key> --write` (re-runs the gates, refuses on errors) -> `<video>/missing-prompt.csv`: THIẾU rows,
+   then extras; `shot_id` `G2-S014` (group + slot) or `G2-X3` (extra), `cluster` = group, `tc_in`/`tc_out` =
+   the slot, `dur_s`, `kind=ai_generated`, `mo_ta` = the slot's need (Vietnamese), `reason` = THIẾU (library empty,
+   or an intro WEAK pick) and what the library refused. stdout gives the save folder per group (= species name for tag-source): put them in the
    reply, never in the file. Videos planned before 2026-11-05 keep their `missing_prompts.txt`.
 
 Reply: path, prompt count, per character roles (e.g. "báo: 3 predator_burst, 1 reaction"), skipped coverage and

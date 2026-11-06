@@ -11,7 +11,7 @@ import re
 
 # Contact verbs (a keyword gate, not proof: QC still views the frames).
 CONTACT = re.compile(r"\b(?:bit(?:e|es|ing|ten)|gor(?:e|es|ed|ing)|ram(?:s|med|ming)|headbutt\w*|tackl\w+|"
-                     r"grab(?:s|bed|bing)?|seiz(?:e|es|ed|ing)|pins? (?:it|him|her|them|down)|pinned|shov(?:e|es|ed|ing)|"
+                     r"grab(?:s|bed|bing)?|seiz(?:e|es|ed|ing)|pins? (?:it|him|her|them|down)|(?<!ears )(?<!ear )pinned(?! back)|shov(?:e|es|ed|ing)|"
                      r"knock(?:s|ed)? (?:down|over|into)|kill(?:s|ed|ing)?|wound(?:s|ed)?|blood(?:y)?|"
                      r"makes? contact|jaws (?:close|clamp)\w*|claws? (?:rake|sink|into)\w*|horns (?:meet|lock|clash)\w*|"
                      r"collid\w+|wrestl\w+|grappl\w+|drags? (?:it|him|her|the (?:prey|carcass|body))|"
@@ -19,8 +19,9 @@ CONTACT = re.compile(r"\b(?:bit(?:e|es|ing|ten)|gor(?:e|es|ed|ing)|ram(?:s|med|m
 # Silent stare-downs: two animals frozen, looking at each other.
 STARE = re.compile(r"\b(?:star(?:e|es|ing)|gaz(?:e|es|ing)|look(?:s|ing)?|glar(?:e|es|ing)) at each other\b|"
                    r"\blocks? eyes\b|\beyes lock(?:ed)?\b|\bface to face\b|\bstare-?down\b|\bstand-?off\b", re.I)
-# Words that make a pose instead of motion ("slow" stays allowed here: sloths, slow push-in camera moves).
-CALM = re.compile(r"\b(?:still(?:ness)?|motionless|gentl[ey]|calm(?:ly)?|paus(?:e|es|ing)|wait(?:s|ing)?|"
+# Words that make a pose instead of motion ("slow" stays allowed here: sloths, slow push-in camera moves). The
+# adverb "still" ("the animal still clearly lit", 2026-11-05: 68 false errors) is not a pose: only "stands still" etc.
+CALM = re.compile(r"\b(?:stillness|(?:stand|stay|hold|keep|remain|lie|sit|freez|stood|kept)\w*\s+(?:very\s+|perfectly\s+)?still|motionless|gentl[ey]|calm(?:ly)?|paus(?:e|es|ing)|wait(?:s|ing)?|"
                   r"rest(?:s|ing)?|settl(?:e|es|ing)|idle|freez(?:e|es|ing)|frozen|pos(?:e|es|ing)|"
                   r"stands? (?:still|watching)|small movement)\b", re.I)
 NEG = re.compile(r"\b(?:no|not|never|without|avoid)\b[^,.;]*", re.I)  # "no standing still" is a request, not a pose
@@ -34,6 +35,22 @@ COLUMNS = ("shot_id,cluster,tc_in,tc_out,dur_s,kind,animal,action,environment,ti
            "direction,position,keep_whole,mo_ta,search_keywords,generation_prompt,reason").split(",")
 SIZES = re.compile(r"\b(extreme wide|very wide|wide|establishing|medium[- ]long|medium|close[- ]up|extreme close[- ]up|"
                    r"detail|aerial|top-down)\b", re.I)
+
+
+# Header of every 1h / cold-open prompt (input/SKILL.md formula): the clip's own length, camera, place, light.
+HEAD = ("Cinematic wildlife documentary, ultra-photorealistic 4K, {s}single continuous shot, 16:9, shot on {cam}, "
+        "{place}, {light}.")
+
+
+def render(cam, place, light, beats, d=None):
+    """Full prompt of one clip d seconds long (None: no number): header, beats (3+ beats on a known length are timed
+    across the whole clip, no static hold), the shared TAIL."""
+    head = HEAD.format(s=f"{d:g}-second " if d else "", cam=cam, place=place, light=light)
+    beats = [b.rstrip(". ") + "." for b in beats]
+    if d and len(beats) >= 3:
+        ticks = [round(x * d * 2) / 2 for x in ([0, .3, .7, 1] if len(beats) == 3 else [0, .2, .5, .7, 1])]
+        beats = [f"{ticks[i]:g}-{ticks[i + 1]:g}s: {b}" for i, b in enumerate(beats)]
+    return " ".join([head] + beats + [TAIL])
 
 
 def dur_s(seconds):

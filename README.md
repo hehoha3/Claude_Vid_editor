@@ -261,7 +261,13 @@ Claude hỏi loại video + vùng (nếu bạn chưa nói), tìm video đang hot
 | 2 | `/scan-source /tag-source và tiếp` | Xem clip mới, xếp vào kho, lấp vào chỗ THIẾU. Rồi dừng | Xem phim trong Resolve, nói chỗ cần sửa |
 | 3 | `/doc-edit color n done` | Chỉnh màu, viết tiêu đề / mô tả / tags, xuất file phim `Done_<video>.mp4`, đăng YouTube riêng tư | Vào YouTube Studio: thumbnail, công khai / hẹn giờ |
 
-Không muốn tạo clip nữa mà muốn lấp chỗ THIẾU bằng footage có sẵn: gõ `/doc-edit fill-THIEU <video>`.
+Câu lệnh tạo clip chỉ dành cho phần intro + story 1 (các phần sau tự lấp bằng footage có sẵn). Không muốn tạo clip
+nữa mà muốn lấp nốt chỗ THIẾU bằng footage có sẵn: gõ `/doc-edit fill-THIEU <video>`.
+
+**Cold open 0:00–0:12 (mọi phim footage+AI 1-3h mới; phim full-AI 8-15p vẫn mở bằng hook 30 s từ 0:00):** màn hình đen + tiếng dây đàn rít lên → cú impact, rồi một tình
+huống căng thẳng nhất của story 1 (rình mồi, săn mồi, gặp nguy hiểm; luôn là clip full-AI, cận mắt / mặt con vật
+trước). Claude tự chọn đoạn đó và viết câu lệnh vào `coldopen-prompt.csv` ngay lần `/doc-edit` đầu tiên; bạn tạo clip, lưu vào `<video>\coldopen\ (1.mp4, 2.mp4...)`, gõ lại
+lệnh đó để Claude đặt lên timeline.
 
 ### 5.2 Video full-AI (8–15 phút): 3 lần gõ
 

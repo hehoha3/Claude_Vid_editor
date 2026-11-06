@@ -19,6 +19,13 @@ def channel_of(path) -> str | None:
     return f"Chann_{m[1]}" if m else None
 
 
+def day_project(name: str) -> str:
+    """<region>_DDMMYY_N (or its work key <video>__Chann_N) -> the day project vid_DDMMYY_N that holds every channel's
+    film of that day (user 2026-11-05); any other name, vid_DDMMYY_N included, stays itself."""
+    m = re.fullmatch(r"[a-z]+_(\d{6}(?:_\d+)?)", str(name).split(SEP)[0], re.I)
+    return f"vid_{m[1]}" if m else str(name).split(SEP)[0]
+
+
 def homes(name: str, globs=None) -> list[Path]:
     """Every folder <workspace>/<name> or <workspace>/_done/<name> (case-insensitive)."""
     if globs is None:

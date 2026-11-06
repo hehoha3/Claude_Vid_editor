@@ -73,7 +73,8 @@ amazon) and runtime in minutes (1h = 60, 3h = 180, 30p = 30); ask if any is uncl
 channel of the call gets the same n, user 2026-11-02: `africa_051126_1` in Chann_1 and Chann_2; one film per channel
 per call), then the same with `--apply` (creates `<video>\audios` + `.work\doc_edit\<key>`, prints OK; a name shared
 by 2+ channels -> `<key>` = `<video>__Chann_N`, which doc-edit's `video_key` finds).
-Set `target: <minutes>` in the source header. Several films = write them one after another, each through steps 1–6,
+Set `target: <minutes>` and `first_onset: 12.6` in the source header (user 2026-11-06: the narrator waits for the
+cold open). Several films = write them one after another, each through steps 1–6,
 then one review stop (step 7) with a summary per film. For every film:
 1. Read [storycraft.md](references/storycraft.md) and production.md. Format (user 2026-11-03; not given -> ask):
    **(1) central question** (3–5 stories, each answers a part) or **(2) multi-story** (3–5 stories, linked or not, each
@@ -102,7 +103,7 @@ then one review stop (step 7) with a summary per film. For every film:
 
    ```
    **<video>** · Chann_<n> · <type> · <target> min — <title>
-   Intro 00:00–01:30: 2–3 lines (what is seen + the hook)
+   Cold open 00:00–00:12: story 1's tense moment, mm:ss (doc-edit makes it) · Intro 00:12–01:30: 2–3 lines (what is seen + the hook)
    Story 1 (mm:ss–mm:ss): 3–5 short beat lines (who, what happens, first attack at mm:ss, outcome)
    Sau đó: Story 2 <name> · Story 3 <name> · … · <lines> dòng (= mp3) · voice <x> % · MUST/PENDING: …
    File: [Screenplay](…) · [transcript](…) · [Timestamp](…) · [Visual_Edit_Plan](…)
@@ -122,11 +123,14 @@ line/word count, voice share, MUST / PENDING scenes, planned vs conformed.
 
 - Narrator ≈ 150 wpm (measured). Channel films: 2,850–3,450 words / 60 min ≈ 35–40 % voice; the validator warns
   under 55 % — state the share, the cut map carries the rest. Only use timing-and-voice.md if the user wants another density.
-- Intro 00:00–01:30: 00:00–00:15 gentle shots of place and animals moving in routine **under soft music** (the intro
-  track, low, no drums); 00:15–01:15 the drum rises, cuts on the beat grid, action teasers at 136–150 % (first 5 and
-  last 2 intro shots calm) using other frames than their story shots, no kill; 01:15–01:30 breath. Fade from black on
-  the first shot, to black on the last intro shot, 0.6 s black slug, Story 1's first shot fades in. `/doc-edit intro`
-  fits the real track later.
+- Cold open + intro (user 2026-11-06): **00:00–00:12 cold open**, no narrator: black, a string riser into an impact
+  (~0:01), then full-AI shots of story 1's most tense moment (a stalk, a hunt, a danger closing in; an eye / face close-up first; prey: its fear
+  -> the danger; predator: the hard stare -> the prey -> teeth / hungry face). The source writes it as scene `0.0 |
+  00:00 | 00:12 | Cold open` with no `>` line and one shot `- * | ECU | COLD OPEN — story 1's tense moment, full-AI (doc-edit) |
+  impact | the hook before a word |`; doc-edit builds it in full-AI; the source names the moment in the scene's `see:`. **00:12–01:15** the strong intro
+  track (it started on the impact) under action teasers at 136–150 % (last 2 intro shots calm), other frames than
+  their story shots, no kill, the narrator from 00:12.6; **01:15–01:30** breath; the music ends with the intro. To
+  black on the last intro shot, 0.6 s black slug, Story 1's first shot fades in. doc-edit fits the real track later.
 - Ending: last line ends by ~59:32; ~8 s silent final wide; 59:40–60:00 end-screen zone of moving shots, fade out.
 - Other runtimes scale from the end: last line by target − 0:28 (`vend:`), end screen the last 20 s; words scale
   with minutes (30 min ≈ 1,425–1,725 words, 2–3 stories). Intro stays 00:00–01:30.

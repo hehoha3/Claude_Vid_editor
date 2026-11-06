@@ -1,5 +1,8 @@
 # Place and fill (`/doc-edit place`, `/doc-edit fill`, `ingest --fill`)
 
+Body after story 1 (user 2026-11-05): plan.py fills its THIẾU slots on every run with the `--sub-all` +
+`--sub-broad` tiers (FALLBACK, cyan; `--no-body-sub` = off), so place / fill leave no red marker there; the flags
+below matter for the intro + story 1.
 Fill notes: `--late-sub --late-sub-t=490` = THIẾU slots from 8:10 on get the closest substitute (same species >
 companion > forest scenery; 60 s apart, max 4 uses; FALLBACK "late substitute"); `--sub-all` = every THIẾU slot.
 Before placing, name the slots that fell through to scenery. `pin=none` lines stay THIẾU: drop them from the spec once
@@ -19,7 +22,7 @@ alternative clips per slot (THIẾU slots too; plan.py `ALTS`) into bins 1-3, ne
 (`alternatives in bins 1-3: N` line).
 Backs up "Edit" (`Edit_bak_place_<stamp>`), imports used files into video bins by what the clip shows (user
 2026-10-22, real and AI alike): tag action attack / hunt / fight -> `2. Attack_roll`, run -> `3. Run_roll` (attack wins),
-everything else -> `1. Other_roll` (untagged: words in folder / file name, e.g. `Chạy`); every clip of the intro (0:00 -> story 1) -> the channel's `7. Open` instead (user 2026-11-05; plan.py reads that
+everything else -> `1. Other_roll` (untagged: words in folder / file name, e.g. `Chạy`); every clip of the intro (0:00 -> story 1) -> the channel's `7. Open` instead (user 2026-11-05; listed in `.work/doc_edit/<key>/open_placed.txt` so plan.py gives them no priority; plan.py reads that
 bin for the intro + story 1 from the first plan on, day project `vid_DDMMYY[_N]` included); `place.py --rebin` re-sorts the
 clips already in those three bins (media pool only, timeline untouched); 4. Audio/Ambience (A3-A6), /Music (A7, the intro music too), /SFX (A8-A9) (a file already anywhere in 4. Audio is reused), places
 V1 frame-exact (WEAK yellow) + A3-A9 (A1 stays empty, user 2026-11-05) (crossfades, fades, starting Clip Volume), markers: red

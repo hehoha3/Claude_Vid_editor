@@ -17,6 +17,9 @@ beauty`. Each story's truth goes into the spec as filter tokens (machine-checked
   filter only when the refusal was wrong, never loosen it to fill the slot.
 
 ## Shots
+- Cold open (user 2026-11-06, films whose narration starts at 0:12.6): plan.py reserves 0:00 -> sentence 1 as one GFX
+  slot `COLD OPEN` (black + riser -> impact on A9, then full-AI cuts of story 1's most tense moment, `references/coldopen.md`); the
+  intro music starts on the hit; ## 1 (the teaser) starts at 0:12.6 and needs no landscape opener. Older films:
 - Opener (user 2026-10-25): the narrator starts at 0:03.6; plan.py puts one epic, cinematic shot on 0:00 -> sentence 1
   by itself (landscape, sunrise / sun, wide sky: default filter `sp=none size=wide,aerial`), and ## 1's beds / music
   start under it. Rarely, when the screenplay opens on a character: `# OPENER Cận mắt báo đốm | real | sp=jaguar

@@ -7,6 +7,11 @@ source_end = "exclusive"
 # script_api = 'C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting'
 # script_lib = 'C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionscript.dll'
 
+[intro]
+# V1 left empty between the intro's last cut (fades to black 1.5 s) and story 1 (fades in 2.5 s), as the 1h films
+# (plan.py GAP_BLACK, user 2026-11-06). Taken from the hook window's end: story and narrator timing unchanged.
+gap_black_s = 0.6
+
 [audio]
 shot_db = -12.0
 music_db = -24.0
@@ -19,6 +24,9 @@ fade_s = 2
 wind_fade_in_s = 4
 # A3/A4 scene beds overlap by this much and crossfade (1h beds: 4 s).
 bed_crossfade_s = 4
+# A5 pre-lap (1h PRELAP, user 2026-11-06): story 1's wind rises this long before the black gap and runs this long
+# into the story, fading in / out over the same span; 0 = off.
+prelap_s = 4
 
 [prompts]
 # Clip length = each slot's next half second (6 s -> 6.5, 8.7 -> 9.0; prompt_rules.dur_s), beats at 20/50/70 %.

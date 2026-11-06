@@ -157,13 +157,13 @@ def audio_events(slots, end):
     for s in slots:
         for e in s["audio"]:
             tr = 3 if e["track"] in (3, 4) else e["track"]
-            if tr in (3, 5, 7):
-                spans[tr].append((s["start"], e.get("path") if e.get("status") == "OK" else None))
+            if tr in (3, 5, 7):  # 'at': the intro music starts on the cold open's impact (2026-11-06)
+                spans[tr].append((s["start"] + e.get("at", 0.0), e.get("path") if e.get("status") == "OK" else None))
             elif e.get("status") == "OK":
                 # A6 = its slot; A8/A9 hits ring at most SFX_TAIL into the next shot (a 104 s water file once ran
-                # from 12:34 to 14:19 over three other scenes)
+                # from 12:34 to 14:19 over three other scenes); the cold open's impact: its riser from src_in, own fades
                 ln = min(e["dur"], s["dur"] + (SFX_TAIL if tr in (8, 9) else 0))
-                out.append([tr, s["start"], ln, e["path"], 0.0])
+                out.append([tr, s["start"], ln, e["path"], e.get("src_in", 0.0)] + ([tuple(e["fades"])] if e.get("fades") else []))
     i = 0  # bed piece counter, global so a bed change lands on the other track
     last_bird = [None]
     for tr, ch in spans.items():
@@ -249,7 +249,7 @@ def edge_fade(a, b, d, fi, fo, end, fps):
 def edge_fades(tl, t0, fps, end):
     """edge_fade() on V1, A1, A3-A9 (A2: the narrator's first / last word stay whole). end = video end frame. -> set."""
     n = 0
-    for kind, k in [("video", 1)] + [("audio", k) for k in range(1, int(tl.GetTrackCount("audio") or 0) + 1) if k != 2]:
+    for kind, k in [("video", 1)] + [("audio", k) for k in range(1, int(tl.GetTrackCount("audio") or 0) + 1) if k not in (2, 9)]:
         for ti in tl.GetItemListInTrack(kind, k) or []:
             old = ti.GetFades() or {}
             fi, fo = int(old.get("FadeIn", 0)), int(old.get("FadeOut", 0))
@@ -283,7 +283,7 @@ def black_fades(video):
         v = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: int(i.GetStart()))
         slot = {f(s["start"]): s for s in plan["slots"]}
         k = sum(int(i.GetStart()) - t0 < f(plan.get("intro", 0)) - 1 for i in v)  # intro items before story 1
-        want = [(0, f(EDGE_IN), 0), (len(v) - 1, 0, min(f(EDGE_OUT), int(v[-1].GetDuration()) - 7))] if v else []
+        want = ([(0, f(EDGE_IN), 0)] if v and int(v[0].GetStart()) == t0 else [])             + ([(len(v) - 1, 0, min(f(EDGE_OUT), int(v[-1].GetDuration()) - 7))] if v else [])  # cold open: hard cut on the hit
         if 0 < k < len(v):
             want += [(k - 1, 0, f(slot.get(int(v[k - 1].GetStart()) - t0, {}).get("fade_out") or 1.5)),
                      (k, f(slot.get(int(v[k].GetStart()) - t0, {}).get("fade_in") or 2.5), 0)]
@@ -342,6 +342,16 @@ def prelap(tl, mp, t0, fps, body):
 def intro_end(plan):
     """Where the body begins: story 1's first shot, or the intro end when that shot was pulled under it (s)."""
     return max(plan["intro"], next((s["start"] for s in plan["slots"] if not s.get("intro")), plan["intro"]))
+
+
+OPEN_PLACED = "open_placed.txt"  # .work/doc_edit/<key>/: clips place.py put into "7. Open" (one lower-case path a line)
+
+
+def mark_open_placed(work, paths):
+    """Add these clips to the work folder's open_placed.txt (kept across runs; plan.py subtracts them)."""
+    f = work / OPEN_PLACED
+    old = set(f.read_text("utf-8").split("\n")) if f.exists() else set()
+    f.write_text("\n".join(sorted((old | {str(Path(p)).lower() for p in paths}) - {""})) + "\n", "utf-8")
 
 
 def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio_only=False, fill=False, until=1e9,
@@ -450,6 +460,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
                 items[_norm(it.GetClipProperty("File Path"))] = it
     n_alt = sum(1 for p in alt if items.get(_norm(p)))
     print(f"alternatives in bins 1-3: {n_alt}/{len(alt)} (not placed)")
+    if need.get(OPEN_BIN):  # user 2026-11-05: clips place.py files into "7. Open" are not the user's own opening
+        mark_open_placed(work, need[OPEN_BIN])  # clips: plan.py open_bin() gives them no priority
 
     failed = []
 
@@ -585,6 +597,11 @@ def selftest():
           "xf": 0.08, "fade": 1.5}  # intro.py: 20 s cut out of a 112 s track, 2 s tail off
     ip = [e for e in audio_events([S(0, 90, [im])], 90.0) if e[0] == 7]
     assert [(e[1], e[2], e[4], e[5]) for e in ip] == [(0, 40, 0, (0.0, 0.08)), (40, 50, 60, (0.08, 1.5))], ip
+    # 2026-11-06 cold open: the music starts on the hit (at), the impact rides A9 from 0:00 from its riser's src_in
+    imp = {"track": 9, "kw": ["impact"], "status": "OK", "path": "imp", "dur": 5.0, "src_in": 0.84, "fades": [0.08, 0.5]}
+    ce = audio_events([S(0, 12.6, [dict(im, dur=89.0, at=1.0), imp]), S(12.6, 77.4, [])], 90.0)
+    assert [e for e in ce if e[0] == 9] == [[9, 0, 5.0, "imp", 0.84, (0.08, 0.5)]], ce
+    assert min(e[1] for e in ce if e[0] == 7) == 1.0
     assert free([(0, 10), (20, 30)], 10, 20) and not free([(0, 10)], 9, 12) and free([], 0, 5)  # --fill gaps
     assert kind_of("x", ["run", "hunt"]) == "attack" and kind_of("x", ["run"]) == "run" and kind_of("x", ["walk"]) == "other"
     assert kind_of(r"Z:\AI\Chạy\lion\a.mp4", []) == "run" and kind_of(r"D:\lion_hunts_zebra.mp4", []) == "attack"

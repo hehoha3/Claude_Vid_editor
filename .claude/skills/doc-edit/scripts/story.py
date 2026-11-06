@@ -66,6 +66,17 @@ def clock(t):
 
 
 # ------------------------------------------------------------------ brief
+# Visual-plan sections a beat sheet never needs (2026-11-05: brief.md was ~250 KB, 3 Reads per film)
+BRIEF_DROP = re.compile(r"track map|animal bible|production qa|clip sourcing|conform to the real")
+CUT_ROW = re.compile(r"\|\s*[^|]+\|\s*([\d:.]+)\s*\|")  # '| 0.1-01 | 00:00.0 | 00:05.0 | ...' -> its In
+
+
+def story2_start(screenplay):
+    """Start of story 2 from the screenplay's runtime map ('| Story 2 — ... | 14:00–26:30 |'), else None."""
+    m = re.search(r"^\|\s*Story\s*2\b[^|]*\|\s*([\d:.]+)\s*[–-]", screenplay, re.M | re.I)
+    return plan.parse_clock(m[1]) if m else None
+
+
 def brief(folder):
     folder = Path(folder)
     cues, vo, vmsg = plan.narration(folder, wait=False)
@@ -111,12 +122,18 @@ def brief(folder):
     if left:
         out += ["", f"## Sentences{' outside the screenplay beats' if beats else ''} (n start slot voice | text)"] + left
     if len(vp) == 1:
-        out += ["", "=" * 20 + f" {vp[0].name} (beat table left out: it repeats the screenplay beats)"]
-        skip = False
+        s2 = story2_start(sp[0].read_text("utf-8")) if len(sp) == 1 else None
+        out += ["", "=" * 20 + f" {vp[0].name} (left out: beat table, track map, 2nd animal bible, production QA, "
+                f"sourcing spec, conform steps" + (f"; cut-map rows from story 2 at {plan.tc(s2)} on" if s2 else "") + ")"]
+        skip, cutmap = False, False
         for raw in vp[0].read_text("utf-8").splitlines():
             s = raw.rstrip()
             if s.startswith("## "):
-                skip = "beat" in s.lower() and ("ledger" in s.lower() or "index" in s.lower() or "level" in s.lower())
+                low = s.lower()
+                skip = ("beat" in low and ("ledger" in low or "index" in low or "level" in low)) or bool(BRIEF_DROP.search(low))
+                cutmap = "cut map" in low and "every shot" in low
+            if cutmap and s2 is not None and (m := CUT_ROW.match(s)) and plan.parse_clock(m[1]) >= s2:
+                continue  # 2026-11-05: the body's per-shot rows repeat the screenplay; prompts + hand work = intro + story 1
             if not skip and (s or (out and out[-1])):
                 out.append(s)
     src = sum(len(p.read_text("utf-8")) for p in sp + vp + [x for x in folder.glob("*.md") if "timestamp" in x.name.lower()])
@@ -138,13 +155,29 @@ def parse_shot(s, n, cast):
     else:
         need, src, flt, aud = p[0], "any", (p[1] if len(p) > 1 else ""), (p[2] if len(p) > 2 else "")
     assert need and len(p) <= 4, f"beats line {n}: need 'shot | [src] | filter [| audio]'"
-    m = re.match(r"\[(\w+)\](?!\s*\[)", need)
-    if m and m[1] in cast:  # one tag: its cast tokens, unless the line has that key itself
-        have = {t.split("=")[0] for t in flt.split()}
-        flt = " ".join(flt.split() + [t for t in cast[m[1]] if t.split("=")[0] not in have])
+    flt = cast_tokens(need, flt, cast)
     plan.parse_filter(flt, n)
     plan.parse_audio(aud, n)
     return need, src, flt, aud
+
+
+def cast_tokens(need, flt, cast):
+    """A shot that starts with one [TAG] of a '# CAST' line gets its tokens, unless the line has that key itself."""
+    m = re.match(r"\[(\w+)\](?!\s*\[)", need)
+    if not (m and m[1] in cast):
+        return flt
+    have = {t.split("=")[0] for t in flt.split()}
+    return " ".join(flt.split() + [t for t in cast[m[1]] if t.split("=")[0] not in have])
+
+
+def cast_raw(line, cast):
+    """A raw spec shot line 'dur | need | src | filter [| audio]' gets the '# CAST' tokens too (2026-11-05: raw
+    intro lines had none, so the hook took male lions for lionesses and a cub for its mother)."""
+    p = line.split("|")
+    if len(p) < 4 or p[0].strip().startswith("#") or not re.fullmatch(r"[\d.*x]+(\s+same)?", p[0].strip()):
+        return line
+    p[3] = " " + cast_tokens(p[1].strip(), p[3].strip(), cast) + (" " if len(p) > 4 else "")
+    return "|".join(p)
 
 
 def read_beats(text):
@@ -217,7 +250,7 @@ def nat(flt):
 
 def expand(text, starts, vo, end=None):
     """beat sheet text, sentence starts, voice spans -> (spec text, summary dict)."""
-    items, _ = read_beats(text)
+    items, cast = read_beats(text)
     n = len(starts)
     beats = [x for x in items if isinstance(x, dict)]
     covered = {i for x in beats for i in range(x["a"], x["z"] + 1)}
@@ -243,7 +276,7 @@ def expand(text, starts, vo, end=None):
             continue
         b = it
         if b["emo"] == "raw":
-            out.extend(at(x) for x in b["raw"])
+            out.extend(at(cast_raw(x, cast)) for x in b["raw"])
             if a7 := re.findall(r"A7=(\S+)", "\n".join(b["raw"])):
                 music = a7[-1]
             prev, hist = None, []
@@ -367,7 +400,7 @@ def selftest():
 ## 1
 * | hook a | real | sp=none size=wide | A7=tense
 ## 2
-* | hook b | any | sp=lion act=run |
+* | [L] hook b | any | act=run |
 >> 3-4 calm A3=wind
 [L] Lioness rests in the shade | sp=lion act=rest size=close_up
 [L] Lioness watches the herd | size=wide sex=male
@@ -387,6 +420,8 @@ def selftest():
     assert intro == 16.0 and "# STORY 1 00:16.00 no=river" in spec
     assert abs(sum(s["dur"] for s in slots) - 64.0) < 1e-6
     assert "sp=lion act=rest size=close_up sex=female" in spec  # cast tokens added
+    assert "* | [L] hook b | any | act=run sp=lion sex=female |" in spec  # raw lines too (2026-11-05)
+    assert cast_raw("# TURN", {"L": ["sp=lion"]}) == "# TURN" and cast_raw("## 2", {}) == "## 2"
     assert "sex=male" in spec and "sex=male sp=lion sex=female" not in spec  # the line's own sex wins
     s5 = [s for s in slots if s["line"] == 5]
     assert s5[-1]["audio"] and {"track": 7, "kw": ["off"]} in s5[-1]["audio"]  # music off before the strike

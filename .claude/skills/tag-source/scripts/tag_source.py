@@ -16,6 +16,7 @@
 A contact sheet = 4 frames at 15/40/65/90 % of the clip (AI clips morph at the very start/end), 2x2,
 numbered 1-4 left-to-right, top-to-bottom. Tags live in clip["tags"] with "v": 2; untagged = no v2 tags."""
 import json
+from collections import Counter
 import subprocess
 import sys
 from pathlib import Path
@@ -137,8 +138,9 @@ def prepare(names, limit, sample, subjects=None, fields=None):
     todo, long_ = [], 0
     # resume-safe: a clip already waiting in a batch file (prepare stopped, batch not applied yet) is never batched twice
     # (retag: only retag rows count; old full-tag batch files stay on disk after apply)
-    queued = {r["id"] for p in WORK.glob("batch_*.json") if "result" not in p.stem
-              for r in json.loads(p.read_text(encoding="utf-8")) if bool(r.get("fields")) == bool(fields)}
+    qb = {r["id"]: p.stem for p in WORK.glob("batch_*.json") if "result" not in p.stem
+          for r in json.loads(p.read_text(encoding="utf-8")) if bool(r.get("fields")) == bool(fields)}
+    queued = set(qb)
     for name in names:
         root = ROOTS[name][0]
         if not index_of(root).exists():
@@ -146,6 +148,10 @@ def prepare(names, limit, sample, subjects=None, fields=None):
         idx = load(root)
         items = sorted((needs_retag(idx, fields) if fields else untagged(idx)).items(), key=lambda kv: kv[1]["path"])
         long_ += sum(c["duration"] > LONG for _, c in items)
+        wait = Counter(qb[k] for k, c in items if k in qb and (not subjects or c.get("subject") in subjects))
+        for bn, n in sorted(wait.items()):  # 2026-11-05: an agent saw "0 clips" while its cast sat in old batches
+            print(f"QUEUED {bn}: {n} clips of {name} waiting (not applied): tag "
+                  + ("its result exists -> apply it" if (WORK / f"{bn}_result.json").exists() else "it, then apply"))
         items = [(k, c) for k, c in items if c["duration"] <= LONG and k not in queued]
         # tag by species (user 2026-10-20: cheap, only what a film needs): one group per folder species
         groups = [[kv for kv in items if kv[1].get("subject") == s] for s in subjects] if subjects else [items]

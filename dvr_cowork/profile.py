@@ -158,8 +158,10 @@ def detect(video):
         return {"video": str(v), "source": "unknown", "profile": None, "channel": channel(v),
                 "ask": "No descriptor and no engine files: ask full-AI 8-15p or footage+AI 1-3h (create-doc-mov pins it)"}
     pid = "full_ai_mountain" if m else "footage_ai_long"
-    return {"video": str(v), "source": "legacy-trace", "profile": pid,
-            "version": 1, "engine": ENGINES[load(pid, 1)["engine_id"]], "channel": channel(v), "traces": m or l}
+    pre = v.name.split("_")[0].lower()  # region = the folder prefix (old congo_* = amazon); vid_* says none
+    region = "amazon" if pre == "congo" else pre if pre in ("amazon", "africa", "himalaya", "ocean") else None
+    return {"video": str(v), "source": "legacy-trace", "profile": pid, "version": 1,
+            "engine": ENGINES[load(pid, 1)["engine_id"]], "region": region, "channel": channel(v), "traces": m or l}
 
 
 def full_ai(video):

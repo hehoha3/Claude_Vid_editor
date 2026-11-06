@@ -50,7 +50,8 @@ files -> it stops).
 
 Tracks of "Edit" (the one timeline + `Edit_bak_*`): A1 empty (user 2026-11-05; place.py A1_UNTIL = 0, older videos
 keep theirs) · A2 narrator only · A3/A4 bed (alternating, 4 s crossfades, ~-32 LUFS, original files) · A5 extra
-environment · A6 natural · A7 music · A8/A9 SXF. Bins: `7. Open` = the intro's shots (0:00 -> story 1) only; every
+environment · A6 natural · A7 music · A8/A9 SXF (A9 at 0:00: the cold open's riser -> impact, user 2026-11-06). Bins: `7. Open` = the intro's shots (0:00 -> story 1) only (plan.py
+gives priority in the intro + story 1 only to the clips the user put there, not to place.py's own: `open_placed.txt`); every
 music / sound file -> `4. Audio/*` (the intro music too).
 
 ## Day project, one video per channel (user 2026-10-25)
@@ -67,8 +68,8 @@ Chann_2; from 2026-11-03 `vid_DDMMYY_1`): work key `<video>__Chann_N` (`dvr_cowo
 Parallel: the file work of each video (brief, beats, plan, prompts) in its own agent at once; Resolve writes
 (vo-sync, place, intro, color) one at a time: they share the current timeline / bin of one Resolve.
 ## After the prompts: Case 1 / Case 2 per video (user 2026-10-30, `input/Claude_Vid_editor_V2_Architecture_*.md`)
-`/doc-edit <audios...>` ends when each video's `missing-prompt.csv` is out: reply per video
-THIẾU count + timecode ranges + prompt numbers, then wait. Waiting never turns into a fallback; Claude never opens
+`/doc-edit <audios...>` ends when each video is placed and its `missing-prompt.csv` (intro + story 1) is out: reply
+per video THIẾU count + timecode ranges + prompt numbers, then wait. Waiting never turns into a fallback; Claude never opens
 Muse / Chrome or generates footage (the user does, by hand). State (`dvr_cowork/jobs.py`, SQLite, Python only):
 `python -m dvr_cowork.jobs status` = each recent video's stage (WAITING_FOR_USER until a decision), decision, last
 Resolve write (INTERRUPTED / FAILED + its backup = rollback point). Then the user decides per video; record it first
@@ -121,29 +122,31 @@ videos before).
 viewer understand, never as keyword matches of a sentence: whole screenplay -> bible + `# HOOK` blueprint -> shot
 lines with truth tokens (`sex=` `age=` `out=kill` `xact=`, story `no=`) that plan.py enforces; no true clip = THIẾU
 (new-video.md 1c, edit-grammar "Story first"). 2026-10-24: the film is read through `story.py brief` (one pack,
-~40 % of the source files) and written as a beat sheet (emotion + shot pool per beat); `story.py expand` turns it
+~60 % of the source files) and written as a beat sheet (emotion + shot pool per beat); `story.py expand` turns it
 into spec.txt with the grammar's rhythm and sound rules (new-video.md B1-B2).
 
 **Story choice** (user 2026-10-21): before writing a spec read `references/biome-story-pacing.md` for the biome
-(`# BIOME savanna` = Africa open country, `rainforest` = Amazon / Congo) and its hook rules. The hook (0:00-1:30, above
-all the first 10 s) is planned first and hardest. The preset steers shot order and pacing only: species, places and
+(`# BIOME savanna` = Africa open country, `rainforest` = Amazon / Congo) and its hook rules. The opening is planned
+first and hardest: footage+AI: 0:00-0:12 the cold open, story 1's most tense moment in full-AI clips (`references/coldopen.md`, user 2026-11-06), then the
+teaser to ~1:30. The preset steers shot order and pacing only: species, places and
 sounds come from the screenplay and the footage, never from the biome name.
 
 ## Commands
 | command (user's words) | runs | reply |
 |---|---|---|
 | `/doc-edit <video folder>` of a full-AI film | `references/full-ai.md` from its state: voice -> prompts, stop; shots complete -> whole film on Edit, stop for review | that file's replies |
-| `/doc-edit <audios-folder> [<audios-folder> ...]` | `references/new-video.md` per video: A narration (background) + B plan + prompts in parallel, then intro music picked by itself (`references/intro.md`, user 2026-10-31: no separate intro command) and place of intro + body on empty tracks; several folders = one agent per video for B, A / place one after the other | place lines + new-video reply per video |
+| `/doc-edit <audios-folder> [<audios-folder> ...]` | `references/new-video.md` per video: preflight (conform if needed) -> A narration (background) + B plan -> C intro music + re-plan -> D prompts for the intro + story 1 -> E place of intro + body on empty tracks (the body's THIẾU already filled by plan.py, user 2026-11-05); several folders = one agent per video for B + D, A / C / E one video after the other | new-video reply per video |
 | `/doc-edit plan` | re-plan after beat / spec edits or new clips: B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
-| `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`; a range -> `missing.py <video> --range=A-B` (same flag on `--check` / `--write`) | prompts reply |
+| `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`: THIẾU of the intro + story 1 by default; a range -> `missing.py <video> --range=A-B`, the whole film `--all` (same flag on `--check` / `--write`) | prompts reply |
 | `/doc-edit logo` ("check folder _check") | `hide_logo.py "D:\AI_video\_check"` (africa: `"D:\AI_video\_africa\_check"`) (~1-2 min) | LOGO / SUSPECT names + `.work\hide_logo\check_list.txt` |
 | `/doc-edit delogo` | `hide_logo.py --list` (MiniMax ~30 s per clip, background) -> `D:\AI_video\_nologo` copies (africa: env `NOLOGO_DIR`) | done, REVIEW FIRST, FAILED, gone |
 | `/doc-edit ingest` ("/scan-source ai, /tag-source") | amazon: scan ai -> tag-source (prepare, Sonnet agents in parallel, apply) -> `organize.py --apply` -> scan ai ("moved N"); africa: scan africa_ai_check -> tag-source `prepare africa_ai_check` -> apply -> `organize.py --africa --apply` -> scan africa_ai_check | tagged, filed per folder, kept in `_check` (why) |
 | `/doc-edit fill [--sub mm:ss]` ("lấp slot thiếu") | `plan.py <folder> [--late-sub --late-sub-t=<s>]` or `--sub-all` -> `place.py <video> --fill` (backup; `references/place-fill.md`) | THIẾU left (timecodes), placed, backup |
-| `/doc-edit fill-THIEU [<video>]` (= "Sử dụng các option thay thế các slot THIEU"; user 2026-10-26: only on this command / phrase, never on its own, never in `fill`) | `plan.py <folder> --sub-broad` (`--sub-all` + tier 4: species itself > same library folder > birds / butterflies / insects / frogs > landscape; slot light first, any light last; FALLBACK "late substitute (broad)", cyan) -> `place.py <video> --fill` | slots filled (timecode -> clip), the off-light / off-setting ones to check, THIẾU left |
+| `/doc-edit fill-THIEU [<video>]` (= "Sử dụng các option thay thế các slot THIEU"; user 2026-10-26: only on this command / phrase, never on its own, never in `fill`; since 2026-11-05 the body after story 1 gets these tiers on every plan run, so this command matters for the intro + story 1) | `plan.py <folder> --sub-broad` (`--sub-all` + tier 4: species itself > same library folder > birds / butterflies / insects / frogs > landscape; slot light first, any light last; FALLBACK "late substitute (broad)", cyan) -> `place.py <video> --fill` | slots filled (timecode -> clip), the off-light / off-setting ones to check, THIẾU left |
 | `/doc-edit fallback-species [<video>] [mm:ss-mm:ss]` (user 2026-10-29: "thay các slot FALLBACK bằng shot cùng loài") | `scripts/fallback_swap.py <video> --range=A-B` dry run, then `--apply` (backup `Edit_bak_fbspecies_*`): each FALLBACK V1 shot -> a clip of the slot's species (else its family), action / setting ignored; hand-changed shots and the intro -> story 1 fade shots untouched; Teal | swapped, left alone (hand), KEEP (no clip) |
 | `/doc-edit ingest --fill [--sub mm:ss]` (also `/scan-source /tag-source và tiếp`) | `ingest`, then `fill` in one go (no stop between); `--sub` as in `fill`; then stop: the user reviews the timeline + logos | tagged, filed, THIẾU left, placed, gaps left |
 | `/doc-edit place` | `references/place-fill.md` | backup, placed, max deviation, gaps, audio, failures, markers |
+| `/doc-edit coldopen <video>` (part of every new footage+AI film's first run, never full-AI 8-15p; this = redo / place) | `references/coldopen.md`: story 1's tense moment -> coldopen.json -> `dvr_cowork coldopen prompts`, stop; clips in `<video>\coldopen` -> `coldopen place --apply` | the moment, prompts + save folder; then backup, cuts, what to listen to |
 | `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; one space per story, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`), several per story | ranges, story spread before -> after, AI clips toned down, intro count, the frames checked |
 | `/doc-edit color n done [<video>]` ("color và done") | `seo.py` in the background (no Resolve) while `color` runs as above; color found a broken shot / a problem -> stop, report, no render; else `done` (check-timelines.md): render + upload private, no thumbnail | color reply + SEO 3 titles + done reply |
 | `/doc-edit seo [<video>] [--force]` | `python -m dvr_cowork youtube seo <video folder> [--force]` (check-timelines.md "SEO") | 3 titles (the chosen one), FLAG lines |

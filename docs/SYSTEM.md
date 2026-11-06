@@ -202,10 +202,13 @@ audios/ (screenplay + timestamp EN/VI + mp3/1..n)
   │   Claude viết beat sheet (bible, HOOK, CAST, cảm xúc + shot từng beat)
   │   story.py expand ──► spec.txt
   │   plan.py ──► plan.json + plan.md (+ 25 dòng tóm tắt)      ◄─ sửa beat, expand, plan lại
-  │   missing.py ──► missing_prompts.txt (1 prompt / slot THIẾU)
+  │     (phần sau story 1: slot THIẾU tự lấp bằng clip thay thế ngay mỗi lần plan, marker cyan)
   ▼
- intro.py tự chọn nhạc intro → plan.py → place.py: backup → intro + thân phim cùng lúc (V1 + A1 + A3-A9 + marker)
-  │ ── PHASE 1 dừng: chờ bạn tạo clip AI theo missing_prompts.txt
+ intro.py tự chọn nhạc intro + cú impact → plan.py lại (cắt intro theo nhịp)
+  │ missing.py ──► missing-prompt.csv (chỉ slot THIẾU của intro + story 1; Claude viết tay, không prompt WEAK)
+  │ place.py: backup → intro + thân phim cùng lúc (V1 + A3-A9 + marker; A9 impact ở 0:00, V1 0:00-0:12 chờ cold open)
+  │ cold open (đoạn căng nhất của story 1, full-AI): dvr_cowork coldopen prompts → bạn tạo clip → coldopen place --apply
+  │ ── PHASE 1 dừng: chờ bạn tạo clip AI theo missing-prompt.csv
   │ bạn tạo clip AI → logo / delogo
   │ PHASE 2 `/scan-source /tag-source và tiếp` = ingest --fill (scan + tag + organize + plan + place --fill)
   │ ── dừng: bạn xem timeline + logo; reframe · audio-expert nếu cần
@@ -267,10 +270,20 @@ shot ≤ 2 s 0 % → 30 %, `# TURN` 0 → 11, SFX 5 → 27, âm thanh tự nhiê
 Mỗi video **một timeline "Edit"** (+ backup `Edit_bak_*`, giữ 3 cái mới nhất; user 2026-11-05). A1 footage+AI để
 trống (video đặt trước 2026-11-05 giữ A1 cũ; `place.py A1_UNTIL = 0`), full-AI = tiếng của chính mỗi shot (-12 dB) · A2
 narrator (mỗi câu một item) · A3/A4 nền ambience (luân phiên, crossfade 4 s) · A5 lớp môi trường / chim · A6 âm thanh
-tự nhiên · A7 nhạc · A8/A9 SFX. Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh
-GFX. Bin video theo hành động: `1. Other_roll`, `2. Attack_roll`, `3. Run_roll`; `7. Open` chỉ footage+AI = các shot
-của intro (0:00 → story 1); mọi nhạc / âm thanh trong `4. Audio/...` (cả nhạc intro); timeline trong `6. Timeline`
+tự nhiên · A7 nhạc · A8/A9 SFX (A9 ở 0:00 = riser → impact của cold open, từ 2026-11-06). Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh
+GFX (xanh `COLD OPEN` = 0:00-0:12 chờ clip cold open). Bin video theo hành động: `1. Other_roll`, `2. Attack_roll`,
+`3. Run_roll`; `7. Open` chỉ footage+AI = các shot của intro (0:00 → story 1; plan.py chỉ ưu tiên clip bạn tự bỏ vào,
+không ưu tiên clip place.py tự đưa vào: `open_placed.txt`); `8. Cold open` = clip cold open; mọi nhạc / âm thanh trong `4. Audio/...` (cả nhạc intro); timeline trong `6. Timeline`
 (`.\dvr.cmd timelines` gom ngay).
+
+### 5.3b Cold open 0:00-0:12 (mọi phim mới, 2026-11-06)
+
+0:00 → ~0:01 đen + A9 tiếng dây đàn rít lên → cú impact (`D:\Audio_lib\SXF\impact`, mỗi phim một file, hai phim cùng
+ngày không trùng); từ cú hit: nhạc intro mạnh (A7) + 3-6 cut từ clip full-AI (mỗi clip tạo 6-9 s) kể một tình huống
+căng thẳng nhất của story 1 (rình mồi, săn mồi, gặp nguy hiểm): shot 1 cận mắt / mặt (con mồi: sợ hãi → mối nguy; thú săn: ánh mắt sắc → con mồi → răng / mặt háu
+đói), không narrator. Prompt ra ngay lần `/doc-edit` đầu (`/doc-edit coldopen <video>` để làm lại; doc-edit
+`references/coldopen.md`, code `dvr_cowork/coldopen.py`). Narrator footage+AI bắt đầu 0:12.6 (source `first_onset:
+12.6`). Full-AI 8-15p không có cold open: hook 30 s vẫn bắt đầu từ 0:00 (user 2026-11-06).
 
 ### 5.4 Full-AI 8-15p (`dvr_cowork/fullai`)
 
@@ -374,7 +387,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 | PostgreSQL cho câu hỏi xuyên video | Một câu SQL thay vì script quét JSON |
 | Preflight một lệnh; việc bị chặn không thử lại | Không mất lượt vô ích |
 | SEO: Python lọc trend + dựng description, Gemini flash-lite viết (~2k token vào, ~1k ra), Claude chỉ duyệt 3 title | Việc viết dài chuyển sang model rẻ; ~300 / 10.000 quota YouTube mỗi ngày, cache 7 ngày |
-| Dịch VI: Claude tự viết toàn bộ trong source (user 2026-11-05, không Gemini). Prompt THIẾU / WEAK: Claude tự viết bằng generator ngân hàng câu `.work/scripts/gen_prompts_<video>.py` (user 2026-11-02: Gemini vượt giới hạn input với ~700 prompt), QC chặn chữ chỉ hướng trên động tác đứng yên | Prompt: chạy lại generator không tốn token |
+| Dịch VI: Claude tự viết toàn bộ trong source (user 2026-11-05, không Gemini). Prompt (2026-11-05): chỉ slot THIẾU của intro + story 1 (~20-60 / phim thay vì ~375), Claude viết tay từng prompt; phần sau story 1 tự lấp bằng clip thay thế | Ít prompt hơn ~85 %, không cần generator |
 | Gemini không tag, không plan / fill: tag vẫn là Sonnet nhìn ảnh, plan / fill là Python có luật cứng | Không đổi chất lượng lấy vài token |
 
 ## 11. Dữ liệu của team: chia sẻ code, giữ riêng dữ liệu

@@ -23,14 +23,14 @@ or touch `_done`). Never write scripts/narration or generate footage; AI video p
 `find <path fragment>` (where a file sits on Edit), `gaps` (empty V1 spans to fill; THIEU + intro black excluded; run
 at every timeline check), `offline [--relink OLD NEW [--apply]]`, `backups [--keep 3 --apply]` (pruning = user yes),
 `vo-sync run AUDIO TIMESTAMPS`, `jobs status|decide|check|fill-report|reject|metrics` (per-video state, one Resolve
-writer), `ai <cmd> <video>` (full-AI), `profile ...`, `youtube login --key Chann_N|remove Chann_N|channels|upload|seo`
+writer), `ai <cmd> <video>` (full-AI), `coldopen prompts|place <video>` (footage+AI 1-3h: 0:00-0:12 = story 1's tense moment in full-AI clips; full-AI 8-15p keeps its 30 s hook from 0:00), `profile ...`, `youtube login --key Chann_N|remove Chann_N|channels|upload|seo`
 (both types; upload previews without `--apply`). DaVinci MCP: general ops. Skills load on demand.
 
 ## Rules
 1. One timeline per video: **"Edit"** (+ backups `Edit_bak_*`, keep the newest 3); restore the user's current timeline
    after scripts. Tracks: A1 = footage+AI **empty** (videos placed before 2026-11-05 keep theirs), full-AI the sound of
    every V1 shot, whole runtime, -12 dB (say the dB); A2 narrator only (one source clip bladed by vo-sync / the
-   engine), A3/A4 ambience bed, A5 ambience 3 / birds, A6 natural, A7 music, A8/A9 SXF (full-AI: A8 song crossfade).
+   engine), A3/A4 ambience bed, A5 ambience 3 / birds, A6 natural, A7 music, A8/A9 SXF (full-AI: A8 song crossfade; footage+AI: A9 at 0:00 = the cold open's riser -> impact).
    Bins: `7. Open` = footage+AI only, the shots of the intro (~1:30); all music / sound -> `4. Audio/*`.
 2. Destructive = deleting/clearing clips, tracks, timelines, grades, ripple edits, `place.py`, `--replace`,
    `grade.py apply`, `ai assemble --rehook`: list exactly what changes (track counts), get an explicit "yes" in this

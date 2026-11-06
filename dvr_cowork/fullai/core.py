@@ -20,11 +20,7 @@ class Stop(RuntimeError):
     """An actionable failure; never continue with guessed media or timing."""
 
 
-def day_project(name):
-    """<region>_DDMMYY_N -> the day project vid_DDMMYY_N that holds every channel's film of that day (user 2026-11-05);
-    any other name (vid_DDMMYY_N included) stays itself."""
-    m = re.fullmatch(r"[a-z]+_(\d{6}(?:_\d+)?)", name, re.I)
-    return f"vid_{m[1]}" if m else name
+from ..videokey import day_project  # noqa: E402,F401  one rule for both engines
 
 
 def video_path(value):
@@ -169,15 +165,17 @@ def unchanged(path, old):
 
 
 def numbered(folder, suffix, count):
-    """Reject aliases (01.mp4), duplicate IDs and extras before importing anything."""
+    """Index = the trailing number of the file name: 1.mp4, shot_001.mp4, shot-001.mp4, S01.mp4 all mean 1.
+    Duplicate IDs (1.mp4 + shot_001.mp4) and extras are refused before importing anything."""
     folder = Path(folder)
     got = {}
     for p in folder.iterdir() if folder.is_dir() else []:
         if p.suffix.lower() != suffix:
             continue
-        if not re.fullmatch(r"[1-9]\d*", p.stem):
-            raise Stop(f"Expected canonical numeric name, got {p.name}")
-        n = int(p.stem)
+        m = re.search(r"(\d+)$", p.stem)
+        if not m or int(m[1]) < 1:
+            raise Stop(f"No trailing index number in file name: {p.name}")
+        n = int(m[1])
         if n in got:
             raise Stop(f"Duplicate numeric ID: {p.name}")
         got[n] = p.resolve()
