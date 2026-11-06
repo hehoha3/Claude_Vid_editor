@@ -79,7 +79,7 @@ def parse_timestamp_file(path: str | Path, section: str = "english") -> list[Cue
     return cues
 
 
-VO_START = 12.6  # user 2026-11-06: the narrator waits for the 12 s cold open (dvr_cowork/coldopen.py); 0:03.6 before
+VO_START = 3.6  # user 2026-10-25: the narrator speaks from 0:03.6; the opening shot holds the screen alone until then
 
 
 def to_vo_start(cues: list[Cue], start: float = VO_START) -> float:

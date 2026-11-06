@@ -206,8 +206,7 @@ audios/ (screenplay + timestamp EN/VI + mp3/1..n)
   ▼
  intro.py tự chọn nhạc intro + cú impact → plan.py lại (cắt intro theo nhịp)
   │ missing.py ──► missing-prompt.csv (chỉ slot THIẾU của intro + story 1; Claude viết tay, không prompt WEAK)
-  │ place.py: backup → intro + thân phim cùng lúc (V1 + A3-A9 + marker; A9 impact ở 0:00, V1 0:00-0:12 chờ cold open)
-  │ cold open (đoạn căng nhất của story 1, full-AI): dvr_cowork coldopen prompts → bạn tạo clip → coldopen place --apply
+  │ place.py: backup → intro + thân phim cùng lúc (V1 + A3-A9 + marker; 0:00 đen + A9 impact, shot mở đầu vào đúng cú hit)
   │ ── PHASE 1 dừng: chờ bạn tạo clip AI theo missing-prompt.csv
   │ bạn tạo clip AI → logo / delogo
   │ PHASE 2 `/scan-source /tag-source và tiếp` = ingest --fill (scan + tag + organize + plan + place --fill)
@@ -270,20 +269,18 @@ shot ≤ 2 s 0 % → 30 %, `# TURN` 0 → 11, SFX 5 → 27, âm thanh tự nhiê
 Mỗi video **một timeline "Edit"** (+ backup `Edit_bak_*`, giữ 3 cái mới nhất; user 2026-11-05). A1 footage+AI để
 trống (video đặt trước 2026-11-05 giữ A1 cũ; `place.py A1_UNTIL = 0`), full-AI = tiếng của chính mỗi shot (-12 dB) · A2
 narrator (mỗi câu một item) · A3/A4 nền ambience (luân phiên, crossfade 4 s) · A5 lớp môi trường / chim · A6 âm thanh
-tự nhiên · A7 nhạc · A8/A9 SFX (A9 ở 0:00 = riser → impact của cold open, từ 2026-11-06). Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh
-GFX (xanh `COLD OPEN` = 0:00-0:12 chờ clip cold open). Bin video theo hành động: `1. Other_roll`, `2. Attack_roll`,
+tự nhiên · A7 nhạc · A8/A9 SFX (A9 ở 0:00 = riser → impact trước intro, từ 2026-11-06). Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh
+GFX (xanh ở 0:00 = màn đen tới cú impact). Bin video theo hành động: `1. Other_roll`, `2. Attack_roll`,
 `3. Run_roll`; `7. Open` chỉ footage+AI = các shot của intro (0:00 → story 1; plan.py chỉ ưu tiên clip bạn tự bỏ vào,
-không ưu tiên clip place.py tự đưa vào: `open_placed.txt`); `8. Cold open` = clip cold open; mọi nhạc / âm thanh trong `4. Audio/...` (cả nhạc intro); timeline trong `6. Timeline`
+không ưu tiên clip place.py tự đưa vào: `open_placed.txt`); mọi nhạc / âm thanh trong `4. Audio/...` (cả nhạc intro); timeline trong `6. Timeline`
 (`.\dvr.cmd timelines` gom ngay).
 
-### 5.3b Cold open 0:00-0:12 (mọi phim mới, 2026-11-06)
+### 5.3b Mở đầu 0:00 (phim footage+AI từ 2026-11-06)
 
 0:00 → ~0:01 đen + A9 tiếng dây đàn rít lên → cú impact (`D:\Audio_lib\SXF\impact`, mỗi phim một file, hai phim cùng
-ngày không trùng); từ cú hit: nhạc intro mạnh (A7) + 3-6 cut từ clip full-AI (mỗi clip tạo 6-9 s) kể một tình huống
-căng thẳng nhất của story 1 (rình mồi, săn mồi, gặp nguy hiểm): shot 1 cận mắt / mặt (con mồi: sợ hãi → mối nguy; thú săn: ánh mắt sắc → con mồi → răng / mặt háu
-đói), không narrator. Prompt ra ngay lần `/doc-edit` đầu (`/doc-edit coldopen <video>` để làm lại; doc-edit
-`references/coldopen.md`, code `dvr_cowork/coldopen.py`). Narrator footage+AI bắt đầu 0:12.6 (source `first_onset:
-12.6`). Full-AI 8-15p không có cold open: hook 30 s vẫn bắt đầu từ 0:00 (user 2026-11-06).
+ngày không trùng; intro.py chọn cùng lúc với nhạc, code `dvr_cowork/impact.py`); đúng cú hit: shot mở đầu (cảnh epic)
++ nhạc intro mạnh (A7); narrator từ 0:03.6; intro ~1:30 như cũ. Phim chưa có impact (intro_music.json cũ) giữ shot mở
+đầu từ 0:00. Full-AI 8-15p không có: hook 30 s bắt đầu từ 0:00.
 
 ### 5.4 Full-AI 8-15p (`dvr_cowork/fullai`)
 

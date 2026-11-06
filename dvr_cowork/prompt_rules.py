@@ -37,7 +37,7 @@ SIZES = re.compile(r"\b(extreme wide|very wide|wide|establishing|medium[- ]long|
                    r"detail|aerial|top-down)\b", re.I)
 
 
-# Header of every 1h / cold-open prompt (input/SKILL.md formula): the clip's own length, camera, place, light.
+# Header of every 1h prompt (input/SKILL.md formula): the clip's own length, camera, place, light.
 HEAD = ("Cinematic wildlife documentary, ultra-photorealistic 4K, {s}single continuous shot, 16:9, shot on {cam}, "
         "{place}, {light}.")
 

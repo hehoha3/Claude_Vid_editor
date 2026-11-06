@@ -5,7 +5,7 @@ from datetime import datetime
 import math
 import re
 from pathlib import Path
-from .core import (ROOT, Stop, config, resolve_lock, event, frames, lock, object_hash, probe, prod, run,
+from .core import (Stop, config, resolve_lock, event, frames, lock, object_hash, probe, prod, run,
                    read_json, video_path, write_json, day_project)
 from .pipeline import assert_voice_media, hook_window, ingested_media, intro_gap_f, subtitle_file
 from ..resolve_conn import connect

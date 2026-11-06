@@ -157,11 +157,11 @@ def audio_events(slots, end):
     for s in slots:
         for e in s["audio"]:
             tr = 3 if e["track"] in (3, 4) else e["track"]
-            if tr in (3, 5, 7):  # 'at': the intro music starts on the cold open's impact (2026-11-06)
+            if tr in (3, 5, 7):  # 'at': the intro music starts on the impact's hit (2026-11-06)
                 spans[tr].append((s["start"] + e.get("at", 0.0), e.get("path") if e.get("status") == "OK" else None))
             elif e.get("status") == "OK":
                 # A6 = its slot; A8/A9 hits ring at most SFX_TAIL into the next shot (a 104 s water file once ran
-                # from 12:34 to 14:19 over three other scenes); the cold open's impact: its riser from src_in, own fades
+                # from 12:34 to 14:19 over three other scenes); the impact: its riser from src_in, own fades
                 ln = min(e["dur"], s["dur"] + (SFX_TAIL if tr in (8, 9) else 0))
                 out.append([tr, s["start"], ln, e["path"], e.get("src_in", 0.0)] + ([tuple(e["fades"])] if e.get("fades") else []))
     i = 0  # bed piece counter, global so a bed change lands on the other track
@@ -283,7 +283,7 @@ def black_fades(video):
         v = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: int(i.GetStart()))
         slot = {f(s["start"]): s for s in plan["slots"]}
         k = sum(int(i.GetStart()) - t0 < f(plan.get("intro", 0)) - 1 for i in v)  # intro items before story 1
-        want = ([(0, f(EDGE_IN), 0)] if v and int(v[0].GetStart()) == t0 else [])             + ([(len(v) - 1, 0, min(f(EDGE_OUT), int(v[-1].GetDuration()) - 7))] if v else [])  # cold open: hard cut on the hit
+        want = ([(0, f(EDGE_IN), 0)] if v and int(v[0].GetStart()) == t0 else [])             + ([(len(v) - 1, 0, min(f(EDGE_OUT), int(v[-1].GetDuration()) - 7))] if v else [])  # impact: black, then a hard cut on the hit
         if 0 < k < len(v):
             want += [(k - 1, 0, f(slot.get(int(v[k - 1].GetStart()) - t0, {}).get("fade_out") or 1.5)),
                      (k, f(slot.get(int(v[k].GetStart()) - t0, {}).get("fade_in") or 2.5), 0)]
@@ -597,7 +597,7 @@ def selftest():
           "xf": 0.08, "fade": 1.5}  # intro.py: 20 s cut out of a 112 s track, 2 s tail off
     ip = [e for e in audio_events([S(0, 90, [im])], 90.0) if e[0] == 7]
     assert [(e[1], e[2], e[4], e[5]) for e in ip] == [(0, 40, 0, (0.0, 0.08)), (40, 50, 60, (0.08, 1.5))], ip
-    # 2026-11-06 cold open: the music starts on the hit (at), the impact rides A9 from 0:00 from its riser's src_in
+    # 2026-11-06 impact: the music starts on the hit (at), the impact rides A9 from 0:00 from its riser's src_in
     imp = {"track": 9, "kw": ["impact"], "status": "OK", "path": "imp", "dur": 5.0, "src_in": 0.84, "fades": [0.08, 0.5]}
     ce = audio_events([S(0, 12.6, [dict(im, dur=89.0, at=1.0), imp]), S(12.6, 77.4, [])], 90.0)
     assert [e for e in ce if e[0] == 9] == [[9, 0, 5.0, "imp", 0.84, (0.08, 0.5)]], ce

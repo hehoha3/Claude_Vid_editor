@@ -264,10 +264,9 @@ Claude hỏi loại video + vùng (nếu bạn chưa nói), tìm video đang hot
 Câu lệnh tạo clip chỉ dành cho phần intro + story 1 (các phần sau tự lấp bằng footage có sẵn). Không muốn tạo clip
 nữa mà muốn lấp nốt chỗ THIẾU bằng footage có sẵn: gõ `/doc-edit fill-THIEU <video>`.
 
-**Cold open 0:00–0:12 (mọi phim footage+AI 1-3h mới; phim full-AI 8-15p vẫn mở bằng hook 30 s từ 0:00):** màn hình đen + tiếng dây đàn rít lên → cú impact, rồi một tình
-huống căng thẳng nhất của story 1 (rình mồi, săn mồi, gặp nguy hiểm; luôn là clip full-AI, cận mắt / mặt con vật
-trước). Claude tự chọn đoạn đó và viết câu lệnh vào `coldopen-prompt.csv` ngay lần `/doc-edit` đầu tiên; bạn tạo clip, lưu vào `<video>\coldopen\ (1.mp4, 2.mp4...)`, gõ lại
-lệnh đó để Claude đặt lên timeline.
+**Mở đầu 0:00 (phim footage+AI 1-3h từ 2026-11-06):** màn hình đen + tiếng dây đàn rít lên → cú impact (~0:01),
+shot mở đầu và nhạc intro vào đúng cú hit, narrator từ 0:03.6, rồi intro ~1:30 như cũ. Claude tự chọn cú impact
+(`D:\Audio_lib\SXF\impact`, hai phim cùng ngày không trùng). Phim full-AI 8-15p vẫn mở bằng hook 30 s từ 0:00.
 
 ### 5.2 Video full-AI (8–15 phút): 3 lần gõ
 

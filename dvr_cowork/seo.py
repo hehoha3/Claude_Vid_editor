@@ -25,6 +25,8 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from .timecode import parse_clock as secs
+
 ROOT = Path(__file__).resolve().parents[1]  # not .config: tests run this file as a script for --selftest
 CACHE = ROOT / ".work" / "seo" / "cache"
 CACHE_DAYS, DAYS_BACK = 7, 90
@@ -43,11 +45,6 @@ DISCLOSURE = ("This film combines real wildlife footage with AI-generated imager
 def clock(s):
     s = int(s)
     return f"{s // 3600}:{s // 60 % 60:02d}:{s % 60:02d}" if s >= 3600 else f"{s // 60:02d}:{s % 60:02d}"
-
-
-def secs(t):
-    m, s = t.split(":")
-    return int(m) * 60 + float(s)
 
 
 def film_facts(spec_text):

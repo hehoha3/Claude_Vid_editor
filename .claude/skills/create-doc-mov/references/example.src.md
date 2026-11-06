@@ -2,7 +2,6 @@
 slug: Africa_The_Waters_Edge
 title: Africa: The Water's Edge
 target: 60
-first_onset: 12.6
 === BIBLE
 | ID | Species | Sex / age | Young | Identity markers and continuity limits | Narrative function / one-line metaphor |
 | --- | --- | --- | --- | --- | --- |
@@ -21,25 +20,18 @@ first_onset: 12.6
 ## Clip sourcing log specification · ## Final cut gates and replacements (use {{shot:1.4-07}}, {{lastend}})
 ## Conform to the real narrator audio (build_four_files.py … --mp3 …)
 === SCENES
-@ 0.0 | 00:00 | 00:12 | Cold open
-see: Black; a string riser into an impact at ~00:01; then story 1's most tense moment (the crocodile's approach, 1.4) in 3–6 full-AI cuts, an eye / face close-up first. No narrator.
-fn: The hook before a word: who is in danger, and from what.
-gate: Built by doc-edit in full-AI; no outcome shown, no contact.
-audio: A9 riser -> impact; A7 the strong intro track from the hit.
-need: COLD — story 1's tense moment, full-AI (doc-edit coldopen)
-- * | ECU | COLD OPEN — story 1's tense moment, full-AI (doc-edit) | impact | the hook before a word |
-
-@ 0.1 | 00:12 | 00:27 | The river waits
-see: The brown river under the drum: wildebeest massing on the bank, a crocodile's eyes breaking the surface. No strike shown.
+@ 0.1 | 00:00 | 00:15 | The river waits
+see: (doc-edit: black + riser -> impact at ~00:01) On the hit, the brown river at sunrise, wide; then under the drum wildebeest massing on the bank, a crocodile's eyes breaking the surface. No strike shown.
 animals: WB herd; CR.
-sound: A3/A4 river bed; A5 hooves; A7 the strong intro track (started on the impact).
+sound: A3/A4 river bed; A5 hooves; A7 the strong intro track from the impact's hit.
 fn: Who must cross, and what waits.
-clips: 4 strong teaser shots.
+clips: 1 epic opener + 3 strong teaser shots.
 gate: Brown river, no catch in frame.
 audio: A3/A4 river bed; A5 hooves. Fallback: generic river crossing, labelled mosaic.
 tail: 1
 need: ALT — any brown-river crossing build-up; no catch in frame
 music: strong intro track, drums
+- 3.6 | EW | the brown river at sunrise, cut in on the impact | river current | the place, big |
 - 4.0 | W | wildebeest massing on a steep bank, dust rising | hooves, bellows | the crowd that must cross |
 - 3.0 | C | a crocodile's eyes surfacing on brown water, sliding L→R | water lap | what waits |
 - * | MW | the first wildebeest leaps off the bank | splash | the crossing starts |

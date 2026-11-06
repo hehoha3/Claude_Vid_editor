@@ -27,8 +27,15 @@ questions, no overwrite question.
 
 ## One shot: `hide_logo.py "<shot_NNN | path>" [tl|tr|bl|br] [--end] [--box x0,y0,x1,y1 ...]`
 No scan, ~30 s. `--end` forces a late-logo search. `--box` at 640x360, tight around the glyphs, one box per logo
-(Gemini star: `--box 566,286,594,314`; BBC miss: `--box 0,3,50,21`). Old smeared delogo:
-`MM_MASK=box ... --box 0,3,74,22`.
+(Gemini star: `--box 566,286,594,314`; BBC miss: `--box 0,3,50,21`; **BBC PLANET EARTH, 3 stacked lines** (BBC /
+PLANET / EARTH, ~x 5-54, y 13-47): `--box 2,10,60,50`, default glyph mask). Old smeared delogo:
+`MM_MASK=box ... --box 0,3,74,22` (leaves a visible grid smear on rock / snow: last resort only).
+
+**User says the logo is still there** (2026-11-06, shot_034: auto box [8,9,48,29] caught only "BBC", no RESIDUE
+reported): stop guessing boxes. One ffmpeg crop of the ORIGINAL's corner (frames at ~1, 4, 7 s, `crop=iw/3:ih/4`,
+`drawgrid`) -> read the glyphs' extent -> `--box` with 2-5 px margin at 640x360 -> one crop of the `_nologo` copy
+(first / middle / last frame) to confirm clean before replying. These 2-3 images are the exception to "never open
+images"; a multi-line logo always needs every line inside the box.
 
 ## Folder scan: `hide_logo.py "<folder>"` (no argument -> ask for a folder or a shot)
 Marks V1 clips of "Edit" (Purple = logo >= 0.45, Yellow = suspect 0.33-0.45), writes `.work/hide_logo/scan.json`

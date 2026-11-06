@@ -129,27 +129,6 @@ def timeline_files(video):
     return out
 
 
-def timeline_uses(project, name):
-    """{lower-case file path: [(src_in, src_out) s]} of the video items on timeline <name> of the open project; the
-    current timeline is restored. Edit + Open of one video share the reuse budget (plan.py REUSE_MAX, other parts)."""
-    from dvr_cowork.resolve_ops import clip_fps, find_timeline, timeline_fps
-    t = find_timeline(project, name)  # the channel's own one in a day project (DVR_CHANNEL)
-    if not t:
-        return {}
-    cur, out = project.GetCurrentTimeline(), {}
-    project.SetCurrentTimeline(t)  # a timeline not loaded yet returns no items
-    fps = timeline_fps(t, project)
-    for k in range(1, int(t.GetTrackCount("video")) + 1):
-        for ti in t.GetItemListInTrack("video", k) or []:
-            if mp := ti.GetMediaPoolItem():
-                a = ti.GetLeftOffset() / clip_fps(mp, fps)
-                out.setdefault(str(Path(mp.GetClipProperty("File Path"))).lower(), []).append(
-                    (round(a, 2), round(a + ti.GetDuration() / fps, 2)))
-    if cur:
-        project.SetCurrentTimeline(cur)
-    return out
-
-
 def check(video, ws=None, proj=None):  # proj: Resolve project name when it differs from the folder
     vdir = find_video(video, ws)
     from dvr_cowork.resolve_ops import use_channel

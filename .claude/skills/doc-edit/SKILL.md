@@ -50,7 +50,7 @@ files -> it stops).
 
 Tracks of "Edit" (the one timeline + `Edit_bak_*`): A1 empty (user 2026-11-05; place.py A1_UNTIL = 0, older videos
 keep theirs) · A2 narrator only · A3/A4 bed (alternating, 4 s crossfades, ~-32 LUFS, original files) · A5 extra
-environment · A6 natural · A7 music · A8/A9 SXF (A9 at 0:00: the cold open's riser -> impact, user 2026-11-06). Bins: `7. Open` = the intro's shots (0:00 -> story 1) only (plan.py
+environment · A6 natural · A7 music · A8/A9 SXF (A9 at 0:00: the riser -> impact before the opener, user 2026-11-06). Bins: `7. Open` = the intro's shots (0:00 -> story 1) only (plan.py
 gives priority in the intro + story 1 only to the clips the user put there, not to place.py's own: `open_placed.txt`); every
 music / sound file -> `4. Audio/*` (the intro music too).
 
@@ -84,8 +84,9 @@ with `jobs decide <video> ingest|fill-existing "<their words>"`:
   edits kept. THIẾU left -> report, wait (never `fill-THIEU` on its own). Called again = only the new files.
 - **Case 2** ("không generate nữa, fill THIẾU bằng footage có sẵn") = the yes for `/doc-edit fill-THIEU <video>` of the
   named video(s), no second ask. What is still THIẾU comes from Resolve (`dvr_cowork gaps` + markers), not the old plan.
-  Truth gates never loosen (species, sex / age the story needs, outcome, day / night, screen direction): no true clip
-  -> stays THIẾU with its reason, never a fake 100 %. After plan `--sub-broad`: `jobs fill-report <video>` (tiers
+  Fill-THIEU = 100 % of the slots (user 2026-11-06): strict pass first, then a second pass drops the soft gates (sex / age /
+  kill / resting / xact) and takes the best clip (FALLBACK cyan, tier `..., soft gates` = look at it); hard gates never
+  loosen (`no=`, biome, day / night, species tier order): only then a slot stays THIẾU with its reason. After plan `--sub-broad`: `jobs fill-report <video>` (tiers
   A exact / B strong / C context / D last resort, `any light` flags, THIẾU + refusals) = the reply: filled
   (timecode -> clip, tier), compromises to look at, THIẾU left + why.
 - User says a placed clip is wrong ("clip X sai loài") -> `jobs reject <video> "<path fragment>" "<why>"`: plan.py drops
@@ -127,7 +128,7 @@ into spec.txt with the grammar's rhythm and sound rules (new-video.md B1-B2).
 
 **Story choice** (user 2026-10-21): before writing a spec read `references/biome-story-pacing.md` for the biome
 (`# BIOME savanna` = Africa open country, `rainforest` = Amazon / Congo) and its hook rules. The opening is planned
-first and hardest: footage+AI: 0:00-0:12 the cold open, story 1's most tense moment in full-AI clips (`references/coldopen.md`, user 2026-11-06), then the
+first and hardest: footage+AI: black + riser -> impact at ~0:01, the epic opener on the hit (user 2026-11-06), then the
 teaser to ~1:30. The preset steers shot order and pacing only: species, places and
 sounds come from the screenplay and the footage, never from the biome name.
 
@@ -142,11 +143,10 @@ sounds come from the screenplay and the footage, never from the biome name.
 | `/doc-edit delogo` | `hide_logo.py --list` (MiniMax ~30 s per clip, background) -> `D:\AI_video\_nologo` copies (africa: env `NOLOGO_DIR`) | done, REVIEW FIRST, FAILED, gone |
 | `/doc-edit ingest` ("/scan-source ai, /tag-source") | amazon: scan ai -> tag-source (prepare, Sonnet agents in parallel, apply) -> `organize.py --apply` -> scan ai ("moved N"); africa: scan africa_ai_check -> tag-source `prepare africa_ai_check` -> apply -> `organize.py --africa --apply` -> scan africa_ai_check | tagged, filed per folder, kept in `_check` (why) |
 | `/doc-edit fill [--sub mm:ss]` ("lấp slot thiếu") | `plan.py <folder> [--late-sub --late-sub-t=<s>]` or `--sub-all` -> `place.py <video> --fill` (backup; `references/place-fill.md`) | THIẾU left (timecodes), placed, backup |
-| `/doc-edit fill-THIEU [<video>]` (= "Sử dụng các option thay thế các slot THIEU"; user 2026-10-26: only on this command / phrase, never on its own, never in `fill`; since 2026-11-05 the body after story 1 gets these tiers on every plan run, so this command matters for the intro + story 1) | `plan.py <folder> --sub-broad` (`--sub-all` + tier 4: species itself > same library folder > birds / butterflies / insects / frogs > landscape; slot light first, any light last; FALLBACK "late substitute (broad)", cyan) -> `place.py <video> --fill` | slots filled (timecode -> clip), the off-light / off-setting ones to check, THIẾU left |
+| `/doc-edit fill-THIEU [<video>]` (= "Sử dụng các option thay thế các slot THIEU"; user 2026-10-26: only on this command / phrase, never on its own, never in `fill`; since 2026-11-05 the body after story 1 gets these tiers on every plan run, so this command matters for the intro + story 1) | `plan.py <folder> --sub-broad` (fills every slot incl. the intro: after the strict pass a `soft gates` pass drops sex / age / kill / resting / xact; `--sub-all` + tier 4: species itself > same library folder > birds / butterflies / insects / frogs > landscape; slot light first, any light last; FALLBACK "late substitute (broad)", cyan) -> `place.py <video> --fill` | slots filled (timecode -> clip), the off-light / off-setting ones to check, THIẾU left |
 | `/doc-edit fallback-species [<video>] [mm:ss-mm:ss]` (user 2026-10-29: "thay các slot FALLBACK bằng shot cùng loài") | `scripts/fallback_swap.py <video> --range=A-B` dry run, then `--apply` (backup `Edit_bak_fbspecies_*`): each FALLBACK V1 shot -> a clip of the slot's species (else its family), action / setting ignored; hand-changed shots and the intro -> story 1 fade shots untouched; Teal | swapped, left alone (hand), KEEP (no clip) |
 | `/doc-edit ingest --fill [--sub mm:ss]` (also `/scan-source /tag-source và tiếp`) | `ingest`, then `fill` in one go (no stop between); `--sub` as in `fill`; then stop: the user reviews the timeline + logos | tagged, filed, THIẾU left, placed, gaps left |
 | `/doc-edit place` | `references/place-fill.md` | backup, placed, max deviation, gaps, audio, failures, markers |
-| `/doc-edit coldopen <video>` (part of every new footage+AI film's first run, never full-AI 8-15p; this = redo / place) | `references/coldopen.md`: story 1's tense moment -> coldopen.json -> `dvr_cowork coldopen prompts`, stop; clips in `<video>\coldopen` -> `coldopen place --apply` | the moment, prompts + save folder; then backup, cuts, what to listen to |
 | `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; one space per story, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`), several per story | ranges, story spread before -> after, AI clips toned down, intro count, the frames checked |
 | `/doc-edit color n done [<video>]` ("color và done") | `seo.py` in the background (no Resolve) while `color` runs as above; color found a broken shot / a problem -> stop, report, no render; else `done` (check-timelines.md): render + upload private, no thumbnail | color reply + SEO 3 titles + done reply |
 | `/doc-edit seo [<video>] [--force]` | `python -m dvr_cowork youtube seo <video folder> [--force]` (check-timelines.md "SEO") | 3 titles (the chosen one), FLAG lines |

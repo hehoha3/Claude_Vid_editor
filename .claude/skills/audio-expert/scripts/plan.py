@@ -7,13 +7,14 @@
 converted to timeline-relative frames (end exclusive) with the real fps; the Resolve timeline is only READ (snapshot
 of A2 + existing audio, used for narrator overlap and conflicts). Output: .work/audio_expert/<video>/runs/<run_id>/.
 """
-import datetime as dt, json, re, sys
+import datetime as dt, json, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).parent))
 import index as ix  # noqa: E402
+from dvr_cowork.timecode import parse_clock as secs  # noqa: E402
 
 PROTECTED = (3, 4)  # tracks never written (ambience beds placed by doc-edit)
 
@@ -21,11 +22,6 @@ PROTECTED = (3, 4)  # tracks never written (ambience beds placed by doc-edit)
 def tc(sec):
     m, s = divmod(sec, 60)
     return f"{int(m)}:{s:04.1f}"
-
-
-def secs(t):
-    m, s = t.split(":")
-    return int(m) * 60 + float(s)
 
 
 def parse(text):

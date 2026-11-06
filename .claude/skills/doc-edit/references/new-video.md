@@ -38,8 +38,8 @@ deletes, Write tool for beats parts) and asks back for the reply parts 3-4 plus 
 
     .venv/Scripts/python.exe -m dvr_cowork vo-sync run "<folder>/mp3" "<folder>/<timestamp>.md"
 
-Bash `run_in_background`, go straight to B, never poll. Narrator from 0:12.6, after the cold open (user 2026-11-06;
-a timestamp file starting earlier is shifted as a whole: `first line moved`). It measures each file's speech onset, writes `.work/<key>_mp3/plan.json`,
+Bash `run_in_background`, go straight to B, never poll. Narrator from 0:03.6 (user 2026-10-25;
+a timestamp file starting elsewhere is shifted as a whole: `first line moved`). It measures each file's speech onset, writes `.work/<key>_mp3/plan.json`,
 imports into `4. Audio/Narrator`, backs up "Edit", lays file n on A2 at timestamp n, writes the VI SRT. Read only its
 stdout (`report.md` only for flagged rows): `pushed` (file n runs into n+1: timestamps or take need a look),
 `boundary_uncertain` (old style: listen), `head_trimmed` / `tail_trimmed` (harmless). A2 not empty / locked, no
@@ -161,13 +161,8 @@ generator), `--check`, `--write` -> `<video>\missing-prompt.csv`. No THIẾU the
 
 ### E. Place (after C and D; Resolve one video at a time)
 `place.py <key>` (no flag; `DVR_CHANNEL=Chann_N` in front in a day project): intro + body on empty tracks (not
-empty -> stop, report); the impact on A9 at 0:00, the intro music from its hit, V1 0:00-0:12.6 left black with a blue
-COLD OPEN marker; intro shots -> bin `7. Open`, music -> `4. Audio/Music`, story 1's bed pre-laps the black.
+empty -> stop, report); black 0:00 -> the impact's hit (A9, blue marker), the opener and the intro music from the hit; intro shots -> bin `7. Open`, music -> `4. Audio/Music`, story 1's bed pre-laps the black.
 Then `dvr_cowork gaps` (must say 0 gaps to fill) and `dvr_cowork backups`.
-
-### F. Cold open (`references/coldopen.md`; every new film)
-In step D: pick story 1's most tense moment, write coldopen.json, `dvr_cowork coldopen prompts` (the reply lists
-them with the others); `coldopen place --apply` once the clips are in `<video>\coldopen`.
 
 ### Reply (Vietnamese), per video, in this order
 1. Place: backup, V1 / audio placed, max deviation, failures, red THIẾU markers (count) and the gaps line.

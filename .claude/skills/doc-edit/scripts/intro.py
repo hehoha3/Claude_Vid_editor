@@ -71,21 +71,21 @@ def profile(path):
             "bars": m["bars"]}
 
 
-def score(p, path, T, cold=False):
-    """cold (2026-11-06): the music enters on the cold open's impact, so it must be strong from its first bars: a
-    quiet start that rises later gets no bonus."""
+def score(p, path, T, hit=False):
+    """hit (2026-11-06): the music enters on the impact's hit, so it must be strong from its first bars: a quiet start
+    that rises later gets no bonus."""
     c = p["climax"]
-    form = 3.0 if c <= EARLY else 2.5 if p["quiet"] and c <= RISE and not cold else 1.0 if c <= RISE else 0.0
+    form = 3.0 if c <= EARLY else 2.5 if p["quiet"] and c <= RISE and not hit else 1.0 if c <= RISE else 0.0
     name = Path(path).stem.lower()
     return round(form + min(p["hits10"], 4) / 2 + p["conf"] + 2 * p["hold"] + 0.5 * (p["len"] >= T)
                  + 0.5 * bool(HINT.search(name)) + 1.0 * bool(DRUM.search(name)), 2)
 
 
 def channel_of(work):
-    """'chann_2' from plan.json's video_dir D:/Chann_2_*/<video>, else None."""
+    """'Chann_2' from plan.json's video_dir D:/Chann_2_*/<video>, else None."""
+    from dvr_cowork.videokey import channel_of as of
     p = work / "plan.json"
-    m = p.exists() and re.search(r"(?i)\bchann_(\d+)", json.loads(p.read_text("utf-8")).get("video_dir", ""))
-    return f"chann_{m[1]}" if m else None
+    return of(json.loads(p.read_text("utf-8")).get("video_dir")) if p.exists() else None
 
 
 def recent_intros(doc, video, n=RECENT):
@@ -213,8 +213,8 @@ def main(video, music=None):
     vdir = Path(pj["video_dir"])
     T = story1(vdir)
     imp = None
-    if pj["slots"][0].get("cold"):  # 2026-11-06: riser -> impact at 0:00, the music from the hit to story 1
-        from dvr_cowork.coldopen import impact
+    if pj["slots"][0].get("opener") or pj["slots"][0].get("black"):  # 2026-11-06: black + riser -> impact, the music from the hit
+        from dvr_cowork.impact import impact
         imp = impact(video_key(video))
         print(f"impact: {Path(imp['path']).name} (hit {imp['hit']}s, from {imp['src_in']}s -> lands at {imp['at']}s)")
     at = imp["at"] if imp else 0.0

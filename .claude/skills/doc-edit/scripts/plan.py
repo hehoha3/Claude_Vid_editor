@@ -35,7 +35,6 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/scan-source/scripts")]
 from dvr_cowork.timestamps import parse_timestamp_file, to_vo_start  # noqa: E402
 from dvr_cowork.timecode import parse_clock  # noqa: E402
-from dvr_cowork.coldopen import COLD_END  # noqa: E402  user 2026-11-06: the 12 s cold open
 from dvr_cowork.videokey import split as split_key, video_key  # noqa: E402  same name in two channels -> <video>__Chann_N
 from scan_source import REGIONS, ROOTS, audio_blocked, index_of, video_roots  # noqa: E402
 import beats  # noqa: E402
@@ -336,14 +335,9 @@ def build(starts, end, blocks, intro=INTRO_MIN):
     assert sorted(blocks) == list(range(1, len(starts) + 1)), \
         f"spec must cover sentences 1..{len(starts)}, missing {sorted(set(range(1, len(starts) + 1)) - set(blocks))}"
     lead = starts[0] >= OPEN_MIN
-    cold = starts[0] >= COLD_END - 0.05  # user 2026-11-06: narrator after the 12 s cold open (dvr_cowork/coldopen.py)
     bounds = [starts[0] if lead else 0.0] + starts[1:] + [end]
     slots, errs = [], []
-    if cold:  # reserved: black + impact, then story 1's tense moment in full-AI shots (`coldopen place`); never matched
-        slots.append({"slot": 1, "line": 1, "start": 0.0, "dur": round(starts[0], 2), "src": "GFX", "filter": {},
-                      "need": "COLD OPEN: đen + impact, rồi các shot full-AI của đoạn căng nhất story 1 (dvr_cowork coldopen)",
-                      "audio": [], "intro": True, "cold": True})
-    elif lead:
+    if lead:
         need, src, flt = opener or OPENER
         slots.append({"slot": 1, "line": 1, "start": 0.0, "dur": round(starts[0], 2), "need": need, "src": src,
                       "filter": flt, "audio": [], "intro": True, "opener": True})
@@ -371,7 +365,7 @@ def build(starts, end, blocks, intro=INTRO_MIN):
                 t += dur
         assert abs(t - t1) < 1e-6
     assert not errs, "\n".join(errs)
-    if lead and not cold and len(slots) > 1:  # beds / music start with the film, under the opener (cold open: after it)
+    if lead and len(slots) > 1:  # beds / music start with the film, under the opener
         o, f = slots[0], slots[1]
         o["audio"] = [e for e in f["audio"] if e["track"] in (3, 4, 5, 7)]
         f["audio"] = [e for e in f["audio"] if e["track"] not in (3, 4, 5, 7)]
@@ -440,8 +434,6 @@ def check_opening(slots, mode="landscape"):
     """Spec check. landscape (legacy default): the film opens on a landscape held a little longer than the shots after it.
     action ('# OPENING action'): the first footage shot is a real event (an animal doing run/fight/attack/hunt/stalk/jump)
     and a wide/medium/aerial shot with an animal that places who is where starts within OPEN_WIDE_T s."""
-    if slots and slots[0].get("cold"):  # the cold open is the opening (coldopen.validate checks its form)
-        return
     sh = [s for s in slots if s["src"] != "GFX"]
     if sh and sh[0].get("opener"):  # build()'s opener: the epic shot; the form rules start after it
         f, size = sh[0]["filter"], set(sh[0]["filter"].get("size", []))
@@ -482,7 +474,7 @@ def snap_intro(slots, intro, m, t_m, opening="landscape"):
     kinds, shifts, left = Counter(), [], []
     for k in range(1, last + 1):
         p, s, b = slots[k - 1], slots[k], slots[k]["start"]
-        if b <= t_m + 0.5 or b in a7 or p.get("cold"):  # the cold open ends on the narrator, fixed
+        if b <= t_m + 0.5 or b in a7:
             continue
         lo, hi = p["start"] + SHOT_MIN, b + s["dur"] - SHOT_MIN
         opts = ([(abs(t - b) - 0.05 * lv, f"hit B{lv}", t) for t, lv in hits if abs(t - b) <= HIT_WIN]
@@ -589,18 +581,24 @@ def intro_music(slots, work, intro):
     for s in slots:
         if s.get("intro"):
             s["audio"] = [e for e in s["audio"] if e["track"] != 7]
-    at = float(j.get("start", 0.0))  # cold open: the music starts on the impact's hit (intro.py)
+    at, i = float(j.get("start", 0.0)), j.get("impact")  # intro.py: the music starts on the impact's hit
+    if i and slots[0].get("opener"):  # user 2026-11-06: black + riser -> impact, the opener cuts in on the hit
+        o = slots[0]
+        slots.insert(0, {"slot": 1, "line": o["line"], "start": 0.0, "dur": at, "src": "GFX", "filter": {}, "audio": [],
+                         "need": "Đen: riser -> impact (A9), shot mở đầu vào đúng cú hit", "intro": True, "black": True})
+        o["start"], o["dur"] = at, round(o["dur"] - at, 2)
+        for k, s in enumerate(slots, 1):
+            s["slot"] = k
     slots[0]["audio"].append({"track": 7, "kw": ["intro"], "status": "OK", "path": j["source"], "dur": j["len"],
                               "fixed": True, "pieces": j["pieces"], "xf": j["xf"], "fade": j["fade"], "at": at})
-    if slots[0].get("cold") and j.get("impact"):  # A9: the riser into the impact, the hit on `at`
-        i = j["impact"]
+    if slots[0].get("black"):  # A9: the riser into the impact, the hit on `at`
         slots[0]["audio"].append({"track": 9, "kw": ["impact"], "status": "OK", "path": i["path"], "dur": i["dur"],
                                   "src_in": i["src_in"], "fixed": True, "fades": [0.08, 0.5]})
     f = next((s for s in slots if not s.get("intro")), None)  # body start, as intro.py story1()
     story1 = j["len"] + at if not f else intro if f["filter"].get("sp") == ["none"] else f["start"]
     return (f"intro music: {Path(j['source']).name} fitted to {tc(j['len'])} from {tc(at)} ({j['how']})"
-            + (f"; impact {Path(j['impact']['path']).name[:40]} (hit at {tc(at)})" if slots[0].get("cold") and j.get("impact") else "")
-            + ("; COLD OPEN slot but intro_music.json has no impact -> run intro.py again" if slots[0].get("cold") and not j.get("impact") else "")
+            + (f"; impact {Path(i['path']).name[:40]} (black 0:00 -> hit {tc(at)})" if slots[0].get("black") else "")
+            + ("; impact but no 0:00 opener (narration before 0:03.6): music from 0:00 -> run intro.py again" if i and not slots[0].get("black") else "")
             + (f"; STALE: story 1 now starts {tc(story1)} -> run intro.py again" if abs(story1 - j["len"] - at) > 0.1 else ""))
 
 
@@ -611,7 +609,7 @@ def intro_beats(slots, intro, opening="landscape"):
     if not cue:
         return "intro beat: no A7 music under the intro (spec: A7 cue on the first intro shot); cuts as written"
     t_m, e = cue
-    t_m += e.get("at", 0.0)  # the music starts on the cold open's hit
+    t_m += e.get("at", 0.0)  # the music starts on the impact's hit
     try:  # whole track (<= 4 min): a slow 15 s opening alone gives no tempo
         if e.get("pieces"):  # intro.py: the source's bar pieces as A7 plays them (no fitted file)
             import numpy as np
@@ -1150,8 +1148,11 @@ def match(slots, clips, taken=None, look=None):
             folders = {kin(c) for c in clips if want & set(c["tags"].get("species", []))} - NEUTRAL - {"_check", ""}
             tiers = [lambda c: want & set(c["tags"].get("species", [])), lambda c: kin(c) in folders, lambda c: kin(c) in NEUTRAL - {"landscape"}, lambda c: kin(c) == "landscape"]
             done = False
-            for keep_light in (True, False):
-                g = f if keep_light else {k: x for k, x in f.items() if k != "light"}
+            # user 2026-11-06: fill-THIEU (explicit --sub-broad) = 100 % of the slots: after the strict pass, a second pass
+            # drops the soft story gates (sex / age / kill / resting / xact); no= / biome / night / species-tier stay
+            for soft, keep_light in ((s_, kl) for s_ in ((False, True) if SUB_BROAD else (False,)) for kl in (True, False)):
+                g = {k: x for k, x in f.items() if (keep_light or k != "light") and not (soft and k in ("sex", "age", "xact", "act", "out"))}
+                g = {**g, "out": ["kill"]} if soft else g  # a kill/catch clip passes too
                 for k, tier in enumerate(tiers):
                     best = None
                     for c in clips:
@@ -1167,7 +1168,7 @@ def match(slots, clips, taken=None, look=None):
                     if best:
                         v, c, cin = best
                         take(s, c, cin, status="FALLBACK", fit=round(v, 2), why="late substitute (broad)",
-                             tier=("species", "kin", "birds/insects", "landscape")[k] + ("" if keep_light else ", any light"))
+                             tier=("species", "kin", "birds/insects", "landscape")[k] + ("" if keep_light else ", any light") + (", soft gates" if soft else ""))
                         done = True
                         break
                 if done:
@@ -1286,6 +1287,8 @@ def intro_weak(slots):
     """user 2026-11-05: an intro WEAK pick counts as THIẾU (red marker, a prompt, Case 1 fills the empty range); the
     pick goes first in alts so place.py still puts it in the bins for a hand swap. The opener (0:00) keeps its pick."""
     n = 0
+    if SUB_BROAD:  # user 2026-11-06: fill-THIEU keeps the best (WEAK) pick of every intro slot, no prompt for it
+        return "intro WEAK kept (fill-THIEU)"
     for s in slots:
         if s.get("intro") and s.get("status") == "WEAK" and not s.get("opener"):
             if s.get("path"):
@@ -2195,12 +2198,24 @@ def selftest():
     _, _, ob2 = parse_spec("# OPENER Cận mắt sư tử | real | sp=lion size=extreme_close\n## 1\n* | a | real | sp=lion |\n")
     assert build([4.0], 8.0, ob2)[0]["filter"] == {"sp": ["lion"], "size": ["extreme_close"]}
     assert len(build([0.6], 8.0, ob2)) == 1  # older timing (narration from 0:00.6): no opener
-    # 2026-11-06 cold open: narration from 12.6 s -> a reserved GFX slot 0:00-12.6 (black + impact + story-1
-    # shots), never matched; ## 1's beds / music stay on ## 1 (the intro music joins slot 0 with its 'at')
-    co = build([12.6, 18.0], 24.0, ob, 90.0)
-    assert co[0]["cold"] and co[0]["src"] == "GFX" and (co[0]["start"], co[0]["dur"]) == (0.0, 12.6) and not co[0]["audio"]
-    assert [e["track"] for e in co[1]["audio"]] == [3, 7, 8] and co[1]["start"] == 12.6
-    check_opening(co, "landscape")  # no landscape-opener rule after a cold open
+    # 2026-11-06 impact: intro_music.json with an impact -> black 0:00 -> hit (GFX, never matched; A7 from the hit + A9
+    # riser), the opener cuts in on the hit and keeps ## 1's beds; no impact = the opener from 0:00 as before
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        im = {"source": "m.mp3", "pieces": [[0, 80]], "xf": 0.08, "fade": 1.5, "len": 80.0, "how": "x", "start": 1.0,
+              "impact": {"path": "i.mp3", "hit": 1.6, "src_in": 0.6, "at": 1.0, "dur": 5.0}}
+        Path(d, "intro_music.json").write_text(json.dumps(im), "utf-8")
+        co = build([3.6, 9.0], 81.0, ob, 90.0)
+        intro_music(co, Path(d), 90.0)
+        assert co[0]["black"] and co[0]["src"] == "GFX" and (co[0]["start"], co[0]["dur"]) == (0.0, 1.0)
+        assert [(e["track"], e.get("at"), e.get("src_in")) for e in co[0]["audio"]] == [(7, 1.0, None), (9, None, 0.6)]
+        assert co[1]["opener"] and (co[1]["start"], co[1]["dur"]) == (1.0, 2.6) and [e["track"] for e in co[1]["audio"]] == [3]
+        assert [s["slot"] for s in co] == [1, 2, 3, 4]
+        check_opening(co, "action")
+        Path(d, "intro_music.json").write_text(json.dumps(dict(im, start=0.0, impact=None)), "utf-8")
+        old = build([3.6, 9.0], 81.0, ob, 90.0)
+        intro_music(old, Path(d), 90.0)
+        assert old[0]["opener"] and old[0]["start"] == 0.0 and [e["track"] for e in old[0]["audio"]] == [3, 7]
     # bin "7. Open" (user 2026-10-26): its AI clip fills a 'real' line in intro + story 1 only, goes first in its band,
     # comes back OPEN_GAP s apart and is not held by the ledger ban
     oc = {"source": "ai", "open": True, "recent": True, "abs": "o", "duration": 10.0, "tags": {}}

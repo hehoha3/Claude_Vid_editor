@@ -176,7 +176,7 @@ def cmd_at(args, cfg):
 def v1_gaps(spans, thieu, fps, intro_end=None):
     """Empty V1 spans (frames from timeline start) -> (to fill, THIEU count, intro gap or None).
     Allowed empty (user 2026-10-26): inside THIEU spans; one gap <= 0.7 s at the intro end (plan) = intro -> story 1
-    black (no plan: the first such gap before 3:00)."""
+    black (no plan: the first such gap before 3:00); 0:00 -> the impact's hit (<= 1 s, user 2026-11-06)."""
     gaps, e = [], 0
     for a, b in sorted(spans):
         if a > e:
@@ -184,6 +184,8 @@ def v1_gaps(spans, thieu, fps, intro_end=None):
         e = max(e, b)
     bad, n_thieu, intro = [], 0, None
     for a, b in gaps:
+        if a == 0 and b <= fps + 1:  # black under the riser until the impact's hit (dvr_cowork/impact.py)
+            continue
         rest = [(a, b)]
         for ma, mb in thieu:  # what no THIEU marker covers
             rest = [p for x, y in rest for p in ((x, min(y, ma)), (max(x, mb), y)) if p[1] > p[0]]
@@ -454,7 +456,7 @@ def build_parser():
 
 
 # One CLI (user 2026-11-05): `python -m dvr_cowork <group> ...` runs the sub-tool, everything else is a Resolve tool.
-GROUPS = {"ai": ".fullai.cli", "profile": ".profile", "youtube": ".youtube", "jobs": ".jobs", "coldopen": ".coldopen"}
+GROUPS = {"ai": ".fullai.cli", "profile": ".profile", "youtube": ".youtube", "jobs": ".jobs", "impact": ".impact"}
 
 
 def main(argv=None):

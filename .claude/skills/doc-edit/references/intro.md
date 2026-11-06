@@ -1,8 +1,9 @@
 # Intro music (part of the new-video run, user 2026-10-31: no separate `/doc-edit intro` command)
 
 The intro runs 0:00 -> story 1 (`# INTRO` / `# STORY 1`, 1:30-2:00 by the screenplay); its music ends exactly there
-(intro end = music end); after a cold open (narrator from 0:12.6) it starts on the impact's hit, which intro.py
-picks at the same time (`dvr_cowork coldopen`, written into intro_music.json). Needs: A2 placed and plan.json. Called from
+(intro end = music end); it starts on the impact's hit (~0:01, user 2026-11-06), which intro.py picks at the same
+time (`dvr_cowork/impact.py`, written into intro_music.json; plan.py then puts black 0:00 -> hit and the opener on the
+hit). Needs: A2 placed (narrator from 0:03.6) and plan.json. Called from
 `references/new-video.md` step C, before the prompts (D) and the one `place.py <video>` (E).
 
 1. Music + fit, one call:

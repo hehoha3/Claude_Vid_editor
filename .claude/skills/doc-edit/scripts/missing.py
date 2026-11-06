@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / ".claude" / "skills" / "scan-source" / "scripts"))
 from dvr_cowork.config import load_config  # noqa: E402
+from dvr_cowork.timecode import parse_clock as secs  # noqa: E402
 from scan_source import ROOTS  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 from plan import AGE_CAP, KILL, SEX_CAP  # noqa: E402  the story-truth words plan.py checks, same in the prompts
@@ -215,11 +216,6 @@ def parse_prompts(text):
 
 def tc(s):
     return f"{int(s // 60):02d}:{s % 60:04.1f}"
-
-
-def secs(t):
-    m, _, s = t.rpartition(":")
-    return int(m or 0) * 60 + float(s)
 
 
 def main(video, mode, rng=None):
