@@ -5,7 +5,7 @@ starts from the user's own edits, less typing).
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/state.py diff <video>                            # start of the next
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/state.py --selftest
 
-Snapshot = items of timelines Edit + Open (track, start, end, file; read only, the user's timeline restored) when
+Snapshot = items of the video timeline channN_vidK (track, start, end, file; read only, the user's timeline restored) when
 the open Resolve project holds <video> (own project, or day project vid_DDMMYY: only its Chann_N timelines), files of
 D:/AI_video/_check and _nologo, and the mtimes of the files the user edits (spec.txt, plan.md, missing-prompt.csv, the hide-logo check list, the audios folder). Stored in
 .work/doc_edit/<video>/state.json; diff prints the last step and every change, grouped, short.
@@ -23,9 +23,9 @@ SHOW = 8  # items listed per group, the rest counted
 
 
 def timelines(video, audios=None):
-    """{"Edit": {"V1@12.00": "file | end 15.20"}} or a note why Resolve was not read. The open project
+    """{"chann1_vid2": {"V1@12.00": "file | end 15.20"}} or a note why Resolve was not read. The open project
     must hold <video>: its own project, or the day project vid_DDMMYY (place.py's project.txt, plan.same_project) where
-    only the video's channel timelines are read (DVR_CHANNEL from its D:/Chann_N_* path, never the other "Edit")."""
+    only the video's timeline channN_vidK is read (from its D:/Chann_N_* path)."""
     try:
         import plan
         from dvr_cowork.cli import _items, _timelines
@@ -37,7 +37,7 @@ def timelines(video, audios=None):
         if not pr or not plan.same_project(pr.GetName(), video):
             return f"not read (open project {pr and pr.GetName()!r} does not hold {video!r})"
         return {t.GetName(): {f"{tr}@{a:.2f}": f"{Path(p).name} | end {b:.2f}" for tr, a, b, _, p in _items(t)}
-                for t in _timelines(pr, {"edit"})}
+                for t in _timelines(pr)}
     except Exception as e:  # noqa: BLE001  Resolve closed: files are still compared
         return f"not read ({e})"
 

@@ -20,7 +20,7 @@ Clips in `D:\AI_video\_check` are planned too (user 2026-10-21), by their tags: 
 note `_check: <issues>`), never with logo / watermark / text (delogo first). Every place / fill also imports up to 4
 alternative clips per slot (THIẾU slots too; plan.py `ALTS`) into bins 1-3, never placed: the user swaps by hand
 (`alternatives in bins 1-3: N` line).
-Backs up "Edit" (`Edit_bak_place_<stamp>`), imports used files into video bins by what the clip shows (user
+Backs up the video timeline (`<timeline>_bak_place_<stamp>`), imports used files into video bins by what the clip shows (user
 2026-10-22, real and AI alike): tag action attack / hunt / fight -> `2. Attack_roll`, run -> `3. Run_roll` (attack wins),
 everything else -> `1. Other_roll` (untagged: words in folder / file name, e.g. `Chạy`); every clip of the intro (0:00 -> story 1) -> the channel's `7. Open` instead (user 2026-11-05; listed in `.work/doc_edit/<key>/open_placed.txt` so plan.py gives them no priority; plan.py reads that
 bin for the intro + story 1 from the first plan on, day project `vid_DDMMYY[_N]` included); `place.py --rebin` re-sorts the

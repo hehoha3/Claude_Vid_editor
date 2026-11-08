@@ -264,9 +264,9 @@ shot ≤ 2 s 0 % → 30 %, `# TURN` 0 → 11, SFX 5 → 27, âm thanh tự nhiê
    số lần đã dùng: khớp nhiều từ mood nhất, rồi phủ hết đoạn, rồi độ dài sát đoạn nhất; không hai cue liền nhau
    cùng một bài.
 
-### 5.3 Track của timeline Edit
+### 5.3 Track của timeline video (channN_vidK)
 
-Mỗi video **một timeline "Edit"** (+ backup `Edit_bak_*`, giữ 3 cái mới nhất; user 2026-11-05). A1 footage+AI để
+Mỗi video **một timeline `channN_vidK`** trong `Chann_N/6. Timeline` của project ngày `vid_DDMMYY` (user 2026-11-06, bỏ "Edit"; + backup `<timeline>_bak_*`, giữ 3 cái mới nhất). A1 footage+AI để
 trống (video đặt trước 2026-11-05 giữ A1 cũ; `place.py A1_UNTIL = 0`), full-AI = tiếng của chính mỗi shot (-12 dB) · A2
 narrator (mỗi câu một item) · A3/A4 nền ambience (luân phiên, crossfade 4 s) · A5 lớp môi trường / chim · A6 âm thanh
 tự nhiên · A7 nhạc · A8/A9 SFX (A9 ở 0:00 = riser → impact trước intro, từ 2026-11-06). Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh
@@ -293,7 +293,7 @@ ngày không trùng; intro.py chọn cùng lúc với nhạc, code `dvr_cowork/i
   │                        Claude xem ảnh, đánh dấu hook_ok + đoạn sạch → ai finish <bài intro> --apply:
   │                        hook 30 s (10-12 cut 2-4 s) → intro lên V1 → nhạc A7/A8 + gió A3/A4 + chim A5 → check
   │ ── dừng: bạn review (không chỉnh màu)
-/doc-edit done <video>   → ai done --apply: kiểm tra Edit thật → render (không ghi đè, _v2) → ai render-status
+/doc-edit done <video>   → ai done --apply: kiểm tra timeline thật → render (không ghi đè, _v2) → ai render-status
                            → (tuỳ chọn) youtube seo → youtube upload (preview) → --apply sau khi bạn duyệt
 ```
 Mỗi phim ghim profile vào `video.project.json` + `.production/profile.lock.json`: sửa profile của workspace không làm
@@ -368,7 +368,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
   `_pushed`; preflight trước mỗi việc; việc bị từ chối không thử lại y hệt.
 - **`.claude/settings.json`**: luôn hỏi trước `place.py`, `--replace`, `grade.py apply`, `reframe --apply`, xoá
   clip/timeline; cấm gửi phím tắt.
-- **Backup**: `Edit_bak_<loại>_<giờ>` (bin `6. Timeline`) trước vo-sync, place, reframe, màu, audio-expert. Khôi phục
+- **Backup**: `<timeline>_bak_<loại>_<giờ>` (bin `6. Timeline`) trước vo-sync, place, reframe, màu, audio-expert. Khôi phục
   = mở lại backup (hỏi trước). Quá nhiều backup làm Resolve lag: `.\dvr.cmd backups --keep 3 --apply`.
 
 ## 10. Nhanh và rẻ: vì sao

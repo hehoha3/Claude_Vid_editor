@@ -7,16 +7,17 @@ import re
 from pathlib import Path
 from .core import (Stop, config, resolve_lock, event, frames, lock, object_hash, probe, prod, run,
                    read_json, video_path, write_json, day_project)
+from ..videokey import timeline_name
 from .pipeline import assert_voice_media, hook_window, ingested_media, intro_gap_f, subtitle_file
 from ..resolve_conn import connect
 from .story import load_plan
 
-# Same project layout as the 1h videos (user 2026-11-04): bins 1-7 per channel, "Edit" in 6. Timeline, A1-A9.
+# Same project layout as the 1h videos (user 2026-11-04): bins 1-7 per channel, timeline channN_vidK in 6. Timeline, A1-A9.
 BINS=("1. Other_roll","2. Attack_roll","3. Run_roll","4. Audio","4. Audio/Narrator","4. Audio/Ambience","4. Audio/SFX",
       "4. Audio/Music","5. Graphics","6. Timeline")  # no "7. Open": footage+AI only (user 2026-11-05)
 TIMELINE_BIN="6. Timeline"
-LEGACY_TIMELINE_BIN="4. Timeline"  # 8p projects made before 2026-11-04
-SHOT_BIN,NARRATOR_BIN,MUSIC_BIN,BED_BIN,SUB_BIN="1. Other_roll","4. Audio/Narrator","4. Audio/Music","4. Audio/Ambience","5. Graphics"
+
+SHOT_BIN,NARRATOR_BIN,MUSIC_BIN,BED_BIN,SUB_BIN="1. Other_roll","4. Audio/Narrator","4. Audio/Music","4. Audio/Ambience","5. Graphics/sub-title"
 SHOT_A,VOICE_A,BED_A,BIRD_A,MUSIC_A=1,2,3,5,7  # A1 clip sound, A2 narrator, A3/A4 wind beds, A5 birds, A7/A8 intro song
 AUDIO_TRACKS=9
 TRACKS=dict(enumerate(("Audio v1","Narrator Voice","Ambience 1","Ambience 2","Ambience 3","Natural sounds","Music",
@@ -73,19 +74,15 @@ class Session:
         self.mp=self.project.GetMediaPool()
         self.previous=self.project.GetCurrentTimeline()
         self.previous_bin=self.mp.GetCurrentFolder()
-        # One project can hold one video per channel: Chann_N/<bins>, each with its own Edit in Chann_N/6. Timeline.
+        # A day project holds every video of every channel: Chann_N/<bins>, one timeline channN_vidK per video in
+        # Chann_N/6. Timeline (user 2026-11-06, replaces "Edit").
         self.ch=channel(self.video)
-        self.all_edits=[t for t in (self.project.GetTimelineByIndex(i) for i in range(1,self.project.GetTimelineCount()+1))
-                        if t and t.GetName()=="Edit"]
-        self.tl=None
-        for name in (TIMELINE_BIN,LEGACY_TIMELINE_BIN):
-            matches=self.all_edits
-            if self.ch or name==LEGACY_TIMELINE_BIN:
-                home=ensure_bin(self.mp,self.bin(name),create=False)
-                ids={c.GetUniqueId() for c in (home.GetClipList() or [])} if home else set()
-                matches=[t for t in matches if t.GetMediaPoolItem() and t.GetMediaPoolItem().GetUniqueId() in ids]
-            if len(matches)>1: raise Stop(f"More than one Edit timeline in {self.bin(name)}; keep exactly one.")
-            if matches: self.tl=matches[0]; break
+        self.name=timeline_name(self.video)
+        if not self.name: raise Stop(f"{self.video} is not inside a D:\\Chann_N_* folder: no timeline name")
+        same=[t for t in (self.project.GetTimelineByIndex(i) for i in range(1,self.project.GetTimelineCount()+1))
+              if t and t.GetName()==self.name]
+        if len(same)>1: raise Stop(f"More than one timeline {self.name}; keep exactly one.")
+        self.tl=same[0] if same else None
         if self.tl:
             fps=float(self.tl.GetSetting("timelineFrameRate") or self.project.GetSetting("timelineFrameRate"))
             if abs(fps-self.plan["fps"])>.001: raise Stop(f"Timeline fps {fps} != plan fps {self.plan['fps']}")
@@ -104,22 +101,19 @@ class Session:
         dst=ensure_bin(self.mp,self.bin(TIMELINE_BIN))
         self.mp.SetCurrentFolder(dst)
         if not self.tl:
-            if self.all_edits:  # Resolve's API refuses a second timeline with the same name
-                raise Stop(f"Another channel's Edit exists; create an empty Edit in {self.bin(TIMELINE_BIN)} by hand "
-                           "(the Resolve UI allows the same name) or use the 1h project template, then rerun")
             try: current=float(self.project.GetSetting("timelineFrameRate"))
             except (TypeError,ValueError): current=None
-            # The project rate is shared by every channel's Edit; only set it when it differs.
+            # The project rate is shared by every video's timeline; only set it when it differs.
             if current is None or abs(current-self.plan["fps"])>.001:
                 fps=str(self.plan["fps"]).removesuffix(".0")
-                if not self.project.SetSetting("timelineFrameRate",fps): raise Stop("Set project frame rate before creating Edit")
-            self.tl=self.mp.CreateEmptyTimeline("Edit")
-            if not self.tl: raise Stop(f"Could not create Edit in {self.bin(TIMELINE_BIN)}")
-        elif not self.ch:
+                if not self.project.SetSetting("timelineFrameRate",fps): raise Stop(f"Set project frame rate before creating {self.name}")
+            self.tl=self.mp.CreateEmptyTimeline(self.name)
+            if not self.tl: raise Stop(f"Could not create {self.name} in {self.bin(TIMELINE_BIN)}")
+        else:
             timeline_clip=self.tl.GetMediaPoolItem()
             if timeline_clip and not any(c.GetUniqueId()==timeline_clip.GetUniqueId() for c in dst.GetClipList() or []):
-                if not self.mp.MoveClips([timeline_clip],dst): raise Stop(f"Could not put Edit in {TIMELINE_BIN}")
-        if not self.project.SetCurrentTimeline(self.tl): raise Stop("Could not select Edit")
+                if not self.mp.MoveClips([timeline_clip],dst): raise Stop(f"Could not put {self.name} in {self.bin(TIMELINE_BIN)}")
+        if not self.project.SetCurrentTimeline(self.tl): raise Stop(f"Could not select {self.name}")
         while int(self.tl.GetTrackCount("video") or 0)<1:
             if not self.tl.AddTrack("video"): raise Stop("Could not create V1")
         while int(self.tl.GetTrackCount("audio") or 0)<AUDIO_TRACKS:
@@ -132,7 +126,7 @@ class Session:
         self.t0=int(self.tl.GetStartFrame())
 
     def backup(self,label):
-        name=f"Edit_bak_{label}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        name=f"{self.name}_bak_{label}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
         self.mp.SetCurrentFolder(ensure_bin(self.mp,self.bin(TIMELINE_BIN)))
         if not self.tl.DuplicateTimeline(name): raise Stop("Backup failed; no timeline clips changed")
         self.project.SetCurrentTimeline(self.tl)
@@ -462,15 +456,15 @@ def finish(video,song,write=False,resolve=None,**sound):
 
 def info(video,resolve=None):
     s=Session(video,resolve)
-    if not s.tl: return {"project":s.project.GetName(),"bin":s.bin(TIMELINE_BIN),"timeline":"Edit not yet created"}
-    return {"project":s.project.GetName(),"bin":s.bin(TIMELINE_BIN),"timeline":"Edit","fps":s.plan["fps"],
+    if not s.tl: return {"project":s.project.GetName(),"bin":s.bin(TIMELINE_BIN),"timeline":f"{s.name} not yet created"}
+    return {"project":s.project.GetName(),"bin":s.bin(TIMELINE_BIN),"timeline":s.name,"fps":s.plan["fps"],
             "tracks":{kind:[{"index":i,"name":s.tl.GetTrackName(kind,i),"items":len(s.bounds(kind,i))}
                              for i in range(1,int(s.tl.GetTrackCount(kind) or 0)+1)] for kind in ("video","audio","subtitle")}}
 
 
 def live_check(session):
     s=session
-    if not s.tl: raise Stop("Edit does not exist")
+    if not s.tl: raise Stop(f"{s.name} does not exist")
     fps=s.plan["fps"]; t0=int(s.tl.GetStartFrame())
     video=sorted(s.bounds("video",1),key=lambda x:int(x.GetStart()))
     if not video: raise Stop("V1 is empty")
@@ -681,7 +675,7 @@ def render_start(video,resolve=None):
             if not s.pm.SaveProject(): raise Stop("Save project failed before render")
             from .core import atomic_text
             used_music=sorted({x["path"] for x in report["audio"] if x["track"] not in (SHOT_A,VOICE_A)})
-            lines=["# Music license records from the live Edit timeline", ""]
+            lines=["# Music license records from the live video timeline", ""]
             for path in used_music:
                 try: note=license_note(path)
                 except Stop: note="MISSING license record; user must verify rights"

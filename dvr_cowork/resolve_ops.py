@@ -42,16 +42,22 @@ def list_timelines(project):
     return [project.GetTimelineByIndex(i) for i in range(1, int(project.GetTimelineCount() or 0) + 1)]
 
 
-# One project per day may hold one video per channel (user 2026-10-25, project vid_251026): top bins Chann_1, Chann_2 ...
-# each with the old sub-bins and its own timeline "Edit" in "Chann_N/6. Timeline". DVR_CHANNEL (set by use_channel()
-# from the video's path D:\Chann_N_*\<video>) points every bin / timeline lookup into that channel's bin; a project
-# without that bin works as before (one video per project).
+# One project per day (vid_DDMMYY) holds every video of every channel (user 2026-11-06): top bins Chann_1, Chann_2 ...
+# each with the sub-bins and, in "Chann_N/6. Timeline", one timeline per video: channN_vidK (K = the video folder's
+# _N; replaces "Edit"). DVR_CHANNEL / DVR_TIMELINE (set by use_channel() from the video's path D:\Chann_N_*\<video>)
+# point every bin / timeline lookup there; a project without that bin keeps its bins at the root.
 CHANNEL_ENV = "DVR_CHANNEL"
+TIMELINE_ENV = "DVR_TIMELINE"
 _CHANN = re.compile(r"(?i)\bchann_(\d+)")
+VIDEO_TL = re.compile(r"(?i)chann(\d+)_vid\d+")
+if not os.environ.get(CHANNEL_ENV) and (_m := VIDEO_TL.fullmatch(os.environ.get(TIMELINE_ENV, ""))):
+    os.environ[CHANNEL_ENV] = f"Chann_{_m[1]}"  # `DVR_TIMELINE=chann2_vid3 <command>` is enough
 
 
 def use_channel(path):
-    r"""D:\Chann_2_darkAmazona\africa_1\audios -> DVR_CHANNEL=Chann_2 (an explicit other value is an error). -> channel."""
+    r"""D:\Chann_2_darkAmazona\africa_061126_3\audios -> DVR_CHANNEL=Chann_2 (an explicit other value is an error),
+    DVR_TIMELINE=chann2_vid3. -> channel."""
+    from .videokey import timeline_name
     m = _CHANN.search(str(path or ""))
     ch = os.environ.get(CHANNEL_ENV)
     if m:
@@ -59,7 +65,49 @@ def use_channel(path):
         if ch and ch.lower() != want.lower():
             raise OpsError(f"{CHANNEL_ENV}={ch} but {path} belongs to {want}")
         os.environ[CHANNEL_ENV] = ch = want
+        os.environ[TIMELINE_ENV] = timeline_name(path)
     return ch
+
+
+def use_video(video):
+    """use_channel() for a video name, work key (<video>__Chann_N) or folder: its D:\\Chann_N_*\\<video> folder when
+    found (a name in 2+ channels without its channel stops in video_key, never a guess). -> channel."""
+    from .videokey import channel_of, homes, split, video_key
+    p = str(video or "")
+    if p and not os.path.isabs(p):
+        name, ch = split(video_key(p))
+        hs = [h for h in homes(name) if not ch or channel_of(h) == ch]
+        p = str(hs[0]) if len(hs) == 1 else p
+    return use_channel(p)
+
+
+def timeline_label():
+    return os.environ.get(TIMELINE_ENV) or "channN_vidK (pass the video's D:\\Chann_N_*\\<video> path or open its timeline)"
+
+
+def video_timeline(project, create=False):
+    """The video's timeline channN_vidK: DVR_TIMELINE (use_channel), else the current timeline when it is one (of
+    DVR_CHANNEL's channel when set). create: a missing DVR_TIMELINE is made empty in "6. Timeline" (the channel's bin).
+    -> timeline or None."""
+    name = os.environ.get(TIMELINE_ENV)
+    if not name:
+        cur = project.GetCurrentTimeline()
+        m = VIDEO_TL.fullmatch(cur.GetName() or "") if cur else None
+        ch = os.environ.get(CHANNEL_ENV)
+        return cur if m and (not ch or ch.lower() == f"chann_{m[1]}") else None
+    tl = find_timeline(project, name)
+    if tl or not create:
+        return tl
+    mp = project.GetMediaPool()
+    prev = mp.GetCurrentFolder()
+    mp.SetCurrentFolder(ensure_bin(mp, TIMELINE_BIN))
+    try:
+        tl = mp.CreateEmptyTimeline(name)
+    finally:
+        mp.SetCurrentFolder(prev or mp.GetRootFolder())
+    if not tl:
+        raise OpsError(f'Could not create timeline "{name}" in "{TIMELINE_BIN}"')
+    return tl
 
 
 def channel_bin(media_pool):
@@ -84,7 +132,7 @@ def _clip_ids(folder):
 
 def find_timeline(project, name):
     """Timeline `name`; in a channel project only the one inside the channel's bin. Several of that name and no
-    channel to choose -> OpsError (never a guess: the other channel's "Edit" would be changed)."""
+    channel to choose -> OpsError (never a guess: another channel's timeline would be changed)."""
     tls = [t for t in list_timelines(project) if t and t.GetName() == name]
     b = channel_bin(project.GetMediaPool())
     if b:
@@ -257,10 +305,11 @@ def apply_plan(resolve, plan, cfg, log=print, dry_run=False, force_clear=False,
     keys = {_norm(f) for f in files}
 
     pm, project = get_project(resolve)
-    tl = find_timeline(project, rc["timeline_name"])
+    use_channel(files[0])  # D:\Chann_N_*\<video>\audios\... -> that video's channN_vidK
+    tl = video_timeline(project, create=not dry_run)
     if not tl:
         names = ", ".join(t.GetName() for t in list_timelines(project) if t)
-        raise OpsError(f'Timeline "{rc["timeline_name"]}" not found in project '
+        raise OpsError(f'Timeline {timeline_label()} not found in project '
                        f'"{project.GetName()}". Timelines: {names}')
     try:
         resolve.OpenPage("edit")
@@ -419,7 +468,7 @@ def place_subtitles(project, tl, plan, items, fps_tl, fps_clip, log=print, secti
     if not n:
         tl.AddTrack("subtitle")
     media_pool = project.GetMediaPool()
-    sub_bin = ensure_bin(media_pool, "5. Subtitles")
+    sub_bin = ensure_bin(media_pool, "5. Graphics/sub-title")  # the user's bin (2026-11-06)
     if old := find_clip(sub_bin, str(srt)):  # 2026-11-06: a re-sync re-imported the stale pool item (old times, +1 h)
         media_pool.DeleteClips([old])
         log("subtitles: stale .srt pool item replaced")
@@ -477,9 +526,10 @@ def verify_track(resolve, plan, cfg):
     """Compare what is on the VO track now with the plan (after manual edits, etc.)."""
     rc = cfg["resolve"]
     _, project = get_project(resolve)
-    tl = find_timeline(project, rc["timeline_name"])
+    use_channel(plan["audio"])
+    tl = video_timeline(project)
     if not tl:
-        raise OpsError(f'Timeline "{rc["timeline_name"]}" not found')
+        raise OpsError(f"Timeline {timeline_label()} not found")
     fps = timeline_fps(tl, project)
     start = int(tl.GetStartFrame())
     track = int(rc["audio_track"])
@@ -496,10 +546,7 @@ def project_info(resolve, cfg):
     _, project = get_project(resolve)
     rc = cfg["resolve"]
     cur = project.GetCurrentTimeline()
-    try:
-        tl = find_timeline(project, rc["timeline_name"]) or cur
-    except OpsError:  # several "Edit" and no channel: show the current one
-        tl = cur
+    tl = video_timeline(project) or cur
     info = {"project": project.GetName(), "channel": os.environ.get(CHANNEL_ENV) if channel_bin(project.GetMediaPool()) else None,
             "timelines": [t.GetName() for t in list_timelines(project) if t],
             "current_timeline": cur.GetName() if cur else None}
@@ -528,7 +575,7 @@ def project_info(resolve, cfg):
 def export_frames(resolve, cfg, times, out_dir):
     """Export graded stills at timeline positions ('mm:ss', 'hh:mm:ss' or full 'hh:mm:ss:ff' TC)."""
     _, project = get_project(resolve)
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"]) or project.GetCurrentTimeline()
+    tl = video_timeline(project) or project.GetCurrentTimeline()
     if not tl:
         raise OpsError("No timeline available")
     project.SetCurrentTimeline(tl)

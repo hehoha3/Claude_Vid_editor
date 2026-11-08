@@ -1,6 +1,6 @@
 ---
 name: doc-edit
-description: Documentary edit in Resolve for two video types of any region (amazon / africa / himalaya) - footage+AI 1-3h (footage library + AI clips; new video(s), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU, color, place, reframe, check-timelines, done, seo, "color n done", status) and full-AI 8-15p (every shot generated, `dvr_cowork ai`; voice -> prompts, shots -> whole film on Edit, review, done). Use for /doc-edit, a pasted video path `D:\Chann_*\<video>` (finds its audios / voice / shots folders itself), "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source /tag-source và tiếp", "voice xong / shots xong", "xong video".
+description: Documentary edit in Resolve for two video types of any region (amazon / africa / himalaya) - footage+AI 1-3h (footage library + AI clips; new video(s), plan, missing-prompts, logo, delogo, ingest, fill, fill-THIEU, color, place, reframe, check-timelines, done, seo, "color n done", status) and full-AI 8-15p (every shot generated, `dvr_cowork ai`; voice -> prompts, shots -> whole film on its timeline, review, done). Use for /doc-edit, a pasted video path `D:\Chann_*\<video>` (finds its audios / voice / shots folders itself), "lên plan / prompt cho shot thiếu", "lấp slot thiếu", "đồng bộ màu", "check folder _check", "/scan-source /tag-source và tiếp", "voice xong / shots xong", "xong video".
 ---
 
 # Doc edit
@@ -48,19 +48,20 @@ files -> it stops).
 - Parallel: narration A runs in the background while B plans; tag batches = up to 4 background agents; delogo and
   `apply` of many batches in the background. Never poll; act on the notification.
 
-Tracks of "Edit" (the one timeline + `Edit_bak_*`): A1 empty (user 2026-11-05; place.py A1_UNTIL = 0, older videos
+Tracks of the video timeline `channN_vidK` (the one timeline + `<timeline>_bak_*`): A1 empty (user 2026-11-05; place.py A1_UNTIL = 0, older videos
 keep theirs) · A2 narrator only · A3/A4 bed (alternating, 4 s crossfades, ~-32 LUFS, original files) · A5 extra
 environment · A6 natural · A7 music · A8/A9 SXF (A9 at 0:00: the riser -> impact before the opener, user 2026-11-06). Bins: `7. Open` = the intro's shots (0:00 -> story 1) only (plan.py
 gives priority in the intro + story 1 only to the clips the user put there, not to place.py's own: `open_placed.txt`); every
 music / sound file -> `4. Audio/*` (the intro music too).
 
-## Day project, one video per channel (user 2026-10-25)
-Project `vid_DDMMYY` (vid_251026 = 25/10/2026) holds one video per channel: top bins `Chann_1`, `Chann_2` ... each
-with the sub-bins 1-7 and its own timeline "Edit" in `Chann_N/6. Timeline`. The channel comes from the audios path
+## Day project, every video of every channel (user 2026-11-06)
+Project `vid_DDMMYY` (vid_061126 = 06/11/2026) holds every video of that day: top bins `Chann_1`, `Chann_2` ... each
+with the sub-bins 1-7 and one timeline per video `channN_vidK` (K = the folder's `_K`: africa_061126_3 in Chann_2 ->
+`chann2_vid3`) in `Chann_N/6. Timeline`; place.py / vo-sync / `ai` create a missing one there. "Edit" is gone. The channel comes from the audios path
 (`D:\Chann_2_darkAmazona\...` -> `Chann_2`): vo-sync, `place.py`, `intro.py` and ledger set it themselves
-(resolve_ops `use_channel`); every other Resolve command of a video runs with `DVR_CHANNEL=Chann_N` in front
-(`DVR_CHANNEL=Chann_2 .venv/Scripts/python.exe -m dvr_cowork info`, light.py, reframe.py, audio-expert ...). Two
-"Edit" and no channel -> the script stops (never a guess). A project without `Chann_*` bins works as before.
+(resolve_ops `use_channel`, also DVR_TIMELINE); every other Resolve command of a video runs with
+`DVR_TIMELINE=channN_vidK` in front (`DVR_TIMELINE=chann2_vid3 .venv/Scripts/python.exe -m dvr_cowork info`,
+light.py, reframe.py, audio-expert ...; it sets DVR_CHANNEL too), else on the open timeline when it is a `channN_vidK`.
 Same video folder name in two channels (user 2026-11-02, intended: `vid_021126` -> `africa_021126_1` in Chann_1 and
 Chann_2; from 2026-11-03 `vid_DDMMYY_1`): work key `<video>__Chann_N` (`dvr_cowork/videokey.py`) for
 `.work/doc_edit/<key>` and the vo-sync job `.work/<key>_mp3`, from the audios path by itself; a bare name needs
@@ -135,7 +136,7 @@ sounds come from the screenplay and the footage, never from the biome name.
 ## Commands
 | command (user's words) | runs | reply |
 |---|---|---|
-| `/doc-edit <video folder>` of a full-AI film | `references/full-ai.md` from its state: voice -> prompts, stop; shots complete -> whole film on Edit, stop for review | that file's replies |
+| `/doc-edit <video folder>` of a full-AI film | `references/full-ai.md` from its state: voice -> prompts, stop; shots complete -> whole film on its timeline, stop for review | that file's replies |
 | `/doc-edit <audios-folder> [<audios-folder> ...]` | `references/new-video.md` per video: preflight (conform if needed) -> A narration (background) + B plan -> C intro music + re-plan -> D prompts for the intro + story 1 -> E place of intro + body on empty tracks (the body's THIẾU already filled by plan.py, user 2026-11-05); several folders = one agent per video for B + D, A / C / E one video after the other | new-video reply per video |
 | `/doc-edit plan` | re-plan after beat / spec edits or new clips: B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
 | `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md`: THIẾU of the intro + story 1 by default; a range -> `missing.py <video> --range=A-B`, the whole film `--all` (same flag on `--check` / `--write`) | prompts reply |
@@ -144,11 +145,11 @@ sounds come from the screenplay and the footage, never from the biome name.
 | `/doc-edit ingest` ("/scan-source ai, /tag-source") | amazon: scan ai -> tag-source (prepare, Sonnet agents in parallel, apply) -> `organize.py --apply` -> scan ai ("moved N"); africa: scan africa_ai_check -> tag-source `prepare africa_ai_check` -> apply -> `organize.py --africa --apply` -> scan africa_ai_check | tagged, filed per folder, kept in `_check` (why) |
 | `/doc-edit fill [--sub mm:ss]` ("lấp slot thiếu") | `plan.py <folder> [--late-sub --late-sub-t=<s>]` or `--sub-all` -> `place.py <video> --fill` (backup; `references/place-fill.md`) | THIẾU left (timecodes), placed, backup |
 | `/doc-edit fill-THIEU [<video>]` (= "Sử dụng các option thay thế các slot THIEU"; user 2026-10-26: only on this command / phrase, never on its own, never in `fill`; since 2026-11-05 the body after story 1 gets these tiers on every plan run, so this command matters for the intro + story 1) | `plan.py <folder> --sub-broad` (fills every slot incl. the intro: after the strict pass a `soft gates` pass drops sex / age / kill / resting / xact; `--sub-all` + tier 4: species itself > same library folder > birds / butterflies / insects / frogs > landscape; slot light first, any light last; FALLBACK "late substitute (broad)", cyan) -> `place.py <video> --fill` | slots filled (timecode -> clip), the off-light / off-setting ones to check, THIẾU left |
-| `/doc-edit fallback-species [<video>] [mm:ss-mm:ss]` (user 2026-10-29: "thay các slot FALLBACK bằng shot cùng loài") | `scripts/fallback_swap.py <video> --range=A-B` dry run, then `--apply` (backup `Edit_bak_fbspecies_*`): each FALLBACK V1 shot -> a clip of the slot's species (else its family), action / setting ignored; hand-changed shots and the intro -> story 1 fade shots untouched; Teal | swapped, left alone (hand), KEEP (no clip) |
+| `/doc-edit fallback-species [<video>] [mm:ss-mm:ss]` (user 2026-10-29: "thay các slot FALLBACK bằng shot cùng loài") | `scripts/fallback_swap.py <video> --range=A-B` dry run, then `--apply` (backup `<timeline>_bak_fbspecies_*`): each FALLBACK V1 shot -> a clip of the slot's species (else its family), action / setting ignored; hand-changed shots and the intro -> story 1 fade shots untouched; Teal | swapped, left alone (hand), KEEP (no clip) |
 | `/doc-edit ingest --fill [--sub mm:ss]` (also `/scan-source /tag-source và tiếp`) | `ingest`, then `fill` in one go (no stop between); `--sub` as in `fill`; then stop: the user reviews the timeline + logos | tagged, filed, THIẾU left, placed, gaps left |
 | `/doc-edit place` | `references/place-fill.md` | backup, placed, max deviation, gaps, audio, failures, markers |
 | `/doc-edit color` ("đồng bộ màu") | load `/colorist`, its light pass: `light.py plan` -> golden-grass preview -> `apply` (backup; one space per story, vivid, never a broken shot) -> look at >= 12 real frames (`dvr_cowork frames`), several per story | ranges, story spread before -> after, AI clips toned down, intro count, the frames checked |
-| `/doc-edit color n done [<video>]` ("color và done") | `seo.py` in the background (no Resolve) while `color` runs as above; color found a broken shot / a problem -> stop, report, no render; else `done` (check-timelines.md): render + upload private, no thumbnail | color reply + SEO 3 titles + done reply |
+| `/doc-edit color n done [<video>]` ("color và done") | `seo.py` in the background (no Resolve) while `color` runs as above; color found a broken shot / a problem -> stop, report, no render; else `done` (check-timelines.md): render + upload private, thumbnail = `<video>\thumb\done.*` if there | color reply + SEO 3 titles + done reply |
 | `/doc-edit seo [<video>] [--force]` | `python -m dvr_cowork youtube seo <video folder> [--force]` (check-timelines.md "SEO") | 3 titles (the chosen one), FLAG lines |
 | `/doc-edit status` | `state.py status`: every video of every channel, its stage, the command to call next (files only, no Resolve) | the table |
 | `/doc-edit reframe [<video>]` | `references/reframe.md` | |

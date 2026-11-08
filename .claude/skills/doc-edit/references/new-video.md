@@ -13,7 +13,7 @@ SKILL.md "Day project"). The agent prompt names the channel, region, work key an
 deletes, Write tool for beats parts) and asks back for the reply parts 3-4 plus every workaround it needed.
 
 ### 0. Preflight (one call)
-`ls "<folder>"` + `ls "<video>"` + `.venv/Scripts/python.exe -m dvr_cowork info` (with `DVR_CHANNEL=Chann_N`) +
+`ls "<folder>"` + `ls "<video>"` + `.venv/Scripts/python.exe -m dvr_cowork info` (with `DVR_TIMELINE=channN_vidK`) +
 `ls "<folder>/mp3" | wc -l` + `find "<folder>/mp3" -name '*.mp3' -size -2000c` + `ls .work/doc_edit/<key>/`.
 - The folder needs (case-insensitive) one `*timestamp*.md` (`[MM:SS] sentence` / `[HH:MM:SS]`, decimals ok, `#`
   lines ignored; bilingual `## English` + `## Vietnamese` (user 2026-10-20): English = A2 + plan, Vietnamese =
@@ -30,7 +30,7 @@ deletes, Write tool for beats parts) and asks back for the reply parts 3-4 plus 
   report, no vo-sync). Never after A2 is placed.
 - No narration yet -> B only (plan.py estimates the spans); the reply says A2 waits for the audio.
   `<video>\plan.md` there and the audio is new -> A only.
-- Resolve's project = `<video>` or the day project `vid_DDMMYY[_N]` with bin `Chann_N` and its "Edit" -> A `run`;
+- Resolve's project = the day project `vid_DDMMYY` (bin `Chann_N`; the timeline `channN_vidK` is created when missing) -> A `run`;
   anything else -> `vo-sync analyze` (Resolve untouched), ask the user to open the project, then `vo-sync apply`.
   Never put A2 into another project.
 
@@ -40,10 +40,10 @@ deletes, Write tool for beats parts) and asks back for the reply parts 3-4 plus 
 
 Bash `run_in_background`, go straight to B, never poll. Narrator from 0:03.6 (user 2026-10-25;
 a timestamp file starting elsewhere is shifted as a whole: `first line moved`). It measures each file's speech onset, writes `.work/<key>_mp3/plan.json`,
-imports into `4. Audio/Narrator`, backs up "Edit", lays file n on A2 at timestamp n, writes the VI SRT. Read only its
+imports into `4. Audio/Narrator`, backs up the video timeline, lays file n on A2 at timestamp n, writes the VI SRT. Read only its
 stdout (`report.md` only for flagged rows): `pushed` (file n runs into n+1: timestamps or take need a look),
 `boundary_uncertain` (old style: listen), `head_trimmed` / `tail_trimmed` (harmless). A2 not empty / locked, no
-"Edit", bad timestamp line -> it stops: report it; never `--force-clear` without the user's yes.
+the timeline, bad timestamp line -> it stops: report it; never `--force-clear` without the user's yes.
 
 ### B. Plan (foreground; one agent per video)
 
@@ -54,7 +54,10 @@ stdout (`report.md` only for flagged rows): `pushed` (file n runs into n+1: time
    `references/edit-grammar.md`, `references/biome-story-pacing.md` (the biome), brief.md. Never open the
    screenplay / timestamp / visual plan files, plan.json, audio, `_library.json`. The Visual Edit Plan's audio
    routing uses other track numbers: take its intent; the layout is SKILL.md "Tracks".
-   Species in the library, one call: `plan.py --species lion,hyena,baboon --region <region>` (comma or space list).
+   Species in the library, one call: `plan.py --species lion,hyena,baboon --region <region> --video "<video>"` (comma
+   or space list; `--video` adds `usable in intro + story 1: lion:614/881 ...` = clips outside the recent / opening
+   ledger). A species that leads the intro / story 1 with less than ~half usable -> ask the user before the beats
+   (user 2026-11-07): keep the ledger (more prompts) or `# LEDGER off` under `# BIOME` in part 01 (this film only).
 1b. **africa only, tag by species** (user 2026-10-20): cast species with < ~60 tagged clips per source ->
    `tag_source.py prepare africa_video africa_ai africa_ai_check --subject <cast,comma> --sample 60` (+ `savannah
    --subject landscape --sample 40` while savannah has < ~150 tagged), then the tag-source loop (Sonnet agents,
@@ -160,7 +163,7 @@ bars. Read `intro music:` / `intro beat:` (cuts not on a beat = narration onsets
 generator), `--check`, `--write` -> `<video>\missing-prompt.csv`. No THIẾU there -> skip, say so.
 
 ### E. Place (after C and D; Resolve one video at a time)
-`place.py <key>` (no flag; `DVR_CHANNEL=Chann_N` in front in a day project): intro + body on empty tracks (not
+`place.py <key>` (no flag; `DVR_TIMELINE=channN_vidK` in front in a day project): intro + body on empty tracks (not
 empty -> stop, report); black 0:00 -> the impact's hit (A9, blue marker), the opener and the intro music from the hit; intro shots -> bin `7. Open`, music -> `4. Audio/Music`, story 1's bed pre-laps the black.
 Then `dvr_cowork gaps` (must say 0 gaps to fill) and `dvr_cowork backups`.
 

@@ -19,9 +19,9 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
   day's footage+AI films; films named `vid_DDMMYY_N` keep their name; `resolve_project` in story.json overrides). Per channel bins
   `1. Other_roll`, `2. Attack_roll`, `3. Run_roll`, `4. Audio/{Narrator,Ambience,SFX,Music}`, `5. Graphics`,
   `6. Timeline`; no `7. Open` (footage+AI only). Shots -> `1. Other_roll`, narrator -> `4. Audio/Narrator`, intro song
-  -> `4. Audio/Music`, wind / birds -> `4. Audio/Ambience`, SRT -> `5. Graphics`. One timeline **"Edit"** in
-  `Chann_N/6. Timeline` (found by that bin; older projects `4. Timeline`) + backups `Edit_bak_*`. Never write into
-  another channel's bin or Edit; no Edit in this channel but another has one -> the user creates the empty one by hand.
+  -> `4. Audio/Music`, wind / birds -> `4. Audio/Ambience`, SRT -> `5. Graphics/sub-title`. One timeline **`channN_vidK`** in
+  `Chann_N/6. Timeline` (created there when missing) + backups `<timeline>_bak_*`. Never write into another
+  channel's bin or another video's timeline.
 - **Tracks**: V1 picture · A1 the sound of every V1 shot, the **whole** runtime, −12 dB · A2 narrator · A3/A4 wind bed
   per scene after the hook, alternating, 4 s crossfades · A5 birds on calm shots · A7/A8 intro song under the 30 s
   hook · A9 unused. Starting gains in `dvr_cowork/fullai/config.toml`, not a loudness guarantee. Fade handles 2 s.
@@ -108,7 +108,7 @@ the full list back). The user overwrites `shots\N.mp4` -> `shots-ready --apply` 
 
 ## `/doc-edit done <video>` (user approved; no colour step)
 
-`$E8 check`, then `$E8 done --apply`: validates the **live** Edit (hand edits kept), renders with `YouTube 1080 HEVC`,
+`$E8 check`, then `$E8 done --apply`: validates the **live** timeline (hand edits kept), renders with `YouTube 1080 HEVC`,
 never overwrites (`_v2`), returns a job ID. Poll `$E8 render-status` until VERIFIED; RUNNING is never done.
 
 **YouTube** (user 2026-11-06: part of `done` for full-AI; the user's OK on the review = the upload yes; a time
@@ -133,7 +133,7 @@ conflicting one aborts before anything is written; every append is journaled and
 journal + backup, never clear or auto-restore. Source-end mismatch -> fix `[resolve] source_end` in
 `dvr_cowork/fullai/config.toml` against `Scripting/README.txt`, the user picks the recovery. Issued prompt IDs are
 never redefined; new media hashes reset that clip's approval. SRT append varies by Resolve version: always create +
-import under `5. Graphics`, report manual placement when it fails. Resolve API gotchas: the resolve-api skill.
+import under `5. Graphics/sub-title`, report manual placement when it fails. Resolve API gotchas: the resolve-api skill.
 
 ## After each step
 

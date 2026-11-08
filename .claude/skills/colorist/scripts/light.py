@@ -1,7 +1,7 @@
-"""Light colour pass for V1 of timeline "Edit" (default /doc-edit color since 2026-10-22): small, safe CDL nudges only.
+"""Light colour pass for V1 of the video timeline channN_vidK (default /doc-edit color since 2026-10-22): small, safe CDL nudges only.
 
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py plan     # measure + decide; Resolve untouched
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply    # backup Edit, CDL on node 1 of every shot
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply    # backup the timeline, CDL on node 1 of every shot
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py --selftest
 
 User 2026-10-22 (africa_1, after match.py broke shots): no heavy scene matching. Per shot only a CDL on node 1
@@ -43,12 +43,10 @@ OUT = ROOT / ".work" / "grade"
 CACHE_DAYS = 14  # frame cache (match.FR) files unused this long are dropped at each plan (user 2026-10-30)
 
 
-def pkey(project):
-    """Plan / LUT folder name: the project, + the channel in a day project (user 2026-10-30: two channels of vid_DDMMYY
-    shared one light_plan.json and dry_auto_<frame>.cube names)."""
-    import os
-    ch = os.environ.get("DVR_CHANNEL")
-    return f"{project.GetName()}_{ch}" if ch else project.GetName()
+def pkey(project, tl):
+    """Plan / LUT folder name: <project>_<video timeline channN_vidK> (user 2026-10-30: two channels of vid_DDMMYY
+    shared one light_plan.json and dry_auto_<frame>.cube names; 2026-11-06: several videos per channel)."""
+    return f"{project.GetName()}_{tl.GetName()}"
 # golden grass: strength (1.0 = what the user approved at 02:25), +- shots looked at, share of golden day shots there,
 # "paler" = gold saturation below this share of the stretch's; never on water (would turn gold), never below hue 28
 DRY_K, DRY_WIN, DRY_SHARE, DRY_PALE, DRY_MINHUE, DRY_MINSAT = 1.0, 5, 0.6, 0.75, 28.0, 0.16
@@ -63,25 +61,19 @@ def is_ai(path):
     return "\\ai_video\\" in p or "\\ai_copyright\\" in p
 
 
-def intro_end(project):
+def intro_end(project, tl):
     """'# INTRO m:ss' of the video's doc-edit spec (seconds), 0 when there is none."""
     import plan as P
-    for d in (ROOT / ".work" / "doc_edit").iterdir():
-        sp = d / "spec.txt"
-        if sp.exists() and P.same_project(project, d.name):
-            m = re.search(r"^#\s*INTRO\s+(\d+):([\d.]+)", sp.read_text("utf-8"), re.M)
-            return int(m[1]) * 60 + float(m[2]) if m else 0.0
-    return 0.0
+    sp = P.spec_of(project, tl)
+    m = sp and re.search(r"^#\s*INTRO\s+(\d+):([\d.]+)", sp.read_text("utf-8"), re.M)
+    return int(m[1]) * 60 + float(m[2]) if m else 0.0
 
 
-def is_africa(project):
+def is_africa(project, tl):
     """Golden grass / burnt grass exists in Africa films only (user 2026-11-02): the spec's '# REGION africa'."""
     import plan as P
-    for d in (ROOT / ".work" / "doc_edit").iterdir():
-        sp = d / "spec.txt"
-        if sp.exists() and P.same_project(project, d.name):
-            return bool(re.search(r"^#\s*REGION\s+africa", sp.read_text("utf-8"), re.M | re.I))
-    return False
+    sp = P.spec_of(project, tl)
+    return bool(sp and re.search(r"^#\s*REGION\s+africa", sp.read_text("utf-8"), re.M | re.I))
 
 
 def tint(st):
@@ -227,7 +219,7 @@ def plan():
     if old:
         print(f"frame cache: {len(old)} files unused for {CACHE_DAYS} days dropped")
     pm, project, tl, rows = G.timeline()
-    t_intro = intro_end(project.GetName()) * 24
+    t_intro = intro_end(project.GetName(), tl.GetName()) * 24
     with ThreadPoolExecutor(6) as ex:
         imgs = list(ex.map(M.grab, rows))
     rows = [dict(r, img=im) for r, im in zip(rows, imgs) if im is not None]
@@ -235,7 +227,7 @@ def plan():
     for r in rows:
         r["st"] = mark_night(G.stats(r["img"]), tags.get(r["path"].lower()))
     film = {"p50": float(np.clip(np.median([r["st"]["p50"] for r in rows if not r["st"]["lowkey"]]), 0.34, 0.46))}
-    cuts, story = M.story_cuts(project.GetName(), rows), 0
+    cuts, story = M.story_cuts(project.GetName(), tl.GetName(), rows), 0
     for r in rows:
         story += r["start"] in cuts
         r["story"] = story
@@ -248,7 +240,7 @@ def plan():
         r["c1"] = G.cdl(r["img"], c["slope"], c["offset"], c["power"], c["sat"])
         r["f1"], r["gd"] = G.stats(r["c1"]), M.ground(r["c1"])
         r["ok"] = dry_ok(r, tags)
-    n_dry = dry_pass(rows) if is_africa(project.GetName()) else 0
+    n_dry = dry_pass(rows) if is_africa(project.GetName(), tl.GetName()) else 0
     for r in rows:
         c, f, ai, intro = r["c"], r["f"], r["ai"], r["intro"]
         n_ai += ai and c["sat"] < 0.99
@@ -258,7 +250,7 @@ def plan():
                         before=dict(p50=round(float(r["st"]["p50"]), 3), sat=round(float(r["st"]["sat"]), 3)),
                         after=dict(p50=round(float(f["p50"]), 3), sat=round(float(f["sat"]), 3)),
                         dry=r.get("dry")))
-    d = OUT / pkey(project)
+    d = OUT / pkey(project, tl)
     d.mkdir(parents=True, exist_ok=True)
     (d / "light_plan.json").write_text(json.dumps({"timeline": tl.GetName(), "shots": out}), "utf-8")
     sl = np.array([s["slope"] for s in out])
@@ -286,10 +278,10 @@ def plan():
 def apply():
     pm, project, tl, rows = G.timeline()
     q = {(s["start"], s["path"].lower()): s for s in
-         json.loads((OUT / pkey(project) / "light_plan.json").read_text("utf-8"))["shots"]}
+         json.loads((OUT / pkey(project, tl) / "light_plan.json").read_text("utf-8"))["shots"]}
     miss = [r for r in rows if (r["start"], r["path"].lower()) not in q]
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
-    bak = f"Edit_bak_light_{dt.datetime.now():%Y%m%d_%H%M%S}"
+    bak = f"{tl.GetName()}_bak_light_{dt.datetime.now():%Y%m%d_%H%M%S}"
     from dvr_cowork.resolve_ops import backup_timeline
     assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)
@@ -306,10 +298,10 @@ def apply():
         g = r["it"].GetNodeGraph()
         old = g.GetLUT(1) or ""
         if s.get("dry"):  # golden grass: own LUT per shot, after the CDL on node 1
-            cube = M.lut_dir(pkey(project)) / f"dry_auto_{s['start']:07d}.cube"
+            cube = M.lut_dir(pkey(project, tl)) / f"dry_auto_{s['start']:07d}.cube"
             cube.parent.mkdir(parents=True, exist_ok=True)
             write_dry_cube(cube, s["dry"])
-            dry.append((g, f"Amazona/match/{pkey(project)}/{cube.name}"))
+            dry.append((g, f"Amazona/match/{pkey(project, tl)}/{cube.name}"))
         elif "dry_auto_" in old:  # an earlier run's golden grass the new plan no longer wants
             g.SetLUT(1, "")
     project.RefreshLUTList()

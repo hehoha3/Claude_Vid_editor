@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Broadcast-logo removal for the clips of a folder, reviewed on timeline "Edit".
+"""Broadcast-logo removal for the clips of a folder, reviewed on the video timeline channN_vidK.
 
 scan:    hide_logo.py <folder>      score every video in <folder>, mark its V1 clips (Purple = logo, Yellow = suspect)
 execute: hide_logo.py --execute     every marker on a V1 clip -> ffmpeg delogo of that clip's file into
@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 from dvr_cowork.resolve_conn import connect  # noqa: E402
 from dvr_cowork.config import load_config  # noqa: E402
 
-TIMELINE = "Edit"
+TIMELINE = "the video timeline channN_vidK"  # DVR_TIMELINE, else the open one (user 2026-11-06, replaces "Edit")
 CACHE = ROOT / ".work" / "hide_logo" / "scan.json"
 EXTS = {".mp4", ".mov", ".mkv", ".mxf", ".avi", ".m4v"}
 # every logo-free copy (D: and read-only Z: sources) waits here until the project is Done; scan-source and
@@ -253,7 +253,7 @@ def scan(folder, files=None, report=None):
                     + "".join(f"#? {f}  # {s:.2f}\n" for f, s in sorted(score.items()) if LO <= s < HI), "utf-8")
     try:
         marked = mark(files_out)
-    except (SystemExit, Exception):  # noqa: BLE001  no Resolve / no "Edit": the list file is the review
+    except (SystemExit, Exception):  # noqa: BLE001  no Resolve / no video timeline: the list file is the review
         marked = 0
     side = ("top" if y0 < H / 2 else "bottom") + "-" + ("left" if x0 < W / 2 else "right")
     print(f"{len(ok)} files scanned | logo at {side} | {len(hit)} with logo, {len(sus)} suspect | "
@@ -301,9 +301,9 @@ def run_list(path):
 
 
 def edit_timeline():
-    from dvr_cowork.resolve_ops import find_timeline
+    from dvr_cowork.resolve_ops import video_timeline
     project = connect().GetProjectManager().GetCurrentProject()
-    tl = find_timeline(project, TIMELINE)  # day project: the DVR_CHANNEL one; two "Edit" without it -> stops
+    tl = video_timeline(project)
     if not tl:
         sys.exit(f"Timeline '{TIMELINE}' not found")
     project.SetCurrentTimeline(tl)

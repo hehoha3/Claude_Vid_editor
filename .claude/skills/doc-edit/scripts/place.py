@@ -1,4 +1,4 @@
-"""doc-edit step 3: plan.json -> timeline "Edit": V1 clips, audio A3-A9, markers (backup first).
+"""doc-edit step 3: plan.json -> the video's timeline channN_vidK (created when missing): V1 clips, audio A3-A9, markers (backup first).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/place.py <video> [--replace] [--dry-run] [--video-only] [--a1-only]
 
@@ -16,7 +16,7 @@ from black; story 1's bed pre-laps the black before story 1 on A5 (prelap()).
 re-cut, or the videos placed with --skip-intro).
 Every run: items at 0:00 fade in from black EDGE_IN, items at the video end fade out EDGE_OUT (not A2); then
 black_fades() checks the 4 V1 black fades (intro end out + story 1 in too) and reads them back.
-Multi-channel project: plan.json's video_dir D:/Chann_N_*/... -> bins and "Edit" inside bin Chann_N (resolve_ops).
+Multi-channel project: plan.json's video_dir D:/Chann_N_*/... -> bins and timeline channN_vidK inside bin Chann_N (resolve_ops).
 Audio rules: A3/A4 entry = bed change, the bed alternates A3/A4 with BED_OVERLAP crossfades until the next change;
 A5 / A7 run from their slot until the next entry on that track, 'off', or the timeline end (looped by
 re-placing the file); A1 = own audio of every AI clip on V1 starting before A1_UNTIL (08:00) at A1_DB (--a1-only adds just that, nothing else touched); A6 = its slot only; A8/A9 = one hit at the slot start (moves to the other SFX track if busy).
@@ -31,7 +31,7 @@ from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
 from dvr_cowork.videokey import video_key  # noqa: E402
 from dvr_cowork.resolve_ops import (_norm, audio_bin, clip_fps, ensure_audio_track, ensure_bin, find_bin, pool_root, use_channel,  # noqa: E402
-                                    find_clip, find_timeline, get_project, timeline_fps)
+                                    find_clip, find_timeline, get_project, timeline_fps, timeline_label, video_timeline)
 
 # starting levels (integrated LUFS per clip); final mix is done by ear in Fairlight
 TARGET = {3: -32, 4: -32, 5: -34, 6: -28, 7: -26, 8: -22, 9: -22}
@@ -260,22 +260,24 @@ def edge_fades(tl, t0, fps, end):
 
 
 def black_fades(video):
-    """The 4 black fades on V1 of <video>'s "Edit" (user rule): from black on the first shot + story 1's first shot, to
+    """The 4 black fades on V1 of <video>'s timeline channN_vidK (user rule): from black on the first shot + story 1's first shot, to
     black on the last intro shot + the last shot (intro ones: plan.json fade_in / fade_out, else 2.5 / 1.5 s). Only a
     missing / shorter fade is set, then read back and saved. Called at the end of every main() run, by
     ledger.render_done before every render and by
     hide_logo --overwrite-all after it reopens the project (2026-10-30: V1 fades were lost on that reopen). -> line."""
     from dvr_cowork.resolve_ops import CHANNEL_ENV, find_timeline
+    from dvr_cowork.videokey import timeline_name
     plan = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))
+    name = timeline_name(plan.get("video_dir")) or "?"
     m, env = re.search(r"(?i)\bchann_(\d+)", plan.get("video_dir", "")), os.environ.get(CHANNEL_ENV)
     if m:  # this video's channel, whatever was set before (overwrite-all walks several videos)
         os.environ[CHANNEL_ENV] = f"Chann_{m[1]}"
     try:
         pm = connect(load_config()).GetProjectManager()
         pr = pm.GetCurrentProject()
-        tl = find_timeline(pr, "Edit")
+        tl = find_timeline(pr, name)
         if not tl:
-            return f"black fades {video}: no Edit in {pr.GetName()}"
+            return f"black fades {video}: no {name} in {pr.GetName()}"
         cur = pr.GetCurrentTimeline()
         pr.SetCurrentTimeline(tl)
         fps, t0 = timeline_fps(tl, pr), int(tl.GetStartFrame())
@@ -358,7 +360,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
          no_intro=False, intro_only=False):
     work = ROOT / ".work" / "doc_edit" / video_key(video)
     plan = json.loads((work / "plan.json").read_text("utf-8"))
-    use_channel(plan.get("video_dir"))  # D:\Chann_N_*\<video>: that channel's bins and "Edit" (multi-channel project)
+    use_channel(plan.get("video_dir"))  # D:\Chann_N_*\<video>: that channel's bins and timeline channN_vidK
     slots, end = plan["slots"], plan["end"]
     if intro_only:  # --intro: 0:00 -> intro end on every track, the rest of the timeline untouched
         end = intro_end(plan)
@@ -378,9 +380,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     cfg = load_config()
     resolve = connect(cfg)
     pm, project = get_project(resolve)
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"])
-    assert tl, f'timeline "{cfg["resolve"]["timeline_name"]}" not found'
-    assert tl.GetName().lower() != "master", 'timeline "Master" is never touched'
+    tl = video_timeline(project, create=not dry)  # a new video: channN_vidK made empty in "6. Timeline"
+    assert tl, f"timeline {timeline_label()} not found"
     orig = project.GetCurrentTimeline()  # the timeline the user has open; restored at the end
     project.SetCurrentTimeline(tl)
     fps = timeline_fps(tl, project)
@@ -548,8 +549,8 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     print(f"edge fades (from / to black): {edge_fades(tl, t0, fps, f(plan['end']))} items")
     pm.SaveProject()
     from dvr_cowork.resolve_ops import CHANNEL_ENV, channel_bin
-    if channel_bin(mp):  # which day project / channel holds this video (plan.same_project: color, intro)
-        (work / "project.txt").write_text(f"{project.GetName()}/{os.environ[CHANNEL_ENV]}\n", "utf-8")
+    if channel_bin(mp):  # which day project / channel / timeline holds this video (plan.same_project, gaps, intro)
+        (work / "project.txt").write_text(f"{project.GetName()}/{os.environ[CHANNEL_ENV]}/{tl.GetName()}\n", "utf-8")
     if orig and orig.GetName() != tl.GetName():
         project.SetCurrentTimeline(orig)
         print(f'back on timeline "{orig.GetName()}"')

@@ -17,7 +17,6 @@ POINTER = Path.home() / ".dvr_cowork" / "last_plan.json"
 
 DEFAULTS: dict = {
     "resolve": {
-        "timeline_name": "Edit",
         "audio_bin": "4. Audio/Narrator",
         "audio_track": 2,
         "backup_timeline": True,

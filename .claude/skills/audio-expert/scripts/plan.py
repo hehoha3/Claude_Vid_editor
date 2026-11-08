@@ -160,11 +160,13 @@ def main(video, run):
     index = [json.loads(l) for l in ix.OUT.read_text("utf-8").splitlines() if l]
     from dvr_cowork.config import load_config
     from dvr_cowork.resolve_conn import connect
-    from dvr_cowork.resolve_ops import find_timeline, get_project, timeline_fps
+    from dvr_cowork.resolve_ops import get_project, timeline_fps, use_video, video_timeline
     cfg = load_config()
     resolve = connect(cfg)
     _, project = get_project(resolve)
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"])
+    use_video(video)
+    tl = video_timeline(project)
+    assert tl, "the video timeline channN_vidK not found"
     fps = timeline_fps(tl, project)
     rate = round(fps)
     snap = snapshot(tl, fps)

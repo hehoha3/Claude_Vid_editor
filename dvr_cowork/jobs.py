@@ -391,13 +391,13 @@ def selftest():
         c.execute("insert into checked values('h1','v1',?,1,'ok','',?)", (r"D:\AI_video\_check\Hwange-001.mp4", now()))
         c.execute("insert into checked values('h2','v1','D:/x/bad.mp4',1,'broken','eof',?)", (now(),))
     assert generated("v1") == {"h1"} and generated("v2") == set()
-    writer_begin("vid_1", "Chann_1", "Edit", "Edit_bak_x")  # lock taken by this process; a second call reuses it
-    writer_begin("vid_1", "Chann_1", "Edit", "Edit_bak_y")
+    writer_begin("vid_1", "Chann_1", "chann1_vid1", "chann1_vid1_bak_x")  # lock taken by this process; a second call reuses it
+    writer_begin("vid_1", "Chann_1", "chann1_vid1", "chann1_vid1_bak_y")
     assert writer_busy() is None
     r = subprocess.run([sys.executable, "-c", "from dvr_cowork import jobs; print(jobs.writer_busy())"],
                        capture_output=True, text=True, cwd=ROOT, env=os.environ)
     assert r.stdout.strip().startswith("pid "), r.stdout + r.stderr  # another process sees the holder
-    r = subprocess.run([sys.executable, "-c", "from dvr_cowork import jobs; jobs.writer_begin('p', None, 'Edit', 'b')"],
+    r = subprocess.run([sys.executable, "-c", "from dvr_cowork import jobs; jobs.writer_begin('p', None, 'chann1_vid1', 'b')"],
                        capture_output=True, text=True, cwd=ROOT, env=os.environ)
     assert r.returncode and "another Resolve write is running" in r.stderr, r.stderr[-300:]
     with db() as c:

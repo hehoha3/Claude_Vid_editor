@@ -3,9 +3,10 @@
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py <audios-folder>
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest
 
-Clips on timeline Edit (older ledgers: + Open) of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never
+Clips on the video timeline (older ledgers: + Open) of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never
 matched on slots starting before BAN_UNTIL (15:00); later slots may use any clip (in-video REUSE_* limits still hold).
-One timeline per video: "Edit" (user 2026-11-05; timeline "Open" is gone, old ledgers keep their open_clips bans).
+One timeline per video: channN_vidK in bin Chann_N/6. Timeline of the day project vid_DDMMYY (user 2026-11-06; "Edit"
+and "Open" are gone, old ledgers keep their open_clips bans).
 
 spec.txt lives in .work/doc_edit/<video>/ (video = parent of the audios folder). Format:
     # END 29:50                optional timeline end; default = end of last sentence + 2 s
@@ -121,7 +122,7 @@ SHOT_MIN, SHOT_MAX = 1.2, 6.0  # footage shot length bounds (s); longer = split 
 FLAT = 4         # this many shots in a row whose lengths differ by < FLAT_SPAN s = flat, metronome rhythm
 FLAT_SPAN = 0.4
 SHORT_T, LONG_T = 2.0, 3.5  # rhythm needs both: >= 25% shots <= 2.0 s and >= 10% shots >= 3.5 s
-OPEN_MIN, OPEN_MAX = 3.0, 4.0  # user rule 2026-10-13: the first shot of "Edit" is a landscape (sp=none, wide/aerial)
+OPEN_MIN, OPEN_MAX = 3.0, 4.0  # user rule 2026-10-13: the first shot of the timeline is a landscape (sp=none, wide/aerial)
 # of 3-4 s, longer than every other intro shot
 # user 2026-10-25: the narrator starts at 0:03.6 (VO_START); the shot before is epic and cinematic: landscape, sun, sky
 # (default) or, rarely, an animal's face / eye / mouth close-up ('# OPENER Cận mắt báo | real | sp=jaguar size=extreme_close')
@@ -141,6 +142,12 @@ REUSE_MAX, REUSE_GAP, REUSE_PEN, SRC_MARGIN = 6, 90.0, 0.06, 1.0
 SAME_MAX, SAME_GAP, SAME_PEN = 3, 300.0, 0.05
 BAN_UNTIL = 900.0  # user 2026-10-25: ledger clips (last N videos) banned only on slots starting before 15:00, fixed
 OLD_PEN = 0.03  # after it a ledger clip loses to an unused one of similar fit (user 2026-10-25)
+# user 2026-11-06: a clip on 0:00-15:00 of one of the last 9 videos of the channel (ledger.opening, c["open15"]) never
+# fills a slot starting before 30:00 and loses OPEN15_PEN after it (twice OLD_PEN: used less, not never)
+OPEN15_UNTIL, OPEN15_PEN = 1800.0, 0.06
+AI_MAX = 0.42  # user 2026-11-06: AI clips <= 42 % of the film's footage time; once spent, real footage only (match())
+AI_MAX_REGION = {"amazon": 1.0}  # user 2026-11-06: Amazon keeps its AI (too little real footage); other regions AI_MAX
+AI_VIDEOS_MAX = ledger.AI_VIDEOS_MAX  # an AI clip on this many videos (every channel) is never planned again
 # bin "7. Open" (user 2026-10-26): AI clips the user made for the opening -> intro + story 1, any src, first pick
 # (2026-11-05: not the ones place.py filed there itself, open_placed.txt),
 # repeated OPEN_GAP s apart (other frames first, window()); stand-in passes add OPEN_BONUS
@@ -160,6 +167,11 @@ def words_re(words):
     """Whole words (+ -s / -es / -y / -ed / -ing): 'male lion' never matches 'female lion', 'zoo' never 'zoom',
     'snow' still matches 'snowy', 'cub' 'cubs' (2026-11-05: no=male_lion refused every lioness)."""
     return re.compile(r"\b(?:" + "|".join(re.escape(w.lower()) for w in words) + r")(?:s|es|y|ed|ing)?\b") if words else None
+
+
+PIN_WARNED = set()  # (slot, pin) already warned: a pin with 0 usable clips is planned without it
+# 2026-11-07: clips tagged species lion whose caption says another cat (sibling films: cougars on lioness lines)
+LION_NOT = ("cougar", "mountain lion", "puma", "sea lion")
 
 
 def has_word(cap, words):
@@ -234,7 +246,9 @@ def spec_meta(text, end=None, intro=INTRO_MIN):
     '# STORY n m:ss' (start of story n), '# TURN' under a '## N' (a change of advantage the author marked).
     Missing = old behaviour (landscape opening, one HOOK/BODY report)."""
     meta, errs, cur = {"opening": "landscape", "biome": None, "look": None, "fast": None, "stories": [], "turns": set(),
-                       "story_no": {}, "action": None, "hook": bool(re.search(r"^\s*#\s*HOOK\b", text, re.M))}, [], None
+                       "story_no": {}, "action": None, "hook": bool(re.search(r"^\s*#\s*HOOK\b", text, re.M)),
+                       # '# LEDGER off' (user 2026-11-06, one film's yes): recent + open15 bans lifted for this video
+                       "ledger": not re.search(r"^\s*#\s*LEDGER\s+off\b", text, re.M | re.I)}, [], None
     for n, raw in enumerate(text.splitlines(), 1):
         s = raw.strip()
         try:
@@ -808,6 +822,8 @@ def hard(c, f, own=True):
                 return "species", ""
         elif not set(f["sp"]) & sp:
             return "species", ""
+        elif "lion" in f["sp"] and has_word(cap, LION_NOT):
+            return "species", ""
     if any(x in sp for x in f.get("no", [])) or has_word(cap, f.get("no", ())):
         return "no", ""
     if has_word(cap, BIOME_NO) or (f.get("sp") == ["none"] and has_word(cap, SCENERY_NO)):  # temperate scenery never passes for a tropical film
@@ -890,9 +906,10 @@ def focus(c, s):
 
 def window(c, s, uses, gap=None, mx=None):
     """In-point for slot s from clip c, or None (REUSE_* / SAME_* above). Uses from timeline Open (start -1e9) are
-    never shown again; frames already on Edit may come back, up to SAME_MAX times in all, SAME_GAP s apart.
-    A ledger clip (c["recent"]) never fills a slot starting before BAN_UNTIL (a "7. Open" clip is made for this video)."""
-    if c.get("recent") and not c.get("open") and s["start"] < BAN_UNTIL:
+    never shown again; frames already on the timeline may come back, up to SAME_MAX times in all, SAME_GAP s apart.
+    A ledger clip (c["recent"]) never fills a slot starting before BAN_UNTIL, an opening one (c["open15"]) none before
+    OPEN15_UNTIL (a "7. Open" clip is made for this video)."""
+    if not c.get("open") and (c.get("recent") and s["start"] < BAN_UNTIL or c.get("open15") and s["start"] < OPEN15_UNTIL):
         return None
     if len(uses) >= (mx or REUSE_MAX) or any(abs(s["start"] - t) < (gap or REUSE_GAP) for t, _, _ in uses):
         return None
@@ -915,6 +932,17 @@ def window(c, s, uses, gap=None, mx=None):
         if len(ov) < SAME_MAX and all(t > -1e8 and abs(s["start"] - t) >= SAME_GAP for t, _, _ in ov)                 and (best is None or len(ov) < best[0]):
             best = (len(ov), x)
     return best and best[1]
+
+
+def ai_share(slots):
+    """AI share of the footage time (GFX / pin=none slots left out); highlights() may add a little after match()."""
+    t = [s for s in slots if s["src"] != "GFX" and s["filter"].get("pin") != ["none"]]
+    return sum(s["dur"] for s in t if s.get("source") == "ai") / max(sum(s["dur"] for s in t), 1e-9)
+
+
+def old_pen(c):
+    """Ledger penalty: a clip of the last N videos (OLD_PEN), one of their openings (OPEN15_PEN)."""
+    return OLD_PEN * bool(c.get("recent")) + OPEN15_PEN * bool(c.get("open15"))
 
 
 def rank_key(x, need=None, open_ok=False):
@@ -942,12 +970,18 @@ def gap_of(s, c, gap=None):
     return OPEN_GAP if c.get("open") and s.get("open_ok") else gap
 
 
-def match(slots, clips, taken=None, look=None):
+def match(slots, clips, taken=None, look=None, ai_max=None):
     """taken: {lower-case path: [(src_in, src_out)]} already on timeline Open: same budget, never the same part.
     look ('# LOOK'): ground look of the first shot; after it each shot wants the look of the last green/dry shot
     (neighbours never jump green -> dry -> desert), a line's own look= wins; the look changes only where no clip
     of it fits better than LOOK_PEN."""
     uses, prev_size, cur = {}, None, [look]  # clip path -> [(timeline start, src_in, src_out)]
+    # AI budget (AI_MAX of the footage time), spent in timeline order: the intro + story 1 (prompts, "7. Open") first
+    total = sum(s["dur"] for s in slots if s["src"] != "GFX" and s["filter"].get("pin") != ["none"])
+    ai = [0.0]
+
+    def ai_ok(c, s):
+        return c["source"] != "ai" or "pin" in s["filter"] or ai[0] + s["dur"] <= (AI_MAX if ai_max is None else ai_max) * total + 0.01
     last = {}  # line + screen direction of the shot just taken
     for c in clips:  # start -1e9: another timeline, so the REUSE_GAP check never applies to these
         if u := (taken or {}).get(c["abs"].lower()):
@@ -957,6 +991,7 @@ def match(slots, clips, taken=None, look=None):
         if (lk := clip_look(c["tags"]["caption"], c.get("green"))) in ("green", "dry"):
             cur[0] = lk
         uses.setdefault(c["abs"], []).append((s["start"], cin, cin + s["dur"]))
+        ai[0] += s["dur"] * (c["source"] == "ai")
         if c.get("hold"):
             kw.setdefault("why", "_check: " + (",".join(c["tags"].get("issues") or []) or "sure=false"))
         if unsure := hard(c, s["filter"], own=False)[1]:
@@ -972,12 +1007,18 @@ def match(slots, clips, taken=None, look=None):
         if want := f.get("look") or (cur[0] and [cur[0]]):
             f = {**f, "look": want}
             s["want_look"] = want
-        cands = [c for c in clips if src_ok(s, c) and c["abs"] not in skip]
+        cands = [c for c in clips if src_ok(s, c) and ai_ok(c, s) and c["abs"] not in skip]
         if "pin" in f:
             hits = [(c, w) for c in cands if f["pin"][0].lower() in c["abs"].lower()
                     and (w := window(c, s, uses.get(c["abs"], ()))) is not None]
-            assert len(hits) == 1, f"slot {s['slot']}: pin {f['pin'][0]!r} -> {len(hits)} usable clips"
-            return [(1.0, *hits[0])]
+            assert len(hits) <= 1, f"slot {s['slot']}: pin {f['pin'][0]!r} -> {len(hits)} usable clips (make it unique)"
+            if hits:
+                return [(1.0, *hits[0])]
+            if (s["slot"], f["pin"][0]) not in PIN_WARNED:  # 2026-11-07: warn + normal pick, never a traceback
+                PIN_WARNED.add((s["slot"], f["pin"][0]))
+                print(f"WARNING slot {s['slot']} (## {s.get('line')}): pin {f['pin'][0]!r} -> 0 usable clips "
+                      f"(ledger, truth tokens or reuse refuse it); planned without the pin")
+            f = {k: v for k, v in f.items() if k != "pin"}
         # truth + fit first (cheap, rejects most clips on species), window only for the survivors: ~10x fewer calls
         # ponytail: greedy in timeline order; a later slot may lose a clip it fits better (plan.md 8.3 beam search)
         out, rej = [], Counter()
@@ -990,7 +1031,7 @@ def match(slots, clips, taken=None, look=None):
                 u = uses.get(c["abs"], ())
                 v -= DIR_PEN if flip and c["tags"].get("direction") == flip else 0
                 out.append((v - REUSE_PEN * len(u) - SAME_PEN * len(overlaps(u, w, s["dur"]))
-                            - OLD_PEN * bool(c.get("recent")), c, w))
+                            - old_pen(c), c, w))
         s["rej"] = {k: n for k, n in rej.items() if n}
         return sorted(out, key=lambda x: rank_key(x, s.get("need"), s.get("open_ok")), reverse=True)
 
@@ -1082,7 +1123,7 @@ def match(slots, clips, taken=None, look=None):
         side_ok = not s.get("vo") and s["dur"] <= budget and run_len(i) <= 2  # never a cutaway over a narrated character line
         best = None
         for c in clips:
-            if not src_ok(s, c) or hard(c, f, own=False)[0] \
+            if not src_ok(s, c) or not ai_ok(c, s) or hard(c, f, own=False)[0] \
                     or (w := window(c, s, uses.get(c["abs"], ()), gap_of(s, c))) is None:  # other action, never a contradicting one
                 continue
             related =bool(want & set(c["tags"].get("species", [])))
@@ -1094,7 +1135,7 @@ def match(slots, clips, taken=None, look=None):
                 continue
             v += (0.3 if related else 0) + (0.05 if c["source"] == "real" else 0) + open_bonus(s, c) \
                 - REUSE_PEN * len(uses.get(c["abs"], ())) \
-                - OLD_PEN * bool(c.get("recent"))
+                - old_pen(c)
             if best is None or v > best[0]:
                 best = (v, c, related, w)
         if best and best[0] >= FALLBACK_FIT:
@@ -1115,7 +1156,7 @@ def match(slots, clips, taken=None, look=None):
             for k, tier in enumerate(tiers):
                 best = None
                 for c in clips:
-                    if not src_ok(s, c) or hard(c, f, own=False)[0] or \
+                    if not src_ok(s, c) or not ai_ok(c, s) or hard(c, f, own=False)[0] or \
                             (w := window(c, s, uses.get(c["abs"], ()), gap_of(s, c, SUB_GAP), SUB_MAX)) is None:
                         continue
                     sp = set(c["tags"].get("species", []))
@@ -1127,7 +1168,7 @@ def match(slots, clips, taken=None, look=None):
                     if (v := fit(c, {**{k: x for k, x in f.items() if k in ("size", "set", "mood", "cam", "ang", "look", "no")},
                                      **light}, None)) is None:
                         continue
-                    v += open_bonus(s, c) - REUSE_PEN * len(uses.get(c["abs"], ())) - OLD_PEN * bool(c.get("recent"))
+                    v += open_bonus(s, c) - REUSE_PEN * len(uses.get(c["abs"], ())) - old_pen(c)
                     if best is None or v > best[0]:
                         best = (v, c, w)
                 if best:
@@ -1156,13 +1197,13 @@ def match(slots, clips, taken=None, look=None):
                 for k, tier in enumerate(tiers):
                     best = None
                     for c in clips:
-                        if not tier(c) or hard(c, g, own=False)[0] or \
+                        if not tier(c) or not ai_ok(c, s) or hard(c, g, own=False)[0] or \
                                 (w := window(c, s, uses.get(c["abs"], ()), SUB_GAP, SUB_BROAD_MAX)) is None:
                             continue
                         v = fit(c, {k: x for k, x in g.items() if k in ("size", "set", "mood", "cam", "ang", "look", "no", "light")}, None)
                         if v is None:
                             continue
-                        v -= REUSE_PEN * len(uses.get(c["abs"], ())) + OLD_PEN * bool(c.get("recent"))
+                        v -= REUSE_PEN * len(uses.get(c["abs"], ())) + old_pen(c)
                         if best is None or v > best[0]:
                             best = (v, c, w)
                     if best:
@@ -1586,8 +1627,20 @@ def same_project(name, video):
     day = re.fullmatch(r"vid_(\d{6})(?:_\d+)?", name.lower())
     if name.lower() == v or norm(name) == v.replace("_", "") or (day and day[1] in v):
         return True
-    pf = ROOT / ".work" / "doc_edit" / video_key(video) / "project.txt"
-    return pf.exists() and pf.read_text("utf-8").strip().lower() == f"{name}/{os.environ.get('DVR_CHANNEL', '')}".lower()
+    pf = ROOT / ".work" / "doc_edit" / video_key(video) / "project.txt"  # <project>/Chann_N[/channN_vidK]
+    return pf.exists() and pf.read_text("utf-8").strip().lower().split("/")[:2] == \
+        [name.lower(), os.environ.get("DVR_CHANNEL", "").lower()]
+
+
+def spec_of(project, timeline):
+    """spec.txt of the video on timeline channN_vidK of Resolve project `project` (names; a day project holds several
+    videos per channel since 2026-11-06), None when there is none."""
+    from dvr_cowork.videokey import homes, timeline_name
+    for d in sorted((ROOT / ".work" / "doc_edit").iterdir()):
+        if (d / "spec.txt").exists() and same_project(project, d.name) and timeline.lower() == (
+                timeline_name(d.name) or next((timeline_name(h) for h in homes(split_key(d.name)[0])), None)):
+            return d / "spec.txt"
+    return None
 
 
 def open_bin(video):
@@ -1709,11 +1762,20 @@ def main(folder, sem=True):
     bmsg = intro_beats(slots, intro, meta["opening"])
     for s in slots:
         s["vo"] = any(a < s["start"] + s["dur"] and s["start"] < b for a, b in vo)
-    recent, rvids = ledger.banned(video.name, video)  # last N other videos of this workspace
+    recent, rvids = ledger.banned(video.name, video) if meta["ledger"] else (set(), [])  # last N other videos
     old = [c for c in clips if c["id"] in recent]
     for c in old:
         c["recent"] = True  # window(): banned before BAN_UNTIL only
-    pool = clips
+    o15, o15v = ledger.opening(video.name, video) if meta["ledger"] else (set(), [])  # 0:00-15:00, last 9 of channel
+    if not meta["ledger"]:
+        print("LEDGER off (# LEDGER off in the spec): recent + opening ledger bans lifted for this video")
+    for c in clips:
+        c["open15"] = c["id"] in o15
+    used = ledger.usage((ledger.ws_of(video), video.name))  # every channel, this video not counted
+    worn = [c for c in clips if c["source"] == "ai" and used[c["id"]] >= AI_VIDEOS_MAX]
+    pool = [c for c in clips if c not in worn]
+    print(f"opening ledger: {sum(c['open15'] for c in clips)} clips of {len(o15v)} videos not before "
+          f"{tc(OPEN15_UNTIL)}; AI clips on >= {AI_VIDEOS_MAX} videos left out: {len(worn)}")
     want = {x for s in slots for x in s["filter"].get("sp", []) if x != "none"}
     ymsg = yolo_pass([c for c in pool if want & set(c["tags"].get("species", []))],
                      "--yolo-cached" in sys.argv or region == "africa")
@@ -1724,7 +1786,8 @@ def main(folder, sem=True):
     s2 = next((t for k, t in meta["stories"] if k == 2), end)  # intro + story 1 = 0:00 -> story 2
     for s in slots:
         s["open_ok"] = s["start"] < s2
-    match(slots, pool, None, meta["look"])
+    ai_max = AI_MAX_REGION.get(region, AI_MAX)
+    match(slots, pool, None, meta["look"], ai_max)
     hmsg = highlights(slots, pool, meta.get("action")) + "; " + intro_weak(slots)
     varmsg = vary(slots, pool)
     wmsg = fix_water(slots, pool, load_audio(), end)
@@ -1786,7 +1849,8 @@ def main(folder, sem=True):
     print(lmsg)
     print(audio_stats(slots, end))
     print(f"clip reuse in this video: {sum(s.get('reuse', 1) > 1 for s in slots)} slots (other part of the clip, >= {REUSE_GAP:.0f} s apart); "
-          f"real footage {sum(s.get('source') == 'real' for s in slots)}, AI {sum(s.get('source') == 'ai' for s in slots)}; "
+          f"real footage {sum(s.get('source') == 'real' for s in slots)}, AI {sum(s.get('source') == 'ai' for s in slots)} "
+          f"({ai_share(slots):.0%} of the footage time, cap {ai_max:.0%}); "
           f"{sum(s.get('part', '').startswith('1/') for s in slots)} shots too long for one clip filled by 2-3 clips (⧉)")
     # slots a ledger clip would have filled OK: the characters that need fresh footage
     blocked = Counter(tag(s) for s in slots if s["status"] in ("THIEU", "WEAK", "FALLBACK") and "pin" not in s["filter"]
@@ -1815,6 +1879,7 @@ def main(folder, sem=True):
 
 
 def selftest():
+    globals()["AI_MAX"] = 1.0  # logic tests with tiny films: the AI budget has its own test below
     end, intro, blocks = parse_spec("# END 00:20\n# INTRO 0:25\n## 1\n3 | a | real | sp=jaguar act=walk size=wide | A3=forest,day\n"
                              "* | b | any | sp=none | \n## 2\n2 | c | ai | pin=none | A8=branch\n* | d | GFX | | A7=off\n")
     s = build([0.0, 8.0], end, blocks)
@@ -2029,6 +2094,8 @@ def selftest():
     except AssertionError:
         pass
     # headers: OPENING / BIOME / STORY ranges / TURN
+    assert spec_meta("# LEDGER off\n")["ledger"] is False and spec_meta("# BIOME savanna\n")["ledger"] is True
+    assert hard({"tags": {"species": ["lion"], "caption": "a mountain lion walks"}}, {"sp": ["lion"]})[0] == "species"
     mt = spec_meta("# OPENING action\n# BIOME savanna\n# FAST_UNTIL 16:38\n# STORY 1 01:30\n# STORY 2 08:42\n# STORY 3 16:38\n"
                    "## 1\n# TURN\n* | a | any | | \n", end=1800.0, intro=90.0)
     assert mt["opening"] == "action" and mt["biome"] == "savanna" and mt["fast"] == 998 and \
@@ -2110,7 +2177,21 @@ def selftest():
     o = one(); match(o, ra)
     assert o[0]["path"] == "real_ok" and o[0]["status"] == "OK", o[0]
     o = one(); match(o, [ra[0], ra[2]])
-    assert o[0]["path"] == "ai_best"  # real footage only weak -> AI
+    assert o[0]["path"] == "ai_best"  # real footage only weak -> AI (budget off in these tests)
+    g = globals()
+    g["AI_MAX"] = 0.42
+    o = one(); match(o, [ra[0], ra[2]])
+    assert o[0].get("source") != "ai", o[0]  # 3 s > 42 % of a 3 s film: the AI budget refuses it
+    # AI budget (user 2026-11-06): 3 x 2 s, cap 42 % = 2.52 s -> the first slot AI, the others real
+    o = [dict(one()[0], slot=k, dur=2, start=t) for k, t in enumerate((0.0, 100.0, 200.0), 1)]
+    match(o, [ra[0], ra[2]])
+    assert [x.get("source") for x in o][:1] == ["ai"] and "ai" not in [x.get("source") for x in o[1:]], o
+    assert abs(ai_share(o) - 1 / 3) < 0.01
+    g["AI_MAX"] = 1.0
+    # opening ledger (user 2026-11-06): a clip of the last 9 openings, never before 30:00, penalised after
+    assert window(dict(pc, open15=True), dict(ps, start=OPEN15_UNTIL - 1), ()) is None
+    assert window(dict(pc, open15=True), dict(ps, start=OPEN15_UNTIL), ()) is not None
+    assert old_pen({"open15": True}) == OPEN15_PEN and old_pen({"recent": True, "open15": True}) == OLD_PEN + OPEN15_PEN
     # a part already on timeline Open counts toward REUSE_MAX and is never shown again
     rv = [{"slot": k, "dur": 4, "src": "any", "filter": {"sp": ["none"]}, "start": t} for k, t in enumerate(range(0, 1200, 100))]
     match(rv, long_, taken={"river": [(13.0, 17.0)]})
@@ -2234,11 +2315,22 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     if sys.argv[1:] == ["--selftest"]:
         selftest()
-    elif sys.argv[1] == "--species":  # --species jaguar,otter,macaw --region amazon: species tags containing these words
-        words = [w for x in sys.argv[2:] if not x.startswith("--") and x.lower() not in REGIONS for w in x.lower().split(",") if w]  # comma or space list
+    elif sys.argv[1] == "--species":  # --species jaguar,otter,macaw --region amazon [--video <video folder>]
+        vid = sys.argv[sys.argv.index("--video") + 1] if "--video" in sys.argv else None
+        words = [w for x in sys.argv[2:] if not x.startswith("--") and x.lower() not in REGIONS and x != vid
+                 for w in x.lower().split(",") if w]  # comma or space list
         assert "--region" in sys.argv, f"--species needs --region {'|'.join(REGIONS)}"
         region = sys.argv[sys.argv.index("--region") + 1]
-        cnt = Counter((x, c["source"]) for c in load_clips(region) for x in c["tags"].get("species", []) if any(w in x for w in words))
+        clips = load_clips(region)
+        cnt = Counter((x, c["source"]) for c in clips for x in c["tags"].get("species", []) if any(w in x for w in words))
         print(" ".join(f"{sp}({src}):{n}" for (sp, src), n in sorted(cnt.items())) or "none")
+        if vid:  # step 0 (user 2026-11-07): ledger shortage per species BEFORE the beats are written
+            v = Path(vid).parent if Path(vid).name.lower() == "audios" else Path(vid)
+            ban = ledger.banned(v.name, v)[0] | ledger.opening(v.name, v)[0]
+            free = Counter(w for c in clips if c["id"] not in ban for w in words
+                           if any(w in x for x in c["tags"].get("species", [])))
+            alln = Counter(w for c in clips for w in words if any(w in x for x in c["tags"].get("species", [])))
+            print("usable in intro + story 1 (not in the recent / opening ledger): "
+                  + " ".join(f"{w}:{free[w]}/{alln[w]}" for w in words))
     else:
         main(sys.argv[1], "--no-sem" not in sys.argv)

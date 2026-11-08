@@ -1,7 +1,7 @@
-"""doc-edit: reframe V1 of timeline "Edit" with Zoom / Position X-Y (Transform), no clips moved or cut.
+"""doc-edit: reframe V1 of the video timeline channN_vidK with Zoom / Position X-Y (Transform), no clips moved or cut.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video>            # dry-run: what would change
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --apply    # backup "Edit", then set
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --apply    # backup the timeline, then set
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py --selftest
 
 1. fill: shots that leave black bars (source wider than 16:9, or bars baked into the file, ffmpeg cropdetect) are
@@ -98,7 +98,7 @@ def size_of(side):
 def main(video, apply):
     from dvr_cowork.config import load_config
     from dvr_cowork.resolve_conn import connect
-    from dvr_cowork.resolve_ops import clip_fps, find_timeline, get_project, timeline_fps
+    from dvr_cowork.resolve_ops import clip_fps, get_project, timeline_fps, use_video, video_timeline
     import plan as P
     import yolo
 
@@ -106,8 +106,9 @@ def main(video, apply):
     slots = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))["slots"]
     cfg = load_config()
     pm, project = get_project(connect(cfg))
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"])
-    assert tl and tl.GetName().lower() != "master", "timeline Edit not found (Master is never touched)"
+    use_video(video)
+    tl = video_timeline(project)
+    assert tl, "video timeline channN_vidK not found (Master is never touched)"
     fps, t0 = timeline_fps(tl, project), int(tl.GetStartFrame())
     W, H = (int(tl.GetSetting(k)) for k in ("timelineResolutionWidth", "timelineResolutionHeight"))
     need_at = {round(s["start"] * round(fps)): s for s in slots}

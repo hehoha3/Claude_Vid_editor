@@ -100,7 +100,7 @@ def recent_intros(doc, video, n=RECENT):
 
 def day_of(work):
     """Day project of a work folder: place.py's project.txt, else from the name (africa_051126_1__Chann_2 ->
-    vid_051126_1, 2026-11-05: the second channel of a day got the first one's track before anything was placed)."""
+    vid_051126, 2026-11-05: the second channel of a day got the first one's track before anything was placed)."""
     from dvr_cowork.videokey import day_project
     p = work / "project.txt"
     return (p.read_text("utf-8").split("/")[0].strip() if p.exists() else day_project(work.name)).lower()

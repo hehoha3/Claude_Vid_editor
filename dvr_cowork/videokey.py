@@ -20,10 +20,24 @@ def channel_of(path) -> str | None:
 
 
 def day_project(name: str) -> str:
-    """<region>_DDMMYY_N (or its work key <video>__Chann_N) -> the day project vid_DDMMYY_N that holds every channel's
-    film of that day (user 2026-11-05); any other name, vid_DDMMYY_N included, stays itself."""
-    m = re.fullmatch(r"[a-z]+_(\d{6}(?:_\d+)?)", str(name).split(SEP)[0], re.I)
+    """<region>_DDMMYY_N (or its work key <video>__Chann_N) -> the day project vid_DDMMYY that holds every film of
+    every channel of that day (user 2026-11-06; before: vid_DDMMYY_N); any other name, vid_* included, stays itself."""
+    m = re.fullmatch(r"(?!vid_)[a-z]+_(\d{6})(?:_\d+)?", str(name).split(SEP)[0], re.I)
     return f"vid_{m[1]}" if m else str(name).split(SEP)[0]
+
+
+def timeline_name(video) -> str | None:
+    r"""The video's one timeline (user 2026-11-06, replaces "Edit"): D:\Chann_2_x\africa_061126_3[\audios] or the key
+    africa_061126_3__Chann_2 -> 'chann2_vid3' (video number = the folder's _N, none -> 1). No channel -> None."""
+    p = Path(str(video or ""))
+    i = next((k for k, s in enumerate(p.parts) if _CHANN.match(s)), None)
+    rest = [s for s in p.parts[i + 1:] if s.lower() != "_done"] if i is not None else []
+    name, ch = split(rest[0] if rest else p.name)
+    ch = ch or channel_of(video)
+    if not ch:
+        return None
+    m = re.search(r"_\d{6}_(\d+)$", name)
+    return f"chann{ch.split('_')[1]}_vid{m[1] if m else 1}"
 
 
 def homes(name: str, globs=None) -> list[Path]:
@@ -82,6 +96,11 @@ def selftest():
         os.environ["DVR_CHANNEL"] = "Chann_1"
         assert video_key("v1", g) == "v1__Chann_1"
         os.environ.pop("DVR_CHANNEL")
+    assert day_project("africa_061126_3__Chann_2") == "vid_061126" and day_project("vid_051126_1") == "vid_051126_1"
+    assert timeline_name(r"D:\Chann_2_x\africa_061126_3\audios") == "chann2_vid3"
+    assert timeline_name("africa_061126_7__Chann_1") == "chann1_vid7" and timeline_name("africa_061126_2") is None
+    assert timeline_name(r"D:\Chann_3_y\_done\himalaya_061126_4") == "chann3_vid4"
+    assert timeline_name(r"D:\Chann_1_a\amazon_311026") == "chann1_vid1"
     print("videokey selftest ok")
 
 

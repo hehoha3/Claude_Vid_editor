@@ -1,4 +1,4 @@
-"""audio-expert execute: placement_plan.json -> timeline "Edit" (A5-A9 only), with backup, readback and journal.
+"""audio-expert execute: placement_plan.json -> the video timeline channN_vidK (A5-A9 only), with backup, readback and journal.
 
     .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/execute.py <video> <run_id> [--replace] [--rollback] [--additive]
 
@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
 from dvr_cowork.resolve_ops import (AUDIO_TOP, _norm, audio_bin, clip_fps, ensure_audio_track,  # noqa: E402
-                                    ensure_bin, find_clip, find_timeline, get_project, timeline_fps)
+                                    ensure_bin, find_clip, get_project, timeline_fps, use_video, video_timeline)
 import plan as pl  # noqa: E402
 
 _s = importlib.util.spec_from_file_location("doc_place", ROOT / ".claude/skills/doc-edit/scripts/place.py")
@@ -38,8 +38,9 @@ def main(video, run, replace, rollback, additive=False):
     cfg = load_config()
     resolve = connect(cfg)
     pm, project = get_project(resolve)
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"])
-    assert tl and tl.GetName().lower() != "master", 'timeline "Master" is never touched'
+    use_video(video)
+    tl = video_timeline(project)
+    assert tl, "the video timeline channN_vidK not found (Master is never touched)"
     orig = project.GetCurrentTimeline()
     project.SetCurrentTimeline(tl)
     fps = timeline_fps(tl, project)

@@ -70,7 +70,7 @@ def main(argv=None):
             elif cmd=="finish": result=ro.finish(args.video,args.song,args.apply,wind=args.wind,beds=args.beds,birds=args.birds)
             elif cmd in ("voice","assemble","done","music") and not args.apply:
                 result={"dry_run":True,"action":cmd,"video":args.video,
-                        "scope":"voice=A2 + SRT; assemble=V1/A1; music=A7 intro music + A3/A4 scene beds; done=verify live Edit then start render",
+                        "scope":"voice=A2 + SRT; assemble=V1/A1; music=A7 intro music + A3/A4 scene beds; done=verify the live video timeline then start render",
                         "apply":"Add --apply only for the user-authorized phase."}
             elif cmd=="voice": result=ro.apply(args.video,"voice")
             elif cmd=="assemble": result=ro.apply(args.video,"shots",rehook=args.rehook)

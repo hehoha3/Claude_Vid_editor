@@ -230,7 +230,7 @@ D:\Chann_1_ShadowCanopy\          <- thư mục một kênh (tự tạo khi đă
 - **Clip full-AI**: đặt tên đúng **số câu lệnh**, ví dụ câu lệnh số 7 lưu thành `shots\7.mp4`.
 
 **Trong DaVinci Resolve**, mỗi video có:
-- **Một timeline tên "Edit"**: đây là bản dựng. Các bản sao lưu tên `Edit_bak_...` (Claude tạo trước khi sửa lớn) giúp
+- **Một timeline `channN_vidK` cho mỗi video** (Channel N, video thứ K trong ngày; project ngày `vid_DDMMYY`): đây là bản dựng. Các bản sao lưu tên `channN_vidK_bak_...` (Claude tạo trước khi sửa lớn) giúp
   quay lại khi cần.
 - **Các bin** (thư mục trong Media Pool): `1. Other_roll`, `2. Attack_roll`, `3. Run_roll` (hình theo hành động),
   `4. Audio` (giọng đọc, nhạc, tiếng động), `5. Graphics` (phụ đề), `6. Timeline`; video footage+AI có thêm
@@ -366,7 +366,7 @@ git pull
 | **Lệnh `/...`** | Câu bắt đầu bằng `/` gõ cho Claude, ví dụ `/doc-edit` |
 | **PowerShell** | Cửa sổ gõ lệnh của Windows (chỉ dùng khi cài đặt / bảo trì) |
 | **Project (Resolve)** | Một "hồ sơ" dựng phim trong Resolve; nhiều kênh làm cùng ngày có thể dùng chung một project |
-| **Timeline "Edit"** | Bản dựng phim trong project |
+| **Timeline `channN_vidK`** | Bản dựng của video K, Channel N trong project ngày `vid_DDMMYY` |
 | **Bin** | Thư mục chứa clip / âm thanh trong Resolve |
 | **Track** | Một "làn" trên timeline: V1 hình, A1–A9 âm thanh |
 | **Footage** | Đoạn phim quay thật trong kho của nhóm |

@@ -6,15 +6,16 @@ Only when the user asks (any time, any number of times). Video = this conversati
 
 - Workspaces = folders matching config.toml `[workspaces] globs` (default `D:\Chann_*`), one sub folder per video;
   new channel = new folder. `--ws` only when two workspaces hold a video of the same name.
-- Reads every video track of "Edit" of Resolve project `<video>` (loads it if another is open, switches
+- Reads every video track of the video's `channN_vidK` in its Resolve project (project.txt, else `vid_DDMMYY`; loads it if another is open, switches
   back). plan.json is not used: hand swaps count, unused plan clips don't. Id = library content hash; a `_nologo`
   copy = its original.
-- `.work/doc_edit/ledgers/<workspace>.json`: new video on top, re-check updates in place. Plan ban = Edit + Open
+- `.work/doc_edit/ledgers/<workspace>.json`: new video on top, re-check updates in place. Plan ban = timeline (+ old Open)
   clips of the `recent` (config, 6) newest other videos of the same workspace, on slots before 15:00 only (`BAN_UNTIL` in plan.py, user 2026-10-25);
-  workspaces never ban each other.
+  workspaces never ban each other. Each entry also keeps `open15` (clips on 0:00-15:00; older entries backfilled by
+  `ledger.py backfill`, 2026-11-06). `done` ends with the AI retire list (clips on >= 42 videos, every channel).
   `ledger.py show` prints all ledgers.
 
-Then, in the same pass, `dvr_cowork gaps` (DVR_CHANNEL set; user 2026-10-26): every empty V1 span is an error except
+Then, in the same pass, `dvr_cowork gaps` (DVR_TIMELINE set; user 2026-10-26): every empty V1 span is an error except
 THIEU slots (markers + plan) and the ~0.6 s intro -> story 1 black. Any timeline check (status, after place/fill,
 "kiểm tra timeline") runs it too.
 
@@ -25,7 +26,7 @@ propose `place.py --fill`).
 ## Done: `/doc-edit done [<video>]` ("xong video", "done demo_4") - user rule 2026-10-13, reworked 2026-10-26
 
 Run it right away: no "exported?" question, no confirmation (the user's "done" is the go). Several videos -> one
-after another. Works in a day project (`vid_DDMMYY`: project + channel from `.work/doc_edit/<video>/project.txt`).
+after another. Works in a day project (`vid_DDMMYY`: project / channel / timeline from `.work/doc_edit/<video>/project.txt`).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <name>] [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]
 
@@ -33,12 +34,12 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
 (amazon_1 = "build_agent"). The render makes it long (a 60 min 4K timeline): run it with `run_in_background`.
 
 1. Final check-timelines (ledger).
-2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of "Edit" is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
+2. Licenses (user rule 2026-10-13, format 2026-10-21): every audio file on the audio tracks of the video timeline is looked up in `.work/audio_licenses.md`, else (Pixabay, e.g. intro music in `D:\Music`) the
    license txt beside the file (`*-<id>-license.txt`, `*-<id>.txt` or any txt naming the id: `ledger.pixabay_license`), or for Epidemic / Suno files the `<stem>.license.txt` that audio-expert fetch.py writes (`ledger.sidecar_row`); files under `D:\Audio_lib` or `D:\Music` with no license -> warn.
    `<video folder>\audio_licenses.md` = one line per licensed file, film order:
    `[start - stop], [start - stop] - <title> + <author> - <license pdf path>` (timeline times, touching pieces joined),
    then the missing ones. No `licenses\` folder, no pdf copies. Envato licenses are per project: remind the user.
-3. Export: timeline "Edit" (user 2026-10-26: Master / Open are deleted; `--timeline <name>` for another) rendered with
+3. Export: the video timeline `channN_vidK` (`--timeline <name>` for another) rendered with
    the Resolve preset "YouTube 1080 HEVC" (missing preset = stop) as `Done_<video>.mp4` into the video folder, waits;
    already there -> not rendered again. Subtitle tracks off for the render, back on after (no subtitles in the file).
    Before it, `place.black_fades` checks the 4 V1 black fades and puts back a missing one (`black fades <video>: ...`
@@ -46,8 +47,9 @@ after another. Works in a day project (`vid_DDMMYY`: project + channel from `.wo
 4. Upload (user 2026-10-31): `Done_<video>.mp4` -> the YouTube channel `.secrets/youtube/channels.json` maps the
    workspace's `Chann_N` to (`dvr_cowork youtube upload --apply`): title / description / tags from `youtube_meta.json` (SEO
    below, run it BEFORE `ledger.py done` when the file is missing), English, Pets & Animals, not for kids, private
-   (unaudited API project), no thumbnail unless the user gives one. `--thumb` = the image the user gives
-   (D:\Thumbs\...). `--publish-at` = "đăng vào 18 giờ" (PC time): private now, YouTube makes it public then
+   (unaudited API project). Thumbnail (user 2026-11-07): `--thumb <image>` if the user gives one, else
+   `<video folder>\thumb\done.jpg|.png` (the `/thumbnail` final the user approved and renamed "done"), else none -
+   say "no thumbnail: thumb\done.* missing"; the user adds it later (`done` again or `youtube upload <video> --thumb`). `--publish-at` = "đăng vào 18 giờ" (PC time): private now, YouTube makes it public then
    (a time already past -> no upload, ask again). Once per video (`.work/doc_edit/<video>/youtube.json`); a `--thumb` later on an uploaded video
    sets only the thumbnail. Chann_N not mapped / not logged in / failed -> `youtube:` line says so, render stays.
 Resolve stays open; no relink, no folder move: the user moves the folder into `_done` himself (user 2026-10-26).

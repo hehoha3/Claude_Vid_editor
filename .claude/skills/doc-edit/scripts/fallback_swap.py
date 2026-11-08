@@ -4,7 +4,7 @@ unchanged; shots the user changed by hand (file or source-in differs from plan.j
 shot / first story-1 shot keep their black fades. Swapped items Teal, reused frames zoom 1.15, A1 stays empty (place.A1_UNTIL).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=00:00-08:00]           # dry run
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=...] --apply   # backup Edit_bak_fbspecies_<stamp>, swap
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=...] --apply   # backup <timeline>_bak_fbspecies_<stamp>, swap
 """
 import datetime as dt, json, re, sys
 from pathlib import Path
@@ -15,9 +15,9 @@ sys.stdout.reconfigure(encoding="utf-8")
 import place, plan  # noqa: E402
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
-from dvr_cowork.videokey import video_key  # noqa: E402
-from dvr_cowork.resolve_ops import (_norm, backup_timeline, clip_fps, find_bin, find_timeline, get_project,  # noqa: E402
-                                    pool_root, use_channel)
+from dvr_cowork.videokey import day_project, video_key  # noqa: E402
+from dvr_cowork.resolve_ops import (_norm, backup_timeline, clip_fps, find_bin, get_project,  # noqa: E402
+                                    pool_root, use_channel, video_timeline)
 
 VIDEO = sys.argv[1]
 _r = next((a[8:] for a in sys.argv if a.startswith("--range=")), "00:00-08:00").split("-")
@@ -38,13 +38,13 @@ def main(apply):
     slots = [s for s in p["slots"] if s["status"] == "FALLBACK" and T0 - 0.1 <= s["start"] < T1]
     edge = (p["intro"] - 2.1, p["intro"] + 0.7) if p.get("intro") else (-1, -1)  # last intro / first story-1 shot: fades
     pt = ROOT / ".work/doc_edit" / video_key(VIDEO) / "project.txt"
-    want = pt.read_text("utf-8").split("/")[0].strip() if pt.exists() else VIDEO
+    want = pt.read_text("utf-8").split("/")[0].strip() if pt.exists() else day_project(VIDEO)
     clips = plan.load_clips(p["region"])
     pool = [c for c in clips if c["tags"].get("species") and not c["tags"].get("issues") and not c.get("hold")
             and not BAN.search(c["tags"].get("caption", ""))]
     resolve = connect(load_config())
     pm, project = get_project(resolve)
-    tl = find_timeline(project, "Edit")
+    tl = video_timeline(project)
     assert tl and tl.GetName().lower() != "master" and project.GetName() == want, f"open project {want}"
     mp = project.GetMediaPool()
     root = pool_root(mp)
@@ -108,9 +108,9 @@ def main(apply):
 
     orig = project.GetCurrentTimeline()
     stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    assert backup_timeline(project, tl, f"Edit_bak_fbspecies_{stamp}"), "backup failed, nothing changed"
+    assert backup_timeline(project, tl, f"{tl.GetName()}_bak_fbspecies_{stamp}"), "backup failed, nothing changed"
     project.SetCurrentTimeline(tl)
-    print(f"backup: Edit_bak_fbspecies_{stamp}")
+    print(f"backup: {tl.GetName()}_bak_fbspecies_{stamp}")
     have = place.bin_index(root)
     done = fail = a1_n = 0
     for ti, path, a, b, c, sin, n in picks:

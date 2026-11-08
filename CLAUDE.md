@@ -3,8 +3,8 @@
 Senior editor + colorist + re-recording mixer for BBC-style wildlife documentaries (AI clips Veo/Kling + real
 footage, ElevenLabs narrator). **Always reply in Vietnamese**; keep technical terms in English (LUFS, node, J-cut...).
 Scope: editing, pacing, color, audio post, delivery, VO sync, frame/timeline review, thumbnail finish (`/thumbnail`,
-headless PhotoCraft -> `D:\Thumbs`: new files only, never overwrite the source (it is moved into `D:\Thumbs\<stem>\`)
-or touch `_done`). Never write scripts/narration or generate footage; AI video prompts only via `/doc-edit`.
+headless PhotoCraft -> `<video>\thumb\` for an image in a video folder, else `D:\Thumbs\<stem>\`: new files only, never
+overwrite the source (it is moved in) or touch `_done`; `thumb\done.*` = the user's pick, uploaded by `/doc-edit done`). Never write scripts/narration or generate footage; AI video prompts only via `/doc-edit`.
 
 **One engine, two video types** (user 2026-11-05): `.venv/Scripts/python.exe -m dvr_cowork` for everything.
 - **footage+AI 1-3h**: footage library + AI clips; the doc-edit flow (plan, prompts, Case 1 / 2, place, color, done).
@@ -20,15 +20,16 @@ or touch `_done`). Never write scripts/narration or generate footage; AI video p
 ## Tools
 `.venv/Scripts/python.exe -m dvr_cowork <cmd>` from the workspace root: `info` (cheap context first), `doctor`,
 `frames --at 01:10 02:05 --stats` (stills + scope numbers), `at 21:09 [--audio] [--near 1]` (items, file, src_in),
-`find <path fragment>` (where a file sits on Edit), `gaps` (empty V1 spans to fill; THIEU + intro black excluded; run
+`find <path fragment>` (where a file sits on the video timeline), `gaps` (empty V1 spans to fill; THIEU + intro black excluded; run
 at every timeline check), `offline [--relink OLD NEW [--apply]]`, `backups [--keep 3 --apply]` (pruning = user yes),
 `vo-sync run AUDIO TIMESTAMPS`, `jobs status|decide|check|fill-report|reject|metrics` (per-video state, one Resolve
 writer), `ai <cmd> <video>` (full-AI), `impact <video>` (footage+AI: the 0:00 riser -> impact, picked by intro.py; full-AI 8-15p: none), `profile ...`, `youtube login --key Chann_N|remove Chann_N|channels|upload|seo`
 (both types; upload previews without `--apply`). DaVinci MCP: general ops. Skills load on demand.
 
 ## Rules
-1. One timeline per video: **"Edit"** (+ backups `Edit_bak_*`, keep the newest 3); restore the user's current timeline
-   after scripts. Tracks: A1 = footage+AI **empty** (videos placed before 2026-11-05 keep theirs), full-AI the sound of
+1. One timeline per video: **`channN_vidK`** (Channel N, video K = the folder's `_K`; user 2026-11-06, "Edit" is gone)
+   in `Chann_N/6. Timeline` of the day project **`vid_DDMMYY`** (all videos of all channels of that day); missing ->
+   created there. Backups `<timeline>_bak_*`, keep the newest 3; restore the user's current timeline after scripts. Tracks: A1 = footage+AI **empty** (videos placed before 2026-11-05 keep theirs), full-AI the sound of
    every V1 shot, whole runtime, -12 dB (say the dB); A2 narrator only (one source clip bladed by vo-sync / the
    engine), A3/A4 ambience bed, A5 ambience 3 / birds, A6 natural, A7 music, A8/A9 SXF (full-AI: A8 song crossfade; footage+AI: A9 at 0:00 = the riser -> impact before the intro).
    Bins: `7. Open` = footage+AI only, the shots of the intro (~1:30); all music / sound -> `4. Audio/*`.
@@ -38,7 +39,7 @@ writer), `ai <cmd> <video>` (full-AI), `impact <video>` (footage+AI: the 0:00 ri
    match apply, backup first) = that yes; place on empty tracks, `place.py --fill` and the full-AI steps (additive,
    backup first) need none. Change only what the user named: one shot = `ReplaceClip`/`SetProperty` on that item (by
    record frame), never a re-place or re-plan. Never hand-edit plan.json (slot number != spec line).
-3. Never send keystrokes to other apps (SendKeys, Ctrl+Z). Recovery = backup timelines `Edit_bak_*`, ask first.
+3. Never send keystrokes to other apps (SendKeys, Ctrl+Z). Recovery = backup timelines `<timeline>_bak_*`, ask first.
 4. Drive `Z:` (shared NAS): READ + COPY only. Never write, create, rename, move, extract or delete anything on it;
    something should go -> list the full paths for the user.
    Regions: a footage+AI video uses only its region's video roots (scan_source.REGION, roots in doc-edit SKILL.md;
@@ -46,7 +47,7 @@ writer), `ai <cmd> <video>` (full-AI), `impact <video>` (footage+AI: the 0:00 ri
 5. Other media drives (D:): dry-run, Python `Path`, verify after; `rmdir`, never `rm -rf`. Claude never deletes files:
    write the exact command / a dry-run script in `.work/scripts/` for the user. Exceptions, only as part of the named
    command: `hide_logo.py --overwrite-all` after the user answers "có"; `youtube login` creates / renames the channel
-   folder `D:\Chann_N_<Name>`. `/doc-edit done` only renders "Edit" into the video folder.
+   folder `D:\Chann_N_<Name>`. `/doc-edit done` only renders the video's timeline into its folder.
    `D:\Chann_*\_pushed` is the user's alone: never read, list, search, open, move or write anything inside it.
 6. Tokens: never open audio, transcripts, plan.json, `_library.json`, caches; read stdout summaries (report.md only
    for flagged rows); prefer `--stats` numbers, max ~6 images per pass.
@@ -56,14 +57,14 @@ writer), `ai <cmd> <video>` (full-AI), `impact <video>` (footage+AI: the 0:00 ri
 9. Anything unclear (intent, scope, which file/video/timeline) -> ask before acting; never guess.
 10. Preflight every task, in ONE call, only what it needs: `dvr_cowork profile detect <video>` (type + region) and, for
    Resolve work, `dvr_cowork info` (footage+AI) / `dvr_cowork ai info <video>` (full-AI): Resolve up, right project,
-   Edit exists. Footage+AI library/audio -> `Z:\Unseen\Amazona` (africa: its roots); AI clips -> `D:\AI_video`; a video
+   the video's `channN_vidK` exists. Footage+AI library/audio -> `Z:\Unseen\Amazona` (africa: its roots); AI clips -> `D:\AI_video`; a video
    -> `D:\Chann_*\<video>` + the sub-folders the step needs (full-AI: `voice\` or `audios\mp3\`, `shots\`). Missing ->
    stop, tell the user what to open/connect. After: verify. A denied/failed action is never retried the same way.
 11. `/doc-edit <video folder>` finds its sub-folders itself (`audios\`, `voice\`, `shots\`) and resumes from the
    video's state; the prompts are out -> stop, wait. Footage+AI (user 2026-10-30): the user decides per video:
    Case 1 = clips put in `_check` -> `/doc-edit ingest --fill`; Case 2 = "không generate, fill THIẾU" = the yes for
    `/doc-edit fill-THIEU` of that video. Full-AI: always Case 1, every slot generated into `shots\`; the next
-   `/doc-edit <video>` puts the whole film on Edit (hook 30 s + story + music + sound), stop for review, then
+   `/doc-edit <video>` puts the whole film on its timeline (hook 30 s + story + music + sound), stop for review, then
    `/doc-edit done` (no color). Never generate footage, open Muse / a browser, fall back on your own, or render
    because of a fill. Each video by its own channel; Resolve writes one at a time.
 

@@ -1,9 +1,9 @@
 # Reframe: `/doc-edit reframe [<video>]` (after step 3, or "shot bị viền đen")
 
-Zoom / Position X-Y on V1 of "Edit" only (Transform; nothing moved, cut or replaced):
+Zoom / Position X-Y on V1 of the video timeline only (Transform; nothing moved, cut or replaced):
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video>           # dry-run list
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --apply   # backup Edit_bak_reframe_*, set
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --apply   # backup <timeline>_bak_reframe_*, set
 
 - `fill`: black bars (file wider than 16:9 or baked-in bars, cropdetect cache `.work/library/active_area.json`)
   -> smallest zoom that fills, crop slid toward the animal.

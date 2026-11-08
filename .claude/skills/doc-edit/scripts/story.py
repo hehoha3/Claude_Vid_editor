@@ -72,8 +72,10 @@ CUT_ROW = re.compile(r"\|\s*[^|]+\|\s*([\d:.]+)\s*\|")  # '| 0.1-01 | 00:00.0 | 
 
 
 def story2_start(screenplay):
-    """Start of story 2 from the screenplay's runtime map ('| Story 2 — ... | 14:00–26:30 |'), else None."""
-    m = re.search(r"^\|\s*Story\s*2\b[^|]*\|\s*([\d:.]+)\s*[–-]", screenplay, re.M | re.I)
+    """Start of story 2 from the screenplay's runtime map: a table row ('| Story 2 — ... | 14:00–26:30 |') or the
+    one-line map (2026-11-06: 'Intro 00:00–01:30 · Story 1 ... · Story 2 the clan arrives 14:00–27:30 · ...'), else None."""
+    m = (re.search(r"^\|\s*Story\s*2\b[^|]*\|\s*([\d:.]+)\s*[–-]", screenplay, re.M | re.I)
+         or re.search(r"\bStory\s*2\b[^|·\n]*?(\d{1,2}:\d{2}(?:\.\d+)?)\s*[–-]\s*\d", screenplay, re.I))
     return plan.parse_clock(m[1]) if m else None
 
 
@@ -166,8 +168,12 @@ def cast_tokens(need, flt, cast):
     m = re.match(r"\[(\w+)\](?!\s*\[)", need)
     if not (m and m[1] in cast):
         return flt
-    have = {t.split("=")[0] for t in flt.split()}
-    return " ".join(flt.split() + [t for t in cast[m[1]] if t.split("=")[0] not in have])
+    toks = flt.split()
+    have = {t.split("=")[0] for t in toks}
+    cno = [t[3:] for t in cast[m[1]] if t.startswith("no=")]
+    if cno and "no" in have:  # 2026-11-07: a line's no= adds to its CAST no=, never replaces it
+        toks = [t + "," + cno[0] if t.startswith("no=") else t for t in toks]
+    return " ".join(toks + [t for t in cast[m[1]] if t.split("=")[0] not in have])
 
 
 def cast_raw(line, cast):
@@ -392,6 +398,9 @@ def main_expand(folder):
 
 
 def selftest():
+    assert story2_start("Intro 00:00–01:30 · Story 1 a 01:30–14:00 · Story 2 b 14:00–27:30") == 840.0
+    assert story2_start("| Story 2 — b | 14:00–26:30 |") == 840.0 and story2_start("Story 2 later") is None
+    assert cast_tokens("[L] x", "act=run no=zebra", {"L": ["sp=lion", "no=cougar"]}) == "act=run no=zebra,cougar sp=lion"
     text = """# REGION africa
 # CAST [L] sp=lion sex=female
 # INTRO @3

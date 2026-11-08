@@ -8,7 +8,7 @@ description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from sh
 Run each command once, reply only from its stdout (one line per clip). Never open images or crops: the script
 checks itself (`RESIDUE` = logo edges left -> redo that clip with `--box`). The user checks in Resolve.
 Script: `.venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py`. Day project `vid_DDMMYY`: prefix every
-Resolve command with `DVR_CHANNEL=Chann_N` (two "Edit" timelines; it stops without). History, calibration, logo
+Resolve command with `DVR_TIMELINE=channN_vidK` (several videos per project), or open that timeline first. History, calibration, logo
 kinds, engine details: `references/notes.md` (read only when a case below does not cover it).
 
 **Copies:** logo-free copies go to `D:\AI_video\_nologo\` (Z: sources -> `_nologo\z\`, used by plan.py instead of
@@ -38,7 +38,7 @@ reported): stop guessing boxes. One ffmpeg crop of the ORIGINAL's corner (frames
 images"; a multi-line logo always needs every line inside the box.
 
 ## Folder scan: `hide_logo.py "<folder>"` (no argument -> ask for a folder or a shot)
-Marks V1 clips of "Edit" (Purple = logo >= 0.45, Yellow = suspect 0.33-0.45), writes `.work/hide_logo/scan.json`
+Marks V1 clips of the video timeline (Purple = logo >= 0.45, Yellow = suspect 0.33-0.45), writes `.work/hide_logo/scan.json`
 and `check_list.txt` (LOGO lines active, SUSPECT `#? `; works without Resolve, e.g. `D:\AI_video\_check`,
 `/doc-edit logo`). Reply: count, LOGO + SUSPECT lists as printed; the user fixes markers, then `--execute`.
 - `--execute`: every marker on a V1 clip -> delogo, relink, markers deleted.

@@ -131,7 +131,7 @@ line/word count, voice share, MUST / PENDING scenes, planned vs conformed.
 - Ending: last line ends by ~59:32; ~8 s silent final wide; 59:40–60:00 end-screen zone of moving shots, fade out.
 - Other runtimes scale from the end: last line by target − 0:28 (`vend:`), end screen the last 20 s; words scale
   with minutes (30 min ≈ 1,425–1,725 words, 2–3 stories). Intro stays 00:00–01:30.
-- Plan tracks: A2 narrator, A3/A4 ambience, A5 natural, A6 music, A7/A8 SFX (Resolve "Edit": A5→A6, A6→A7,
+- Plan tracks: A2 narrator, A3/A4 ambience, A5 natural, A6 music, A7/A8 SFX (Resolve timeline: A5→A6, A6→A7,
   A7/A8→A8/A9; A1 empty, user 2026-11-05).
 - Screenplay beats `**NNN · mm:ss.s–mm:ss.s**` + `*Narrator:*` lines are what doc-edit `story.py brief` reads.
 

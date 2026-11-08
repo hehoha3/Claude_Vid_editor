@@ -190,8 +190,12 @@ Side shot = any footage shot whose `need` has no `[tag]` of a main character.
   only when an AI look would hurt (hero wide, aerial).
 - Real next to AI is fine: the grade makes them one place and moment. Keep the same individual's look
   (size, markings, setting) consistent across the cut.
-- Reuse: clips on "Edit" (older ledgers: + "Open") of the last 6 checked videos of the same workspace are never used in the
-  first 15:00 (user 2026-10-25); after 15:00 any clip may come in, under the same in-video limits. Inside one video
+- Reuse: clips on the video timeline (older ledgers: + "Open") of the last 6 checked videos of the same workspace are never used in the
+  first 15:00 (user 2026-10-25); after 15:00 any clip may come in, under the same in-video limits. A clip on 0:00-15:00
+  of one of the last 9 videos of the channel (ledger `open15`) never before 30:00 and loses to a fresh clip after it
+  (user 2026-11-06). AI <= 42 % of the footage time, Amazon no cap (plan.py AI_MAX / AI_MAX_REGION; in timeline order: intro + story 1 first,
+  then real footage only). An AI clip on 42 videos of all channels is never planned again (ledger `retire` lists
+  its files in `.work/scripts/retire_ai_<date>.ps1`, the user runs it with -Apply). Inside one video
   (user 2026-10-22: save source, not too often, not too rarely) a clip may serve up to 6 slots, >= 90 s apart: another
   part of the clip first, else the same frames again, but no frame on screen more than 3 times and those repeats >= 5
   min apart (plan.md ↻n, `=frame`); fresh clips still win at similar fit.

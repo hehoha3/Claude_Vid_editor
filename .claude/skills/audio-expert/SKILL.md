@@ -1,6 +1,6 @@
 ---
 name: audio-expert
-description: Sound design on timeline "Edit" (music / natural sound / SXF on A5-A9, backup + rollback) and library gaps from Epidemic Sound / Suno into D:\Audio_lib. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", "tải nhạc Epidemic", "tạo nhạc Suno", audio THIẾU after a plan. Never V1 / A1-A4.
+description: Sound design on the video timeline channN_vidK (music / natural sound / SXF on A5-A9, backup + rollback) and library gaps from Epidemic Sound / Suno into D:\Audio_lib. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", "tải nhạc Epidemic", "tạo nhạc Suno", audio THIẾU after a plan. Never V1 / A1-A4.
 ---
 
 # Audio expert (V1: selection + placement)
@@ -11,7 +11,7 @@ Order: **story -> what the viewer must feel -> sound map -> pick assets -> place
 (world, orientation, curiosity, state change, anticipation, reveal, action accent, scale, continuity, contrast,
 release); silence is a choice (pre-attack, aftermath), not a gap to fill.
 
-## Tracks (timeline "Edit" as it is; the spec's A5-A8 roles were remapped)
+## Tracks (the video timeline as it is; the spec's A5-A8 roles were remapped)
 | track | role | may write |
 |---|---|---|
 | A1 | own audio of the AI clips (doc-edit, -12 dB) | no |
@@ -27,8 +27,8 @@ protected: ask first. Never timeline "Master".
 
 **Full-AI 8-15p videos** (user 2026-11-05: lighter than footage+AI, `dvr_cowork ai finish` places song + wind +
 birds by itself, doc-edit `references/full-ai.md` B; audio-expert only for a fetch or when the user asks for more):
-same Edit layout; `<video>` = `<folder name>__Chann_N`, every script with
-`DVR_CHANNEL=Chann_N`. A3/A4 = the engine's wind beds, A5 = its birds, A7/A8 under the 30 s hook = its intro song: `execute.py
+same timeline layout; `<video>` = `<folder name>__Chann_N`, every script with
+`DVR_TIMELINE=channN_vidK`. A3/A4 = the engine's wind beds, A5 = its birds, A7/A8 under the 30 s hook = its intro song: `execute.py
 ... --additive` (keeps every existing item, refuses an overlap; never `--replace`). Beats from `audios/visual_plan.md` +
 screenplay. Only licensed files (`D:\Audio_lib`, fetched with their `.license.txt`); a missing sound -> mode fetch from
 Epidemic without asking.

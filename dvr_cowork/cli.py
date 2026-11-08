@@ -8,7 +8,7 @@
   dvr info
   dvr frames --at 01:10 02:05 [--stats]
   dvr prefetch
-  dvr at 21:09 05:12 [--tl Edit] [--audio] [--near 1]
+  dvr at 21:09 05:12 [--tl chann1_vid2] [--audio] [--near 1]
   dvr find shot_028 capybara
   dvr offline [--relink D:/old_folder D:/new_folder [--apply]]
   dvr vo-sync run     AUDIO TIMESTAMPS [--dry-run] [--on-overlap push|trim|abort] [--markers] [--force-clear] [--no-backup]
@@ -89,17 +89,15 @@ def cmd_doctor(args, cfg):
     line("OK" if has_model else "WARN",
          f"Whisper model '{cfg['whisper']['model']}' " + ("cached" if has_model else "not downloaded yet (run: dvr prefetch)"))
     try:
-        from .resolve_ops import project_info
+        from .resolve_ops import VIDEO_TL, project_info
         resolve = _connect(cfg)
         info = project_info(resolve, cfg)
         line("OK", f"Resolve {info.get('resolve_version', '')} | project '{info['project']}'")
-        tl_name = cfg["resolve"]["timeline_name"]
-        if tl_name in info["timelines"]:
-            t = info["timeline"]
-            line("OK", f"timeline '{tl_name}' {t['fps']:g} fps {t['resolution']} | audio tracks: {len(t['tracks']['audio'])}")
-        else:
-            ok = False
-            line("FAIL", f"timeline '{tl_name}' not found. Timelines: {', '.join(info['timelines'])}")
+        t = info.get("timeline")
+        if t and VIDEO_TL.fullmatch(t["name"]):
+            line("OK", f"timeline '{t['name']}' {t['fps']:g} fps {t['resolution']} | audio tracks: {len(t['tracks']['audio'])}")
+        else:  # no video path given and the current timeline is no channN_vidK: nothing to check yet
+            line("INFO", f"no video timeline channN_vidK open. Timelines: {', '.join(info['timelines'])}")
         line("OK" if info.get("audio_bin_exists") else "INFO",
              f"bin '{cfg['resolve']['audio_bin']}' " + ("exists" if info.get("audio_bin_exists") else "will be created"))
     except Exception as e:  # noqa: BLE001
@@ -132,19 +130,17 @@ def _project(cfg):
     return _connect(cfg).GetProjectManager().GetCurrentProject()
 
 
-def _timelines(project, names):
-    """Yield the named timelines, each made current (items load only then); restores the user's timeline."""
-    from .resolve_ops import find_timeline
+def _timelines(project, name=None):
+    """Yield timeline `name`, else the video's channN_vidK (DVR_TIMELINE from a video path, or the current one), made
+    current (items load only then); restores the user's timeline."""
+    from .resolve_ops import OpsError, find_timeline, timeline_label, video_timeline
     cur = project.GetCurrentTimeline()
-    # each name through find_timeline: in a day project only the channel's own one (DVR_CHANNEL), never both "Edit"
-    want = {t.GetName() for i in range(1, project.GetTimelineCount() + 1)
-            if (t := project.GetTimelineByIndex(i)).GetName().lower() in names}
+    t = find_timeline(project, name) if name else video_timeline(project)
+    if not t:
+        raise OpsError(f"timeline {name or timeline_label()} not found")
     try:
-        for name in sorted(want):
-            t = find_timeline(project, name)
-            if t:
-                project.SetCurrentTimeline(t)
-                yield t
+        project.SetCurrentTimeline(t)
+        yield t
     finally:
         if cur:
             project.SetCurrentTimeline(cur)
@@ -165,7 +161,7 @@ def cmd_at(args, cfg):
     from .timecode import fmt_seconds, parse_clock
     times = [parse_clock(t) for t in args.times]
     kinds = ("video", "audio") if args.audio else ("video",)
-    for tl in _timelines(_project(cfg), {args.tl.lower()}):
+    for tl in _timelines(_project(cfg), args.tl):
         for tr, s, e, src, p in _items(tl, kinds):
             for t in times:
                 if s - args.near <= t < e + args.near:
@@ -202,20 +198,20 @@ def v1_gaps(spans, thieu, fps, intro_end=None):
 def cmd_gaps(args, cfg):
     """Every empty span on V1 that must be filled (THIEU slots and the intro -> story 1 black excluded).
     THIEU = timeline markers + the doc-edit plan's THIEU slots (video: --video, else the one whose project.txt
-    names this project/channel)."""
-    import os
+    names this project and timeline: <project>/Chann_N/channN_vidK)."""
     from .timecode import fmt_seconds
     project, bad = _project(cfg), []
     root = work_root(cfg) / "doc_edit"
-    if args.video:
-        from .videokey import video_key
-        pf = root / video_key(args.video) / "plan.json"
-    else:
-        key = f"{project.GetName()}/{os.environ.get('DVR_CHANNEL', '')}".rstrip("/").lower()
-        pf = next((p.parent / "plan.json" for p in root.glob("*/project.txt")
-                   if p.read_text("utf-8").strip().lower().rstrip("/") == key), None)
-    plan = json.loads(pf.read_text("utf-8")) if pf and pf.exists() else None
-    for tl in _timelines(project, {args.tl.lower()}):
+    for tl in _timelines(project, args.tl):
+        if args.video:
+            from .videokey import video_key
+            pf = root / video_key(args.video) / "plan.json"
+        else:
+            want = (project.GetName().lower(), tl.GetName().lower())
+            pf = next((p.parent / "plan.json" for p in root.glob("*/project.txt")
+                       if (k := p.read_text("utf-8").strip().lower().split("/"))[0] == want[0] and k[-1] == want[1]),
+                      None)
+        plan = json.loads(pf.read_text("utf-8")) if pf and pf.exists() else None
         fps, t0 = float(tl.GetSetting("timelineFrameRate")), tl.GetStartFrame()
         spans = [(it.GetStart() - t0, it.GetEnd() - t0) for it in tl.GetItemListInTrack("video", 1) or []]
         thieu = [(f, f + int(m.get("duration", 1))) for f, m in (tl.GetMarkers() or {}).items()
@@ -238,11 +234,11 @@ def cmd_find(args, cfg):
     from .timecode import fmt_seconds
     keys = [k.lower() for k in args.fragments]
     hits = 0
-    for tl in _timelines(_project(cfg), {"edit"}):
+    for tl in _timelines(_project(cfg)):
         for tr, s, e, _src, p in _items(tl):
             if any(k in p.lower() for k in keys):
                 hits += 1
-                log(f"{tl.GetName():<5} {tr:<3} {fmt_seconds(s)}-{fmt_seconds(e)}  {'' if os.path.exists(p) else 'OFFLINE '}{p}")
+                log(f"{tl.GetName()} {tr:<3} {fmt_seconds(s)}-{fmt_seconds(e)}  {'' if os.path.exists(p) else 'OFFLINE '}{p}")
     log(f"{hits} items")
     return EXIT_OK
 
@@ -329,7 +325,7 @@ def cmd_backups(args, cfg):
     if not args.apply:
         log("dry run: add --apply to delete (user yes first)")
         return EXIT_OK
-    assert cur is None or cur not in old, "the open timeline is a backup: open Edit first"
+    assert cur is None or cur not in old, "the open timeline is a backup: open the video timeline first"
     ok = project.GetMediaPool().DeleteTimelines(old) if old else True
     _connect(cfg).GetProjectManager().SaveProject()
     log(f"deleted {len(old) if ok else 0}/{len(old)}, project saved")
@@ -401,15 +397,15 @@ def build_parser():
     f.set_defaults(fn=cmd_frames)
     a = sub.add_parser("at", help="items under timeline positions (file, src_in)")
     a.add_argument("times", nargs="+", help="mm:ss[.s] | hh:mm:ss")
-    a.add_argument("--tl", default="Edit", help="timeline name (default Edit)")
+    a.add_argument("--tl", help="timeline name (default: the video's channN_vidK / the current one)")
     a.add_argument("--audio", action="store_true", help="audio tracks too")
     a.add_argument("--near", type=float, default=0.0, help="also items within N s (neighbours of a cut)")
     a.set_defaults(fn=cmd_at)
     g = sub.add_parser("gaps", help="empty V1 spans to fill (THIEU slots + intro -> story 1 black excluded)")
-    g.add_argument("--tl", default="Edit", help="timeline name (default Edit)")
+    g.add_argument("--tl", help="timeline name (default: the video's channN_vidK / the current one)")
     g.add_argument("--video", help="doc-edit video whose plan.json gives the THIEU slots (default: from project.txt)")
     g.set_defaults(fn=cmd_gaps)
-    fd = sub.add_parser("find", help="where files matching path fragments sit on Edit")
+    fd = sub.add_parser("find", help="where files matching path fragments sit on the video timeline")
     fd.add_argument("fragments", nargs="+")
     fd.set_defaults(fn=cmd_find)
     o = sub.add_parser("offline", help="offline media of the open project; --relink OLD NEW swaps a path prefix")
@@ -473,7 +469,7 @@ def main(argv=None):
     from .resolve_conn import ResolveConnectionError
     from .resolve_ops import OpsError, OverlapError, use_channel
     from .timestamps import TimestampError
-    try:  # vo-sync on D:\Chann_N_*\... works in that channel's bin / "Edit" (multi-channel project)
+    try:  # a D:\Chann_N_*\<video> path -> that channel's bin and the video's timeline channN_vidK
         use_channel(next((v for v in vars(args).values() if isinstance(v, str) and "chann_" in v.lower()), None))
         return args.fn(args, cfg)
     except OverlapError as e:
