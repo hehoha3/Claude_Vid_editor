@@ -155,6 +155,61 @@ Lần đầu Claude yêu cầu đăng nhập tài khoản Anthropic: làm theo h
 Từ giờ, mỗi lần làm việc chỉ cần hai dòng trên. Dùng VS Code: **File > Open Folder > `D:\Claude_editor`**, rồi mở
 khung Claude ở cạnh màn hình.
 
+### 2.9 Kết nối công cụ nhạc, tiếng động, Resolve và thumbnail (khoảng 15 phút)
+
+Claude dùng các công cụ này qua **MCP** (một "cổng kết nối" giữa Claude và phần mềm / dịch vụ khác). Thiếu cái nào thì
+chỉ phần việc của nó không chạy, phần còn lại vẫn dựng phim bình thường.
+
+| Công cụ | Claude dùng để | Cần không? |
+|---|---|---|
+| **Epidemic Sound** | Tìm và tải nhạc / tiếng động kho còn thiếu vào `D:\Audio_lib` | Nên có (nhóm có gói đăng ký) |
+| **Suno** | Tạo nhạc intro riêng khi Epidemic không có bài vừa ý | Tuỳ chọn, tốn credit tài khoản chung |
+| **DaVinci Resolve MCP** | Các thao tác Resolve lặt vặt ngoài script | Nên có |
+| **PhotoCraft** | Lệnh `/thumbnail` | Chỉ khi làm thumbnail |
+
+**a) Epidemic Sound** (kết nối qua tài khoản claude.ai, không cần lệnh):
+1. Vào **https://claude.ai** > **Settings** > **Connectors** > tìm **Epidemic Sound** > **Connect** > đăng nhập tài
+   khoản Epidemic của nhóm (hỏi trưởng nhóm).
+2. Claude Code phải đăng nhập **đúng tài khoản claude.ai đó** (bước 2.8). Mở lại Claude.
+3. **Bắt buộc trước khi đăng video:** vào trang tài khoản Epidemic Sound, mục kết nối kênh (**Channels**), thêm
+   **từng kênh YouTube** của bạn. Kênh chưa được thêm thì YouTube sẽ báo bản quyền (Content ID) mọi bài nhạc Epidemic.
+
+**b) Suno** (dán vào PowerShell, đang ở `D:\Claude_editor`):
+```powershell
+claude mcp add --transport http suno https://api.suno.com/mcp
+```
+Rồi mở Claude, gõ `/mcp` > chọn **suno** > **Authenticate**: trình duyệt mở ra, đăng nhập **tài khoản Suno chung của
+nhóm** (hỏi trưởng nhóm). Mỗi lần tạo nhạc và mỗi lần tải một bài tốn credit của cả nhóm (khoảng 6 lượt tải / tháng):
+Claude luôn hỏi bạn trước khi dùng.
+
+**c) DaVinci Resolve MCP.** Kiểm tra máy có file này (bản Resolve mới có sẵn):
+```powershell
+Test-Path "C:\Program Files\Blackmagic Design\DaVinci Resolve\ResolveMCP.exe"
+```
+Hiện `True` thì dán:
+```powershell
+claude mcp add --scope user "DaVinci Resolve" -- "C:\Program Files\Blackmagic Design\DaVinci Resolve\ResolveMCP.exe"
+```
+Hiện `False`: bỏ qua, các script của hệ thống vẫn điều khiển Resolve bình thường (bước 2.2).
+
+**d) PhotoCraft** (chỉ cho `/thumbnail`): cài vào thư mục mặc định. Kiểm tra:
+`Test-Path "C:\Program Files\PhotoCraft\photocraft-cli.exe"` phải hiện `True` (cài chỗ khác thì `/thumbnail` báo lỗi).
+
+**e) Cho phép Claude dùng công cụ.** Lần đầu Claude gọi Epidemic / Suno, màn hình hỏi quyền:
+- Tìm kiếm, tải Epidemic, xem credit Suno (`account-usage`), chờ / xem bài Suno: chọn **Yes, and don't ask again**.
+- Tạo bài Suno (`audio-create`) và tải bài Suno (`audio-download`): chọn **Yes** từng lần, đừng cho phép luôn, vì
+  tốn credit.
+
+**f) Nhạc tải tay** (Pixabay, Envato, Storyblocks...): khi `/doc-edit done`, Claude tự ghi danh sách license vào
+`audio_licenses.md` của video. Để file nhạc được nhận ra, giữ giấy license cạnh nó:
+- Pixabay: file `.txt` license tải kèm, để cùng thư mục (đổi tên bài thì đổi tên `.txt` y như vậy, ví dụ
+  `tense_2.mp3` + `tense_2.txt`).
+- Storyblocks: giữ nguyên tên file có `-SBA-<số>`, file `... Storyblocks.pdf` ở cùng thư mục hoặc thư mục cha.
+- Epidemic / Suno: Claude tự tạo file `<tên bài>.license.txt` khi tải, không cần làm gì.
+
+**g) Kiểm tra:** `claude mcp list` trong PowerShell (hoặc `/mcp` trong Claude). Đúng: các dòng **Epidemic Sound**,
+**suno**, **DaVinci Resolve** có dấu **✔ Connected**. Dòng khác báo lỗi (ví dụ `filmcraft`) mà bạn không dùng thì kệ nó.
+
 ---
 
 ## 3. Kết nối Gemini và YouTube (tuỳ chọn)

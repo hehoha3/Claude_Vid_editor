@@ -75,7 +75,7 @@ Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 st
 ### B. Shots -> the whole film on the timeline (one pass, then stop for review)
 
 User 2026-11-06: "shots generated" = steps 1-4 in one go (story V1/A1 -> hook -> every audio track -> finish),
-never a stop after step 1; one reply at the end. The user's OK on that review = `/doc-edit done` + upload below.
+never a stop after step 1; one reply at the end. Then the user calls `/doc-edit done` (render) or `/doc-edit push`.
 
 1. `$E8 shots-ready --apply` = ingest (exact IDs, full decode, duration, aspect, audio, hashes; unchanged files
    reused; other names in `shots\` -> stop, the user moves them) -> body on V1 / A1 -> contact sheets.
@@ -111,8 +111,11 @@ the full list back). The user overwrites `shots\N.mp4` -> `shots-ready --apply` 
 `$E8 check`, then `$E8 done --apply`: validates the **live** timeline (hand edits kept), renders with `YouTube 1080 HEVC`,
 never overwrites (`_v2`), returns a job ID. Poll `$E8 render-status` until VERIFIED; RUNNING is never done.
 
-**YouTube** (user 2026-11-06: part of `done` for full-AI; the user's OK on the review = the upload yes; a time
-given -> `--publish-at <ISO time +07:00>`, none -> private): `$Y seo "<video>"` prints film facts + a trend digest (~200 quota units, cached 7 days; thin
+`done` stops here (user 2026-11-08: render + save, no upload).
+
+## `/doc-edit push <video>` = `done` above, then SEO + upload (the command = the upload yes)
+
+**YouTube** (a time given -> `--publish-at <ISO time +07:00>`, none -> private): `$Y seo "<video>"` prints film facts + a trend digest (~200 quota units, cached 7 days; thin
 digest -> once more with `--query "snow leopard mountain goat"`). Write `.production/seo_draft.json`:
 `{"titles":[3 full titles],"pick":1,"hook":"2–3 sentences","summary":"2–3 sentences, no payoff","tags":[20–30],
 "hashtags":[...],"chapters":[optional]}` -> `$Y seo "<video>" --write` builds `youtube_meta.json`; fix every FLAG.
@@ -121,7 +124,7 @@ digest -> once more with `--query "snow leopard mountain goat"`). Write `.produc
   Can It <concrete test>? | <label>`. Label: `Wildlife Documentary`, `Wild Animals` or the channel's name. Story
   line ≤ ~80, whole ≤ 100 chars. True to the film, payoff hidden, searchable common names, never a competitor's
   title. Tags: pair tags, species, then niche tags; never other channels' names or absent animals.
-- `$Y upload "<video>"` = the preview (channel from `Chann_N`); the user's yes to that exact preview -> record its
+- `$Y upload "<video>"` = the preview (channel from `Chann_N`); `push` = the yes to it -> record its
   `request_hash` as `approved_request_hash` in `youtube_meta.json`, `$Y upload "<video>" --apply`. Private, AI
   disclosure always on; `--publish-at 2026-11-03T18:00:00+07:00` only on request. An UNKNOWN result blocks retries
   until reconciled in Studio. After upload: thumbnail + "Altered content" in Studio.

@@ -348,7 +348,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 
 | Skill | Làm gì | Script chính | Ghi vào |
 |---|---|---|---|
-| `doc-edit` | footage+AI: narration → brief → beat sheet → plan → place; missing-prompts, logo, delogo, ingest, fill, color, reframe, status, check-timelines, done, seo, color n done. full-AI: `references/full-ai.md` (voice → prompts → shots → cả phim → done) | `story.py`, `plan.py`, `place.py`, `missing.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline Edit, `.work/doc_edit/` |
+| `doc-edit` | footage+AI: narration → brief → beat sheet → plan → place; missing-prompts, logo, delogo, ingest, fill, color, reframe, status, after-gen-vid, done, push, seo. full-AI: `references/full-ai.md` (voice → prompts → shots → cả phim → done) | `story.py`, `plan.py`, `place.py`, `missing.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline Edit, `.work/doc_edit/` |
 | `tag-source` | Agent tagger nhìn 4 frame/clip một lần → tag; xếp clip AI mới vào thư mục loài | `tag_source.py`, `organize.py` | `.work/library/` |
 | `scan-source` | Cập nhật index sau khi thêm/đổi/xoá file | `scan_source.py` | `.work/library/` |
 | `process-ai-video` | Làm clip AI trông như quay thật, cắt character sheet đầu clip | `process_ai_video.py` | Ghi đè clip trong `D:\AI_video` |

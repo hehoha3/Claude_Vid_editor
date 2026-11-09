@@ -12,8 +12,15 @@
       "Bash(*DeleteTimelines*)",
       "Bash(*ClearTrack*)",
       "Bash(*reframe.py*--apply*)",
-      "Bash(*grade.py apply*)"
+      "Bash(*grade.py apply*)",
+      "Bash(*after_gen.py finish*)",
+      "Bash(*gen_swap.py*--apply*)"
     ]
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": false,
+    "context-mode@context-mode": false,
+    "superpowers@claude-plugins-official": false
   },
   "hooks": {
     "SessionStart": [

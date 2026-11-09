@@ -1,6 +1,6 @@
 ---
 name: audio-expert
-description: Sound design on the video timeline channN_vidK (music / natural sound / SXF on A5-A9, backup + rollback) and library gaps from Epidemic Sound / Suno into D:\Audio_lib. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", "tải nhạc Epidemic", "tạo nhạc Suno", audio THIẾU after a plan. Never V1 / A1-A4.
+description: Sound design on channN_vidK A5-A9 (music / natural / SXF, backup) and missing sounds from Epidemic / Suno into D:\Audio_lib. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music", "tải nhạc Epidemic", "tạo nhạc Suno", audio THIẾU. Never V1 / A1-A4.
 ---
 
 # Audio expert (V1: selection + placement)
@@ -17,10 +17,11 @@ release); silence is a choice (pre-attack, aftermath), not a gap to fill.
 | A1 | own audio of the AI clips (doc-edit, -12 dB) | no |
 | A2 | Narrator Voice (speech windows = item spans) | read only |
 | A3, A4 | Ambience 1/2 bed from doc-edit | no (protected) |
-| A5 | Ambience 3: extra environment layers (birds, water) | yes, in free gaps |
+| A5 | Ambience 3: extra environment layers (birds, water), the old song's tail at a music change (place.py MUSIC_XF, A7 level), support for an A3/A4 bed change | yes, in free gaps |
 | A6 | Natural sounds: footsteps, leaves, splashes (sync / flexible cues) | yes |
 | A7 | Music: one track, sequential; a stop is a decision | yes |
-| A8, A9 | SXF 1/2: state-change drops, risers, hits, whooshes | yes |
+| A8 | SXF 1: natural SFX (snaps, splashes, calls as hits) | yes |
+| A9 | SXF 2: designed SFX (risers, impacts, whooshes, drops) | yes |
 
 Doc-edit output on A6-A9 may be replaced after the backup (`--replace`); anything the user placed by hand on A5-A9 is
 protected: ask first. Never timeline "Master".

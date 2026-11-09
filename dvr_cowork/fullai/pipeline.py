@@ -24,10 +24,9 @@ def next_video(key, region="himalaya", base="D:/"):
     if len(roots)!=1: raise Stop(f"Expected one {base}Chann_{m[1]}_* folder, found {[str(p) for p in roots]}")
     root=roots[0]; today=datetime.now().strftime("%d%m%y")
     folders=[p for d in (root,root/"_done") if d.is_dir() for p in d.iterdir() if p.is_dir() and p.name.lower()!="_pushed"]
-    # one index per day across every channel and type, as create-doc-mov new_video.py (a name stays unique)
-    every=[q for c in Path(base).glob("Chann_*") if c.is_dir() for d in (c,c/"_done") if d.is_dir()
-           for q in d.iterdir() if q.is_dir() and q.name.lower()!="_pushed"]
-    n=1+max([int(x[1] or 1) for p in every if (x:=re.fullmatch(rf"[a-z]+_{today}(?:_(\d+))?",p.name,re.I))],default=0)
+    # each channel numbers its own day (user 2026-11-09), as create-doc-mov new_video.py: Chann_3's first film is _1
+    from ..videokey import day_index
+    n=day_index(today,root)
     recent=[]
     for p in sorted(folders,key=lambda p:p.stat().st_mtime,reverse=True):
         src=p/".production/story.json"

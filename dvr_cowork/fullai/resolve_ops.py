@@ -19,9 +19,8 @@ TIMELINE_BIN="6. Timeline"
 
 SHOT_BIN,NARRATOR_BIN,MUSIC_BIN,BED_BIN,SUB_BIN="1. Other_roll","4. Audio/Narrator","4. Audio/Music","4. Audio/Ambience","5. Graphics/sub-title"
 SHOT_A,VOICE_A,BED_A,BIRD_A,MUSIC_A=1,2,3,5,7  # A1 clip sound, A2 narrator, A3/A4 wind beds, A5 birds, A7/A8 intro song
-AUDIO_TRACKS=9
-TRACKS=dict(enumerate(("Audio v1","Narrator Voice","Ambience 1","Ambience 2","Ambience 3","Natural sounds","Music",
-                        "SXF 1","SXF 2"),1))  # the 1h template's names; only Resolve defaults ("Audio 3") are renamed
+from ..resolve_ops import TRACK_NAMES as TRACKS  # shared A1-A9 names; only Resolve defaults ("Audio 3") are renamed
+AUDIO_TRACKS=len(TRACKS)
 
 
 def ensure_bin(mp,name,create=True):
@@ -107,7 +106,8 @@ class Session:
             if current is None or abs(current-self.plan["fps"])>.001:
                 fps=str(self.plan["fps"]).removesuffix(".0")
                 if not self.project.SetSetting("timelineFrameRate",fps): raise Stop(f"Set project frame rate before creating {self.name}")
-            self.tl=self.mp.CreateEmptyTimeline(self.name)
+            from dvr_cowork.resolve_ops import new_timeline  # user 2026-11-08: copy of the channel's "channN_vidK"
+            self.tl=new_timeline(self.project,self.mp,self.name,dst)
             if not self.tl: raise Stop(f"Could not create {self.name} in {self.bin(TIMELINE_BIN)}")
         else:
             timeline_clip=self.tl.GetMediaPoolItem()

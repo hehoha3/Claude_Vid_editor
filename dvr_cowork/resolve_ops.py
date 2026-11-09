@@ -87,8 +87,8 @@ def timeline_label():
 
 def video_timeline(project, create=False):
     """The video's timeline channN_vidK: DVR_TIMELINE (use_channel), else the current timeline when it is one (of
-    DVR_CHANNEL's channel when set). create: a missing DVR_TIMELINE is made empty in "6. Timeline" (the channel's bin).
-    -> timeline or None."""
+    DVR_CHANNEL's channel when set). create: a missing DVR_TIMELINE is made in the channel's "6. Timeline" from its
+    template (new_timeline). -> timeline or None."""
     name = os.environ.get(TIMELINE_ENV)
     if not name:
         cur = project.GetCurrentTimeline()
@@ -98,15 +98,56 @@ def video_timeline(project, create=False):
     tl = find_timeline(project, name)
     if tl or not create:
         return tl
-    mp = project.GetMediaPool()
-    prev = mp.GetCurrentFolder()
-    mp.SetCurrentFolder(ensure_bin(mp, TIMELINE_BIN))
-    try:
-        tl = mp.CreateEmptyTimeline(name)
-    finally:
-        mp.SetCurrentFolder(prev or mp.GetRootFolder())
+    tl = new_timeline(project, project.GetMediaPool(), name)
     if not tl:
         raise OpsError(f'Could not create timeline "{name}" in "{TIMELINE_BIN}"')
+    return tl
+
+
+TEMPLATE_TL = "channN_vidK"  # the template timeline in each channel's "6. Timeline" (tracks, names, format)
+# user 2026-11-09, every video timeline (both types): A1 V1's own sound (footage+AI 1-3h keeps it empty), A2 narrator,
+# A3/A4 beds, A5 Ambience 3 (extra bed + music crossfades), A6 natural, A7 music, A8 natural SFX, A9 designed SFX
+TRACK_NAMES = dict(enumerate(("Audio v1", "Narrator Voice", "Ambience 1", "Ambience 2", "Ambience 3",
+                              "Natural sounds", "Music", "SXF 1", "SXF 2"), 1))
+
+
+def format_timeline(tl):
+    """V1 + A1-A9 (stereo) with TRACK_NAMES; only Resolve's default names ("Audio 3") are renamed, the template's or the
+    user's own names stay. -> tracks added."""
+    added = 0
+    while int(tl.GetTrackCount("video") or 0) < 1:
+        added += bool(tl.AddTrack("video"))
+    added += ensure_audio_track(tl, len(TRACK_NAMES), 2, lambda _: None)
+    for i, name in TRACK_NAMES.items():
+        if re.fullmatch(r"(?i)audio\s*\d+", str(tl.GetTrackName("audio", i) or "")):
+            tl.SetTrackName("audio", i, name)
+    return added
+
+
+def new_timeline(project, mp, name, tb=None):
+    """A new video timeline in the channel's "6. Timeline" (user 2026-11-09; tb = that bin when the caller has it): a
+    copy of the template "channN_vidK" of that same bin, else an empty one (said on stdout); then format_timeline."""
+    cur, tb = project.GetCurrentTimeline(), tb or ensure_bin(mp, TIMELINE_BIN)
+    ids = {c.GetUniqueId() for c in tb.GetClipList() or []}
+    tpl = next((t for t in list_timelines(project) if t and t.GetName() == TEMPLATE_TL and t.GetMediaPoolItem()
+                and t.GetMediaPoolItem().GetUniqueId() in ids), None)
+    tl = tpl.DuplicateTimeline(name) if tpl else None
+    if not tl:
+        print(f'timeline "{name}": no template "{TEMPLATE_TL}" in {os.environ.get(CHANNEL_ENV) or "(root)"}/'
+              f"{TIMELINE_BIN} -> empty timeline")
+        prev = mp.GetCurrentFolder()
+        mp.SetCurrentFolder(tb)
+        tl = mp.CreateEmptyTimeline(name)
+        mp.SetCurrentFolder(prev or mp.GetRootFolder())
+    if not tl:
+        return None
+    item = tl.GetMediaPoolItem()
+    if item and item.GetUniqueId() not in {c.GetUniqueId() for c in tb.GetClipList() or []}:
+        mp.MoveClips([item], tb)  # a duplicate may land beside its source or in the current bin
+    project.SetCurrentTimeline(tl)  # track edits on a timeline that is not loaded may not stick
+    format_timeline(tl)
+    if cur:
+        project.SetCurrentTimeline(cur)
     return tl
 
 
@@ -152,6 +193,16 @@ def find_bin(root, name):
         if not root:
             return None
     return root
+
+
+OPEN_BIN = "7. Open"  # footage+AI: the intro shots
+
+
+def open_bin_path(timeline=None):
+    """The video's own intro bin "7. Open/vidK" (user 2026-11-09: one sub-bin per video of the channel, so two videos
+    of a day never share intro clips); K from timeline channN_vidK (default: DVR_TIMELINE). No K -> "7. Open"."""
+    m = re.search(r"_vid(\d+)$", timeline or os.environ.get(TIMELINE_ENV) or "")
+    return f"{OPEN_BIN}/vid{m[1]}" if m else OPEN_BIN
 
 
 TIMELINE_BIN = "6. Timeline"

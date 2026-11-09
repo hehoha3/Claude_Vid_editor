@@ -293,13 +293,20 @@ def reject(video, fragment, why):
 
 def generated(video):
     """Content hashes of the clips `jobs check <video>` accepted from _check (Case 1): the clips generated for this
-    video. place.py imports them into the channel's "7. Open" (user 2026-11-02); organize renames / moves the files,
+    video. place.py imports them into the video's "7. Open/vidK" (user 2026-11-02, sub-bin 2026-11-09); organize renames / moves the files,
     so the hash (scan_source.fast_hash), not the name, finds them."""
+    return set(generated_names(video))
+
+
+def generated_names(video):
+    """{content hash: file name when checked} of the generated clips; the name (G1-S016.mp4) is the
+    missing-prompt.csv shot_id the clip was made for, kept here after organize renamed the file."""
     try:
         with db() as c:
-            return {r[0] for r in c.execute("select hash from checked where video=? and status='ok'", (video,))}
+            return {h: Path(p).name for h, p in
+                    c.execute("select hash, path from checked where video=? and status='ok'", (video,))}
     except sqlite3.Error:
-        return set()
+        return {}
 
 
 def rejected(video):

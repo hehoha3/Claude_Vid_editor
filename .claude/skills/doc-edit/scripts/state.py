@@ -115,7 +115,7 @@ def stage(vdir, done):
     if last in ("P6", "color"):
         return "coloured", "/doc-edit done"
     if miss.exists() and miss.stat().st_size > 1:
-        return "planned, prompts out", "Case 1: clips in _check -> /doc-edit ingest --fill / Case 2: /doc-edit fill-THIEU"
+        return "planned, prompts out", "Case 1: clips in _check -> /doc-edit after-gen-vid / Case 2: /doc-edit fill-THIEU"
     return "planned", "/doc-edit fill, color"
 
 

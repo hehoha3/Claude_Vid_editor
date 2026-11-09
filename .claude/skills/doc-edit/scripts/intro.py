@@ -114,7 +114,7 @@ def driving(p, path):
 
 def candidates():
     """Intro music = D:\\Music tracks with their license beside them (user 2026-10-30; the license goes into
-    audio_licenses.md at check-timelines / done); the library's music (plan.py AUDIO_POOL[7]) only when there is none."""
+    audio_licenses.md at done); the library's music (plan.py AUDIO_POOL[7]) only when there is none."""
     import ledger
     from scan_source import audio_blocked
     music = [str(p) for d in MUSIC_DIRS if d.is_dir() for p in d.rglob("*") if p.suffix.lower() in EXTS
@@ -259,7 +259,7 @@ def main(video, music=None):
           f"on A7, {T:.2f}s ({how})")
     import ledger
     r = ledger.pixabay_row(music) or ledger.sidecar_row(music)
-    print(f"license: {r[1]} ({r[2]} + {r[3]}) -> audio_licenses.md at check-timelines / done" if r else
+    print(f"license: {r[1]} ({r[2]} + {r[3]}) -> audio_licenses.md at done" if r else
           "license: NONE found beside the track (not Pixabay?): check .work/audio_licenses.md before done")
 
 

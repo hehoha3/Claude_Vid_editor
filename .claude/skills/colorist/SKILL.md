@@ -1,6 +1,6 @@
 ---
 name: colorist
-description: Colorist for Resolve - scopes, nodes, primaries/secondaries, shot matching, LUTs and looks, grading AI wildlife clips (Veo/Kling) into one consistent BBC-style film (grade.py). Use for any color, grade, LUT, exposure, white balance, fur/sky/greens, night, contrast, banding, noise question or "shot looks wrong/cheap/fake".
+description: Resolve color - grade, LUT / look, shot matching, light pass (light.py, grade.py), AI clips (Veo/Kling) into one BBC look. Use for any color, exposure, white balance, contrast, noise question or a shot that looks wrong / fake.
 ---
 
 # Colorist

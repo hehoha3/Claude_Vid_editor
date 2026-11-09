@@ -129,7 +129,7 @@ the timeline, bad timestamp line -> it stops: report it; never `--force-clear` w
    edit-grammar "Opening ... the hook": the viewer decides there whether to stay. Videos before 2026-10-24
    (spec_parts/, no beats) keep their hand-written spec: `cat spec_parts/0*.txt > spec.txt`.
 3. **Plan**: `story.py expand "<folder>"` (its one line: shots, side share, cues, turns, repeats), then
-   `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py "<folder>" > <work>/plan_stdout.txt 2>&1`; read
+   `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py "<folder>" --verbose > <work>/plan_stdout.txt 2>&1` (`--verbose` = the WEAK candidates below the summary, for the judge round); read
    only the summary `sed -n '1,/character WEAK/p' <work>/plan_stdout.txt` (`region:` must be the command's region).
    With an audio it uses A's measured spans (A not done -> wait for its notification, re-run).
    - Every spec error is printed at once, grouped with `##` numbers; fix them all in one pass (beats parts), expand,
@@ -164,7 +164,7 @@ generator), `--check`, `--write` -> `<video>\missing-prompt.csv`. No THIẾU the
 
 ### E. Place (after C and D; Resolve one video at a time)
 `place.py <key>` (no flag; `DVR_TIMELINE=channN_vidK` in front in a day project): intro + body on empty tracks (not
-empty -> stop, report); black 0:00 -> the impact's hit (A9, blue marker), the opener and the intro music from the hit; intro shots -> bin `7. Open`, music -> `4. Audio/Music`, story 1's bed pre-laps the black.
+empty -> stop, report); black 0:00 -> the impact's hit (A9, blue marker), the opener and the intro music from the hit; intro shots -> bin `7. Open/vidK`, music -> `4. Audio/Music`, story 1's bed pre-laps the black.
 Then `dvr_cowork gaps` (must say 0 gaps to fill) and `dvr_cowork backups`.
 
 ### Reply (Vietnamese), per video, in this order

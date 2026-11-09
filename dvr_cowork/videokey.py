@@ -53,6 +53,25 @@ def homes(name: str, globs=None) -> list[Path]:
     return out
 
 
+def day_index(day: str, chann_dir, work=None) -> int:
+    """_N of the next film of one channel on day DDMMYY (user 2026-11-09): each channel numbers its own films, 1 + the
+    highest _N that channel used that day (its folder and _done, never _pushed; a name without _N counts as 1), so
+    Chann_3's first film is <region>_DDMMYY_1 whatever Chann_1 made. With `work` (.work/doc_edit) the channel's keys
+    <name>__Chann_N count too, and a plain key counts unless its name lives only in other channels (it may be this
+    channel's film that went to _pushed, whose work folder must not be reused)."""
+    pat = re.compile(rf"^[a-z]+_{day}(?:_(\d+))?$", re.I)
+    root, ch = Path(chann_dir), channel_of(chann_dir)
+    names = [q.name for base in (root, root / "_done") if base.is_dir()
+             for q in base.iterdir() if q.is_dir() and q.name.lower() != "_pushed"]
+    if work and Path(work).is_dir():
+        for w in Path(work).iterdir():
+            name, wch = split(w.name)
+            if wch == ch or (wch is None and pat.match(name)
+                             and not {channel_of(h) for h in homes(name, [str(root.parent / "Chann_*")])} - {ch}):
+                names.append(name)
+    return 1 + max([int(m[1] or 1) for n in names if (m := pat.match(n))], default=0)
+
+
 def split(video) -> tuple[str, str | None]:
     """'africa_1__Chann_2' -> ('africa_1', 'Chann_2'); a video folder path -> (its name, its channel)."""
     s = str(video)
@@ -96,6 +115,18 @@ def selftest():
         os.environ["DVR_CHANNEL"] = "Chann_1"
         assert video_key("v1", g) == "v1__Chann_1"
         os.environ.pop("DVR_CHANNEL")
+        for d in ("Chann_1_a/africa_091126_1", "Chann_1_a/_done/africa_091126_2", "Chann_1_a/_pushed/africa_091126_7",
+                  "Chann_2_b/amazon_091126", "work/africa_091126_1__Chann_1", "work/amazon_091126_4"):
+            (t / d).mkdir(parents=True)
+        (t / "Chann_3_c").mkdir()
+        assert day_index("091126", t / "Chann_3_c") == 1  # Chann_1 made films today: Chann_3 still starts at 1
+        assert day_index("091126", t / "Chann_1_a") == 3 and day_index("091126", t / "Chann_2_b") == 2
+        assert day_index("101126", t / "Chann_1_a") == 1
+        # plain work key amazon_091126_4 has no home: it may be any channel's pushed film, so it counts for all
+        assert day_index("091126", t / "Chann_3_c", t / "work") == 5
+        (t / "Chann_2_b" / "amazon_091126_4").mkdir()  # now it is Chann_2's: Chann_3 ignores it again
+        assert day_index("091126", t / "Chann_3_c", t / "work") == 1
+        assert day_index("091126", t / "Chann_2_b", t / "work") == 5
     assert day_project("africa_061126_3__Chann_2") == "vid_061126" and day_project("vid_051126_1") == "vid_051126_1"
     assert timeline_name(r"D:\Chann_2_x\africa_061126_3\audios") == "chann2_vid3"
     assert timeline_name("africa_061126_7__Chann_1") == "chann1_vid7" and timeline_name("africa_061126_2") is None

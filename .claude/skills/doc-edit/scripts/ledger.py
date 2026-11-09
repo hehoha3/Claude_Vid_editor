@@ -1,23 +1,26 @@
 """Clip ledger per workspace (channel): a new video never reuses the clips of the last N videos of its workspace.
 
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py check <video> [--ws <workspace>] [--project <Resolve project>]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py show [<workspace>]
-    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline <name>] [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline <name>] [--upload [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py backfill   # M6: open15 of entries before 2026-11-06
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py retire     # AI clips on >= 42 videos -> .ps1 for the user
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py --selftest
 
 Workspace = a channel folder holding one folder per video (D:\\Chann_shadowCanopy\\demo_4\\audios ...). Workspaces are
 found by the globs of config.toml [workspaces] (default D:\\Chann_*): a new channel = a new folder, nothing else to set.
-check (= /doc-edit check-timelines, any time, as often as wanted): reads every video track of the video's timeline
+check (internal, step 1 of done; no user command since 2026-11-09): reads every video track of the video's timeline
 channN_vidK in its Resolve project (project.txt, else the day project vid_DDMMYY; loads it if another project is open, then switches back), maps each file to
 its library id (content hash; a hide-logo `_nologo` copy counts as its original) and stores them in
 .work/doc_edit/ledgers/<workspace>.json. A new video goes on top; re-checking a video updates it in place.
 Ban for video V = clips + open_clips of the `recent` (config, default 6) newest OTHER videos of V's workspace.
 open15 (2026-11-06) = clips on 0:00-15:00: those of the 9 newest other videos never before 30:00 of V, penalised after.
+intro_week (2026-11-09) = intro clips of the channel's other videos within 7 days (checked: timeline "intro"; only
+planned: plan.json): never in an intro slot of V, hard (7. Open and `# LEDGER off` included).
 An AI clip on 42 videos (every channel, ai_max_videos) is never planned again; done / retire list it for deletion.
-done (= /doc-edit done): final check, licensed music of the video timeline (license paths), render it ->
-<video>/Done_<video>.mp4 (preset "YouTube 1080 HEVC") -> YouTube upload (dvr_cowork.youtube). Works in a day project (bin Chann_N, timeline channN_vidK). Resolve stays
+done (= /doc-edit done): final check, <video>/audio_licenses.md when missing (--licenses rewrites it): every audio
+file of the video timeline with a license, spans + title + author + license path (no license -> left out); render it ->
+<video>/Done_<video>.mp4 (preset "YouTube 1080 HEVC") -> with --upload (push) YouTube upload (dvr_cowork.youtube).
+licenses <video>: only (re)write audio_licenses.md, no render. Works in a day project (bin Chann_N, timeline channN_vidK). Resolve stays
 open; the user moves the folder into _done himself (user 2026-10-26). Videos in _done keep their workspace.
 """
 import json, os, re, sys
@@ -99,6 +102,56 @@ def opening(video, video_dir=None):
     ws = ws_of(video_dir or find_video(video))
     vids = [v for v in load(ws)["videos"] if v["video"].lower() != video.lower()][:OPEN15_N]
     return {i for v in vids for i in open15_of(ws, v)}, [v["video"] for v in vids]
+
+
+INTRO_DAYS = int(_cfg.get("intro_days", 7))  # user 2026-11-09: no intro shot twice in one channel within a week
+INTRO_END = 95.0  # intro length when a plan.json has none (0:00 -> story 1, ~1:35)
+
+
+def plan_intro(p):
+    """Intro end (s) of a plan.json path, INTRO_END when the file or its field is missing."""
+    return (json.loads(Path(p).read_text("utf-8")).get("intro") if Path(p).exists() else None) or INTRO_END
+
+
+def day_of(name):
+    """Date of a video from the DDMMYY in its name (africa_061126_2__Chann_1 -> 2026-11-06), else None."""
+    m = re.search(r"_(\d\d)(\d\d)(\d\d)(?:_|$)", str(name))
+    try:
+        return date(2000 + int(m[3]), int(m[2]), int(m[1])) if m else None
+    except ValueError:
+        return None
+
+
+def intro_week(video, video_dir=None, work=None, days=INTRO_DAYS):
+    """(clip ids, video names): the intro clips of every OTHER video of <video>'s channel whose day is within `days` of
+    its own: ledger entries (timeline "intro", older entries their open15) + the plan.json intro slots of videos not
+    checked yet (made the same day / in parallel: the ledger only learns a video at check / done). plan.py never puts
+    them in an intro slot, a "7. Open" clip and `# LEDGER off` included."""
+    from dvr_cowork.videokey import channel_of, homes, split
+    ws = ws_of(video_dir or find_video(video))
+    ch, me = (channel_of(ws) or "").lower(), split(video)[0].lower()
+    d0 = day_of(me)
+    if not d0:
+        return set(), []
+
+    def near(name):
+        d = day_of(name)
+        return d is not None and name.lower() != me and abs((d - d0).days) <= days
+
+    ids, names = set(), set()
+    for v in load(ws)["videos"]:
+        if near(v["video"]):
+            ids |= set(v.get("intro") or open15_of(ws, v))
+            names.add(v["video"])
+    for p in Path(work or ROOT / ".work" / "doc_edit").glob("*/plan.json"):
+        name, kch = split(p.parent.name)
+        if not near(name) or (kch.lower() != ch if kch else
+                              not any(ws_of(h).lower() == ws.lower() for h in homes(name, GLOBS))):
+            continue
+        end = plan_intro(p)
+        ids |= {s["id"] for s in json.loads(p.read_text("utf-8"))["slots"] if s.get("id") and s["start"] < end}
+        names.add(name)
+    return ids, sorted(names)
 
 
 def backfill():
@@ -216,9 +269,9 @@ def _proj(vdir):
     return pt.read_text("utf-8").strip().split("/")[0] if pt.exists() else day_project(vdir.name)
 
 
-def timeline_files(video):
-    """{"clips": {file path}, "open15": {file path on 0:00-15:00}} of the video timeline of project <video>; loads the
-    project if another one is open."""
+def timeline_files(video, intro_end=INTRO_END):
+    """{"clips": {file path}, "open15": {file path on 0:00-15:00}, "intro": {file path before intro_end}} of the video
+    timeline of project <video>; loads the project if another one is open."""
     from dvr_cowork.resolve_conn import connect
     from dvr_cowork.resolve_ops import timeline_fps
     pm = connect(load_config()).GetProjectManager()
@@ -239,6 +292,7 @@ def timeline_files(video):
                  for ti in t.GetItemListInTrack("video", k) or [] if ti.GetMediaPoolItem()]
         out["clips"] = {p for p, _ in items}
         out["open15"] = {p for p, s in items if s < OPEN15}
+        out["intro"] = {p for p, s in items if s < intro_end}  # the real intro, hand edits included (intro_week)
     if cur:
         project.SetCurrentTimeline(cur)
     if back:
@@ -251,7 +305,8 @@ def check(video, ws=None, proj=None):  # proj: Resolve project name when it diff
     from dvr_cowork.resolve_ops import use_channel
     use_channel(vdir)  # D:\\Chann_N_*\\<video>: that channel's bin, timeline channN_vidK
     proj = proj or _proj(vdir)
-    files = timeline_files(proj)
+    from dvr_cowork.videokey import video_key
+    files = timeline_files(proj, plan_intro(ROOT / ".work" / "doc_edit" / video_key(vdir) / "plan.json"))
     if "clips" not in files:
         raise SystemExit(f'project {proj} has no timeline {os.environ.get("DVR_TIMELINE")}: nothing recorded')
     lib, fields, miss = library(), {}, {}
@@ -275,8 +330,6 @@ def _current(pm):
 
 
 LICENSES = ROOT / ".work" / "audio_licenses.md"
-LICENSED_ROOT = norm(load_config()["paths"]["audio_lib"]) + os.sep  # Epidemic / Suno: no sidecar / row = warning
-MUSIC_ROOT = norm(r"D:\Music") + os.sep  # intro music (intro.py MUSIC_DIRS), Pixabay: no row/license = warning too
 
 
 def pixabay_license(p):
@@ -290,13 +343,15 @@ def pixabay_license(p):
         (t for t in txts if re.search(rf"Audio File ID:\s*{m[1]}(?!\d)", t.read_text("utf-8", "replace"))), None)
 
 
-def pixabay_row(p):
+def pixabay_row(p, lic=None):
     """Pixabay track -> [file, license txt, title, author] from its license txt (pixabay_license; user 2026-10-29:
-    the intro music must be in audio_licenses.md), else None."""
-    lic = pixabay_license(p)
+    the intro music must be in audio_licenses.md), else None. lic: a txt found another way (same stem)."""
+    lic = lic or pixabay_license(p)
     if not lic:
         return None
     t = [x.strip() for x in lic.read_text("utf-8", "replace").splitlines()] + [""]
+    if not any(x.startswith("Audio File Title") for x in t):
+        return None
     get = lambda key: next((t[i + 1] for i, x in enumerate(t[:-1]) if x.startswith(key)), "")
     author = re.sub(r"-\d+$", "", get("Licensor's Username").rstrip("/").rsplit("/", 1)[-1])
     return [p, str(lic), get("Audio File Title"), author]
@@ -310,6 +365,37 @@ def sidecar_row(p):
         return None
     kv = dict(x.split(": ", 1) for x in lic.read_text("utf-8", "replace").splitlines() if ": " in x)
     return [p, str(lic), kv.get("Title", ""), kv.get("Author", "")]
+
+
+def stem_txt_row(p):
+    """A renamed track (tense_2.mp3, user 2026-11-09) with its license beside it under the same stem:
+    <stem>.txt / <stem>-license.txt / <stem>_license.txt (Pixabay certificate -> title + author), else None."""
+    q = Path(p)
+    for lic in (q.with_suffix(".txt"), q.with_name(f"{q.stem}-license.txt"), q.with_name(f"{q.stem}_license.txt")):
+        if lic.exists():
+            return pixabay_row(p, lic) or [p, str(lic), "", ""]
+    return None
+
+
+def storyblocks_row(p):
+    """Storyblocks file (...-SBA-<id>.mp3) -> the nearest folder up holding *Storyblocks*.pdf (Individual License,
+    user 2026-11-09: Z:\\Unseen\\Amazona\\audio), else None."""
+    q = Path(p)
+    if not re.search(r"-SB[AV]-\d+", q.stem, re.I):
+        return None
+    for d in q.parents:
+        if pdf := next(iter(sorted(d.glob("*Storyblocks*.pdf"))), None):
+            return [p, str(pdf), re.sub(r"-SB[AV]-\d+.*$", "", q.stem, flags=re.I).replace("-", " "), "Storyblocks"]
+    return None
+
+
+AUDIO_EXT = (".mp3", ".wav", ".aif", ".aiff", ".flac", ".m4a", ".ogg")
+
+
+def license_of(p, rows):
+    """Every way a license is found for one audio file, in order: the Envato table, Epidemic / Suno sidecar,
+    Pixabay id, same-stem txt, Storyblocks pdf. -> row or None."""
+    return rows.get(norm(p)) or sidecar_row(p) or pixabay_row(p) or stem_txt_row(p) or storyblocks_row(p)
 
 
 def license_rows(text):
@@ -355,12 +441,14 @@ def licenses(project, vdir, fname="audio_licenses.md"):
                         ((ti.GetStart() - t0) / fps, (ti.GetEnd() - t0) / fps))
     if cur:
         project.SetCurrentTimeline(cur)
-    for p in used:
-        if norm(p) not in rows and (r := pixabay_row(p) or sidecar_row(p)):
-            rows[norm(p)] = r
-    lic = sorted(((p, rows[norm(p)]) for p in used if norm(p) in rows),
-                 key=lambda x: min(a for sp in used[x[0]].values() for a, _ in sp))  # film order
-    nolic = sorted(p for p in used if norm(p) not in rows and norm(p).startswith((LICENSED_ROOT, MUSIC_ROOT)))
+    # user 2026-11-09: every audio file of the film (music, ambience, SFX, any drive); the narrator and other files
+    # of the video folder (ElevenLabs voice, full-AI shot sound) and video files need none
+    own = norm(str(vdir)) + os.sep
+    used = {p: v for p, v in used.items() if p and Path(p).suffix.lower() in AUDIO_EXT and not norm(p).startswith(own)}
+    first = lambda p: min(a for sp in used[p].values() for a, _ in sp)  # film order
+    found = {p: license_of(p, rows) for p in used}
+    lic = sorted(((p, c) for p, c in found.items() if c), key=lambda x: first(x[0]))
+    nolic = sorted((p for p, c in found.items() if not c), key=first)
 
     def line(p, c):
         spans = ", ".join((f"{name}: " if name.lower() != "edit" else "")
@@ -372,15 +460,10 @@ def licenses(project, vdir, fname="audio_licenses.md"):
     md = [f"# License nhạc của {project.GetName()} (timeline {os.environ.get("DVR_TIMELINE")}, {date.today()})\n",
           "Envato Elements: mỗi license chỉ cho một project, đăng ký lại cho video này.\n",
           "Epidemic Sound: kênh YouTube phải được whitelist trong tài khoản Epidemic, nếu không sẽ bị Content ID claim.\n"]
-    md += [f"- {line(p, c)}" for p, c in lic]
-    if nolic:
-        md += ["\n## Chưa có license\n"] + [f"- {p}" for p in nolic]
+    md += [f"- {line(p, c)}" for p, c in lic]  # user 2026-11-09: files without a license are left out
     (Path(vdir) / fname).write_text("\n".join(md) + "\n", "utf-8")
-    print(f"licenses: {len(lic)} licensed audio file(s) on the video timeline -> {Path(vdir) / fname}")
-    for p, c in lic:
-        print(f"  {line(p, c)}")
-    if nolic:
-        print(f"  NO LICENSE ROW (in {LICENSED_ROOT.rstrip(os.sep)}, missing from {LICENSES.name}): " + "; ".join(nolic))
+    print(f"licenses: {len(used)} audio file(s) on the video timeline, {len(lic)} with a license listed "
+          f"({len(nolic)} without, left out) -> {Path(vdir) / fname}")
 
 
 PRESET = "YouTube 1080 HEVC"
@@ -454,8 +537,22 @@ def rerender(video, ws=None, proj=None, timeline=None):
     render_done(project, vdir, timeline, f"Done_{vdir.name}_v{n}")
 
 
-def done(video, ws=None, proj=None, timeline=None, thumb=None, publish_at=None):
-    """A finished video (user 2026-10-26: Master / Open deleted, no quit, no move): final check-timelines, licensed
+def licenses_cmd(video, ws=None, proj=None):
+    """`ledger.py licenses <video>` (user 2026-11-09, "tạo lại audio_licenses.md"): rewrite <video>/audio_licenses.md
+    from the video timeline only, no render; the open project must be the video's."""
+    from dvr_cowork.resolve_conn import connect
+    from dvr_cowork.resolve_ops import use_channel
+    vdir = find_video(video, ws)
+    use_channel(vdir)
+    proj = proj or _proj(vdir)
+    project = _current(connect(load_config()).GetProjectManager())
+    if not project or project.GetName().lower() != proj.lower():
+        raise SystemExit(f'Resolve project "{proj}" is not the open project: open it first, nothing changed')
+    licenses(project, vdir)
+
+
+def done(video, ws=None, proj=None, timeline=None, thumb=None, publish_at=None, upload=False, relicense=False):
+    """A finished video (user 2026-10-26: Master / Open deleted, no quit, no move): final ledger check, licensed
     music of the video timeline channN_vidK -> <video folder>/audio_licenses.md, render <timeline> (preset "YouTube 1080 HEVC") as
     <video folder>/Done_<video>.mp4 and wait, then upload it to the channel's YouTube (user 2026-10-31,
     dvr_cowork.youtube). Resolve stays open on the user's timeline; the user moves the folder into
@@ -474,16 +571,21 @@ def done(video, ws=None, proj=None, timeline=None, thumb=None, publish_at=None):
         project = pm.LoadProject(proj)
         if not project:
             raise SystemExit(f'Resolve project "{proj}" not found: nothing changed')
-    licenses(project, vdir)
+    if relicense or not (vdir / "audio_licenses.md").exists():  # user 2026-11-09: an existing one is kept
+        licenses(project, vdir)
+    else:
+        print(f"licenses: {vdir / 'audio_licenses.md'} kept (--licenses rewrites it)")
     render_done(project, vdir, timeline, f"Done_{vdir.name}")
-    # User 2026-11-07: no --thumb -> <video>\thumb\done.jpg/.png (the final the user approved and renamed), else none.
-    thumb = thumb or next((str(p) for p in sorted((vdir / "thumb").glob("done.*"))
-                           if p.suffix.lower() in (".jpg", ".jpeg", ".png")), None)
-    try:
-        from dvr_cowork import youtube
-        yt = youtube.upload(vdir, thumb, publish_at=publish_at)
-    except Exception as e:  # quota / network: the render stands, upload again by hand
-        yt = f"youtube: upload FAILED ({e}); retry: python -m dvr_cowork.youtube upload \"{vdir}\""
+    yt = "youtube: not uploaded (/doc-edit push uploads)"
+    if upload:  # user 2026-11-08: `/doc-edit done` = render + save only; `/doc-edit push` = done --upload (+ SEO)
+        # User 2026-11-07: no --thumb -> <video>\thumb\done.jpg/.png (the final the user approved and renamed), else none.
+        thumb = thumb or next((str(p) for p in sorted((vdir / "thumb").glob("done.*"))
+                               if p.suffix.lower() in (".jpg", ".jpeg", ".png")), None)
+        try:
+            from dvr_cowork import youtube
+            yt = youtube.upload(vdir, thumb, publish_at=publish_at)
+        except Exception as e:  # quota / network: the render stands, upload again by hand
+            yt = f"youtube: upload FAILED ({e}); retry: python -m dvr_cowork.youtube upload \"{vdir}\""
     print(yt)
     handoff(f"done {vdir.name} ({ws_of(vdir)}): rendered Done_{vdir.name}.mp4 (timeline {timeline}); {yt}; folder move = user")
     print(f"done {vdir.name}: rendered, Resolve left open; move {vdir} into {DONE} yourself")
@@ -535,6 +637,18 @@ def selftest():
     ids, _ = opening("new", Path("D:/W/new"))
     assert "6" in ids and "7" not in ids and "5" in ids, ids  # e: no open15, no plan.json -> its whole timeline
     assert usage()["2"] == 1 and usage(("W", "b"))["2"] == 0 and usage()["22"] == 1
+    # intro_week (user 2026-11-09): intros of the channel's videos within 7 days, checked (ledger) or only planned
+    assert day_of("africa_061126_2__Chann_1") == date(2026, 11, 6) and day_of("amazon_3") is None
+    record("Chann_1_x", "africa_061126_2", {"clips": ["9"], "intro": ["op"], "open15": ["op", "o2"]})
+    record("Chann_1_x", "africa_201026_1", {"clips": ["8"], "open15": ["old"]})  # 17 days before: not counted
+    wk = Path(tempfile.mkdtemp())
+    for key, slots in (("africa_061126_3__Chann_1", [{"id": "p3", "start": 1.0}, {"id": "late", "start": 300.0}]),
+                       ("africa_061126_3__Chann_2", [{"id": "c2", "start": 1.0}])):  # other channel: not counted
+        (wk / key).mkdir()
+        (wk / key / "plan.json").write_text(json.dumps({"intro": 94.0, "slots": slots}), "utf-8")
+    ids, vids = intro_week("africa_091126_1", Path("D:/Chann_1_x/africa_091126_1"), wk)
+    assert ids == {"op", "p3"} and vids == ["africa_061126_2", "africa_061126_3"], (ids, vids)
+    assert intro_week("africa_061126_3", Path("D:/Chann_1_x/africa_061126_3"), wk)[0] == {"op"}  # itself left out
     tmp = Path(tempfile.mkdtemp())
     rows = license_rows("| file | license |\n|---|---|\n| Z:\\S\\a.wav | Z:\\S\\1.pdf | x |\n| head | not a pdf |")
     assert rows == {norm(r"Z:\S\a.wav"): [r"Z:\S\a.wav", r"Z:\S\1.pdf", "x"]}, rows
@@ -548,6 +662,14 @@ def selftest():
         assert pixabay_row(tmp / f"{name}.mp3")[1:] == [str(tmp / lic), "T", "au"], name
     (tmp / "d-w-4927.mp3").touch()
     assert pixabay_license(tmp / "d-w-4927.mp3") is None  # 4927 is not 492750
+    (tmp / "tense_2.txt").write_text("Licensor's Username:\nhttps://pixabay.com/users/am-5/\n\nAudio File Title:\n"
+                                     "Dread\n", "utf-8")  # renamed Pixabay track, license under the same stem
+    assert license_of(str(tmp / "tense_2.mp3"), {})[1:] == [str(tmp / "tense_2.txt"), "Dread", "am"]
+    (tmp / "sb").mkdir()
+    (tmp / "Individual License - Storyblocks.pdf").touch()  # Storyblocks: the pdf in a folder above
+    r = license_of(str(tmp / "sb" / "light-wind-forest-SBA-300420725.mp3"), {})
+    assert r[1:] == [str(tmp / "Individual License - Storyblocks.pdf"), "light wind forest", "Storyblocks"], r
+    assert license_of(str(tmp / "sb" / "x.mp3"), {}) is None
     h = tmp / "current.md"
     h.write_text("# H\n\nUpdated: 2000-01-01\n\nLast completed:\n\n- old\n", "utf-8")
     handoff("done v (W)", h)
@@ -565,12 +687,12 @@ if __name__ == "__main__":
     proj = a[a.index("--project") + 1] if "--project" in a else None
     if a == ["--selftest"]:
         selftest()
-    elif a[:1] == ["check"] and len(a) >= 2:
-        check(a[1], ws, proj)
     elif a[:1] == ["done"] and len(a) >= 2:
         done(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else None,  # user 2026-10-26
              a[a.index("--thumb") + 1] if "--thumb" in a else None,
-             a[a.index("--publish-at") + 1] if "--publish-at" in a else None)
+             a[a.index("--publish-at") + 1] if "--publish-at" in a else None, "--upload" in a, "--licenses" in a)
+    elif a[:1] == ["licenses"] and len(a) >= 2:
+        licenses_cmd(a[1], ws, proj)
     elif a[:1] == ["rerender"] and len(a) >= 2:
         rerender(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else None)
     elif a[:1] == ["show"]:

@@ -69,9 +69,9 @@ stripped. A film without a source file: rebuild one from its transcript + timest
 **C. New film(s):** the user writes `/create-doc-mov Chann1 sẽ làm về <topic> trong khoảng 1h, Chann2 sẽ làm <topic>
 trong khoảng 30p`. Per film take channel number, region (`amazon` / `africa` / `himalaya`, from the topic; Congo =
 amazon) and runtime in minutes (1h = 60, 3h = 180, 30p = 30); ask if any is unclear. Name + create the folders in one call:
-`scripts\new_video.py 1:africa 2:africa` (dry run: `<region>_DDMMYY_<n>`; one call = one day project, so every
-channel of the call gets the same n, user 2026-11-02: `africa_051126_1` in Chann_1 and Chann_2; one film per channel
-per call), then the same with `--apply` (creates `<video>\audios` + `.work\doc_edit\<key>`, prints OK; a name shared
+`scripts\new_video.py 1:africa 2:africa` (dry run: `<region>_DDMMYY_<n>`; each channel numbers its own day, user
+2026-11-09: n = 1 + that channel's highest n today, so Chann_3's first film is `_1` even after Chann_1's
+`africa_091126_1`; all films of the day share the day project `vid_DDMMYY`; one film per channel per call), then the same with `--apply` (creates `<video>\audios` + `.work\doc_edit\<key>`, prints OK; a name shared
 by 2+ channels -> `<key>` = `<video>__Chann_N`, which doc-edit's `video_key` finds).
 Set `target: <minutes>` in the source header. Several films = write them one after another, each through steps 1–6,
 then one review stop (step 7) with a summary per film. For every film:

@@ -3,7 +3,7 @@
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py <audios-folder>
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/plan.py --selftest
 
-Clips on the video timeline (older ledgers: + Open) of the last N videos of the same workspace (ledger.py, /doc-edit check-timelines) are never
+Clips on the video timeline (older ledgers: + Open) of the last N videos of the same workspace (ledger.py, recorded at /doc-edit done) are never
 matched on slots starting before BAN_UNTIL (15:00); later slots may use any clip (in-video REUSE_* limits still hold).
 One timeline per video: channN_vidK in bin Chann_N/6. Timeline of the day project vid_DDMMYY (user 2026-11-06; "Edit"
 and "Open" are gone, old ledgers keep their open_clips bans).
@@ -27,7 +27,7 @@ audio:  A3=forest,day A6=bird A8=branch,snap A7=off   (keywords matched against 
 'NxK' / '*xK' = N s (or the rest) as K shots of the same need + filter, uneven lengths, audio on the first part.
 --yolo-cached: use the YOLO cache only (unmeasured clips rank by tags); yolo.py --warm measures the rest.
 """
-import functools, json, os, re, sys
+import csv, functools, json, os, re, sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -36,6 +36,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT), str(ROOT / ".claude/skills/scan-source/scripts")]
 from dvr_cowork.timestamps import parse_timestamp_file, to_vo_start  # noqa: E402
 from dvr_cowork.timecode import parse_clock  # noqa: E402
+from dvr_cowork.resolve_ops import OPEN_BIN  # noqa: E402
 from dvr_cowork.videokey import split as split_key, video_key  # noqa: E402  same name in two channels -> <video>__Chann_N
 from scan_source import REGIONS, ROOTS, audio_blocked, index_of, video_roots  # noqa: E402
 import beats  # noqa: E402
@@ -151,7 +152,7 @@ AI_VIDEOS_MAX = ledger.AI_VIDEOS_MAX  # an AI clip on this many videos (every ch
 # bin "7. Open" (user 2026-10-26): AI clips the user made for the opening -> intro + story 1, any src, first pick
 # (2026-11-05: not the ones place.py filed there itself, open_placed.txt),
 # repeated OPEN_GAP s apart (other frames first, window()); stand-in passes add OPEN_BONUS
-OPEN_BIN, OPEN_GAP, OPEN_BONUS = "7. Open", 20.0, 0.3
+OPEN_GAP, OPEN_BONUS = 20.0, 0.3  # OPEN_BIN: resolve_ops (per video: open_bin_path)
 BIOME_NO = ("autumn", "snow", "conifer", "pine forest", "town", "city", "garden", "airport", "building", "boat",
             "zoo", "enclosure", "captive", "wildlife park", "bloody", "blood", "pronghorn", "everglades", "florida",
             "eucalyptus", "gum tree", "koala", "kangaroo")
@@ -679,6 +680,8 @@ def load_clips(region):
 
 
 def usable(c):
+    if "gen" in c:  # generated for a slot, already cut to its length: whole clip (no AI_TRIM / best / YOLO window)
+        return 0.0, c["duration"]
     a, b = c["tags"].get("best") or [0, c["duration"]]
     if c["source"] == "ai":
         a, b = max(a, AI_TRIM), min(b, c["duration"] - AI_TRIM)
@@ -908,7 +911,10 @@ def window(c, s, uses, gap=None, mx=None):
     """In-point for slot s from clip c, or None (REUSE_* / SAME_* above). Uses from timeline Open (start -1e9) are
     never shown again; frames already on the timeline may come back, up to SAME_MAX times in all, SAME_GAP s apart.
     A ledger clip (c["recent"]) never fills a slot starting before BAN_UNTIL, an opening one (c["open15"]) none before
-    OPEN15_UNTIL (a "7. Open" clip is made for this video)."""
+    OPEN15_UNTIL (a "7. Open" clip is made for this video). An intro clip of another video of the channel this week
+    (c["intro_week"]) never fills an intro slot, whatever bin it is in."""
+    if c.get("intro_week") and s.get("intro"):
+        return None
     if not c.get("open") and (c.get("recent") and s["start"] < BAN_UNTIL or c.get("open15") and s["start"] < OPEN15_UNTIL):
         return None
     if len(uses) >= (mx or REUSE_MAX) or any(abs(s["start"] - t) < (gap or REUSE_GAP) for t, _, _ in uses):
@@ -970,6 +976,37 @@ def gap_of(s, c, gap=None):
     return OPEN_GAP if c.get("open") and s.get("open_ok") else gap
 
 
+GEN_BONUS = 0.25  # rank bonus of a clip generated for the slot (a fifth of it for any other slot)
+GEN_SHORT = 0.042  # a generated clip may be up to 1 frame (24 fps) shorter than its slot
+
+
+def mark_generated(clips, video):
+    """User 2026-11-08: fill-THIEU uses every clip generated for this video (jobs check; filed by organize or still
+    in _check). c["gen"] = timeline seconds of the missing-prompt.csv rows it was made for (name = shot_id); match()
+    puts it there first, hold / issues ignored (WEAK + marker note when held). Logo / text clips stay out (delogo)."""
+    from dvr_cowork.jobs import generated_names
+    names = generated_names(video_key(video))
+    csvp = video / "missing-prompt.csv"
+    at = {}
+    if csvp.exists():
+        for r in csv.DictReader(csvp.open(encoding="utf-8-sig")):
+            m, _, s = (r.get("tc_in") or "").rpartition(":")
+            at[r["shot_id"]] = (int(m or 0) * 60 + float(s)) if s else None
+    n = 0
+    for c in clips:
+        if c["id"] in names:
+            c["gen"] = [t for t in [at.get(Path(names[c["id"]]).stem)] if t is not None]
+            n += 1
+    return f"generated: {n}/{len(names)} usable"
+
+
+def generated_used(slots, clips):
+    gen = {c["abs"] for c in clips if "gen" in c}
+    used = {s["path"] for s in slots if s.get("path") in gen}
+    return f", {len(used)} on V1" + (f", unused {len(gen - used)}: " + ", ".join(sorted(Path(p).name for p in gen - used))[:300]
+                                     if gen - used else "")
+
+
 def match(slots, clips, taken=None, look=None, ai_max=None):
     """taken: {lower-case path: [(src_in, src_out)]} already on timeline Open: same budget, never the same part.
     look ('# LOOK'): ground look of the first shot; after it each shot wants the look of the last green/dry shot
@@ -988,6 +1025,8 @@ def match(slots, clips, taken=None, look=None, ai_max=None):
             uses[c["abs"]] = [(-1e9, a, b) for a, b in u]
 
     def take(s, c, cin, **kw):
+        if "gen" in c:
+            kw["gen"] = True  # gen_swap.py puts these on V1
         if (lk := clip_look(c["tags"]["caption"], c.get("green"))) in ("green", "dry"):
             cur[0] = lk
         uses.setdefault(c["abs"], []).append((s["start"], cin, cin + s["dur"]))
@@ -1030,6 +1069,8 @@ def match(slots, clips, taken=None, look=None, ai_max=None):
             if (v := fit(c, f, prev)) is not None and (w := window(c, s, uses.get(c["abs"], ()), gap_of(s, c))) is not None:
                 u = uses.get(c["abs"], ())
                 v -= DIR_PEN if flip and c["tags"].get("direction") == flip else 0
+                if "gen" in c and not u:  # generated for this slot: strong bonus; generated for another: small
+                    v += GEN_BONUS if any(s["start"] - 0.05 <= t < s["start"] + s["dur"] for t in c["gen"]) else GEN_BONUS / 5
                 out.append((v - REUSE_PEN * len(u) - SAME_PEN * len(overlaps(u, w, s["dur"]))
                             - old_pen(c), c, w))
         s["rej"] = {k: n for k, n in rej.items() if n}
@@ -1054,10 +1095,23 @@ def match(slots, clips, taken=None, look=None, ai_max=None):
                 return parts
         return None
 
+    # user 2026-11-08: generated clips are candidates with a bonus (rank), the best option per slot wins. Only a
+    # pin=none slot (forced THIẾU for its prompt) takes the clip made for it, since it would stay empty otherwise.
+    free = [s for s in slots if s["src"] != "GFX" and s["filter"].get("pin") == ["none"]]
+    for c in clips:
+        for t in c.get("gen", ()):
+            s = min(free, key=lambda x: abs(x["start"] - t), default=None)
+            if s and not s.get("gen") and abs(s["start"] - t) < 0.5 and c["duration"] >= s["dur"] - GEN_SHORT:
+                take(s, c, max(0.0, round((c["duration"] - s["dur"]) / 2, 2)),
+                     status="WEAK" if c.get("hold") else "OK", fit=1.0, top3=[],  # take() sets gen
+                     alts=[[c["abs"], c["source"]]])
     out, run = [], None  # run: (chain, clip, next src_in, status, fit) after a part of a '12x4 same' chain
     for s in slots:
         f = s["filter"]
         out.append(s)
+        if s.get("gen"):  # taken by the generated pre-pass above (a pin=none slot too: the clip made for it)
+            run, prev_size = None, None
+            continue
         if s["src"] == "GFX" or f.get("pin") == ["none"]:
             s["status"] = "GFX" if s["src"] == "GFX" else "THIEU"
             prev_size = None
@@ -1251,7 +1305,7 @@ def highlights(slots, clips, window=None):
         want = set(s["filter"].get("sp", [])) - {"none"}
         z = s["slot"] in zone
         cur = by.get(s.get("path"), {})
-        if not s.get("intro") or s.get("opener") or not want or s["src"] == "GFX" or "pin" in s["filter"] or s.get("chain") \
+        if not s.get("intro") or s.get("opener") or not want or s["src"] == "GFX" or "pin" in s["filter"] or s.get("chain") or s.get("gen") \
                 or (cur.get("open") and not z) or (z and cur and strong(cur, "act") and not any(w in Path(s["path"]).stem.lower() for w in HL_NO + ("attack",))):
             continue  # a '... same' chain keeps its one continuous clip; a "7. Open" pick stays outside the zone
         v = HL_SPEEDS[n % len(HL_SPEEDS)]
@@ -1270,7 +1324,7 @@ def highlights(slots, clips, window=None):
             for c, L in cands:
                 path, cap, sp = c["abs"], c["tags"]["caption"].lower(), set(c["tags"].get("species", []))
                 if (L and (L["start"] - s["start"] < SAME_GAP or L["slot"] in took)) or (path in took and not z) \
-                        or (c.get("recent") and not c.get("open") and s["start"] < BAN_UNTIL) \
+                        or (c.get("recent") and not c.get("open") and s["start"] < BAN_UNTIL) or c.get("intro_week") \
                         or not want & sp or (z and not sp <= cast) or (tier and not strong(c, tier)) \
                         or (not L and c["tags"]["species"][0] not in want) \
                         or any(w in cap for w in HL_NO) or hard(c, s["filter"])[0]                         or (z and (c.get("hold") or any(w in Path(path).stem.lower() for w in HL_NO + ("attack",)))):
@@ -1322,6 +1376,17 @@ def highlights(slots, clips, window=None):
 
 PICK_KEYS = ("path", "id", "source", "src_in", "src_out", "caption", "reuse", "same", "speed", "highlight", "part",
              "zoom")
+
+
+def intro_guard(slots, banned):
+    """Last check after every pass (generated pre-pass, highlights, fix_water...): an intro slot holding a clip of
+    another channel video's intro this week (ledger.intro_week) -> THIẾU. -> summary line."""
+    hit = [s for s in slots if s.get("intro") and s.get("id") in banned]
+    for s in hit:
+        for k in PICK_KEYS:
+            s.pop(k, None)
+        s.update(status="THIEU", why="intro clip of another channel video this week")
+    return f"intro week guard: {len(hit)} intro slots cleared" + (f" ({', '.join(tc(s['start']) for s in hit[:8])})" if hit else "")
 
 
 def intro_weak(slots):
@@ -1644,17 +1709,20 @@ def spec_of(project, timeline):
 
 
 def open_bin(video):
-    """Lower-case paths of the videos in bin "7. Open" (the channel's one in a day project) of the open Resolve project
+    """Lower-case paths of the videos in the video's own bin "7. Open/vidK" (user 2026-11-09: one sub-bin per video of
+    the channel; clips straight in "7. Open" or in another video's sub-bin are not read) of the open Resolve project
     of <video> (a Path, D:\\Chann_N_*\\<video>); empty set + why when Resolve is closed or another project is open."""
     try:
         from dvr_cowork.config import load_config
         from dvr_cowork.resolve_conn import connect
-        from dvr_cowork.resolve_ops import find_bin, pool_root, use_channel
+        from dvr_cowork.resolve_ops import find_bin, open_bin_path, pool_root, use_channel
+        from dvr_cowork.videokey import timeline_name
         use_channel(video)
         pr = connect(load_config()).GetProjectManager().GetCurrentProject()
         if not pr or not same_project(pr.GetName(), video):
             return set(), f"7. Open: not read (Resolve project {pr and pr.GetName()!r} is not {video.name!r})"
-        b = find_bin(pool_root(pr.GetMediaPool()), OPEN_BIN)
+        name = open_bin_path(timeline_name(video))
+        b = find_bin(pool_root(pr.GetMediaPool()), name)
         stack, out = [b] if b else [], set()
         while stack:
             f = stack.pop()
@@ -1668,7 +1736,7 @@ def open_bin(video):
     pf = ROOT / ".work" / "doc_edit" / video_key(video) / "open_placed.txt"
     placed = set(pf.read_text("utf-8").split("\n")) if pf.exists() else set()
     own = out - placed
-    return own, f"7. Open: {len(own)} videos of the user's for the intro + story 1 ({len(out & placed)} placed by place.py: no priority)"
+    return own, f"{name}: {len(own)} videos of the user's for the intro + story 1 ({len(out & placed)} placed by place.py: no priority)"
 
 
 def estimate_vo(cues):
@@ -1771,6 +1839,11 @@ def main(folder, sem=True):
         print("LEDGER off (# LEDGER off in the spec): recent + opening ledger bans lifted for this video")
     for c in clips:
         c["open15"] = c["id"] in o15
+    wk, wkv = ledger.intro_week(video.name, video)  # hard, `# LEDGER off` too (user 2026-11-09)
+    for c in clips:
+        c["intro_week"] = c["id"] in wk
+    print(f"intro week: {sum(c['intro_week'] for c in clips)} clips of the intros of {', '.join(wkv) or 'no video'} "
+          f"(channel, {ledger.INTRO_DAYS} days) never in this intro")
     used = ledger.usage((ledger.ws_of(video), video.name))  # every channel, this video not counted
     worn = [c for c in clips if c["source"] == "ai" and used[c["id"]] >= AI_VIDEOS_MAX]
     pool = [c for c in clips if c not in worn]
@@ -1787,10 +1860,13 @@ def main(folder, sem=True):
     for s in slots:
         s["open_ok"] = s["start"] < s2
     ai_max = AI_MAX_REGION.get(region, AI_MAX)
+    gmsg = mark_generated(pool, video) if SUB_BROAD else "generated: --sub-broad only"
     match(slots, pool, None, meta["look"], ai_max)
+    gmsg += generated_used(slots, pool)
     hmsg = highlights(slots, pool, meta.get("action")) + "; " + intro_weak(slots)
     varmsg = vary(slots, pool)
     wmsg = fix_water(slots, pool, load_audio(), end)
+    print(intro_guard(slots, wk))
     out = Path(OUT) if OUT else None  # --out=<dir>: plan.json + plan.md there (benchmark), the video's untouched
     if out:
         out.mkdir(parents=True, exist_ok=True)
@@ -1837,6 +1913,7 @@ def main(folder, sem=True):
           f"{', '.join(tc(s['start']) for s in land[:12])}" + (" (user 2026-10-26: few, ~4)" if len(land) > 4 else ""))
     print(smsg)
     print(hmsg)
+    print(gmsg)
     print(varmsg)
     print(wmsg)
     if looks:
@@ -1871,10 +1948,11 @@ def main(folder, sem=True):
     print(f"untagged clips skipped: {sum(unt.values())}; of the cast (folder species): "
           f"{ {x: unt[x] for x in sorted(want | ({'landscape'} if region == 'africa' else set())) if unt[x]} }")
     print(f"side-shot WEAK kept as is: {sum(s['status'] == 'WEAK' and is_side(s) for s in slots)}")
-    print("character WEAK (judge: keep, pin=<file> or pin=none; chosen first, then alternatives):")
-    for s in slots:
-        if s["status"] == "WEAK" and not is_side(s):  # scenery near-misses don't hurt the story, characters do
-            print(f"  {s['slot']} ##{s['line']} {s['dur']}s {s['need'][:70]}\n    " + "\n    ".join(x[:110] for x in s["top3"]))
+    cw = [s for s in slots if s["status"] == "WEAK" and not is_side(s)]  # scenery near-misses don't hurt the story
+    print(f"character WEAK: {len(cw)} (judge: keep, pin=<file> or pin=none" + ("; chosen first, then alternatives):"
+          if "--verbose" in sys.argv else "; candidates: --verbose, user 2026-11-08 token cost)"))
+    for s in cw if "--verbose" in sys.argv else ():
+        print(f"  {s['slot']} ##{s['line']} {s['dur']}s {s['need'][:70]}\n    " + "\n    ".join(x[:110] for x in s.get("top3", [])))
     print(f"-> {(out or work) / 'plan.json'}\n-> {(out or video) / 'plan.md'}")
 
 
@@ -1914,6 +1992,11 @@ def selftest():
     hs = [{"slot": 1, "dur": 3, "src": "any", "filter": {"sp": ["jaguar"], "act": ["walk"]}, "start": 0.0}]
     match(hs, h)
     assert hs[0]["status"] == "WEAK" and hs[0]["why"] == "_check: dark", hs
+    # a generated clip (gen = its prompt's tc_in) fills its own slot even when another species / blurred
+    gs = [{"slot": 1, "dur": 3, "src": "any", "filter": {"sp": ["tapir"], "act": ["run"]}, "start": 10.0}]
+    gs[0]["filter"]["pin"] = ["none"]  # a slot forced THIẾU for its prompt takes the clip made for it
+    match(gs, [dict(h[0], gen=[10.2], issues=["blur"])])
+    assert gs[0]["path"] == "held" and gs[0].get("gen") and gs[0]["status"] == "WEAK", gs
     # a strike shot takes a walking animal only as WEAK (never OK); a lunging one is fine
     st = [{"slot": 1, "dur": 3, "src": "any", "need": "[J]", "filter": {"sp": ["jaguar"], "act": ["attack"]}, "start": 400.0}]
     match(st, clips[:2])
@@ -2191,6 +2274,13 @@ def selftest():
     # opening ledger (user 2026-11-06): a clip of the last 9 openings, never before 30:00, penalised after
     assert window(dict(pc, open15=True), dict(ps, start=OPEN15_UNTIL - 1), ()) is None
     assert window(dict(pc, open15=True), dict(ps, start=OPEN15_UNTIL), ()) is not None
+    # intro week (user 2026-11-09): never in an intro slot, even from "7. Open"; fine outside the intro
+    assert window(dict(pc, intro_week=True, open=True), dict(ps, intro=True), ()) is None
+    assert window(dict(pc, intro_week=True), dict(ps, intro=False), ()) is not None
+    ig = [{"intro": True, "id": "x", "path": "p", "status": "OK", "start": 1.0},
+          {"intro": False, "id": "x", "path": "p", "status": "OK", "start": 200.0}]
+    assert intro_guard(ig, {"x"}).startswith("intro week guard: 1") and ig[0]["status"] == "THIEU" \
+        and "path" not in ig[0] and ig[1]["path"] == "p", ig
     assert old_pen({"open15": True}) == OPEN15_PEN and old_pen({"recent": True, "open15": True}) == OLD_PEN + OPEN15_PEN
     # a part already on timeline Open counts toward REUSE_MAX and is never shown again
     rv = [{"slot": k, "dur": 4, "src": "any", "filter": {"sp": ["none"]}, "start": t} for k, t in enumerate(range(0, 1200, 100))]

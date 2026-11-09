@@ -16,7 +16,7 @@ import place, plan  # noqa: E402
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
 from dvr_cowork.videokey import day_project, video_key  # noqa: E402
-from dvr_cowork.resolve_ops import (_norm, backup_timeline, clip_fps, find_bin, get_project,  # noqa: E402
+from dvr_cowork.resolve_ops import (_norm, open_bin_path, backup_timeline, clip_fps, find_bin, get_project,  # noqa: E402
                                     pool_root, use_channel, video_timeline)
 
 VIDEO = sys.argv[1]
@@ -48,7 +48,7 @@ def main(apply):
     assert tl and tl.GetName().lower() != "master" and project.GetName() == want, f"open project {want}"
     mp = project.GetMediaPool()
     root = pool_root(mp)
-    obin = set(place.bin_index(find_bin(root, plan.OPEN_BIN)))
+    obin = set(place.bin_index(find_bin(root, open_bin_path(tl.GetName()))))  # the video's own 7. Open/vidK
     st, fps = int(tl.GetStartFrame()), 24.0
     rows, uses = [], {}
     for ti in tl.GetItemListInTrack("video", 1) or []:
@@ -138,6 +138,7 @@ def main(apply):
         project.SetCurrentTimeline(orig)
     pm.SaveProject()
     print(f"swapped {done}, failed {fail}, A1 AI audio {a1_n} at {place.A1_DB} dB, color {COLOR}")
+    print(place.black_fades(VIDEO))
 
 
 
