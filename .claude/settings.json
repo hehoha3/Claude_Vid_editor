@@ -12,7 +12,9 @@
       "Bash(*DeleteTimelines*)",
       "Bash(*ClearTrack*)",
       "Bash(*reframe.py*--apply*)",
-      "Bash(*grade.py apply*)"
+      "Bash(*grade.py apply*)",
+      "Bash(*after_gen.py finish*)",
+      "Bash(*gen_swap.py*--apply*)"
     ]
   },
   "hooks": {

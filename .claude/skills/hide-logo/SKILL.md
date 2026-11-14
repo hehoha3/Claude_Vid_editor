@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: hide-logo
 description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from shots - MiniMax-Remover inpainted copies into D:\AI_video\_nologo, relinked in Resolve; find logos in a folder; overwrite originals when a video is done. Use for /hide-logo, "shot ở 21:38 có logo góc trên trái", "remove the logo on shot_NNN", Object Removal of a logo.
 ---
@@ -8,7 +9,7 @@ description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from sh
 Run each command once, reply only from its stdout (one line per clip). Never open images or crops: the script
 checks itself (`RESIDUE` = logo edges left -> redo that clip with `--box`). The user checks in Resolve.
 Script: `.venv/Scripts/python .claude/skills/hide-logo/scripts/hide_logo.py`. Day project `vid_DDMMYY`: prefix every
-Resolve command with `DVR_CHANNEL=Chann_N` (two "Edit" timelines; it stops without). History, calibration, logo
+Resolve command with `DVR_TIMELINE=channN_vidK` (several videos per project), or open that timeline first. History, calibration, logo
 kinds, engine details: `references/notes.md` (read only when a case below does not cover it).
 
 **Copies:** logo-free copies go to `D:\AI_video\_nologo\` (Z: sources -> `_nologo\z\`, used by plan.py instead of
@@ -27,11 +28,18 @@ questions, no overwrite question.
 
 ## One shot: `hide_logo.py "<shot_NNN | path>" [tl|tr|bl|br] [--end] [--box x0,y0,x1,y1 ...]`
 No scan, ~30 s. `--end` forces a late-logo search. `--box` at 640x360, tight around the glyphs, one box per logo
-(Gemini star: `--box 566,286,594,314`; BBC miss: `--box 0,3,50,21`). Old smeared delogo:
-`MM_MASK=box ... --box 0,3,74,22`.
+(Gemini star: `--box 566,286,594,314`; BBC miss: `--box 0,3,50,21`; **BBC PLANET EARTH, 3 stacked lines** (BBC /
+PLANET / EARTH, ~x 5-54, y 13-47): `--box 2,10,60,50`, default glyph mask). Old smeared delogo:
+`MM_MASK=box ... --box 0,3,74,22` (leaves a visible grid smear on rock / snow: last resort only).
+
+**User says the logo is still there** (2026-11-06, shot_034: auto box [8,9,48,29] caught only "BBC", no RESIDUE
+reported): stop guessing boxes. One ffmpeg crop of the ORIGINAL's corner (frames at ~1, 4, 7 s, `crop=iw/3:ih/4`,
+`drawgrid`) -> read the glyphs' extent -> `--box` with 2-5 px margin at 640x360 -> one crop of the `_nologo` copy
+(first / middle / last frame) to confirm clean before replying. These 2-3 images are the exception to "never open
+images"; a multi-line logo always needs every line inside the box.
 
 ## Folder scan: `hide_logo.py "<folder>"` (no argument -> ask for a folder or a shot)
-Marks V1 clips of "Edit" (Purple = logo >= 0.45, Yellow = suspect 0.33-0.45), writes `.work/hide_logo/scan.json`
+Marks V1 clips of the video timeline (Purple = logo >= 0.45, Yellow = suspect 0.33-0.45), writes `.work/hide_logo/scan.json`
 and `check_list.txt` (LOGO lines active, SUSPECT `#? `; works without Resolve, e.g. `D:\AI_video\_check`,
 `/doc-edit logo`). Reply: count, LOGO + SUSPECT lists as printed; the user fixes markers, then `--execute`.
 - `--execute`: every marker on a V1 clip -> delogo, relink, markers deleted.

@@ -5,10 +5,10 @@ folder), never overwrites.
   thumb.py finish IMAGE --text "LINE 1\\nLINE 2" --logo LOGO.png --layout A|B [grade/crop/text overrides]
   thumb.py --selftest
 
-finish -> <out-dir>/<stem>/ (source moved in) with <stem>[_vN].psd (layered), <stem>_clean.png 3840x2160
+finish -> <out-dir>/<stem>/, or <video>/thumb/ for an image in a video folder D:\\Chann_N_*\\<video> (source moved in) with <stem>[_vN].psd (layered), <stem>_clean.png 3840x2160
 (no text/logo), <stem>_final.jpg 3840x2160 (< 2 MB). Brightness/saturation auto-target the look of references/look-ref.png.
 """
-import argparse, filecmp, json, math, os, shutil, subprocess, sys
+import argparse, filecmp, json, math, os, re, shutil, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -109,6 +109,14 @@ def free_stem(out_dir, stem):
     return f"{stem}_v{n}"
 
 
+def video_dir(p):
+    r"""D:\Chann_1_x\<video>\a.png or ...\<video>\thumb\a.png -> D:\Chann_1_x\<video>; elsewhere -> None."""
+    for d in Path(p).parents:
+        if re.match(r"chann_\d+_", d.parent.name, re.I):
+            return d
+    return None
+
+
 def fit_size(lines, box):
     """Rough pt size (72 ppi = px) so the longest line and all lines fit the box; Montserrat Black caps ~0.82 em/char (measured)."""
     bw, bh = box[2] - box[0], box[3] - box[1]
@@ -131,7 +139,12 @@ def cmd_finish(a):
         sys.exit(f"out dir missing: {out_dir}")
     # One folder per thumbnail; the source is MOVED into it (user 2026-10-16, was a copy until then).
     # Source already in it -> reuse; a same-named file already there -> never overwrite, work on that one.
-    work = src.parent if src.parent.name == src.stem else out_dir / src.stem
+    # Image inside a video folder D:\Chann_N_*\<video>\ -> <video>\thumb\ (user 2026-11-07); /doc-edit done
+    # uploads <video>\thumb\done.* (the user renames the approved final to "done").
+    vdir = video_dir(src)
+    if vdir and vdir.name.startswith("_"):  # _pushed / _done are the user's
+        sys.exit(f"not a video folder: {vdir}")
+    work = vdir / "thumb" if vdir else src.parent if src.parent.name == src.stem else out_dir / src.stem
     work.mkdir(exist_ok=True)
     if not (work / src.name).exists():
         shutil.move(src, work / src.name)
@@ -146,7 +159,8 @@ def cmd_finish(a):
 
     d = info(src)
     src_st = still_stats(src)
-    africa = "_africa_" in src.stem.lower()
+    # --region (user 2026-11-07: /thumbnail <image> <region> ...) decides; none -> the old file-name rule.
+    africa = a.region == "africa" if a.region else "_africa_" in src.stem.lower()
     if africa:
         TARGET.update(AFRICA_TARGET)
     ev0, vib0 = look_delta(src_st)
@@ -156,10 +170,11 @@ def cmd_finish(a):
     warm = a.warm if a.warm is not None else (AFRICA["warm"] if africa else 0)
     a.bg_ev = a.bg_ev if a.bg_ev is not None else (AFRICA["bg_ev"] if africa else 0.0)
     a.yellow_sat = a.yellow_sat if a.yellow_sat is not None else (AFRICA["yellow_sat"] if africa else -5)
-    if africa:
-        for k, dflt in (("green_sat", 0), ("gamma", 1.1), ("curve", 6)):
-            if getattr(a, k) == dflt:
-                setattr(a, k, AFRICA[k])
+    for k, dflt in (("green_sat", 0), ("gamma", 1.1), ("curve", 6)):  # None = not passed; a typed value always wins
+        if getattr(a, k) is None:
+            setattr(a, k, AFRICA[k] if africa else dflt)
+    if a.no_color:  # frozen, ex-himalaya (user 2026-11-11): light (+ --curve) only, colour layers stay neutral
+        wb, warm, vib, a.yellow_sat, a.green_sat = [0, 0, 0], 0, 0, 0, 0
     x, y, cw, ch = [int(v) for v in a.crop.split(",")] if a.crop else crop_169(d["width"], d["height"])
     lay = LAYOUT[a.layout]
     lines = a.text.replace("\\n", "\n").split("\n")
@@ -239,6 +254,7 @@ def cmd_finish(a):
     q = render_final(psd, final)
     if a.exposure is None and a.vibrance is None:  # one measured correction toward TARGET
         dev, dvib = look_delta(still_stats(final))
+        dvib = 0 if a.no_color else dvib
         if abs(dev) > 0.1 or abs(dvib) > 6:
             ev, vib = round(clamp(ev + dev, -0.3, 1.2), 2), int(clamp(vib + dvib, 0, 80))
             edit_psd(psd, [("layer.setAdjustment", {"layer": ids["BRIGHTNESS"], "exposure": ev, "gamma": a.gamma}),
@@ -270,6 +286,9 @@ def selftest():
         assert free_stem(t, "thumb_1") == "thumb_1_v2"
         (t / "thumb_1_v2.psd").touch()
         assert free_stem(t, "thumb_1") == "thumb_1_v3"
+    v = Path(r"D:\Chann_1_x\africa_051126_1")
+    assert video_dir(v / "thumb.png") == v and video_dir(v / "thumb" / "thumb.png") == v
+    assert video_dir(Path(r"D:\Thumbs\thumb\thumb.png")) is None
     assert fit_size(["SHORT"], LAYOUT["A"]["title"]) == 300  # capped
     assert fit_size(["A" * 40, "B"], LAYOUT["A"]["title"]) < 100
     st = lambda p50, sat: {"luma_p1_p10_p50_p90_p99": [0, 0, p50, 0, 0], "sat_mean": sat}  # noqa: E731
@@ -299,6 +318,8 @@ def main():
     f.add_argument("--text", required=True, help=r"headline; \n = line break")
     f.add_argument("--logo", required=True)
     f.add_argument("--prefix", default="", help="output name prefix, e.g. chann1_ (logo ava1)")
+    f.add_argument("--region", choices=["amazon", "africa", "frozen", "himalaya", "ocean"],  # himalaya = old frozen
+                   help="look: africa = AFRICA defaults, the others = the default look")
     f.add_argument("--layout", choices=["A", "B"], default="A")
     f.add_argument("--out-dir", default=r"D:\Thumbs")
     f.add_argument("--crop", help="x,y,w,h in source px (16:9); default centred")
@@ -317,14 +338,15 @@ def main():
     f.add_argument("--warm", type=int, help="WARM photo filter (warming85) density 0-100; default 26 when the "
                                             "file name has _africa_, else 0")
     f.add_argument("--exposure", type=float, help="BRIGHTNESS EV; default auto toward look-ref")
-    f.add_argument("--gamma", type=float, default=1.1, help="BRIGHTNESS gamma (>1 lifts shadows)")
+    f.add_argument("--gamma", type=float, help="BRIGHTNESS gamma (>1 lifts shadows); default 1.1, africa 1.3")
     f.add_argument("--vibrance", type=int, help="VIBRANCE (saturation = half); default auto toward look-ref")
-    f.add_argument("--curve", type=int, default=6, help="S-curve strength (0 = flat)")
+    f.add_argument("--curve", type=int, help="S-curve strength (0 = flat); default 6, africa 3")
     f.add_argument("--yellow-sat", type=int, help="HSL yellows saturation; default -5, africa +12")
-    f.add_argument("--green-sat", type=int, default=0)
+    f.add_argument("--green-sat", type=int, help="HSL greens saturation; default 0, africa +10")
     f.add_argument("--subject-ev", type=float, default=0.15)
     f.add_argument("--bg-ev", type=float, help="BG_DARKEN EV; default 0, africa -0.15")
     f.add_argument("--bg-sat", type=int, default=0)
+    f.add_argument("--no-color", action="store_true", help="WB/WARM/HSL/VIBRANCE neutral; exposure stays auto")
     f.add_argument("--sharpen", type=int, default=60, help="unsharp amount on subject")
     f.add_argument("--vignette", type=float, default=0.06, help="VIGNETTE layer opacity 0..1")
     f.set_defaults(fn=cmd_finish)

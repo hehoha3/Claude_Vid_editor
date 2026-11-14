@@ -1,5 +1,6 @@
 ---
-description: Sync the narration audio to a [mm:ss] timestamp file on track A2 of timeline "Edit"
+model: sonnet
+description: Sync the narration audio to a [mm:ss] timestamp file on track A2 of the video timeline channN_vidK
 argument-hint: "<audio path>" "<timestamps path>" [--markers] [--on-overlap push|trim|abort]
 allowed-tools: Bash(.venv/Scripts/python.exe -m dvr_cowork:*), Read
 ---

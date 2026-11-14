@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile_id": "full_ai_mountain",
+  "profile_version": 2,
+  "enabled": true,
+  "label": "full-AI 8-15p",
+  "engine_id": "mountain_ai",
+  "default_region": "himalaya",
+  "regions": [
+    "himalaya",
+    "amazon",
+    "africa"
+  ],
+  "runtime": {
+    "default_minutes": 10,
+    "min_minutes": 8,
+    "max_minutes": 15
+  },
+  "body": {
+    "shot_min_s": 6,
+    "shot_max_s": 9
+  },
+  "setup_s": 30,
+  "intro": {
+    "mode": "cuts_from_body",
+    "duration_s": 30,
+    "reuse_reviewed_body_sources": true,
+    "cut_min_s": 2,
+    "cut_max_s": 4,
+    "preferred_cut_count": [
+      10,
+      12
+    ],
+    "default_speed": 1.0,
+    "selective_speed_range": [
+      1.1,
+      1.25
+    ],
+    "retimed_a1": "mute",
+    "allow_resolution_spoilers": false
+  },
+  "story": {
+    "strong_motion": true,
+    "daylight_only": true,
+    "setup_min_intensity": 3
+  },
+  "prompts": {
+    "beat_count": 4
+  },
+  "media": {
+    "source_dir": "shots",
+    "numbering": "canonical_prompt_id"
+  },
+  "workflow": {
+    "issue_body_prompts_after_verified_voice": true
+  },
+  "capabilities": {
+    "footage_scan": false,
+    "footage_tag": false,
+    "library_match": false,
+    "external_video_generation": false,
+    "auto_tts": false
+  },
+  "audio": {
+    "shot_track": 1,
+    "narrator_track": 2,
+    "bed_tracks": [
+      3,
+      4
+    ],
+    "music_track": 7
+  },
+  "state_backend": "video_files",
+  "refs": {
+    "author": [
+      ".claude/skills/create-doc-mov/references/full-ai.md"
+    ],
+    "edit": [
+      ".claude/skills/doc-edit/references/full-ai.md"
+    ]
+  }
+}

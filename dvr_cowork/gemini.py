@@ -28,6 +28,41 @@ def ask(task, files, json_out=False, thinking="low", max_tokens=4096, max_input=
         return _ask(task, files, json_out, thinking, max_tokens, max_input, LITE)
 
 
+FRAME_TASK = (
+    "Each IMAGE is one graded frame of a BBC-style wildlife documentary (real footage mixed with AI-generated clips, "
+    "16:9 UHD, one natural look per story). QA screen for the colorist/editor: flag only what must be fixed.\n"
+    "Check: colour cast or look off vs the other frames; crushed blacks / clipped highlights / too dark or flat; "
+    "logo, watermark, burnt-in text or subtitle; AI artefacts (melted or extra limbs, warped faces/eyes, smeared fur, "
+    "morphing background, impossible anatomy); soft / out of focus / heavy noise; black, frozen or empty frame; "
+    "letterbox or pillarbox bars; plastic/CG look next to real footage.\n"
+    "One line per IMAGE, in the given order, exactly:\n<image name> | OK\nor\n<image name> | FLAG | <issue>: <where, "
+    "max 12 words>\nAdd [?] when unsure. No other lines."
+)
+
+
+def screen_frames(paths, model="gemini-3.5-flash"):
+    """Gemini vision pre-screen of exported stills -> ({file name: "OK" | "FLAG ..."}, stats). Claude then views only
+    the flagged stills (+ one control). Raises SystemExit with the bridge error (no retry)."""
+    cmd = [sys.executable, str(BRIDGE), "vision", "--task", FRAME_TASK, "--root", str(ROOT), "--model", model]
+    for p in paths:
+        cmd += ["--image", str(p)]
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8",
+                       env=os.environ | {"PYTHONIOENCODING": "utf-8"})
+    out = json.loads(r.stdout) if r.stdout.strip() else {"ok": False, "error": r.stderr.strip()[-300:] or "no output"}
+    if not out.get("ok"):
+        raise SystemExit(f"Gemini failed: {out.get('error')} (no retry)")
+    verdicts = {}
+    for line in out["preview"].splitlines():
+        name, _, rest = line.partition("|")
+        name, rest = name.strip(), rest.strip()
+        if name and rest:
+            verdicts[name] = "OK" if rest.upper() == "OK" else rest.replace("FLAG |", "FLAG").strip()
+    stats = out.get("stats", {}) | {"model": out.get("model", model) + (" (cache)" if out.get("cached") else "")}
+    if out.get("warning"):
+        stats["warning"] = out["warning"]
+    return verdicts, stats
+
+
 def _ask(task, files, json_out, thinking, max_tokens, max_input, model):
     # bridge default timeout 90 s: a 32k-token flash draft (thinking medium) runs longer -> scale with the answer cap
     cmd = [sys.executable, str(BRIDGE), "ask", "--thinking", thinking, "--max-tokens", str(max_tokens),

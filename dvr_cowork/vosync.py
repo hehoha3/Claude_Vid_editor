@@ -19,7 +19,8 @@ def clips_job(folder) -> str:
     """Job name of a per-sentence folder: <video>_<folder> (D:/x/amazon_2/audios/mp3 -> amazon_2_mp3); plan.py
     reads .work/<this>/plan.json."""
     p = Path(folder)
-    return f"{p.parents[1].name}_{p.name}"
+    from .videokey import video_key  # same video name in two channels -> <video>__Chann_N_mp3
+    return f"{video_key(p.parents[1])}_{p.name}"
 
 
 def job_dir(cfg, audio: str) -> Path:

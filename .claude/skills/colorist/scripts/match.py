@@ -1,7 +1,7 @@
-"""Scene match for V1 of timeline "Edit": every shot looks like the same place and time as its scene's hero shot.
+"""Scene match for V1 of the video timeline channN_vidK: every shot looks like the same place and time as its scene's hero shot.
 
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py plan        # measure, scenes, heroes, LUTs; Resolve untouched
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py apply       # backup Edit, group + CDL + match LUT per shot
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py apply       # backup the timeline, group + CDL + match LUT per shot
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py verify      # ExportLUT of every shot -> real numbers, markers
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py note 02:41 group=Day warm=-0.01 note="leaves too lime"
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/match.py --selftest
@@ -288,13 +288,12 @@ def light_group(tag, st):
     return g, ""
 
 
-def story_cuts(project, rows):
+def story_cuts(project, timeline, rows):
     """Start frames of the shots holding a '# STORY n m:ss' time of the video's spec (doc-edit): a scene never spans
     two stories (user 2026-10-22: same space inside one story). No spec found -> no cuts."""
     import re
     import plan as P
-    spec = next((d / "spec.txt" for d in (ROOT / ".work" / "doc_edit").iterdir()
-                 if (d / "spec.txt").exists() and P.same_project(project, d.name)), None)
+    spec = P.spec_of(project, timeline)
     if not spec:
         return set()
     ts = [int(m[1]) * 60 + float(m[2]) for m in re.finditer(r"^#\s*STORY\s+\d+\s+(\d+):([\d.]+)", spec.read_text("utf-8"), re.M)]
@@ -366,6 +365,19 @@ def season(s, ov):
     return n
 
 
+def pkey(project, tl):
+    """Plan / LUT folder of one video: <project>_<timeline channN_vidK> (a day project holds several videos)."""
+    return f"{project.GetName()}_{tl.GetName()}"
+
+
+def is_africa(project, timeline):
+    """The video's spec says '# REGION africa' (project names are vid_DDMMYY: no region in them)."""
+    import re
+    import plan as P
+    sp = P.spec_of(project, timeline)
+    return bool(sp and re.search(r"(?im)^#\s*REGION\s+africa", sp.read_text("utf-8")))
+
+
 def lut_dir(project):
     return LUTROOT / "Amazona" / "match" / project
 
@@ -408,11 +420,11 @@ def overrides(project):
 def plan(sheet=True):
     import plan as P
     pm, project, tl, rows = G.timeline()
-    africa = "africa" in project.GetName().lower()
+    africa = is_africa(project.GetName(), tl.GetName())
     if africa:
         africa_targets()
     light = {c["abs"].lower(): c["tags"].get("light") for r in P.REGIONS for c in P.load_clips(r)}  # every region: the timeline may hold either
-    _, ov = overrides(project.GetName())
+    _, ov = overrides(pkey(project, tl))
     FR.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(6) as ex:
         imgs = list(ex.map(grab, rows))
@@ -440,7 +452,7 @@ def plan(sheet=True):
     with ThreadPoolExecutor(6) as ex:
         list(ex.map(balance, rows))
     # 2) scenes (never across a story start) + ground season + heroes
-    sc = scenes(rows, story_cuts(project.GetName(), rows))
+    sc = scenes(rows, story_cuts(project.GetName(), tl.GetName(), rows))
     n_dry = sum(season(s, ov) for s in sc)
     for r in rows:
         if r.get("dry"):  # the scene match starts from the dried grass
@@ -489,8 +501,8 @@ def plan(sheet=True):
     with ThreadPoolExecutor(6) as ex:
         list(ex.map(lambda r: match(r, blend(hm[r["scene"]], gm[r["group"]], dict(L=0.25, C=0.25)), S_SHOT), rest))
     # 4) write LUTs + plan
-    d = ROOT / ".work" / "grade" / project.GetName()
-    ld = lut_dir(project.GetName())
+    d = ROOT / ".work" / "grade" / pkey(project, tl)
+    ld = lut_dir(pkey(project, tl))
     ld.mkdir(parents=True, exist_ok=True)
     out = []
     for r in rows:
@@ -502,7 +514,7 @@ def plan(sheet=True):
         out.append(dict(start=r["start"], path=r["path"], key=r["key"], group=r["group"], lut=G.GROUPS[r["group"]],
                         scene=r["scene"], hero=r["hero"], slope=[round(float(x), 4) for x in r["cdl"]["slope"]],
                         offset=[round(float(x), 4) for x in r["cdl"]["offset"]], power=round(float(r["cdl"]["power"]), 4),
-                        sat=round(float(r["cdl"]["sat"]), 4), match_lut=f"Amazona/match/{project.GetName()}/{name}",
+                        sat=round(float(r["cdl"]["sat"]), 4), match_lut=f"Amazona/match/{pkey(project, tl)}/{name}",
                         flags=r["flags1"], sim=dict(p50=round(float(f1["p50"]), 4), p99=round(float(f1["p99"]), 4),
                                                     sat=round(float(f1["sat"]), 4), clip=round(float(f1["clip"]), 3))))
     d.mkdir(parents=True, exist_ok=True)
@@ -573,12 +585,12 @@ def sheets(rows, sc, d):
 
 def apply():
     pm, project, tl, rows = G.timeline()
-    q = json.loads((ROOT / ".work" / "grade" / project.GetName() / "match_plan.json").read_text("utf-8"))["shots"]
+    q = json.loads((ROOT / ".work" / "grade" / pkey(project, tl) / "match_plan.json").read_text("utf-8"))["shots"]
     by = {(s["start"], s["path"].lower()): s for s in q}
     miss = [r for r in rows if (r["start"], r["path"].lower()) not in by]
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
     assert project.RefreshLUTList()
-    bak = f"Edit_bak_match_{dt.datetime.now():%Y%m%d_%H%M%S}"
+    bak = f"{tl.GetName()}_bak_match_{dt.datetime.now():%Y%m%d_%H%M%S}"
     from dvr_cowork.resolve_ops import backup_timeline
     assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)
@@ -610,9 +622,9 @@ def verify():
     from dvr_cowork.resolve_conn import connect
     res = connect(load_config())
     pm, project, tl, rows = G.timeline()
-    if "africa" in project.GetName().lower():
+    if is_africa(project.GetName(), tl.GetName()):
         africa_targets()  # same house limits as plan
-    d = ROOT / ".work" / "grade" / project.GetName()
+    d = ROOT / ".work" / "grade" / pkey(project, tl)
     q = {(s["start"], s["path"].lower()): s for s in json.loads((d / "match_plan.json").read_text("utf-8"))["shots"]}
     page, tmp = res.GetCurrentPage(), d / "_export.cube"
     res.OpenPage("color")
@@ -664,7 +676,7 @@ def note(tc, kv):
     m, s = tc.split(":")
     f = (int(m) * 60 + float(s)) * 24
     r = max((x for x in rows if x["start"] <= f), key=lambda x: x["start"])
-    p, ov = overrides(project.GetName())
+    p, ov = overrides(pkey(project, tl))
     o = ov.setdefault(key(r), {})
     for a in kv:
         k, v = a.split("=", 1)

@@ -24,6 +24,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from dvr_cowork.vtypes import parse as parse_name, stories  # noqa: E402  story count by runtime (user 2026-11-12)
+
 TARGET = 3600.0
 SHOT_MAX, LONG_MAX, SHOT_MIN = 8.0, 12.0, 0.8
 REST_LIST, REST_HOOK = 3.0, 6.0
@@ -176,7 +179,7 @@ def build(src_path, out, check=False):
         l["n"] = n
         l["d"] = len(l["en"].split()) * 60 / wpm + 0.4
         if not l["vi"] or l["vi"] == l["en"] or l["vi"].isascii():
-            err.append(f"line {n}: Vietnamese missing or untranslated: {l['vi'][:60]!r} (translate_vi.py fills it)")
+            err.append(f"line {n}: Vietnamese missing or untranslated: {l['vi'][:60]!r} (Claude writes it, SKILL.md C 4b)")
     status = f"PLANNED — onsets estimated from word counts at {wpm:.0f} wpm (+0.4 s per block); not yet conformed to audio"
     meas = None
     if "--mp3" in sys.argv:
@@ -206,6 +209,14 @@ def build(src_path, out, check=False):
             warn.append(f"{sc['id']}: no footage status (need:)")
     if abs(prev - TARGET) > 0.01:
         err.append(f"scenes end at {stamp(prev)}, target {stamp(TARGET)}")
+    # story count from the runtime (user 2026-11-12, dvr_cowork.vtypes.stories): scene ids k.x, 0.x = intro
+    ks = {int(sc["id"].split(".")[0]) for sc in scenes if sc["id"].split(".")[0].isdigit()} - {0}
+    named = parse_name(Path(out).parent) if out else None  # films before the f_ / fa_ prefixes keep their count
+    if named and named["type"] and 8 <= TARGET / 60 <= 180 and not meta.get("stories_reason"):
+        opts = [o["stories"] for o in stories(TARGET / 60)["options"]]
+        if len(ks) not in opts:
+            warn.append(f"{len(ks)} stories in {TARGET / 60:g} min; options {opts} (profile stories), "
+                        "or a `stories_reason:` header line")
     for a, b in zip(lines, lines[1:]):
         if a["t"] + a["d"] > b["t"] + 0.05:
             err.append(f"voice block {a['n']} overlaps block {b['n']} by {a['t'] + a['d'] - b['t']:.1f} s")
@@ -258,7 +269,7 @@ def build(src_path, out, check=False):
                 return stamp(shot_at[v]["t"])
             if k == "line":
                 return stamp(lines[int(v) - 1]["t"])
-            return {"budget": f"{words:,} words in {len(lines)} Genmax blocks ≈ {voiced / 60:.1f} min of voice "
+            return {"budget": f"{words:,} words in {len(lines)} voice blocks ≈ {voiced / 60:.1f} min of voice "
                               f"({voiced / TARGET:.0%} of runtime); the other {(TARGET - voiced) / 60:.1f} min are the picture-and-sound "
                               f"passages listed under every scene",
                     "status": status, "lastend": stamp(last_end)}[k]
@@ -274,7 +285,7 @@ def build(src_path, out, check=False):
         "\n\n".join("\n".join(l["en"] for l in sc["lines"]) for sc in scenes if sc["lines"]) + "\n", encoding="utf-8")
 
     ts = [f"# {meta['title']} — Timestamp EN / VI", "",
-          f"{status}. One onset per Genmax block (1.mp3 … {len(lines)}.mp3). "
+          f"{status}. One onset per voice block (1.mp3 … {len(lines)}.mp3). "
           f"{sum(1 for l in lines if l['pin'])} onsets are locked to picture events; the others float inside their scene "
           f"and are re-timed by `build_four_files.py --mp3 <mp3 folder>` once the audio exists.", "",
           "## English", ""]

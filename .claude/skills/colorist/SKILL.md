@@ -1,6 +1,6 @@
 ---
 name: colorist
-description: Colorist for Resolve - scopes, nodes, primaries/secondaries, shot matching, LUTs and looks, grading AI wildlife clips (Veo/Kling) into one consistent BBC-style film (grade.py). Use for any color, grade, LUT, exposure, white balance, fur/sky/greens, night, contrast, banding, noise question or "shot looks wrong/cheap/fake".
+description: Resolve color - grade, LUT / look, shot matching, light pass (light.py, grade.py), AI clips (Veo/Kling) into one BBC look. Use for any color, exposure, white balance, contrast, noise question or a shot that looks wrong / fake.
 ---
 
 # Colorist
@@ -28,10 +28,10 @@ Read only the reference that fits the question:
 
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py plan    # Resolve untouched
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/dry_preview.py <project>   # golden-grass before/after
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply   # backup Edit_bak_light_<stamp>, CDL node 1
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/light.py apply   # backup <timeline>_bak_light_<stamp>, CDL node 1
 
-Day project: all three with `DVR_CHANNEL=Chann_N` in front; plan + golden-grass LUTs then live under
-`<project>_<Chann_N>` (light.pkey, user 2026-10-30), so the two channels never share them. `plan` drops frame-cache
+Day project: all three with `DVR_TIMELINE=channN_vidK` in front (or that timeline open); plan + golden-grass LUTs
+live under `<project>_<channN_vidK>` (light.pkey / match.pkey, user 2026-11-06), so two videos never share them. `plan` drops frame-cache
 files (`.work/grade/frames320`) unused for 14 days (CACHE_DAYS).
 
 **Per shot: one small CDL on node 1** (~1 min for 1000 shots, frame cache; no group look LUT):

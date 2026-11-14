@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "profile_id": "ocean_long",
+  "profile_version": 1,
+  "enabled": false,
+  "label": "ocean (reserved, not built)",
+  "engine_id": "ocean_long",
+  "default_region": null,
+  "regions": [],
+  "runtime": {"default_minutes": 120, "min_minutes": 60, "max_minutes": 180},
+  "missing_before_enable": ["chapter schema", "footage roots", "audio roots", "compiler", "validators",
+                            "research cache (documents + factual claims)"],
+  "capabilities": {"footage_scan": false, "footage_tag": false, "library_match": false,
+                   "external_video_generation": false},
+  "refs": {}
+}

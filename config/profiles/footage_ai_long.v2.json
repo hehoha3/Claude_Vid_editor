@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "profile_id": "footage_ai_long",
+  "profile_version": 2,
+  "enabled": true,
+  "label": "footage+AI 1-3h",
+  "engine_id": "footage_long",
+  "default_region": null,
+  "regions": [
+    "amazon",
+    "africa",
+    "himalaya"
+  ],
+  "runtime": {
+    "default_minutes": 60,
+    "min_minutes": 30,
+    "max_minutes": 180
+  },
+  "note": "Route only (user 2026-11-05): 1-3h, A1 empty, region = footage roots (scan_source). Every edit number stays in doc-edit.",
+  "capabilities": {
+    "footage_scan": true,
+    "footage_tag": true,
+    "library_match": true,
+    "external_video_generation": false
+  },
+  "state_backend": "dvr_cowork.jobs",
+  "refs": {
+    "author": [
+      ".claude/skills/create-doc-mov/SKILL.md"
+    ],
+    "edit": [
+      ".claude/skills/doc-edit/SKILL.md"
+    ]
+  }
+}

@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / ".claude/skills/doc-edit/scripts"))
 import plan  # noqa: E402
 
 video = sys.argv[1]
-work = ROOT / ".work" / "doc_edit" / video
+work = ROOT / ".work" / "doc_edit" / plan.video_key(video)
 old = json.loads((work / "plan.json").read_text("utf-8"))
 if late := [s["start"] for s in old["slots"] if s.get("why") == "late substitute"]:  # old run used --late-sub / --sub-all
     plan.LATE_SUB, plan.LATE_SUB_T = True, min(late)

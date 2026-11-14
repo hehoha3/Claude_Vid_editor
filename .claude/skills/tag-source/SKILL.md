@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: tag-source
 description: Vision-tag new clips in the AI and real footage indexes once each with Sonnet subagents (species, action per frame, sex, age, predation outcome, shot size, light, mood, best in/out, issues) so doc-edit finds footage without re-watching; --retag adds the story fields to clips tagged before. Use for /tag-source, after scan-source reports NEW clips, or to tag/describe the footage library.
 ---

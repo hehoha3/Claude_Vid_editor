@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "profile_id": "footage_ai_long",
+  "profile_version": 1,
+  "enabled": true,
+  "label": "1h-footage+AI",
+  "engine_id": "footage_long",
+  "default_region": null,
+  "regions": [
+    "africa",
+    "amazon",
+    "congo",
+    "himalaya"
+  ],
+  "runtime": {
+    "default_minutes": 60,
+    "min_minutes": 30,
+    "max_minutes": null
+  },
+  "note": "Describes the route only. Every 1h number (intro, tracks, bins, plan) stays in dvr_cowork, doc-edit SKILL.md and the scripts.",
+  "capabilities": {
+    "footage_scan": true,
+    "footage_tag": true,
+    "library_match": true,
+    "external_video_generation": false
+  },
+  "state_backend": "dvr_cowork.jobs"
+}

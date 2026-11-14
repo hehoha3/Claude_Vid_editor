@@ -1,6 +1,9 @@
-"""audio-expert execute: placement_plan.json -> timeline "Edit" (A5-A9 only), with backup, readback and journal.
+"""audio-expert execute: placement_plan.json -> the video timeline channN_vidK (A5-A9 only), with backup, readback and journal.
 
-    .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/execute.py <video> <run_id> [--replace] [--rollback]
+    .venv/Scripts/python.exe .claude/skills/audio-expert/scripts/execute.py <video> <run_id> [--replace] [--rollback] [--additive]
+
+- --additive (8p videos): nothing is cleared; existing A5-A9 items (the engine's hook music on A7) stay and a
+  placement overlapping one refuses the run before any write.
 
 - Refuses on stale timeline (A2 / V1 differ from timeline_snapshot_before.json) and on timeline "Master".
 - Backup = DuplicateTimeline "<name>_bak_audio_<stamp>" before any write. A1-A4 and V1 are never touched.
@@ -19,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.resolve_conn import connect  # noqa: E402
 from dvr_cowork.resolve_ops import (AUDIO_TOP, _norm, audio_bin, clip_fps, ensure_audio_track,  # noqa: E402
-                                    ensure_bin, find_clip, find_timeline, get_project, timeline_fps)
+                                    ensure_bin, find_clip, get_project, timeline_fps, use_video, video_timeline)
 import plan as pl  # noqa: E402
 
 _s = importlib.util.spec_from_file_location("doc_place", ROOT / ".claude/skills/doc-edit/scripts/place.py")
@@ -27,7 +30,7 @@ dp = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(dp)  # TARGET, FADE, loudness (main() is guarded)
 
 
-def main(video, run, replace, rollback):
+def main(video, run, replace, rollback, additive=False):
     rd = ROOT / ".work" / "audio_expert" / video / "runs" / run
     plan = json.loads((rd / "placement_plan.json").read_text("utf-8"))["placements"]
     before = json.loads((rd / "timeline_snapshot_before.json").read_text("utf-8"))
@@ -35,8 +38,9 @@ def main(video, run, replace, rollback):
     cfg = load_config()
     resolve = connect(cfg)
     pm, project = get_project(resolve)
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"])
-    assert tl and tl.GetName().lower() != "master", 'timeline "Master" is never touched'
+    use_video(video)
+    tl = video_timeline(project)
+    assert tl, "the video timeline channN_vidK not found (Master is never touched)"
     orig = project.GetCurrentTimeline()
     project.SetCurrentTimeline(tl)
     fps = timeline_fps(tl, project)
@@ -63,8 +67,13 @@ def main(video, run, replace, rollback):
         raise SystemExit("stale: A2 changed since the plan was made; re-run plan.py")
     if cur["video1"] != before["video1"]:
         raise SystemExit("stale: V1 changed since the plan was made; re-run plan.py")
+    if additive:  # 8p: A7 holds the engine's hook music; keep every existing item, refuse only real overlaps
+        clash = pl.clashes(plan, snap)
+        if clash:
+            raise SystemExit(f"--additive: placements overlap existing items {clash[:5]}; fix cues.txt, re-run plan.py")
+        replace = False
     busy = {f"A{n}": len(v) for n, v in snap["audio"].items() if n in (6, 7, 8, 9) and v}
-    if busy and not replace and not log_p.exists():
+    if busy and not replace and not additive and not log_p.exists():
         raise SystemExit(f"A6-A9 not empty {busy}; re-run with --replace (cleared after the backup)")
 
     mp = project.GetMediaPool()
@@ -96,10 +105,14 @@ def main(video, run, replace, rollback):
 
     have = {(n, int(i.GetStart()) - t0, int(i.GetEnd()) - t0) for n in range(5, 10)
             for i in tl.GetItemListInTrack("audio", n) or []}
-    cache_p = ROOT / ".work" / "doc_edit" / video / "loudness.json"
+    from dvr_cowork.videokey import video_key
+    cache_p = ROOT / ".work" / "doc_edit" / video_key(video) / "loudness.json"
     cache = json.loads(cache_p.read_text("utf-8")) if cache_p.exists() else {}
     ok = skipped = 0
     failed, vol_fail = [], 0
+    pj = cache_p.parent / "plan.json"  # A7 after the intro = background level (place.level, user 2026-11-14)
+    pj = json.loads(pj.read_text("utf-8")) if pj.exists() else {}
+    body = dp.intro_end(pj) if "intro" in pj else None
     for p in plan:
         tr, a, b2 = p["track_index"], p["timeline_start_frame_relative"], p["timeline_end_frame_relative_exclusive"]
         if (tr, a, b2) in have:
@@ -130,7 +143,7 @@ def main(video, run, replace, rollback):
         if fd:
             ti.SetFades({"FadeIn": fd, "FadeOut": fd})
         lu = dp.loudness(p["source_path"], cache)
-        if lu is not None and not ti.SetProperty("AudioVolume", round(dp.TARGET[tr] - lu, 1)):
+        if lu is not None and not ti.SetProperty("AudioVolume", round(dp.level(tr, a / fps, body) - lu, 1)):
             vol_fail += 1
         with log_p.open("a", encoding="utf-8") as f:
             f.write(json.dumps({"placement_id": p["placement_id"], "track": tr, "start": a, "end": b2,
@@ -158,4 +171,4 @@ def main(video, run, replace, rollback):
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
-    main(a[0], a[1], "--replace" in sys.argv, "--rollback" in sys.argv)
+    main(a[0], a[1], "--replace" in sys.argv, "--rollback" in sys.argv, "--additive" in sys.argv)

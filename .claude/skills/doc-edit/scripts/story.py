@@ -52,6 +52,7 @@ WR = (1.45, 0.8, 1.15, 0.75, 1.35, 0.85, 1.05, 0.7)  # build / chase: flashes of
 SIDE_PAUSE, SIDE_MIN, SIDE_MAX, SIDE_SHARE = 3.0, 2.5, 5.0, 0.22  # pause (s) that takes a side shot; its length;
 # share of the beat (one shot always allowed) and of the film so far
 NAT_GAP = 8.0  # s between two automatic natural sounds
+SPACING = 3  # user 2026-11-02: a shot line may come back, but with at least 3 other shots between two uses
 # act -> A6 keywords (Z:\Unseen\SFX shared_* files: footsteps_walk_grass, grass_rustle, drinking_lapping...)
 NAT = (("drink", "drinking"), ("eat", "eating"), ("feed", "eating"), ("swim", "water"), ("fly", "wings"),
        ("chase", "footsteps"), ("run", "footsteps"), ("attack", "footsteps"), ("stalk", "grass,rustle"),
@@ -65,6 +66,19 @@ def clock(t):
 
 
 # ------------------------------------------------------------------ brief
+# Visual-plan sections a beat sheet never needs (2026-11-05: brief.md was ~250 KB, 3 Reads per film)
+BRIEF_DROP = re.compile(r"track map|animal bible|production qa|clip sourcing|conform to the real")
+CUT_ROW = re.compile(r"\|\s*[^|]+\|\s*([\d:.]+)\s*\|")  # '| 0.1-01 | 00:00.0 | 00:05.0 | ...' -> its In
+
+
+def story2_start(screenplay):
+    """Start of story 2 from the screenplay's runtime map: a table row ('| Story 2 — ... | 14:00–26:30 |') or the
+    one-line map (2026-11-06: 'Intro 00:00–01:30 · Story 1 ... · Story 2 the clan arrives 14:00–27:30 · ...'), else None."""
+    m = (re.search(r"^\|\s*Story\s*2\b[^|]*\|\s*([\d:.]+)\s*[–-]", screenplay, re.M | re.I)
+         or re.search(r"\bStory\s*2\b[^|·\n]*?(\d{1,2}:\d{2}(?:\.\d+)?)\s*[–-]\s*\d", screenplay, re.I))
+    return plan.parse_clock(m[1]) if m else None
+
+
 def brief(folder):
     folder = Path(folder)
     cues, vo, vmsg = plan.narration(folder, wait=False)
@@ -110,17 +124,23 @@ def brief(folder):
     if left:
         out += ["", f"## Sentences{' outside the screenplay beats' if beats else ''} (n start slot voice | text)"] + left
     if len(vp) == 1:
-        out += ["", "=" * 20 + f" {vp[0].name} (beat table left out: it repeats the screenplay beats)"]
-        skip = False
+        s2 = story2_start(sp[0].read_text("utf-8")) if len(sp) == 1 else None
+        out += ["", "=" * 20 + f" {vp[0].name} (left out: beat table, track map, 2nd animal bible, production QA, "
+                f"sourcing spec, conform steps" + (f"; cut-map rows from story 2 at {plan.tc(s2)} on" if s2 else "") + ")"]
+        skip, cutmap = False, False
         for raw in vp[0].read_text("utf-8").splitlines():
             s = raw.rstrip()
             if s.startswith("## "):
-                skip = "beat" in s.lower() and ("ledger" in s.lower() or "index" in s.lower() or "level" in s.lower())
+                low = s.lower()
+                skip = ("beat" in low and ("ledger" in low or "index" in low or "level" in low)) or bool(BRIEF_DROP.search(low))
+                cutmap = "cut map" in low and "every shot" in low
+            if cutmap and s2 is not None and (m := CUT_ROW.match(s)) and plan.parse_clock(m[1]) >= s2:
+                continue  # 2026-11-05: the body's per-shot rows repeat the screenplay; prompts + hand work = intro + story 1
             if not skip and (s or (out and out[-1])):
                 out.append(s)
     src = sum(len(p.read_text("utf-8")) for p in sp + vp + [x for x in folder.glob("*.md") if "timestamp" in x.name.lower()])
     text = "\n".join(out) + "\n"
-    dst = plan.ROOT / ".work" / "doc_edit" / folder.parent.name / "brief.md"
+    dst = plan.ROOT / ".work" / "doc_edit" / plan.video_key(folder.parent) / "brief.md"
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_text(text, "utf-8")
     print(f"brief: {len(cues)} sentences, {beats} screenplay beats, {len(left)} sentences outside them; {vmsg}; "
@@ -137,13 +157,33 @@ def parse_shot(s, n, cast):
     else:
         need, src, flt, aud = p[0], "any", (p[1] if len(p) > 1 else ""), (p[2] if len(p) > 2 else "")
     assert need and len(p) <= 4, f"beats line {n}: need 'shot | [src] | filter [| audio]'"
-    m = re.match(r"\[(\w+)\](?!\s*\[)", need)
-    if m and m[1] in cast:  # one tag: its cast tokens, unless the line has that key itself
-        have = {t.split("=")[0] for t in flt.split()}
-        flt = " ".join(flt.split() + [t for t in cast[m[1]] if t.split("=")[0] not in have])
+    flt = cast_tokens(need, flt, cast)
     plan.parse_filter(flt, n)
     plan.parse_audio(aud, n)
     return need, src, flt, aud
+
+
+def cast_tokens(need, flt, cast):
+    """A shot that starts with one [TAG] of a '# CAST' line gets its tokens, unless the line has that key itself."""
+    m = re.match(r"\[(\w+)\](?!\s*\[)", need)
+    if not (m and m[1] in cast):
+        return flt
+    toks = flt.split()
+    have = {t.split("=")[0] for t in toks}
+    cno = [t[3:] for t in cast[m[1]] if t.startswith("no=")]
+    if cno and "no" in have:  # 2026-11-07: a line's no= adds to its CAST no=, never replaces it
+        toks = [t + "," + cno[0] if t.startswith("no=") else t for t in toks]
+    return " ".join(toks + [t for t in cast[m[1]] if t.split("=")[0] not in have])
+
+
+def cast_raw(line, cast):
+    """A raw spec shot line 'dur | need | src | filter [| audio]' gets the '# CAST' tokens too (2026-11-05: raw
+    intro lines had none, so the hook took male lions for lionesses and a cub for its mother)."""
+    p = line.split("|")
+    if len(p) < 4 or p[0].strip().startswith("#") or not re.fullmatch(r"[\d.*x]+(\s+same)?", p[0].strip()):
+        return line
+    p[3] = " " + cast_tokens(p[1].strip(), p[3].strip(), cast) + (" " if len(p) > 4 else "")
+    return "|".join(p)
 
 
 def read_beats(text):
@@ -216,7 +256,7 @@ def nat(flt):
 
 def expand(text, starts, vo, end=None):
     """beat sheet text, sentence starts, voice spans -> (spec text, summary dict)."""
-    items, _ = read_beats(text)
+    items, cast = read_beats(text)
     n = len(starts)
     beats = [x for x in items if isinstance(x, dict)]
     covered = {i for x in beats for i in range(x["a"], x["z"] + 1)}
@@ -228,6 +268,7 @@ def expand(text, starts, vo, end=None):
     out, sm = [], {"shots": 0, "side": 0, "side_s": 0.0, "foot_s": 0.0, "a7": 0, "off": 0, "hit": 0, "whoosh": 0,
                    "riser": 0, "a6": 0, "turns": 0, "emo": {}, "repeat": []}
     music, last_nat, last_nat_kw, prev = None, -1e9, None, None  # prev = last written shot (dict, mutable)
+    hist = []  # needs of the shots written so far (SPACING)
 
     def at(s):  # '# STORY 1 @16' -> '# STORY 1 01:31.75' (start of sentence 16)
         if a := AT.match(s.strip()):
@@ -241,10 +282,10 @@ def expand(text, starts, vo, end=None):
             continue
         b = it
         if b["emo"] == "raw":
-            out.extend(at(x) for x in b["raw"])
+            out.extend(at(cast_raw(x, cast)) for x in b["raw"])
             if a7 := re.findall(r"A7=(\S+)", "\n".join(b["raw"])):
                 music = a7[-1]
-            prev = None
+            prev, hist = None, []
             continue
         l0, l1, mood = EMO[b["emo"]]
         t0, t1 = bounds[b["a"] - 1], bounds[b["z"]]
@@ -282,10 +323,11 @@ def expand(text, starts, vo, end=None):
             for j, x in enumerate(ls):
                 if j < len(fixed):
                     tpl = fixed[j]
-                elif b["pool"]:
-                    tpl = b["pool"][pi % len(b["pool"])]; pi += 1
-                else:
-                    tpl = fixed[j % len(fixed)]
+                else:  # next pool line (or this sentence's own lines) not used in the last SPACING shots, if any
+                    cand = b["pool"] or fixed
+                    rec = set((hist + [s[1][0] for s in shots])[-SPACING:])
+                    k = next((k for k in range(len(cand)) if cand[(pi + k) % len(cand)][0] not in rec), 0)
+                    tpl = cand[(pi + k) % len(cand)]; pi += k + 1
                 shots.append((x, tpl, False))
             if side:
                 shots.append((side_len, b["side"][si % len(b["side"])], True)); si += 1
@@ -309,13 +351,13 @@ def expand(text, starts, vo, end=None):
                     last_nat, last_nat_kw = t, a["6"]
                 if "7" in a:
                     music = a["7"]
-                same = prev is not None and prev["need"] == need
                 shot = {"dur": "*" if j == star else f"{x:.1f}", "need": need, "src": src, "flt": flt,
-                        "aud": a, "side": is_side, "emo": b["emo"], "rep": prev["rep"] + 1 if same else 1}
-                if shot["rep"] == 3:
-                    sm["repeat"].append(f"{b['a']}-{b['z']}")
+                        "aud": a, "side": is_side, "emo": b["emo"]}
+                if need in hist[-SPACING:] and f"{b['a']}-{b['z']}" not in sm["repeat"]:
+                    sm["repeat"].append(f"{b['a']}-{b['z']}")  # the beat has too few lines to keep the spacing
                 out.append(shot)
                 prev = shot
+                hist.append(need)
                 t += x
                 sm["shots"] += 1
                 sm["foot_s"] += x
@@ -342,7 +384,7 @@ def beats_text(work):
 def main_expand(folder):
     folder = Path(folder)
     cues, vo, vmsg = plan.narration(folder, wait=False)
-    work = plan.ROOT / ".work" / "doc_edit" / folder.parent.name
+    work = plan.ROOT / ".work" / "doc_edit" / plan.video_key(folder.parent)
     out = next((Path(a[6:]) for a in sys.argv if a.startswith("--out=")), work / "spec.txt")
     spec, sm = expand(beats_text(work), [c.t for c in cues], vo)
     out.write_text("# generated by story.py expand from the beat sheet: edit the beats, expand again\n" + spec, "utf-8")
@@ -352,10 +394,13 @@ def main_expand(folder):
           f"{sm['off']}, hits {sm['hit']}, whoosh {sm['whoosh']}, riser {sm['riser']}, natural A6 {sm['a6']}, turns "
           f"{sm['turns']}; {vmsg}\n-> {out}")
     if sm["repeat"]:
-        print("same shot line 3+ times in a row (give the beat more lines) in beats: " + ", ".join(sm["repeat"]))
+        print(f"shot line back within {SPACING} shots (give the beat >= {SPACING + 1} lines) in beats: " + ", ".join(sm["repeat"]))
 
 
 def selftest():
+    assert story2_start("Intro 00:00–01:30 · Story 1 a 01:30–14:00 · Story 2 b 14:00–27:30") == 840.0
+    assert story2_start("| Story 2 — b | 14:00–26:30 |") == 840.0 and story2_start("Story 2 later") is None
+    assert cast_tokens("[L] x", "act=run no=zebra", {"L": ["sp=lion", "no=cougar"]}) == "act=run no=zebra,cougar sp=lion"
     text = """# REGION africa
 # CAST [L] sp=lion sex=female
 # INTRO @3
@@ -364,7 +409,7 @@ def selftest():
 ## 1
 * | hook a | real | sp=none size=wide | A7=tense
 ## 2
-* | hook b | any | sp=lion act=run |
+* | [L] hook b | any | act=run |
 >> 3-4 calm A3=wind
 [L] Lioness rests in the shade | sp=lion act=rest size=close_up
 [L] Lioness watches the herd | size=wide sex=male
@@ -384,6 +429,8 @@ def selftest():
     assert intro == 16.0 and "# STORY 1 00:16.00 no=river" in spec
     assert abs(sum(s["dur"] for s in slots) - 64.0) < 1e-6
     assert "sp=lion act=rest size=close_up sex=female" in spec  # cast tokens added
+    assert "* | [L] hook b | any | act=run sp=lion sex=female |" in spec  # raw lines too (2026-11-05)
+    assert cast_raw("# TURN", {"L": ["sp=lion"]}) == "# TURN" and cast_raw("## 2", {}) == "## 2"
     assert "sex=male" in spec and "sex=male sp=lion sex=female" not in spec  # the line's own sex wins
     s5 = [s for s in slots if s["line"] == 5]
     assert s5[-1]["audio"] and {"track": 7, "kw": ["off"]} in s5[-1]["audio"]  # music off before the strike
@@ -406,6 +453,13 @@ def selftest():
             raise SystemExit(f"selftest: no error for {why}")
         except AssertionError as e:
             assert why.split()[0] in str(e) or why in str(e), (why, str(e))
+    # SPACING (user 2026-11-02): 4 lines -> no line back within 3 shots; 2 lines -> expand names the beat
+    pool = lambda n: "".join(f"[L] Lioness shot {c} | sp=lion act=rest\n" for c in "abcd"[:n])  # noqa: E731
+    spec4, sm4 = expand("# REGION africa\n>> 1-8 calm\n" + pool(4), starts, vo, end=64.0)
+    e4, i4, b4 = plan.parse_spec(spec4)
+    n4 = [s["need"] for s in plan.build(starts, e4 or 64.0, b4, i4)]
+    assert len(n4) > 8 and all(n4[k] not in n4[max(0, k - SPACING):k] for k in range(len(n4))) and not sm4["repeat"], n4
+    assert expand("# REGION africa\n>> 1-8 calm\n" + pool(2), starts, vo, end=64.0)[1]["repeat"] == ["1-8"]
     hl = lengths(9.0, 1.5, 0)
     assert len(hl) >= 5 and abs(sum(hl) - 9.0) < 1e-9 and min(hl) >= 1.2 and max(hl) - min(hl) > 0.4
     print("selftest ok")

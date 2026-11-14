@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: process-ai-video
 description: Make AI clips in D:\AI_video look like real camera footage (blacks, saturation, casts, detail, 1920x1080, grain) and cut character-sheet head frames, overwriting in place. Use for /process-ai-video, "AI clip trông giả / less fake", or removing character sheets.
 ---

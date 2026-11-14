@@ -7,7 +7,7 @@
 Per query: search.list order=viewCount, one call per length bucket (medium 4-20 min unless --min >= 20, long > 20 min;
 100 of 10,000 daily quota units each), then videos.list (1 unit / 50 ids) for real numbers. Drops videos under --min
 minutes and live / upcoming; --ai keeps titles / descriptions / tags naming AI or an AI generator. Prints one
-markdown table. Uses any saved OAuth token (.secrets/youtube/tokens, `python -m dvr_cowork.youtube login`).
+markdown table. Uses any saved OAuth token (.secrets/youtube/tokens, `python -m dvr_cowork youtube login --key Chann_N`).
 """
 import argparse, re, sys
 from datetime import datetime, timedelta, timezone
@@ -60,7 +60,7 @@ def creds():
     for p in sorted(TOKENS.glob("*.json")) if TOKENS.exists() else []:
         if c := saved(p):
             return c
-    sys.exit("no valid YouTube token: run `.venv/Scripts/python.exe -m dvr_cowork.youtube login`")
+    sys.exit("no valid YouTube token: run `.venv/Scripts/python.exe -m dvr_cowork youtube login --key Chann_N`")
 
 
 def run(queries, days, n, ai, min_m):

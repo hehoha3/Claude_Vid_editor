@@ -3,7 +3,7 @@
 `scripts/build_four_files.py` turns one source file into the four deliverables. Everything that can contradict
 (onsets, shot times, rests, key-event times in prose, ending) is computed from the same data.
 
-## Source file (`.work\doc_edit\<video>\four_files.src.md`)
+## Source file (`.work\doc_edit\<key>\four_files.src.md`; `<key>` = `<video>__Chann_N` when the name is in 2+ channels)
 
 Sections start with `=== NAME`:
 
@@ -50,7 +50,7 @@ anchors. Pin only lines that describe a visible event (reveal, strike, miss, sto
 - no two shots with the same action text — repeated footage is not allowed as filler (callbacks are new frames);
 - voice blocks never overlap and never cross the scene's end / `vend`. A pin means "at or just after its shot": longer
   real audio slides it up to 1.5 s later (warning), more is an error. While planning, keep ≥ 10 % of a pinned
-  segment's voice time free before the pin (warning otherwise) — Genmax runs a few percent off the 150 wpm estimate;
+  segment's voice time free before the pin (warning otherwise) — the recorded voice runs a few percent off the 150 wpm estimate;
 - every Vietnamese line present and translated (empty, equal to the EN line or without any Vietnamese letter = error);
 - warning: a voice-free rest ≥ 6 s without any shot hook — write what the viewer learns or feels there.
 

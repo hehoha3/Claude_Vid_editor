@@ -20,21 +20,22 @@ target: 60
 ## Clip sourcing log specification · ## Final cut gates and replacements (use {{shot:1.4-07}}, {{lastend}})
 ## Conform to the real narrator audio (build_four_files.py … --mp3 …)
 === SCENES
-@ 0.1 | 00:00 | 00:15 | Morning on the Mara
-see: Wide dawn over the river, mist; wildebeest grazing above the bank; a hippo surfacing. No danger shown.
-animals: WB herd; HP pod.
-sound: A3/A4 dawn river; A5 grazing; A6 soft opening of the intro track, low, no drums.
-fn: A living place before danger.
-clips: 3 calm shots, 5 s each.
-gate: Brown river at dawn, no predator in frame.
-audio: A3/A4 dawn bed; A5 grazing. Fallback: generic river dawn, labelled mosaic.
+@ 0.1 | 00:00 | 00:15 | The river waits
+see: (doc-edit: black + riser -> impact at ~00:01) On the hit, the brown river at sunrise, wide; then under the drum wildebeest massing on the bank, a crocodile's eyes breaking the surface. No strike shown.
+animals: WB herd; CR.
+sound: A3/A4 river bed; A5 hooves; A7 the strong intro track from the impact's hit.
+fn: Who must cross, and what waits.
+clips: 1 epic opener + 3 strong teaser shots.
+gate: Brown river, no catch in frame.
+audio: A3/A4 river bed; A5 hooves. Fallback: generic river crossing, labelled mosaic.
 tail: 1
-need: ALT — any calm brown-river dawn; no predator in frame
-music: soft music, low, no drums; A3/A4 dawn bed
-- 5.0 | EW | river at dawn, mist on brown water; fade from black 1 s | river current | the river before any threat |
-- 5.0 | MW | wildebeest grazing above the bank, drifting L→R | grass cropping | ordinary life the film will put under pressure |
-- * | W | a hippo surfacing slowly, breath steaming | exhale | the river is already occupied |
-> At first light, the river looks like the calmest place in Africa. ||
+need: ALT — any brown-river crossing build-up; no catch in frame
+music: strong intro track, drums
+- 3.6 | EW | the brown river at sunrise, cut in on the impact | river current | the place, big |
+- 4.0 | W | wildebeest massing on a steep bank, dust rising | hooves, bellows | the crowd that must cross |
+- 3.0 | C | a crocodile's eyes surfacing on brown water, sliding L→R | water lap | what waits |
+- * | MW | the first wildebeest leaps off the bank | splash | the crossing starts |
+> Every year, the river decides who crosses. ||
 
 @ 1.4 | 05:00 | 05:28 | The strike
 see: A crocodile slides in and goes under; {{shot:1.4-04}} it surges beneath a young wildebeest; the youngster twists free.

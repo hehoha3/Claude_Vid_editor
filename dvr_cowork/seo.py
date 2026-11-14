@@ -1,7 +1,7 @@
 r"""YouTube SEO for a finished video (user 2026-10-31): trend research with the YouTube Data API, text by Gemini.
 
-    .venv/Scripts/python.exe -m dvr_cowork.seo <video folder> [--force]   -> .work/doc_edit/<video>/youtube_meta.json
-    .venv/Scripts/python.exe -m dvr_cowork.seo <video folder> --pick 2    the 2nd title option becomes the title
+    .venv/Scripts/python.exe -m dvr_cowork youtube seo <video folder> [--force]   -> .work/doc_edit/<video>/youtube_meta.json
+    .venv/Scripts/python.exe -m dvr_cowork youtube seo <video folder> --pick 2    the 2nd title option becomes the title
     .venv/Scripts/python.exe -m dvr_cowork.seo --selftest
 
 1. Film facts from .work/doc_edit/<video>/spec.txt (# FILM, # REGION, # INTRO, # BIBLE = chapters, # CAST = species):
@@ -25,6 +25,9 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from .timecode import parse_clock as secs
+from .vtypes import region_id
+
 ROOT = Path(__file__).resolve().parents[1]  # not .config: tests run this file as a script for --selftest
 CACHE = ROOT / ".work" / "seo" / "cache"
 CACHE_DAYS, DAYS_BACK = 7, 90
@@ -45,11 +48,6 @@ def clock(s):
     return f"{s // 3600}:{s // 60 % 60:02d}:{s % 60:02d}" if s >= 3600 else f"{s // 60:02d}:{s % 60:02d}"
 
 
-def secs(t):
-    m, s = t.split(":")
-    return int(m) * 60 + float(s)
-
-
 def film_facts(spec_text):
     """spec.txt -> {film, region, species[], chapters[(seconds, bible text)]} (chapter 0 = cold open at 0)."""
     f = {"film": "", "region": "amazon", "species": [], "chapters": [(0, "cold open / intro")]}
@@ -57,7 +55,7 @@ def film_facts(spec_text):
         if m := re.match(r"# FILM (.*)", line):
             f["film"] = m[1].strip()
         elif m := re.match(r"# REGION (\w+)", line):
-            f["region"] = m[1].lower()
+            f["region"] = region_id(m[1]) or m[1].lower()  # himalaya = frozen (user 2026-11-12)
         elif m := re.match(r"# BIBLE \d+ (\d+:\d+)-\S+ (.*)", line):
             f["chapters"].append((secs(m[1]), m[2].strip()[:300]))
         elif m := re.match(r"# CAST \[\w+\] sp=([\w,]+)", line):
@@ -69,7 +67,7 @@ def film_facts(spec_text):
 
 
 def queries(f):
-    region = {"africa": "african savanna"}.get(f["region"], f["region"])
+    region = {"africa": "african savanna", "frozen": "snow mountain arctic"}.get(f["region"], f["region"])
     return [f"{region} wildlife documentary"] + [f"{sp} documentary" for sp in f["species"][:2]]
 
 
@@ -84,7 +82,7 @@ def youtube_client(vdir):
             yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
             chans = yt.channels().list(part="snippet", id=cid).execute().get("items", []) if cid else []
             return yt, chans[0]["snippet"]["title"] if chans else ""
-    sys.exit("seo: no valid YouTube token: run `python -m dvr_cowork.youtube login` once")
+    sys.exit("seo: no valid YouTube token: run `python -m dvr_cowork youtube login --key Chann_N` once")
 
 
 def search(yt, q):
@@ -208,7 +206,8 @@ def assemble(g, f, channel):
 
 def run(vdir, force=False):
     vdir = Path(vdir)
-    work = ROOT / ".work" / "doc_edit" / vdir.name
+    from dvr_cowork.videokey import video_key
+    work = ROOT / ".work" / "doc_edit" / video_key(vdir)
     meta_f = work / "youtube_meta.json"
     if meta_f.exists() and not force:
         return f"seo: {meta_f.name} already there (title: {json.loads(meta_f.read_text('utf-8'))['title']}), --force to redo"
@@ -238,7 +237,8 @@ def run(vdir, force=False):
 
 
 def pick(vdir, n):
-    meta_f = ROOT / ".work" / "doc_edit" / Path(vdir).name / "youtube_meta.json"
+    from dvr_cowork.videokey import video_key
+    meta_f = ROOT / ".work" / "doc_edit" / video_key(vdir) / "youtube_meta.json"
     meta = json.loads(meta_f.read_text("utf-8"))
     new = meta["titles"][n - 1]["text"]
     meta["description"] = meta["description"].replace(meta["title"], new, 1)

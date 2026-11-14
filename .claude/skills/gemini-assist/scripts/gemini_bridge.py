@@ -87,6 +87,129 @@ def json_out(obj):
     print(json.dumps(obj, ensure_ascii=False))
 
 
+def image_parts(paths, side=1024):
+    """Stills -> inline JPEG parts (long side <= side px: ~2 Gemini tiles each) + one digest for the cache key."""
+    import base64
+    import io
+    from PIL import Image
+    parts, h = [], hashlib.sha256()
+    for f in paths:
+        im = Image.open(f).convert("RGB")
+        im.thumbnail((side, side))
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=85)
+        data = buf.getvalue()
+        h.update(Path(f).name.encode("utf-8") + data)
+        parts += [{"text": f"=== IMAGE {Path(f).name} ==="},
+                  {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(data).decode("ascii")}}]
+    return parts, h.hexdigest()
+
+
+def generate(root, task, src, model, thinking, max_tokens, as_json, timeout, no_cache=False, dry_run=False,
+             cache_flags=(), images=()):
+    """One cached generateContent call -> dict(response, stats, cfile, cached) or dict(dry_run, cfile).
+    images: inline parts from image_parts() (their digest belongs in cache_flags)."""
+    cfile = cache_path(root, task, src, model, thinking, max_tokens, as_json, *cache_flags)
+    if cfile.is_file() and not no_cache:
+        cached = json.loads(cfile.read_text(encoding="utf-8"))
+        return {"response": cached["response"], "stats": cached.get("stats", {}), "cfile": cfile, "cached": True}
+    if dry_run:
+        return {"dry_run": True, "cfile": cfile}
+    gen = {"maxOutputTokens": max_tokens, "thinkingConfig": {"thinkingLevel": thinking}}
+    if as_json:
+        gen["responseMimeType"] = "application/json"
+    body = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
+            "contents": [{"role": "user", "parts": list(images) + [{"text": src + "TASK:\n" + task.strip()}]}],
+            "generationConfig": gen}
+    t0 = time.time()
+    resp = call(secret(), API + model + ":generateContent", body, timeout=max(10, timeout))
+    response, stats = extract(resp)
+    stats["ms"] = int((time.time() - t0) * 1000)
+    log = root / ".work" / "gemini" / "usage.jsonl"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M"), "model": model,
+                             **{k: v for k, v in stats.items() if k != "finish"}}) + "\n")
+    if not response.strip():
+        block = resp.get("promptFeedback", {}).get("blockReason", "")
+        raise RuntimeError(f"No text response (finish={stats['finish']} block={block}). Raise --max-tokens or check the prompt.")
+    cfile.parent.mkdir(parents=True, exist_ok=True)
+    cfile.write_text(json.dumps({"response": response, "stats": stats}, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"response": response, "stats": stats, "cfile": cfile, "cached": False}
+
+
+LITE = "gemini-3.5-flash-lite"
+
+
+def with_fallback(run, model):
+    """run(model); flash busy (HTTP 503 / 429) -> one call on flash-lite. -> (result, model used, fell_back)."""
+    try:
+        return run(model), model, False
+    except RuntimeError as e:
+        if model == LITE or not any(f"HTTP {c}" in str(e) for c in (503, 429)):
+            raise
+        return run(LITE), LITE, True
+
+
+# locate: Gemini reads whole code files (line-numbered) and returns only the line ranges Claude should Read.
+LOCATE_EXT = {".py", ".md", ".toml", ".ps1", ".yaml", ".yml", ".ini", ".cfg"}
+LOCATE_SKIP = {".venv", "__pycache__", ".git", ".secrets", "_pushed", "node_modules", "cache"}
+LOCATE_TASK = (
+    "The SOURCE blocks are code/doc files; every line starts with its line number and a tab.\n"
+    "QUESTION: {q}\n"
+    "Reply with the smallest line ranges Claude must read to answer or change this, most relevant first, "
+    "max {n} lines, one per range, exactly:\n<file>:<start>-<end> | <function/section> | <why, max 12 words>\n"
+    "<file> = the SOURCE name exactly as given. Ranges cover whole functions/blocks, each <= {span} lines. "
+    "Nothing relevant -> reply only: NONE"
+)
+
+
+def locate_files(root, names):
+    out = []
+    for name in names:
+        f = Path(name).expanduser()
+        f = (f if f.is_absolute() else root / f).resolve()
+        if root not in f.parents and f != root:
+            raise RuntimeError(f"locate reads only inside the project: {f}")
+        found = sorted(f.rglob("*")) if f.is_dir() else [f]
+        for g in found:
+            rel = g.relative_to(root)
+            if g.is_file() and g.suffix.lower() in LOCATE_EXT and not LOCATE_SKIP & set(rel.parts):
+                out.append(g)
+        if not f.exists():
+            raise RuntimeError(f"Not found: {f}")
+    return list(dict.fromkeys(out))
+
+
+def locate_source(root, files):
+    blocks, lengths = [], {}
+    for f in files:
+        rel = f.relative_to(root).as_posix()
+        lines = f.read_text(encoding="utf-8-sig", errors="replace").splitlines()
+        lengths[rel] = len(lines)
+        blocks.append(f"=== SOURCE {rel} ===\n" + "\n".join(f"{i}\t{t}" for i, t in enumerate(lines, 1)) + "\n\n")
+    return "".join(blocks), lengths
+
+
+def parse_ranges(text, lengths, span):
+    """Keep only ranges that name a sent file and real lines; clamp to the file end and to span."""
+    ranges = []
+    for line in text.splitlines():
+        head, _, rest = line.strip().partition("|")
+        loc, _, nums = head.strip().rpartition(":")
+        a, _, b = nums.partition("-")
+        loc = loc.strip().replace("\\", "/")
+        if loc not in lengths or not a.strip().isdigit():
+            continue
+        start = max(1, int(a))
+        end = int(b) if b.strip().isdigit() else start
+        end = min(max(start, end), lengths[loc], start + span - 1)
+        if start > lengths[loc]:
+            continue
+        ranges.append({"file": loc, "start": start, "end": end, "note": rest.strip()[:120]})
+    return ranges
+
+
 def main():
     p = argparse.ArgumentParser(description="Call Gemini API safely, returning short JSON to Claude")
     subs = p.add_subparsers(dest="cmd", required=True)
@@ -109,6 +232,27 @@ def main():
     a.add_argument("--max-output-chars", type=int, default=3500)
     a.add_argument("--no-cache", action="store_true")
     a.add_argument("--dry-run", action="store_true", help="Check input and cache without calling API")
+    lo = subs.add_parser("locate", help="Line ranges in code files that answer a question (Claude Reads only those)")
+    lo.add_argument("--question", required=True, help="What Claude wants to find or change, in English")
+    lo.add_argument("--file", action="append", required=True, help="Project file or folder (repeatable)")
+    lo.add_argument("--root", default=".")
+    lo.add_argument("--model", default="gemini-3.5-flash", help="flash busy (503/429) -> one call on flash-lite")
+    lo.add_argument("--max-ranges", type=int, default=6)
+    lo.add_argument("--span", type=int, default=120, help="Max lines per range (default 120)")
+    lo.add_argument("--max-input-chars", type=int, default=600000)
+    lo.add_argument("--timeout", type=int, default=120)
+    lo.add_argument("--no-cache", action="store_true")
+    lo.add_argument("--dry-run", action="store_true")
+    v = subs.add_parser("vision", help="One Gemini look at still images (frame QA); answer like ask")
+    v.add_argument("--task", required=True)
+    v.add_argument("--image", action="append", required=True, help="PNG/JPG still (repeatable, max 24)")
+    v.add_argument("--root", default=".")
+    v.add_argument("--model", default="gemini-3.5-flash", help="flash busy (503/429) -> one call on flash-lite")
+    v.add_argument("--thinking", default="low", choices=["minimal", "low", "medium", "high"])
+    v.add_argument("--max-tokens", type=int, default=2048)
+    v.add_argument("--side", type=int, default=1024, help="long side px sent per image (default 1024)")
+    v.add_argument("--timeout", type=int, default=120)
+    v.add_argument("--no-cache", action="store_true")
     opts = p.parse_args()
 
     if opts.cmd == "setup-key":
@@ -142,6 +286,51 @@ def main():
         json_out({"ok": True, **tot})
         return
 
+    if opts.cmd == "vision":
+        imgs = [Path(f).expanduser().resolve() for f in opts.image]
+        missing = [str(f) for f in imgs if not f.is_file()]
+        if missing or len(imgs) > 24:
+            raise RuntimeError(f"vision: {len(imgs)} images (max 24), missing: {missing[:3]}")
+        parts, digest = image_parts(imgs, opts.side)
+        r, model, fell_back = with_fallback(
+            lambda m: generate(root, opts.task, "", m, opts.thinking, opts.max_tokens, False, opts.timeout,
+                               opts.no_cache, cache_flags=("vision", digest, opts.side), images=parts), opts.model)
+        out = {"ok": True, "cached": r["cached"], "model": model, "preview": r["response"][:6000],
+               "full_result_path": str(r["cfile"]), "stats": r["stats"]}
+        if fell_back:
+            out["warning"] = "flash busy: answered by flash-lite, trust its flags less"
+        if r["stats"].get("finish") == "MAX_TOKENS":
+            out["warning"] = "Answer cut at --max-tokens; raise it."
+        json_out(out)
+        return
+
+    if opts.cmd == "locate":
+        files = locate_files(root, opts.file)
+        if not files:
+            raise RuntimeError("No readable code/doc files in --file")
+        src, lengths = locate_source(root, files)
+        if len(src) > opts.max_input_chars:
+            raise RuntimeError(f"Sources {len(src)} chars > --max-input-chars {opts.max_input_chars}; name fewer files")
+        task = LOCATE_TASK.format(q=opts.question.strip(), n=opts.max_ranges, span=opts.span)
+        r, model, fell_back = with_fallback(
+            lambda m: generate(root, task, src, m, "low", 1024, False, opts.timeout, opts.no_cache, opts.dry_run,
+                               ("locate",)), opts.model)
+        if r.get("dry_run"):
+            json_out({"ok": True, "dry_run": True, "files": len(files), "input_chars": len(src),
+                      "cache_path": str(r["cfile"])})
+            return
+        ranges = parse_ranges(r["response"], lengths, opts.span)[:opts.max_ranges]
+        out = {"ok": True, "cached": r["cached"], "model": model, "ranges": ranges,
+               "read_lines": sum(x["end"] - x["start"] + 1 for x in ranges), "of_lines": sum(lengths.values()),
+               "stats": r["stats"]}
+        if fell_back:
+            out["warning"] = "flash busy: answered by flash-lite, check the ranges harder"
+        if not ranges:
+            out["warning"] = ("Gemini found nothing relevant" if r["response"].strip().startswith("NONE")
+                              else "No valid range in the answer: " + r["response"][:200]) + "; use Grep instead"
+        json_out(out)
+        return
+
     files = []
     for name in opts.input:
         f = Path(name).expanduser().resolve()
@@ -153,35 +342,17 @@ def main():
     src = build_source(files)
     if len(src) > opts.max_input_chars:
         p.error("Input exceeds max input characters. Chunk it before delegation.")
-    cfile = cache_path(root, opts.task, src, opts.model, opts.thinking, opts.max_tokens, opts.json)
-    if cfile.is_file() and not opts.no_cache:
-        cached = json.loads(cfile.read_text(encoding="utf-8"))
-        json_out({"ok": True, "cached": True, "preview": cached["response"][:opts.max_output_chars],
-                  "full_result_path": str(cfile), "stats": cached.get("stats", {})})
-        return
-    if opts.dry_run:
+    r = generate(root, opts.task, src, opts.model, opts.thinking, opts.max_tokens, opts.json, opts.timeout,
+                 opts.no_cache, opts.dry_run)
+    cfile = r["cfile"]
+    if r.get("dry_run"):
         json_out({"ok": True, "dry_run": True, "input_chars": len(src), "cache_path": str(cfile)})
         return
-
-    gen = {"maxOutputTokens": opts.max_tokens, "thinkingConfig": {"thinkingLevel": opts.thinking}}
-    if opts.json:
-        gen["responseMimeType"] = "application/json"
-    body = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
-            "contents": [{"role": "user", "parts": [{"text": src + "TASK:\n" + opts.task.strip()}]}],
-            "generationConfig": gen}
-    t0 = time.time()
-    resp = call(secret(), API + opts.model + ":generateContent", body, timeout=max(10, opts.timeout))
-    response, stats = extract(resp)
-    stats["ms"] = int((time.time() - t0) * 1000)
-    log.parent.mkdir(parents=True, exist_ok=True)
-    with log.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M"), "model": opts.model,
-                             **{k: v for k, v in stats.items() if k != "finish"}}) + "\n")
-    if not response.strip():
-        block = resp.get("promptFeedback", {}).get("blockReason", "")
-        raise RuntimeError(f"No text response (finish={stats['finish']} block={block}). Raise --max-tokens or check the prompt.")
-    cfile.parent.mkdir(parents=True, exist_ok=True)
-    cfile.write_text(json.dumps({"response": response, "stats": stats}, ensure_ascii=False, indent=2), encoding="utf-8")
+    response, stats = r["response"], r["stats"]
+    if r["cached"]:
+        json_out({"ok": True, "cached": True, "preview": response[:opts.max_output_chars],
+                  "full_result_path": str(cfile), "stats": stats})
+        return
     out = {"ok": True, "cached": False, "preview": response[:opts.max_output_chars], "full_result_path": str(cfile),
            "stats": stats}
     if stats["finish"] == "MAX_TOKENS":

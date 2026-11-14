@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: research-youtube
 description: Top 20 most-viewed YouTube videos of the last 10 days for a topic, with links (presets amazon-wildlife, africa-wildlife; or any topic, "(ai)" = AI-made only). Use for /research-youtube, "tìm video nhiều view nhất tuần", "top video chủ đề X", "trend YouTube tuần này", or a niche check before a new video topic.
 ---
@@ -20,7 +21,7 @@ One script run (two at most); no vidIQ, browser or other API calls; never open a
 4. Reply in Vietnamese: the table as printed (plain `https://youtu.be/...` links), then at most 3 lines of takeaways
    (dominant channels, title / length patterns, views/ngày standouts).
 
-Errors: `no valid YouTube token` -> the user runs `.venv/Scripts/python.exe -m dvr_cowork.youtube login`. Quota error
+Errors: `no valid YouTube token` -> the user runs `.venv/Scripts/python.exe -m dvr_cowork youtube login --key Chann_N`. Quota error
 -> stop, it resets ~14:00-15:00 giờ VN; no retry.
 Limits (say when relevant): `--ai` is a keyword check, AI videos that never say so are missed; search returns at most
 50 per query and length, so this is the top of what search surfaces, not a census.

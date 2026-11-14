@@ -1,7 +1,7 @@
-"""Shot matching + house look for V1 of timeline "Edit": every shot balanced toward one target per light, one AMZ LUT.
+"""Shot matching + house look for V1 of the video timeline channN_vidK: every shot balanced toward one target per light, one AMZ LUT.
 
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py plan [--sheet]   # measure + solve, nothing in Resolve
-    .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py apply            # backup Edit, groups, CDL, LUTs
+    .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py apply            # backup the timeline, groups, CDL, LUTs
     .venv/Scripts/python.exe .claude/skills/colorist/scripts/grade.py --selftest
 
 Method (demo_2, 2026-10-09; simulated grade matched Resolve stills within 0.01):
@@ -162,10 +162,10 @@ def grab(c):
 def timeline():
     from dvr_cowork.config import load_config
     from dvr_cowork.resolve_conn import connect
-    from dvr_cowork.resolve_ops import clip_fps, find_timeline, get_project, timeline_fps
+    from dvr_cowork.resolve_ops import clip_fps, get_project, timeline_fps, video_timeline
     pm, project = get_project(connect(load_config()))
-    tl = find_timeline(project, "Edit")
-    assert tl and tl.GetName() == "Edit", 'timeline "Edit" not found (Master is never touched)'
+    tl = video_timeline(project)  # DVR_TIMELINE, else the open channN_vidK
+    assert tl, "video timeline channN_vidK not found: open it or set DVR_TIMELINE (Master is never touched)"
     fps, t0 = timeline_fps(tl, project), int(tl.GetStartFrame())
     rows = []
     for it in sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda t: t.GetStart()):
@@ -216,7 +216,7 @@ def plan(sheet):
                    f"{mn(f0s, 'p99'):.3f}->{mn(f1s, 'p99'):.3f} sat {mn(f0s, 'sat'):.3f}->{mn(f1s, 'sat'):.3f} | "
                    f"flagged LUT-only {fl0} -> CDL+LUT {fl1}")
     out.sort(key=lambda q: q["start"])
-    d = ROOT / ".work" / "grade" / project.GetName()
+    d = ROOT / ".work" / "grade" / f"{project.GetName()}_{tl.GetName()}"
     d.mkdir(parents=True, exist_ok=True)
     (d / "plan.json").write_text(json.dumps({"timeline": tl.GetName(), "shots": out}), "utf-8")
     print(f"V1 {len(rows)} shots, measured {len(out)} (no frame: {sum(i is None for i in imgs)})")
@@ -234,12 +234,12 @@ def plan(sheet):
 
 def apply():
     pm, project, tl, rows = timeline()
-    q = json.loads((ROOT / ".work" / "grade" / project.GetName() / "plan.json").read_text("utf-8"))["shots"]
+    q = json.loads((ROOT / ".work" / "grade" / f"{project.GetName()}_{tl.GetName()}" / "plan.json").read_text("utf-8"))["shots"]
     by = {(s["start"], s["path"].lower()): s for s in q}
     miss = [r for r in rows if (r["start"], r["path"].lower()) not in by]
     assert len(miss) <= len(rows) * 0.02, f"{len(miss)} V1 shots changed since plan: re-run plan"
     project.GetMediaPool().SetCurrentFolder(project.GetMediaPool().GetRootFolder())
-    bak = f"Edit_bak_grade_{dt.datetime.now():%Y%m%d_%H%M%S}"
+    bak = f"{tl.GetName()}_bak_grade_{dt.datetime.now():%Y%m%d_%H%M%S}"
     from dvr_cowork.resolve_ops import backup_timeline
     assert backup_timeline(project, tl, bak), "backup failed, nothing changed"  # into bin "6. Timeline"
     project.SetCurrentTimeline(tl)

@@ -1,6 +1,6 @@
 ---
 name: audio-expert
-description: Sound design on timeline "Edit" - sound map from story + narrator, picks music / natural sound / SXF from the library, places them frame-exact on A5-A9 with backup and rollback. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music / natural sound", "âm thanh thu hút hơn", or a thin music bed. Never touches V1 or A1-A4; no EQ/ducking/loudness.
+description: Sound design on channN_vidK A5-A9 (music / natural / SXF, backup) and missing sounds from Epidemic / Suno into D:\Audio_lib. Use for /audio-expert, "sắp xếp audio", "thêm SXF / music", "tải nhạc Epidemic", "tạo nhạc Suno", audio THIẾU. Never V1 / A1-A4.
 ---
 
 # Audio expert (V1: selection + placement)
@@ -11,19 +11,28 @@ Order: **story -> what the viewer must feel -> sound map -> pick assets -> place
 (world, orientation, curiosity, state change, anticipation, reveal, action accent, scale, continuity, contrast,
 release); silence is a choice (pre-attack, aftermath), not a gap to fill.
 
-## Tracks (timeline "Edit" as it is; the spec's A5-A8 roles were remapped)
+## Tracks (the video timeline as it is; the spec's A5-A8 roles were remapped)
 | track | role | may write |
 |---|---|---|
 | A1 | own audio of the AI clips (doc-edit, -12 dB) | no |
 | A2 | Narrator Voice (speech windows = item spans) | read only |
 | A3, A4 | Ambience 1/2 bed from doc-edit | no (protected) |
-| A5 | Ambience 3: extra environment layers (birds, water) | yes, in free gaps |
+| A5 | Ambience 3: extra environment layers (birds, water), the old song's tail at a music change (place.py MUSIC_XF, A7 level), support for an A3/A4 bed change | yes, in free gaps |
 | A6 | Natural sounds: footsteps, leaves, splashes (sync / flexible cues) | yes |
 | A7 | Music: one track, sequential; a stop is a decision | yes |
-| A8, A9 | SXF 1/2: state-change drops, risers, hits, whooshes | yes |
+| A8 | SXF 1: natural SFX (snaps, splashes, calls as hits) | yes |
+| A9 | SXF 2: designed SFX (risers, impacts, whooshes, drops) | yes |
 
 Doc-edit output on A6-A9 may be replaced after the backup (`--replace`); anything the user placed by hand on A5-A9 is
 protected: ask first. Never timeline "Master".
+
+**Full-AI videos** (a_; user 2026-11-05: lighter than the footage types, `dvr_cowork ai finish` places song + wind +
+birds by itself, doc-edit `references/full-ai.md` B; audio-expert only for a fetch or when the user asks for more):
+same timeline layout; `<video>` = `<folder name>__Chann_N`, every script with
+`DVR_TIMELINE=channN_vidK`. A3/A4 = the engine's wind beds, A5 = its birds, A7/A8 under the 30 s hook = its intro song: `execute.py
+... --additive` (keeps every existing item, refuses an overlap; never `--replace`). Beats from `audios/visual_plan.md` +
+screenplay. Only licensed files (`D:\Audio_lib`, fetched with their `.license.txt`); a missing sound -> mode fetch from
+Epidemic without asking.
 
 ## Modes
 Data in `.work/audio_expert/`: `audio_index.jsonl` (never open whole; filter in Python), `learning_plan.md`,
@@ -33,6 +42,7 @@ Data in `.work/audio_expert/`: `audio_index.jsonl` (never open whole; filter in 
 |---|---|
 | learn | refresh `learning_plan.md` / `learning_log.md` (evidence-based: read / observed / verified / unsure) |
 | index | `.venv/Scripts/python.exe .claude/skills/audio-expert/scripts/index.py` (incremental; music gets a waveform arc; nothing is "listened") |
+| fetch | library gap -> Epidemic / Suno -> `scripts/fetch.py` -> audio_lib; read `references/online_sources.md` first (cost order, queries, layout) |
 | analyze | screenplay + timestamp + `.work/voice_<audio>/plan.json` (speech windows) -> `<video>/sound_map.json` |
 | plan | write `<video>/cues.txt` (format in its header), then `scripts/plan.py <video> --run <id>` -> placement_plan.json, placement_report.md, mix_notes.md |
 | execute | `scripts/execute.py <video> <run_id> [--replace]` (backup, A5-A9 only, readback, journal, re-run safe); `--rollback` removes only journaled items |
@@ -48,8 +58,8 @@ Data in `.work/audio_expert/`: `audio_index.jsonl` (never open whole; filter in 
 - Music: pick by waveform arc and natural end; cut before its end -> fade note. Stop music before an attack, let body
   sound carry it; no happy music after an escape. Reuse a track only as a named motif (M-calm = hypnotic journey,
   M-danger = suspicions, M-drop = sub drop at act changes).
-- Species sounds: the library has none (no monkey, elephant, duiker or eagle calls). Never pass a bird or generic hit
-  off as a species voice; list missing sounds in the report.
+- Species sounds: Z:\Unseen\SFX has some (lion, hyena, hippo, elephant, baboon...); a missing one -> Epidemic
+  SearchSoundEffects (mode fetch), never a bird or generic hit passed off as a species voice; still missing -> report.
 - Evidence labels: music = `waveform_analysis` (mood from filename), else `filename_only`, confidence <= 0.6. Never
   say "listened". Confidence below ~0.6 on a cue that matters -> leave the slot empty, say so.
 - Starting level and 0-4 s edge fades reuse doc-edit's TARGET / FADE tables (place.py) so new clips do not bury the

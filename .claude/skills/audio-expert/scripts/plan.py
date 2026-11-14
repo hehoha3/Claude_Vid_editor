@@ -7,13 +7,14 @@
 converted to timeline-relative frames (end exclusive) with the real fps; the Resolve timeline is only READ (snapshot
 of A2 + existing audio, used for narrator overlap and conflicts). Output: .work/audio_expert/<video>/runs/<run_id>/.
 """
-import datetime as dt, json, re, sys
+import datetime as dt, json, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).parent))
 import index as ix  # noqa: E402
+from dvr_cowork.timecode import parse_clock as secs  # noqa: E402
 
 PROTECTED = (3, 4)  # tracks never written (ambience beds placed by doc-edit)
 
@@ -21,11 +22,6 @@ PROTECTED = (3, 4)  # tracks never written (ambience beds placed by doc-edit)
 def tc(sec):
     m, s = divmod(sec, 60)
     return f"{int(m)}:{s:04.1f}"
-
-
-def secs(t):
-    m, s = t.split(":")
-    return int(m) * 60 + float(s)
 
 
 def parse(text):
@@ -105,6 +101,18 @@ def build(rows, index, fps, end_s, a2, prof):
     return sorted(out, key=lambda p: (p["timeline_start_frame_relative"], p["track_index"])), bad
 
 
+def clashes(plan, snap):
+    """Placements overlapping an item already on their track (A5-A9) -> ["<id> / <existing name>", ...]."""
+    out = []
+    for p in plan:
+        a, b = p["timeline_start_frame_relative"], p["timeline_end_frame_relative_exclusive"]
+        tr = p["track_index"]
+        for x, y, name in snap["audio"].get(tr, snap["audio"].get(str(tr), [])):
+            if x < b and a < y and (x, y) != (a, b):
+                out.append(f'{p["placement_id"]} / A{tr} {name}')
+    return out
+
+
 def snapshot(tl, fps):
     t0 = int(tl.GetStartFrame())
     snap = {"fps": fps, "start_frame": t0, "end_rel": int(tl.GetEndFrame()) - t0, "audio": {}, "video1": []}
@@ -152,11 +160,13 @@ def main(video, run):
     index = [json.loads(l) for l in ix.OUT.read_text("utf-8").splitlines() if l]
     from dvr_cowork.config import load_config
     from dvr_cowork.resolve_conn import connect
-    from dvr_cowork.resolve_ops import find_timeline, get_project, timeline_fps
+    from dvr_cowork.resolve_ops import get_project, timeline_fps, use_video, video_timeline
     cfg = load_config()
     resolve = connect(cfg)
     _, project = get_project(resolve)
-    tl = find_timeline(project, cfg["resolve"]["timeline_name"])
+    use_video(video)
+    tl = video_timeline(project)
+    assert tl, "the video timeline channN_vidK not found"
     fps = timeline_fps(tl, project)
     rate = round(fps)
     snap = snapshot(tl, fps)
@@ -171,6 +181,7 @@ def main(video, run):
         return cache[e["asset_id"]]
 
     plan, bad = build(rows, index, rate, end_s, a2, prof)
+    bad += [f"overlaps existing item {c}" for c in clashes(plan, snap)]  # e.g. 8p hook music on A7
     for p in plan:  # media must exist
         if not Path(p["source_path"]).exists():
             bad.append(f'{p["placement_id"]}: media missing {p["source_path"]}')
@@ -207,6 +218,8 @@ def selftest():
     assert m["timeline_end_frame_relative_exclusive"] == 40 * 24 and not m["natural_end"]
     assert next(p for p in plan if p["track_index"] == 6)["shift_s"] == -6.0
     assert resolve_asset("hit", idx)["asset_id"] == "h"
+    snap = {"audio": {7: [[0, 30 * 24, "intro.mp3"]], 8: []}}
+    assert clashes(plan, snap) == ["s1_L001 / A7 intro.mp3"] and clashes([hit], snap) == []
     print("selftest ok")
 
 

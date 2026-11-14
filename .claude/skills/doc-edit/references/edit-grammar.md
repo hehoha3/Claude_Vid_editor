@@ -17,6 +17,8 @@ beauty`. Each story's truth goes into the spec as filter tokens (machine-checked
   filter only when the refusal was wrong, never loosen it to fill the slot.
 
 ## Shots
+- Impact (user 2026-11-06): when intro.py picked one, plan.py puts black 0:00 -> the hit (~1 s, GFX, A9 riser ->
+  impact); the opener below cuts in on the hit with the intro music, the narrator still at 0:03.6.
 - Opener (user 2026-10-25): the narrator starts at 0:03.6; plan.py puts one epic, cinematic shot on 0:00 -> sentence 1
   by itself (landscape, sunrise / sun, wide sky: default filter `sp=none size=wide,aerial`), and ## 1's beds / music
   start under it. Rarely, when the screenplay opens on a character: `# OPENER Cận mắt báo đốm | real | sp=jaguar
@@ -94,7 +96,7 @@ at 0:38, cause before effect). Ends with the `reset`: story 1 must read as earli
   first `HL_HEAD` = 5 (the hook's set-up, 3-7) and the last `HL_TAIL` = 2 (outro landscapes) shows a chase / fight /
   climax of the line's species: later story shots or library clips (the animal = the clip's main species), chase /
   fight first, then tense / dramatic footage; a clip <= 3x in the intro, other frames, >= 8 s apart; the line's calm
-  act and a "7. Open" pick yield. `# ACTION 0:29-1:21` in the beats header (user 2026-10-28) = the action zone as a time
+  act and a "7. Open" pick (a user-made intro clip) yield. `# ACTION 0:29-1:21` in the beats header (user 2026-10-28) = the action zone as a time
   window instead of first 5 / last 2; in the zone only the intro's own animals may be in frame (no zebra / warthog /
   wildebeest prey), so the shots fit what the narrator says there. `intro highlights:` line = `action zone: N chase/fight + M tense of K`. A species
   with few action clips (africa_271026 elephants: ~8) leaves calm shots there: write more lion / predator lines into
@@ -188,11 +190,15 @@ Side shot = any footage shot whose `need` has no `[tag]` of a main character.
   only when an AI look would hurt (hero wide, aerial).
 - Real next to AI is fine: the grade makes them one place and moment. Keep the same individual's look
   (size, markings, setting) consistent across the cut.
-- Reuse: clips on "Edit" + "Open" of the last 6 checked videos of the same workspace are never used in the
-  first 15:00 (user 2026-10-25); after 15:00 any clip may come in, under the same in-video limits. Inside one video
+- Reuse: clips on the video timeline (older ledgers: + "Open") of the last 6 checked videos of the same workspace are never used in the
+  first 15:00 (user 2026-10-25); after 15:00 any clip may come in, under the same in-video limits. A clip on 0:00-15:00
+  of one of the last 9 videos of the channel (ledger `open15`) never before 30:00 and loses to a fresh clip after it
+  (user 2026-11-06). AI <= 40 % of the footage time in every region, f_ films none (user 2026-11-12; plan.py AI_MAX / vtypes.ai_max; in timeline order: intro + story 1 first,
+  then real footage only). An AI clip on 42 videos of all channels is never planned again (ledger `retire` lists
+  its files in `.work/scripts/retire_ai_<date>.ps1`, the user runs it with -Apply). Inside one video
   (user 2026-10-22: save source, not too often, not too rarely) a clip may serve up to 6 slots, >= 90 s apart: another
   part of the clip first, else the same frames again, but no frame on screen more than 3 times and those repeats >= 5
-  min apart (plan.md ↻n, `=frame`); fresh clips still win at similar fit. Parts already on "Open" never come back.
+  min apart (plan.md ↻n, `=frame`); fresh clips still win at similar fit.
 - Zoom + speed (user 2026-10-22, plan.py `vary`, place.py applies, plan.md ⏱ / 🔍): real clips shot above 25 fps
   play frame-exact at 24/fps (30 fps = 80 %) except on strikes and in the hook; true slow motion (<= 50 %, 50/60 fps
   sources) only on calm holds >= 3 s, one per 20 s; aerial scenery every 2nd at 120 %. Punch-in 1.12-1.25 on 4K
@@ -241,8 +247,8 @@ good clips to WEAK.
 - A6: natural sound of what is on screen, this slot only (`A6=birds`, `A6=leaves`).
 - A7: music cue, plays once from this slot until the next A7 entry, `A7=off`, or file end. Library mood:
   `calm` (gentle, peaceful), `neutral`/`observe`, `mystery`/`wonder`/`explore`, `tense`/`danger`/`stalk`,
-  `chase`/`action`/`epic` (licensed music in Z:\Unseen\Sound, by mood folder) plus the older `tense` tracks.
-  Folder `opening` is reserved for timeline "Open", never used here.
+  `chase`/`action`/`epic` (Epidemic / Suno music in D:\Audio_lib\music, by mood folder) plus the older `tense` tracks.
+  Folder `opening` is reserved (formerly timeline "Open"), never used here.
 - Keywords that exist (others come back as audio THIẾU): beds/layers `forest`, `birds`, `insects`, `crickets`,
   `night`, `water`, `stream`, `rain`, `wind`, `thunder`, `fire`; animal foley `breathing`, `growl`, `attack`,
   `footsteps`, `run`, `grass`, `rustle`, `drinking`, `lapping`, `eating`, `bite`, `bone`, `splash`, `swim`,

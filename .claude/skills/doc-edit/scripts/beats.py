@@ -1,4 +1,4 @@
-"""Beat / bar / hit map of one music file (numpy + ffmpeg, no tokens). plan.py snaps the intro cuts of "Edit" to it.
+"""Beat / bar / hit map of one music file (numpy + ffmpeg, no tokens). plan.py snaps the intro cuts of the video timeline to it.
 Analysis taken from the old intro-music-visualization music_map.py (2026-10-17). All numbers are measured, never "listened".
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/beats.py "<music file>" [seconds]

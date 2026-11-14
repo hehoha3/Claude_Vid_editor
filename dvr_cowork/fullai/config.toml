@@ -1,0 +1,41 @@
+[resolve]
+render_preset = "YouTube 1080 HEVC"
+# Existing repo's Resolve 21.1 notes say exclusive. If your installed API differs,
+# verify the official local Scripting/README.txt and change this before placing.
+# Every append checks actual start/end and aborts on a mismatch; never retries by deleting.
+source_end = "exclusive"
+# script_api = 'C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting'
+# script_lib = 'C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionscript.dll'
+
+[intro]
+# V1 left empty between the intro's last cut (fades to black 1.5 s) and story 1 (fades in 2.5 s), as the 1h films
+# (plan.py GAP_BLACK, user 2026-11-06). Taken from the hook window's end: story and narrator timing unchanged.
+gap_black_s = 0.6
+
+[audio]
+shot_db = -12.0
+music_db = -24.0
+wind_db = -3.36
+# A5 clear bird calls on the calm shots (user 2026-11-05); starting gain, listen against the narrator.
+bird_db = -20.0
+# A3 fade-in/out handles set on each Resolve item (seconds); drag them in review to adjust.
+fade_s = 2
+# Wind rises out of the intro song's natural decay at the hook cut.
+wind_fade_in_s = 4
+# A3/A4 scene beds overlap by this much and crossfade (1h beds: 4 s).
+bed_crossfade_s = 4
+# A5 pre-lap (1h PRELAP, user 2026-11-06): story 1's wind rises this long before the black gap and runs this long
+# into the story, fading in / out over the same span; 0 = off.
+prelap_s = 4
+
+[prompts]
+# Clip length = slot + 1 s, up to the half second (6 s -> 7, 8.7 -> 10; prompt_rules.dur_s, user 2026-11-09), beats at 20/50/70 %.
+# Prefix of every prompt, then the shot. `motion` follows the location, right before the timed beats.
+# No "Cinematic / BBC Earth / national geographic photography" (user 2026-11-10: those pulled slow-motion looks);
+# prompt_rules.SPEED is said before this style.
+style = "Wildlife documentary footage, 4k ultra-realistic, detailed animal textures, No text, no logo (BBC, National Geographic, ….), No voiceover, no background music, natural sound"
+# Region locks (user 2026-11-05): motion + color per region. A region without a table here stops `prompts` with a
+# reminder; amazon / africa locks are written by the user later.
+[prompts.regions.frozen]  # was himalaya (user 2026-11-12)
+motion = "Fast, powerful, continuous action in every second: the animals run, leap, scramble, lunge and turn at full real-world speed, bodies always moving, snow and stones flying; no standing still, no slow walking, no posing, no pauses between beats."
+color = "Neutral 5600K white balance, true-white snow, natural warm-neutral color: no blue, cyan or teal tint or grade."
