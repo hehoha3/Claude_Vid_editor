@@ -151,7 +151,7 @@ def put(mp, tl, it, media, rec, n, sin, fps):
         res = mp.AppendToTimeline([{"mediaPoolItem": it, "startFrame": a, "endFrame": a + k, "mediaType": media,
                                     "trackIndex": 1, "recordFrame": rec}])
         ti = res[0] if res else None
-        if not ti:
+        if not ti or ti.GetEnd() is None:   # Resolve returns an empty item when it cannot place the clip
             return None
         d = int(ti.GetEnd()) - int(ti.GetStart())
         if d == n:

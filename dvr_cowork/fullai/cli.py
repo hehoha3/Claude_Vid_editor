@@ -8,11 +8,11 @@ from ..resolve_conn import ResolveConnectionError
 
 
 def parser():
-    p=argparse.ArgumentParser(prog="dvr_cowork ai",description="full-AI 8-15p (any region): voice -> prompts -> shots -> review -> done")
+    p=argparse.ArgumentParser(prog="dvr_cowork ai",description="full-AI 8-180p (any region): voice -> prompts -> shots -> review -> done")
     sub=p.add_subparsers(dest="command",required=True)
     q=sub.add_parser("init");q.add_argument("video");q.add_argument("--minutes",type=float,help="default: the profile's")
-    q.add_argument("--title");q.add_argument("--region",help="himalaya | amazon | africa (default: himalaya)")
-    q.add_argument("--type",default="full_ai_mountain",help="profile or alias (full-AI)")
+    q.add_argument("--title");q.add_argument("--region",help="frozen | amazon | africa (default: the folder name's, else frozen)")
+    q.add_argument("--type",default="full_ai",help="profile or alias (full-AI)")
     q=sub.add_parser("voice-ready",help="conform -> A2 + SRT -> prompts in one call");q.add_argument("video")
     q.add_argument("--apply",action="store_true")
     q=sub.add_parser("shots-ready",help="ingest -> body on V1/A1 -> hook contact sheets");q.add_argument("video")
@@ -22,7 +22,8 @@ def parser():
     for cmd in ("build","validate","plan","conform","ingest","sheets","hook","status","info","check","render-status"):
         q=sub.add_parser(cmd);q.add_argument("video")
     q=sub.add_parser("prompts");q.add_argument("video");q.add_argument("--reissue",action="store_true")
-    q.add_argument("--only",type=lambda s:[int(x) for x in s.split(",")],help="redo list: shot IDs, e.g. 3,7,12")
+    q.add_argument("--renumber",action="store_true",help="new slot layout, shots/ empty: old manifest kept, IDs from 1")
+    q.add_argument("--only",type=lambda s:[int(x.rsplit("_",1)[-1]) for x in s.split(",")],help="redo list: shot IDs, e.g. 3,7,12 or c3v6_3,c3v6_7")
     for cmd in ("voice","assemble","done"):
         q=sub.add_parser(cmd);q.add_argument("video");q.add_argument("--apply",action="store_true")
     sub.choices["assemble"].add_argument("--rehook",action="store_true",help="replace this engine's old intro items (backup first)")
@@ -30,7 +31,7 @@ def parser():
     q.add_argument("--wind");q.add_argument("--beds",help="JSON {scene id: licensed bed file}; default .production/beds.json")
     q.add_argument("--birds",help="JSON {prompt id: licensed bird file}; default .production/birds.json")
     q.add_argument("--replace",action="store_true");q.add_argument("--apply",action="store_true")
-    q=sub.add_parser("next-video");q.add_argument("channel");q.add_argument("--region",default="himalaya")
+    q=sub.add_parser("next-video");q.add_argument("channel");q.add_argument("--region",default="frozen")
     return p
 
 
@@ -61,7 +62,7 @@ def main(argv=None):
                     "intro":(plan.get("rules") or {}).get("intro",{}).get("mode","five_roles_6s")}
         elif cmd in ("conform","ingest","sheets","hook"): result=getattr(pipeline,cmd)(args.video)
         elif cmd=="prompts":
-            with pipeline.lock(prod(args.video)/"files.lock"): result=pipeline.missing_prompts(args.video,args.reissue,args.only)
+            with pipeline.lock(prod(args.video)/"files.lock"): result=pipeline.missing_prompts(args.video,args.reissue,args.only,args.renumber)
         elif cmd=="status": result=read_json(prod(args.video)/"state.json")
         else:
             from . import resolve_ops as ro

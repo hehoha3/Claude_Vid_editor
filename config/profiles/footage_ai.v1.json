@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "profile_id": "footage_ai",
+  "profile_version": 1,
+  "enabled": true,
+  "label": "footage+AI 8-180p (AI <= 40 %)",
+  "engine_id": "footage_long",
+  "default_region": null,
+  "regions": [
+    "amazon",
+    "africa",
+    "frozen"
+  ],
+  "runtime": {
+    "default_minutes": 60,
+    "min_minutes": 8,
+    "max_minutes": 180
+  },
+  "note": "user 2026-11-12: AI <= 40 % of the footage time in every region (vtypes.AI_MAX); generated clips: region _check (library) or <video>/shots (one-time).",
+  "capabilities": {
+    "footage_scan": true,
+    "footage_tag": true,
+    "library_match": true,
+    "ai_clips": true,
+    "external_video_generation": false
+  },
+  "state_backend": "dvr_cowork.jobs",
+  "refs": {
+    "author": [
+      ".claude/skills/create-doc-mov/SKILL.md"
+    ],
+    "edit": [
+      ".claude/skills/doc-edit/SKILL.md"
+    ]
+  }
+}

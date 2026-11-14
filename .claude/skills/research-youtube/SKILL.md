@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: research-youtube
 description: Top 20 most-viewed YouTube videos of the last 10 days for a topic, with links (presets amazon-wildlife, africa-wildlife; or any topic, "(ai)" = AI-made only). Use for /research-youtube, "tìm video nhiều view nhất tuần", "top video chủ đề X", "trend YouTube tuần này", or a niche check before a new video topic.
 ---

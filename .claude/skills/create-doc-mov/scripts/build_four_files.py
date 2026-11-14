@@ -24,6 +24,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from dvr_cowork.vtypes import parse as parse_name, stories  # noqa: E402  story count by runtime (user 2026-11-12)
+
 TARGET = 3600.0
 SHOT_MAX, LONG_MAX, SHOT_MIN = 8.0, 12.0, 0.8
 REST_LIST, REST_HOOK = 3.0, 6.0
@@ -206,6 +209,14 @@ def build(src_path, out, check=False):
             warn.append(f"{sc['id']}: no footage status (need:)")
     if abs(prev - TARGET) > 0.01:
         err.append(f"scenes end at {stamp(prev)}, target {stamp(TARGET)}")
+    # story count from the runtime (user 2026-11-12, dvr_cowork.vtypes.stories): scene ids k.x, 0.x = intro
+    ks = {int(sc["id"].split(".")[0]) for sc in scenes if sc["id"].split(".")[0].isdigit()} - {0}
+    named = parse_name(Path(out).parent) if out else None  # films before the f_ / fa_ prefixes keep their count
+    if named and named["type"] and 8 <= TARGET / 60 <= 180 and not meta.get("stories_reason"):
+        opts = [o["stories"] for o in stories(TARGET / 60)["options"]]
+        if len(ks) not in opts:
+            warn.append(f"{len(ks)} stories in {TARGET / 60:g} min; options {opts} (profile stories), "
+                        "or a `stories_reason:` header line")
     for a, b in zip(lines, lines[1:]):
         if a["t"] + a["d"] > b["t"] + 0.05:
             err.append(f"voice block {a['n']} overlaps block {b['n']} by {a['t'] + a['d'] - b['t']:.1f} s")

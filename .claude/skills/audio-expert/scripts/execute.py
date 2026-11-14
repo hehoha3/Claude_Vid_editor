@@ -110,6 +110,9 @@ def main(video, run, replace, rollback, additive=False):
     cache = json.loads(cache_p.read_text("utf-8")) if cache_p.exists() else {}
     ok = skipped = 0
     failed, vol_fail = [], 0
+    pj = cache_p.parent / "plan.json"  # A7 after the intro = background level (place.level, user 2026-11-14)
+    pj = json.loads(pj.read_text("utf-8")) if pj.exists() else {}
+    body = dp.intro_end(pj) if "intro" in pj else None
     for p in plan:
         tr, a, b2 = p["track_index"], p["timeline_start_frame_relative"], p["timeline_end_frame_relative_exclusive"]
         if (tr, a, b2) in have:
@@ -140,7 +143,7 @@ def main(video, run, replace, rollback, additive=False):
         if fd:
             ti.SetFades({"FadeIn": fd, "FadeOut": fd})
         lu = dp.loudness(p["source_path"], cache)
-        if lu is not None and not ti.SetProperty("AudioVolume", round(dp.TARGET[tr] - lu, 1)):
+        if lu is not None and not ti.SetProperty("AudioVolume", round(dp.level(tr, a / fps, body) - lu, 1)):
             vol_fail += 1
         with log_p.open("a", encoding="utf-8") as f:
             f.write(json.dumps({"placement_id": p["placement_id"], "track": tr, "start": a, "end": b2,

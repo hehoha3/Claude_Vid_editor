@@ -7,14 +7,15 @@ from pathlib import Path
 from .core import (Stop, atomic_text, digest, event, frames, lock, numbered, object_hash,
                    probe, prod, read_json, run, stamp, unchanged, video_path, write_json, day_project)
 from .story import bible, build, load_plan, pinned_profile, prompt_text, region_locks
-from ..prompt_rules import csv_text, dur_s, shot_size
+from ..prompt_rules import csv_text, dur_s, shot_id, shot_size
+from ..vtypes import shot_media
 
 
 ROTATION=("migration","lost","predator","mother","throne")
 
 
-def next_video(key, region="himalaya", base="D:/"):
-    """One call for /create-doc-mov Chann_N: channel dir, next <region>_DDMMYY_N (user 2026-11-05; was vid_), recent
+def next_video(key, region="frozen", base="D:/"):
+    """One call for /create-doc-mov Chann_N: channel dir, next a_<region>_DDMMYY_N (user 2026-11-12: type prefix), recent
     archetypes/casts. Skips _pushed."""
     import re
     from datetime import datetime
@@ -23,6 +24,8 @@ def next_video(key, region="himalaya", base="D:/"):
     roots=[p for p in Path(base).glob(f"Chann_{m[1]}_*") if p.is_dir()]
     if len(roots)!=1: raise Stop(f"Expected one {base}Chann_{m[1]}_* folder, found {[str(p) for p in roots]}")
     root=roots[0]; today=datetime.now().strftime("%d%m%y")
+    from ..vtypes import folder
+    name=lambda n: folder("full_ai",region,today,n)
     folders=[p for d in (root,root/"_done") if d.is_dir() for p in d.iterdir() if p.is_dir() and p.name.lower()!="_pushed"]
     # each channel numbers its own day (user 2026-11-09), as create-doc-mov new_video.py: Chann_3's first film is _1
     from ..videokey import day_index
@@ -35,11 +38,11 @@ def next_video(key, region="himalaya", base="D:/"):
             recent.append({"folder":p.name,"title":s.get("title"),"archetype":s.get("archetype"),
                            "cast":[c.get("species") for c in s.get("characters",[])]})
     last=next((r["archetype"] for r in recent if r["archetype"] in ROTATION),None)
-    return {"channel_dir":str(root),"next_video":str(root/f"{region}_{today}_{n}"),"resolve_project":day_project(f"{region}_{today}_{n}"),
+    return {"channel_dir":str(root),"next_video":str(root/name(n)),"resolve_project":day_project(name(n)),
             "next_archetype":ROTATION[(ROTATION.index(last)+1)%5] if last else ROTATION[0],"recent":recent}
 
 
-def initialize(video, minutes=None, title=None, region=None, profile="full_ai_mountain"):
+def initialize(video, minutes=None, title=None, region=None, profile="full_ai"):
     import math
     from ..profile import create
     v=video_path(video)
@@ -91,7 +94,7 @@ def conform(video):
         return {"blocks":len(media),"occupancy":new["voice_occupancy"],"runtime_s":new["runtime_f"]/new["fps"]}
 
 
-def missing_prompts(video, reissue=False, only=None):
+def missing_prompts(video, reissue=False, only=None, renumber=False):
     v=video_path(video)
     plan=load_plan(v,conformed=True)
     receipt=prod(v)/"voice_receipt.json"
@@ -102,6 +105,11 @@ def missing_prompts(video, reissue=False, only=None):
         raise Stop("Narrator A2 receipt does not match this conformed plan")
     assert_voice_media(v,plan)
     frozen=prod(v)/"manifest.json"
+    if frozen.exists() and renumber:
+        # Explicit user request only (2026-11-09, v2 -> v3 shot layout): allowed while no shot exists; old manifest kept.
+        if media:=shot_media(v):
+            raise Stop(f"--renumber refused: shots/ holds {len(media)} generated clip(s); their IDs are issued")
+        frozen.rename(frozen.with_name(f"manifest.{datetime.now():%Y%m%d_%H%M%S}.json"))
     if frozen.exists() and reissue:
         # Explicit user request only: same slot→ID mapping, new text; the old manifest is kept, never deleted.
         old=read_json(frozen)
@@ -119,7 +127,7 @@ def missing_prompts(video, reissue=False, only=None):
         ids=[c["id"] for c in plan["source"]["characters"]]
         rows=[]
         from ..profile import pinned
-        region=(pinned(v)[0] or {}).get("region_id") or "himalaya"
+        region=(pinned(v)[0] or {}).get("region_id") or "frozen"
         for sh in (s for s in plan["slots"] if s["prompt_id"]):
             i=sh["prompt_id"]; text=prompt_text(plan,sh,region)
             rows.append({"prompt_id":i,"title":sh["title"],"file":f"{i}.mp4","slot":sh["id"],"scene":sh["scene"],
@@ -141,7 +149,8 @@ def missing_prompts(video, reissue=False, only=None):
     table=[]
     for r in rows:
         sh=by.get(r["slot"],{}); cast=[names.get(c,c) for c in r.get("in_frame","").split()]
-        table.append({"shot_id":r["prompt_id"],"cluster":r["scene"],"tc_in":stamp(r["start_f"]/fps),
+        sid=shot_id(v,r["prompt_id"])  # c3v6_9 (user 2026-11-10); core.numbered reads its trailing 9
+        table.append({"shot_id":sid,"cluster":r["scene"],"tc_in":stamp(r["start_f"]/fps),
                       "tc_out":stamp(r["end_f"]/fps),"dur_s":r.get("dur_s") or dur_s(r["duration_s"]),"kind":"ai_generated",
                       "animal":", ".join(cast),"action":sh.get("action",""),
                       "environment":sh.get("location") or src["geography"],"time_of_day":"daylight",
@@ -149,7 +158,7 @@ def missing_prompts(video, reissue=False, only=None):
                       "direction":sh.get("direction",""),"mo_ta":r.get("title") or "",
                       "search_keywords":" ".join(cast+["snow mountain wildlife",shot_size(sh.get("camera"))]).strip(),
                       "generation_prompt":r["prompt"],
-                      "reason":f"save as shots/{r['prompt_id']}.mp4"+(f"; hook candidate ({r['hook_role']})"
+                      "reason":f"save as shots/{sid}.mp4"+(f"; hook candidate ({r['hook_role']})"
                                                                       if r.get("hook_role","none")!="none" else "")})
     atomic_text(v/"missing-prompt.csv",csv_text(table))
     atomic_text(v/"lock-assets.md",bible(src))

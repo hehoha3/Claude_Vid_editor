@@ -20,9 +20,10 @@ def channel_of(path) -> str | None:
 
 
 def day_project(name: str) -> str:
-    """<region>_DDMMYY_N (or its work key <video>__Chann_N) -> the day project vid_DDMMYY that holds every film of
-    every channel of that day (user 2026-11-06; before: vid_DDMMYY_N); any other name, vid_* included, stays itself."""
-    m = re.fullmatch(r"(?!vid_)[a-z]+_(\d{6})(?:_\d+)?", str(name).split(SEP)[0], re.I)
+    """[f_|fa_|a_]<region>_DDMMYY_N (or its work key <video>__Chann_N) -> the day project vid_DDMMYY that holds every
+    film of every channel of that day (user 2026-11-06; before: vid_DDMMYY_N); any other name, vid_* included, stays
+    itself."""
+    m = re.fullmatch(r"(?!vid_)(?:[a-z]+_)+(\d{6})(?:_\d+)?", str(name).split(SEP)[0], re.I)
     return f"vid_{m[1]}" if m else str(name).split(SEP)[0]
 
 
@@ -56,10 +57,11 @@ def homes(name: str, globs=None) -> list[Path]:
 def day_index(day: str, chann_dir, work=None) -> int:
     """_N of the next film of one channel on day DDMMYY (user 2026-11-09): each channel numbers its own films, 1 + the
     highest _N that channel used that day (its folder and _done, never _pushed; a name without _N counts as 1), so
-    Chann_3's first film is <region>_DDMMYY_1 whatever Chann_1 made. With `work` (.work/doc_edit) the channel's keys
+    Chann_3's first film is <type>_<region>_DDMMYY_1 whatever Chann_1 made; every type and region shares the count
+    (the timeline channN_vidK takes K). With `work` (.work/doc_edit) the channel's keys
     <name>__Chann_N count too, and a plain key counts unless its name lives only in other channels (it may be this
     channel's film that went to _pushed, whose work folder must not be reused)."""
-    pat = re.compile(rf"^[a-z]+_{day}(?:_(\d+))?$", re.I)
+    pat = re.compile(rf"^(?:[a-z]+_)+{day}(?:_(\d+))?$", re.I)
     root, ch = Path(chann_dir), channel_of(chann_dir)
     names = [q.name for base in (root, root / "_done") if base.is_dir()
              for q in base.iterdir() if q.is_dir() and q.name.lower() != "_pushed"]
@@ -132,6 +134,12 @@ def selftest():
     assert timeline_name("africa_061126_7__Chann_1") == "chann1_vid7" and timeline_name("africa_061126_2") is None
     assert timeline_name(r"D:\Chann_3_y\_done\himalaya_061126_4") == "chann3_vid4"
     assert timeline_name(r"D:\Chann_1_a\amazon_311026") == "chann1_vid1"
+    assert day_project("fa_africa_121126_2__Chann_1") == "vid_121126"
+    assert timeline_name(r"D:\Chann_1_a\a_frozen_121126_4") == "chann1_vid4"
+    with tempfile.TemporaryDirectory() as t:  # user 2026-11-12: prefixed and legacy names share one day count
+        for d in ("Chann_1_a/africa_121126_1", "Chann_1_a/fa_africa_121126_2", "Chann_1_a/a_frozen_121126_3"):
+            (Path(t) / d).mkdir(parents=True)
+        assert day_index("121126", Path(t) / "Chann_1_a") == 4
     print("videokey selftest ok")
 
 

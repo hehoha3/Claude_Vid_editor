@@ -34,6 +34,21 @@ for real reasoning (thoughts are billed as output); raise `--max-tokens` only af
 `check` = free key + model lookup. `usage` = token totals from `.work/gemini/usage.jsonl` (no call).
 `--dry-run` = cache path, no call.
 
+## locate (Claude uses it on its own, CLAUDE.md rule 6)
+`gemini_bridge.py locate --question "<what to find/change, English>" --file <file|folder> [--file ...] --root .`
+-> JSON `ranges` (`file`, `start`, `end`, `note`; validated against the real files, clamped, max 6 x 120 lines),
+`read_lines` / `of_lines`. Gemini gets the files line-numbered (project only; .py .md .toml .ps1 .yaml; `.venv`,
+`__pycache__`, `.secrets`, caches, `_pushed` skipped); default `gemini-3.5-flash`, busy -> one flash-lite call
+(`warning`). Cached per question + file contents. Then Read each range with offset/limit. A known identifier ->
+Grep (complete, cheaper); locate can miss a use (2026-11-14 test: 3 of 4), so Grep the name before editing.
+Empty `ranges` -> Grep, never re-ask.
+
+## vision (frame QA)
+`dvr_cowork frames --at ... --stats --gemini` -> each still line ends `| gemini: OK` or `FLAG <issue>: <where>` (+ a
+`gemini: N flagged` line). Claude Reads only the flagged / `?` stills + one OK as control. Raw call: `gemini_bridge.py
+vision --task "..." --image F [--image F]...` (max 24, sent as 1024 px JPEG, ~1.1k tokens each; flash, busy -> one
+flash-lite call). Trial 2026-11-14: 5/5 stills agreed with Claude's own look. Gemini error -> view the stills yourself.
+
 ## Rules
 1. Never read, print, log, or transmit API keys to Claude. Secret lives in OS credential store (keyring), sent only
    in the request header by Python.

@@ -17,11 +17,6 @@
       "Bash(*gen_swap.py*--apply*)"
     ]
   },
-  "enabledPlugins": {
-    "ponytail@ponytail": false,
-    "context-mode@context-mode": false,
-    "superpowers@claude-plugins-official": false
-  },
   "hooks": {
     "SessionStart": [
       {

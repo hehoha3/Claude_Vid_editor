@@ -37,6 +37,14 @@ from dvr_cowork.resolve_ops import (_norm, audio_bin, clip_fps, ensure_audio_tra
 
 # starting levels (integrated LUFS per clip); final mix is done by ear in Fairlight
 TARGET = {3: -32, 4: -32, 5: -34, 6: -28, 7: -26, 8: -22, 9: -22}
+# user 2026-11-14 (footage + footage+AI): after the intro A7 is only a background bed under the narrator, low but
+# still heard; the intro music keeps TARGET[7]. Full-AI films have their own mix (fullai), not this.
+A7_BODY = -36
+
+
+def level(tr, start, body):
+    """Starting LUFS of an audio piece: A7 starting at / after the body (story 1, intro_end) -> A7_BODY."""
+    return A7_BODY if tr == 7 and body is not None and start >= body - 0.05 else TARGET[tr]
 BED_OVERLAP = 4.0
 SFX_TAIL = 2.0  # s an A8/A9 hit may run past the end of its slot
 A1_DB = -12  # AI clips bring their own audio to A1, this much below the clip level (user rule 2026-10-09)
@@ -386,6 +394,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         slots = skip_intro(slots, plan["intro"])
         print(f"--skip-intro: V1/audio/markers from {plan['intro']:.1f}s on; 0:00-{plan['intro']:.1f}s left empty")
     events = [] if (video_only or a1_only or fill) else audio_events(slots, end)
+    body = intro_end(plan) if "intro" in plan else None  # A7 from here on: background level A7_BODY (level())
     intro_music = any(e.get("pieces") and e.get("status") == "OK" for s in slots for e in s["audio"])
     vids = [s for s in slots if s["status"] in ("OK", "WEAK", "FALLBACK")]
     if audio_only:  # --audio-only: A3-A9 only; V1, A1, A2 and the markers stay as they are
@@ -545,7 +554,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         if fi or fo:
             ti.SetFades({"FadeIn": fi, "FadeOut": fo})
         lu = loudness(path, cache)
-        if lu is not None and not ti.SetProperty("AudioVolume", round(TARGET[lvl] - lu, 1)):
+        if lu is not None and not ti.SetProperty("AudioVolume", round(level(lvl, start, body) - lu, 1)):
             vol_fail += 1
     cache_p.write_text(json.dumps(cache, indent=0), "utf-8")
 

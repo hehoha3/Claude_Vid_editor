@@ -193,7 +193,7 @@ Side shot = any footage shot whose `need` has no `[tag]` of a main character.
 - Reuse: clips on the video timeline (older ledgers: + "Open") of the last 6 checked videos of the same workspace are never used in the
   first 15:00 (user 2026-10-25); after 15:00 any clip may come in, under the same in-video limits. A clip on 0:00-15:00
   of one of the last 9 videos of the channel (ledger `open15`) never before 30:00 and loses to a fresh clip after it
-  (user 2026-11-06). AI <= 42 % of the footage time, Amazon no cap (plan.py AI_MAX / AI_MAX_REGION; in timeline order: intro + story 1 first,
+  (user 2026-11-06). AI <= 40 % of the footage time in every region, f_ films none (user 2026-11-12; plan.py AI_MAX / vtypes.ai_max; in timeline order: intro + story 1 first,
   then real footage only). An AI clip on 42 videos of all channels is never planned again (ledger `retire` lists
   its files in `.work/scripts/retire_ai_<date>.ps1`, the user runs it with -Apply). Inside one video
   (user 2026-10-22: save source, not too often, not too rarely) a clip may serve up to 6 slots, >= 90 s apart: another

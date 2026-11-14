@@ -173,6 +173,8 @@ def cmd_finish(a):
     for k, dflt in (("green_sat", 0), ("gamma", 1.1), ("curve", 6)):  # None = not passed; a typed value always wins
         if getattr(a, k) is None:
             setattr(a, k, AFRICA[k] if africa else dflt)
+    if a.no_color:  # frozen, ex-himalaya (user 2026-11-11): light (+ --curve) only, colour layers stay neutral
+        wb, warm, vib, a.yellow_sat, a.green_sat = [0, 0, 0], 0, 0, 0, 0
     x, y, cw, ch = [int(v) for v in a.crop.split(",")] if a.crop else crop_169(d["width"], d["height"])
     lay = LAYOUT[a.layout]
     lines = a.text.replace("\\n", "\n").split("\n")
@@ -252,6 +254,7 @@ def cmd_finish(a):
     q = render_final(psd, final)
     if a.exposure is None and a.vibrance is None:  # one measured correction toward TARGET
         dev, dvib = look_delta(still_stats(final))
+        dvib = 0 if a.no_color else dvib
         if abs(dev) > 0.1 or abs(dvib) > 6:
             ev, vib = round(clamp(ev + dev, -0.3, 1.2), 2), int(clamp(vib + dvib, 0, 80))
             edit_psd(psd, [("layer.setAdjustment", {"layer": ids["BRIGHTNESS"], "exposure": ev, "gamma": a.gamma}),
@@ -315,7 +318,7 @@ def main():
     f.add_argument("--text", required=True, help=r"headline; \n = line break")
     f.add_argument("--logo", required=True)
     f.add_argument("--prefix", default="", help="output name prefix, e.g. chann1_ (logo ava1)")
-    f.add_argument("--region", choices=["amazon", "africa", "himalaya", "ocean"],
+    f.add_argument("--region", choices=["amazon", "africa", "frozen", "himalaya", "ocean"],  # himalaya = old frozen
                    help="look: africa = AFRICA defaults, the others = the default look")
     f.add_argument("--layout", choices=["A", "B"], default="A")
     f.add_argument("--out-dir", default=r"D:\Thumbs")
@@ -343,6 +346,7 @@ def main():
     f.add_argument("--subject-ev", type=float, default=0.15)
     f.add_argument("--bg-ev", type=float, help="BG_DARKEN EV; default 0, africa -0.15")
     f.add_argument("--bg-sat", type=int, default=0)
+    f.add_argument("--no-color", action="store_true", help="WB/WARM/HSL/VIBRANCE neutral; exposure stays auto")
     f.add_argument("--sharpen", type=int, default=60, help="unsharp amount on subject")
     f.add_argument("--vignette", type=float, default=0.06, help="VIGNETTE layer opacity 0..1")
     f.set_defaults(fn=cmd_finish)

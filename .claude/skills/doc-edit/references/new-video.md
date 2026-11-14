@@ -1,11 +1,13 @@
-## New video (footage+AI 1-3h): `/doc-edit <audios-folder> [amazon|africa|himalaya]`
+## New video (footage f_ / footage+AI fa_, 8-180 min): `/doc-edit <audios-folder> [amazon|africa|frozen]`
 
 Order (user 2026-11-05): **0 preflight -> A narration (background) + B plan (foreground) -> C intro music + re-plan
 -> D prompts (intro + story 1 only) -> E place**. The body after story 1 is filled at once by plan.py (BODY_SUB: the
 `--sub-all` + `--sub-broad` tiers, FALLBACK markers): no prompts there. Prompts come after C because the intro fit
-renumbers the groups (2026-11-05: prompts written before it had to be regenerated).
+renumbers the groups (2026-11-05: prompts written before it had to be regenerated). **f_ films** (no AI): skip D
+and reply part 5; plan's THIẾU go to the reply, the user then calls fill-THIEU / fallback-species. **Under 20 min**:
+the intro is 0:00-0:30 (`# INTRO 0:30`, `# STORY 1 00:30`; the mute test at 0:10 / 0:20 / 0:30), else 0:00-1:30.
 
-Region = the video folder's prefix (`amazon_` / `africa_` / `himalaya_`; old `congo_*` = amazon) or the command's
+Region = the video folder's name (`fa_africa_…`; old `africa_` / `amazon_`, `himalaya_` = frozen, `congo_` = amazon) or the command's
 word; neither -> ask, stop. `<video>` = the folder's parent (`D:\Chann_1_shadowCanopy\amazon_2\audios` -> `amazon_2`);
 outputs land in that video folder. Several audios folders (one per channel, user 2026-10-25): one agent per video
 runs B + D (files only) in parallel; A, C's `intro.py` order and E run one video after the other (one Resolve,
@@ -56,8 +58,8 @@ the timeline, bad timestamp line -> it stops: report it; never `--force-clear` w
    routing uses other track numbers: take its intent; the layout is SKILL.md "Tracks".
    Species in the library, one call: `plan.py --species lion,hyena,baboon --region <region> --video "<video>"` (comma
    or space list; `--video` adds `usable in intro + story 1: lion:614/881 ...` = clips outside the recent / opening
-   ledger). A species that leads the intro / story 1 with less than ~half usable -> ask the user before the beats
-   (user 2026-11-07): keep the ledger (more prompts) or `# LEDGER off` under `# BIOME` in part 01 (this film only).
+   ledger). Ledger (user 2026-11-09, always, no question): intro + story 1 keep it in full (THIẾU -> prompts);
+   from story 2 real footage of the ledger comes back (<= 2 slots a clip, penalised), AI clips never; `# LEDGER off` is gone.
 1b. **africa only, tag by species** (user 2026-10-20): cast species with < ~60 tagged clips per source ->
    `tag_source.py prepare africa_video africa_ai africa_ai_check --subject <cast,comma> --sample 60` (+ `savannah
    --subject landscape --sample 40` while savannah has < ~150 tagged), then the tag-source loop (Sonnet agents,
@@ -80,7 +82,10 @@ the timeline, bad timestamp line -> it stops: report it; never `--force-clear` w
    seen. `no=` words match whole words (+ -s / -es / -y / -ed / -ing): `no=male_lion` keeps "female lion",
    `no=cub` also refuses "cubs"; write `sparring`, not `spar`. Multi-species stories: every predator / prey line gets
    `no=<the other story's animals>` from the start. eucalyptus / koala / snow / autumn / zoo... are refused for every
-   slot, roads / vehicles / fences for landscape slots (plan.py BIOME_NO, SCENERY_NO).
+   slot, roads / vehicles / fences for landscape slots (plan.py BIOME_NO, SCENERY_NO). Frozen (user 2026-11-14): snow
+   passes; `# BIOME mountain` (cliffs, peaks, ibex, snow leopard) refuses sea / coast / sea ice / iceberg / tundra
+   scenery, polar + domestic species and people's things (MOUNTAIN_NO); `# BIOME polar` keeps them. No / wrong header ->
+   plan.py decides from the FILM / BIBLE words and prints `biome: ...`.
 2. **Beat sheet** (the judgement is Claude's, the mechanical grammar story.py's). Write it in 2-4 parts with the
    **Write tool** (`.work/doc_edit/<key>/beats_parts/01.txt` ...; never a bash heredoc), then
    `.venv/Scripts/python.exe .claude/skills/doc-edit/scripts/story.py expand "<folder>"` -> spec.txt (overwritten:
@@ -111,7 +116,7 @@ the timeline, bad timestamp line -> it stops: report it; never `--force-clear` w
        # REGION africa                   <- always, first line of part 01
        # END 29:50                       <- target length; omit = last sentence end + 2 s
        # INTRO 0:20                      <- 0:15-2:00 (> 0:30 = cold-open hook, mostly character shots); omit = 0:15
-       # OPENING action                  <- optional: landscape (default) | action; with # BIOME savanna|rainforest,
+       # OPENING action                  <- optional: landscape (default) | action; with # BIOME savanna|rainforest (frozen: mountain|polar),
        # BIOME savanna                      # STORY 1 01:30 (chapter starts), # FAST_UNTIL, '# TURN' under a ## N:
        # STORY 1 01:30                      edit-grammar "Opening ... the hook" + biome-story-pacing.md
        # LOOK dry                        <- optional ground look green|dry: first shot takes it, each next shot keeps
@@ -177,7 +182,8 @@ Then `dvr_cowork gaps` (must say 0 gaps to fill) and `dvr_cowork backups`.
    (no preview acts on the anchor animal, no outcome shown), the 1:30 reset, opening THIẾU, how story 1 ends on screen.
 5. Prompts: `<video>\missing-prompt.csv` path, count, roles per character ("báo: 3 predator_burst, 1 reaction"),
    relationship_wide clips, biology flags; the user saves the clips into `D:\AI_video\_check` (amazon),
-   `D:\AI_video\_africa\_check` (africa, flat) or `D:\AI_video\_himalaya\_check`.
+   `D:\AI_video\_africa\_check` (africa, flat) or `D:\AI_video\_frozen\_check` (library, reusable), or one-time
+   clips of this film into `<video>\shots` (same names).
 No "next step" line: the user calls the next command (Case 1 / Case 2, SKILL.md).
 
 User edits later -> change the beats part, expand, re-run (`/doc-edit plan`); never hand-edit plan.json. Videos placed

@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: hide-logo
 description: Remove broadcast / AI-generator logos (BBC, Veo, Gemini...) from shots - MiniMax-Remover inpainted copies into D:\AI_video\_nologo, relinked in Resolve; find logos in a folder; overwrite originals when a video is done. Use for /hide-logo, "shot ở 21:38 có logo góc trên trái", "remove the logo on shot_NNN", Object Removal of a logo.
 ---

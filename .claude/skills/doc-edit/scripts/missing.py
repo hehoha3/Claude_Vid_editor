@@ -14,8 +14,8 @@ Claude, not Gemini; one prompt per slot; 2026-11-05: intro + story 1 only, so no
     prey_escape L>R | side-on 300mm telephoto pan | <place> | bright daylight   <- one clip = prompt k of the group
     - <what happens, English, one beat>                                         <- beats, untimed (the script times them)
     ## +harpy_eagle                           <- extra group (not a THIẾU slot, e.g. daily life): saved to <AI_DIR>/<name>
-Prompt k of a group = slot k of the group (extras = the group's longest slot); clip length dur_s = the slot's next
-half second (3.2 -> 3.5, 5 -> 5.5, user 2026-11-05); beats per clip: < 5 s one, < 8 s up to two, else up to four.
+Prompt k of a group = slot k of the group (extras = the group's longest slot); clip length dur_s = the slot + 1 s,
+up to the half second (3.2 -> 4.5, 4 -> 5, user 2026-11-09); beats per clip: < 5 s one, < 8 s up to two, else up to four.
 --check / --write run the QC gates (references/missing-prompts.md); --write refuses on errors and writes
 <video>/missing-prompt.csv: the 19-column missing-scenes schema (prompt_rules.COLUMNS). <video> = the work key, the video folder or its audios folder.
 """
@@ -28,14 +28,14 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / ".claude" / "skills" / "scan-source" / "scripts"))
 from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.timecode import parse_clock as secs  # noqa: E402
-from scan_source import ROOTS  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 from plan import AGE_CAP, KILL, SEX_CAP  # noqa: E402  the story-truth words plan.py checks, same in the prompts
-from dvr_cowork.prompt_rules import TAIL, csv_text, dur_s, issues, render as render_prompt, shot_size  # noqa: E402  shared with full-AI
+from dvr_cowork.prompt_rules import SPEED, TAIL, csv_text, dur_s, issues, paced, render as render_prompt, shot_id, shot_size  # noqa: E402  shared with full-AI
 # where the user saves generated clips, per plan.json region: amazon = AI root of this machine (config.toml);
 # africa = D:\AI_video\_africa\_check (user 2026-10-22; organize.py --africa files them into _africa\<species>)
-AI_DIR = {"amazon": load_config()["paths"]["ai_video"], "africa": str(ROOTS["africa_ai_check"][0] / "_check"),
-          "himalaya": str(Path(load_config()["paths"]["ai_video"]) / "_himalaya" / "_check")}
+from dvr_cowork.vtypes import ai_max, check_dir, region_id  # noqa: E402
+AI_DIR = {"amazon": load_config()["paths"]["ai_video"], "africa": str(check_dir("africa")),
+          "frozen": str(check_dir("frozen"))}  # frozen (was himalaya, user 2026-11-12): D:\AI_video\_frozen\_check
 # prompt format (user 2026-11-05, input/SKILL.md formula): header with the clip's own length + untimed beats; the
 # shared TAIL (prompt_rules: moving animals, no stare-down, no contact) closes every prompt. 1h prompts carry no locks.
 BEAT = re.compile(r"-\s+(.+)")
@@ -52,7 +52,8 @@ OPPOSITE = {"L>R": "right to left", "R>L": "left to right"}
 BAD_MOVE = ("reverse", "backward", "turns around", "turning around", "u-turn", "mirrored", "flipped", "teleport",
             "orbit", "slow motion", "slow-motion")
 BAD_ENV = ("snow", "alpine", "conifer", "pine", "autumn", "desert", "dust cloud", "dusty")
-BAD_ENV_REGION = {"africa": ("snow", "alpine", "conifer", "pine", "autumn")}  # dry, dusty savanna is right there
+BAD_ENV_REGION = {"africa": ("snow", "alpine", "conifer", "pine", "autumn"),  # dry, dusty savanna is right there
+                  "frozen": ("conifer", "pine", "autumn", "desert", "dust cloud", "dusty", "jungle", "rainforest")}  # snow / alpine are the biome
 NO_GAIT = {"sloth": ("run", "sprint", "gallop", "charge"), "snake": ("run", "sprint", "leg", "gallop"),
            "python": ("run", "sprint", "leg", "gallop"), "anaconda": ("run", "sprint", "leg", "gallop"),
            "fish": ("run", "walk", "sprint")}
@@ -156,6 +157,8 @@ def check(p, gs):
             if len(r["beats"]) > max_beats(d):
                 errs.append(f"{gid}#{n}: {len(r['beats'])} beats for a {dur_s(d):g} s clip (max {max_beats(d)}: "
                             "one readable beat under 5 s, two under 8 s)")
+            if sp != "none" and "sloth" not in sp and (e := paced(r["beats"], dur_s(d) if d else None)):
+                errs.append(f"{gid}#{n}: {e}")
         for a in range(len(rows)):
             for b in range(a + 1, len(rows)):
                 if difflib.SequenceMatcher(None, rows[a]["text"], rows[b]["text"]).ratio() >= DUP:
@@ -223,10 +226,12 @@ def main(video, mode, rng=None):
     from dvr_cowork.videokey import video_key
     if Path(video).name.lower() == "audios":  # the audios folder, as plan.py / story.py take it
         video = str(Path(video).parent)
+    if not ai_max(video):  # f_ footage film (user 2026-11-12): no AI prompts
+        sys.exit(f"{Path(video).name} is a footage film (no AI): fill THIẾU with /doc-edit fill-THIEU or fallback-species")
     work = ROOT / ".work" / "doc_edit" / video_key(video)
     plan = json.loads((work / "plan.json").read_text("utf-8"))
     slots = plan["slots"]
-    region = plan.get("region", "amazon")  # plans before 2026-10-20 have no region: amazon
+    region = region_id(plan.get("region")) or "amazon"  # plans before 2026-10-20 have no region: amazon
     AI, BAD_ENV = AI_DIR[region], BAD_ENV_REGION.get(region, BAD_ENV)
     if rng:  # --range=0:00-6:30: only THIẾU slots starting inside it (user asks per part of the film)
         a, b = (secs(x) for x in rng.split("-"))
@@ -281,7 +286,7 @@ def main(video, mode, rng=None):
             slot, start, sec = slot_of(g, k)
             refused = ", ".join(f"{a} {b}" for a, b in (g or {}).get("refused", {}).items())
             table.append({
-                "shot_id": f"{gid}-S{slot:03d}" if slot else f"{gid}-X{k + 1}", "cluster": gid,
+                "shot_id": shot_id(out.parent, len(table) + 1), "cluster": gid,
                 "tc_in": tc(start) if slot else "", "tc_out": tc(start + sec) if slot else "",
                 "dur_s": dur_s(sec) if sec else "", "kind": "ai_generated",
                 "animal": "" if name == "none" else name, "action": r["role"], "environment": r["place"],
@@ -293,6 +298,7 @@ def main(video, mode, rng=None):
                 "generation_prompt": render(r, sec),
                 "reason": ("THIẾU: clip WEAK của intro" if g and any("intro WEAK" in (need[x].get("why") or "") for x in g["slots"])
                            else "THIẾU: không có trong kho") + (f" (kho bị loại: {refused})" if refused else "")})
+    renumbered(out, table, video_key(video))
     out.write_text(csv_text(table), "utf-8", newline="")
     print(f"{len(table)} prompts in {len(p)} groups -> {out}")
     for g in gs:
@@ -306,6 +312,22 @@ def main(video, mode, rng=None):
     print("groups without prompts:", missing)
 
 
+def renumbered(out, table, key):
+    """shot_id = the row number (c3v6_9, user 2026-11-10) and the clip's file name: a re-write that moves an ID
+    already generated to another slot would place that clip wrong -> stop (--range / new rows go after)."""
+    import csv
+    from dvr_cowork.jobs import generated_names
+    if not out.exists():
+        return
+    old = {r["shot_id"]: r.get("tc_in", "") for r in csv.DictReader(out.open(encoding="utf-8-sig"))}
+    new = {r["shot_id"]: r["tc_in"] for r in table}
+    made = {Path(n).stem for n in generated_names(key).values()}
+    moved = sorted(i for i in made & set(old) if new.get(i) != old[i])
+    if moved:
+        raise SystemExit(f"STOP: {len(moved)} generated clips would change slot ({', '.join(moved[:10])}): keep "
+                         f"{out.name} as it is, or ask the user (old clips -> re-place by hand)")
+
+
 def selftest():
     sl = [{"slot": 1, "status": "THIEU", "dur": 3.0, "need": "[C] Mèo lao", "filter": {"sp": ["golden cat"], "act": ["run"]}},
           {"slot": 2, "status": "THIEU", "dur": 4.0, "need": "[C] Mèo chạy", "filter": {"sp": ["golden cat"], "act": ["run"]}},
@@ -317,17 +339,17 @@ def selftest():
                       "action R>L | drone | dry savanna | dusk\n- x\n- y\n## G2\n"
                       "establishing static | drone | canopy | dawn\n- Mist rolls over the canopy.\n")
     assert len(p["G1"]) == 2 and (p["G2"][0]["role"], p["G2"][0]["vec"]) == ("establishing", "static")
-    assert render(p["G1"][0], 3.2) == ("Cinematic wildlife documentary, ultra-photorealistic 4K, 3.5-second single "
+    assert render(p["G1"][0], 3.2) == (SPEED + ". Wildlife documentary, ultra-photorealistic 4K, 4.5-second single "
                                        "continuous shot, 16:9, shot on long lens, dry savanna, bright daylight. "
                                        "A golden cat trots left to right. " + TAIL), render(p["G1"][0], 3.2)
-    assert "5.5-second" in render(p["G1"][0], 5) and "-second" not in render(p["G1"][0], None)
+    assert "6-second" in render(p["G1"][0], 5) and "-second" not in render(p["G1"][0], None)
     four = dict(p["G1"][1], beats=["a", "b", "c", "d"])
-    assert "0-2s: a. 2-5s: b. 5-6.5s: c. 6.5-9.5s: d." in render(four, 9), render(four, 9)  # 9 s slot -> 9.5 s clip
+    assert "0-2s: a. 2-5s: b. 5-7s: c. 7-10s: d." in render(four, 9), render(four, 9)  # 9 s slot -> 10 s clip
     g1 = {"id": "G1", "key": ("C", "golden cat", "run", "", ""), "clips": 2, "lines": [1], "slots": [1, 2],
           "durs": [3.2, 9.0], "starts": [0, 3.2]}
     assert slot_of(g1, 1) == (2, 3.2, 9.0) and slot_of(g1, 2) == (None, None, 9.0)
     e, _ = check({"G1": [dict(p["G1"][1], text=p["G1"][1]["text"] + " golden cat")]}, [g1])
-    assert any("2 beats for a 3.5 s clip" in x for x in e), e   # prompt 1 sits on the 3.2 s slot: one beat only
+    assert any("2 beats for a 4.5 s clip" in x for x in e), e   # prompt 1 sits on the 3.2 s slot: one beat only
     for bad in ("## G1\nCinematic nature documentary, BBC Earth style - x\n",                          # old one-line prompt
                 "## G1\naction L>R | Photorealistic wildlife | x | y\n- a\n",                          # header written by hand
                 "## G1\naction L>R | lens | x | y\n0-2s: a\n2-10s: b\n",                               # old timed beats
@@ -376,6 +398,9 @@ def selftest():
                  [{"id": "G1", "key": ("J", "jaguar", "run", "", ""), "clips": 2, "lines": [1], "slots": [1],
                    "durs": [4.0], "starts": [0]}])
     assert any("near-duplicate" in x for x in e)
+    assert not any("pace:" in x for x in e)  # 4 s slot -> 5 s clip: one beat "x" is allowed
+    e, _ = check({"G1": [dict(p["G1"][0], text=p["G1"][0]["text"] + " golden cat")]}, [g1])
+    assert any("pace:" in x for x in e), e  # "trots" alone on a 4.5 s clip
     print("selftest ok")
 
 

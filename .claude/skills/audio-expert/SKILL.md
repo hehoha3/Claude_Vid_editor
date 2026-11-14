@@ -26,7 +26,7 @@ release); silence is a choice (pre-attack, aftermath), not a gap to fill.
 Doc-edit output on A6-A9 may be replaced after the backup (`--replace`); anything the user placed by hand on A5-A9 is
 protected: ask first. Never timeline "Master".
 
-**Full-AI 8-15p videos** (user 2026-11-05: lighter than footage+AI, `dvr_cowork ai finish` places song + wind +
+**Full-AI videos** (a_; user 2026-11-05: lighter than the footage types, `dvr_cowork ai finish` places song + wind +
 birds by itself, doc-edit `references/full-ai.md` B; audio-expert only for a fetch or when the user asks for more):
 same timeline layout; `<video>` = `<folder name>__Chann_N`, every script with
 `DVR_TIMELINE=channN_vidK`. A3/A4 = the engine's wind beds, A5 = its birds, A7/A8 under the 30 s hook = its intro song: `execute.py

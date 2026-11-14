@@ -18,6 +18,8 @@ import atexit, datetime as dt, json, os, re, sqlite3, subprocess, sys, time
 from collections import defaultdict
 from pathlib import Path
 
+from .vtypes import ai_max, check_dir, region_id  # check_dir: amazon _check, africa _africa\_check, frozen _frozen\_check
+
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / ".work" / "doc_edit"
 DECISIONS = {"ingest": "INGEST_CHECK", "fill-existing": "FILL_EXISTING"}
@@ -169,6 +171,8 @@ def status():
                            vdir / "missing-prompt.csv")
             if st.startswith("planned") and not place_of(v):  # place.py writes project.txt
                 st, nxt = "planned, not placed", "/doc-edit <audios> (A2 + intro music + place)"
+            elif st.startswith("planned") and not ai_max(vdir):  # f_ footage film: no prompts, no Case 1
+                nxt = "/doc-edit fill-THIEU <video> (footage film: no AI)"
             elif st.startswith("planned, prompts out") and (not d or d[1] < dt.datetime.fromtimestamp(
                     prompts.stat().st_mtime).isoformat(timespec="seconds")):
                 st, nxt = "WAITING_FOR_USER", "user: Case 1 (clips in _check) or Case 2 (fill THIẾU)"
@@ -178,7 +182,7 @@ def status():
                 proj, _, ch = where.partition("/")
                 w = c.execute("select status, script, backup, started from writes where project=? and "
                               "coalesce(channel,'')=? order by id desc limit 1", (proj, ch)).fetchone()
-            line = f"  {v:<16} {pj.get('region', 'amazon'):<7} {where or '-':<20} {st:<22}"
+            line = f"  {v:<20} {region_id(pj.get('region')) or 'amazon':<7} {where or '-':<20} {st:<22}"
             line += f" decision {d[0]} {d[1][:16]}" if d else ""
             if w:
                 bad = w[0] == "RUNNING" and not busy
@@ -188,11 +192,6 @@ def status():
 
 
 # ------------------------------------------------------------------ Case 1: _check intake (PR 3)
-def check_dir(region):
-    from .config import load_config
-    ai = Path(load_config()["paths"]["ai_video"])
-    return ai / "_africa" / "_check" if region == "africa" else ai / "_check"
-
 
 def decodes(p):
     """'' when ffprobe sees a video stream and the last second decodes (a truncated download fails here)."""
@@ -206,13 +205,14 @@ def decodes(p):
     return (r.stderr.strip().splitlines() or ["ffmpeg failed"])[0][:80] if r.returncode else ""
 
 
-def check(video, wait=3.0):
-    """New files of the video's region _check: still copying (size moving), broken (not decodable) or ok; files seen
-    by an earlier check are named, not re-read. Nothing is moved or deleted (the user removes broken files)."""
+def check(video, wait=3.0, d=None):
+    """New files of the video's region _check (or of folder `d`: after-gen-vid passes <video>\\shots, user 2026-11-13):
+    still copying (size moving), broken (not decodable) or ok; files seen by an earlier check are named, not re-read.
+    Nothing is moved or deleted (the user removes broken files)."""
     sys.path.insert(0, str(ROOT / ".claude/skills/scan-source/scripts"))
     from scan_source import fast_hash
-    region = plan_of(video).get("region", "amazon")
-    d = check_dir(region)
+    region = region_id(plan_of(video).get("region")) or "amazon"
+    shared, d = d is None, Path(d) if d else check_dir(region)
     files = sorted(p for p in d.rglob("*") if p.is_file() and p.suffix.lower() in VIDEO_EXTS) if d.is_dir() else []
     size = {p: p.stat().st_size for p in files}
     if files:
@@ -233,7 +233,8 @@ def check(video, wait=3.0):
             out["broken" if why else "ok"].append(f"{p.name}: {why}" if why else p.name)
         others = [v for (v,) in c.execute("select distinct video from decisions where decision='INGEST_CHECK'")
                   if v != video and (DOC / v / "plan.json").exists()
-                  and plan_of(v).get("region", "amazon") == region and last_decision(c, v)[0] == "INGEST_CHECK"]
+                  and (region_id(plan_of(v).get("region")) or "amazon") == region
+                  and last_decision(c, v)[0] == "INGEST_CHECK"] if shared else []  # a video's own shots\ is not shared
     print(f"{video} ({region}) {d}: {len(files)} files | new ok {len(out['ok'])} | still copying "
           f"{len(out['copying'])} | broken {len(out['broken'])} | seen before {len(out['seen'])}")
     for k in ("copying", "broken"):
@@ -299,7 +300,7 @@ def generated(video):
 
 
 def generated_names(video):
-    """{content hash: file name when checked} of the generated clips; the name (G1-S016.mp4) is the
+    """{content hash: file name when checked} of the generated clips; the name (c3v6_9.mp4, before 2026-11-10 G1-S016.mp4) is the
     missing-prompt.csv shot_id the clip was made for, kept here after organize renamed the file."""
     try:
         with db() as c:

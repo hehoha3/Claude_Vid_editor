@@ -175,6 +175,9 @@ if __name__ == "__main__":
         ROOT = ROOTS["africa_ai_check"][0]
         CHECK = ROOT / "_check"
         ALIAS = {**ALIAS, **ALIAS_AFRICA}
+    if "--frozen" in sys.argv:  # user 2026-11-12: D:\AI_video\_frozen\_check -> _frozen\<species> (frozen_ai_check)
+        ROOT = ROOTS["frozen_ai_check"][0]
+        CHECK = ROOT / "_check"
     if "--allow-blur-dark" in sys.argv:  # file blur/dark clips too (issues stay in the tags)
         BLOCK -= {"blur", "dark"}
     ALLOW_UNSURE = "--allow-unsure" in sys.argv  # tiny subjects (ants) are always sure=false: file them if no blocking issue

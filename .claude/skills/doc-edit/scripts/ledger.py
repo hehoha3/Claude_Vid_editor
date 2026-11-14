@@ -2,6 +2,7 @@
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py show [<workspace>]
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <Resolve project>] [--timeline <name>] [--upload [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]]
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py push <video> [<video> ...] [--publish-at "YYYY-MM-DD HH:MM"]   # renders 1 by 1, uploads <= 3 side by side
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py backfill   # M6: open15 of entries before 2026-11-06
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py retire     # AI clips on >= 42 videos -> .ps1 for the user
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py --selftest
@@ -15,11 +16,12 @@ its library id (content hash; a hide-logo `_nologo` copy counts as its original)
 Ban for video V = clips + open_clips of the `recent` (config, default 6) newest OTHER videos of V's workspace.
 open15 (2026-11-06) = clips on 0:00-15:00: those of the 9 newest other videos never before 30:00 of V, penalised after.
 intro_week (2026-11-09) = intro clips of the channel's other videos within 7 days (checked: timeline "intro"; only
-planned: plan.json): never in an intro slot of V, hard (7. Open and `# LEDGER off` included).
+planned: plan.json): never in an intro slot of V, hard (7. Open included).
 An AI clip on 42 videos (every channel, ai_max_videos) is never planned again; done / retire list it for deletion.
 done (= /doc-edit done): final check, <video>/audio_licenses.md when missing (--licenses rewrites it): every audio
 file of the video timeline with a license, spans + title + author + license path (no license -> left out); render it ->
 <video>/Done_<video>.mp4 (preset "YouTube 1080 HEVC") -> with --upload (push) YouTube upload (dvr_cowork.youtube).
+<video>/shots/intro.mp4 (2026-11-13) -> bin 7. Open/vidK + timeline master_channN_vidK (intro + nested channN_vidK) is rendered.
 licenses <video>: only (re)write audio_licenses.md, no render. Works in a day project (bin Chann_N, timeline channN_vidK). Resolve stays
 open; the user moves the folder into _done himself (user 2026-10-26). Videos in _done keep their workspace.
 """
@@ -126,7 +128,7 @@ def intro_week(video, video_dir=None, work=None, days=INTRO_DAYS):
     """(clip ids, video names): the intro clips of every OTHER video of <video>'s channel whose day is within `days` of
     its own: ledger entries (timeline "intro", older entries their open15) + the plan.json intro slots of videos not
     checked yet (made the same day / in parallel: the ledger only learns a video at check / done). plan.py never puts
-    them in an intro slot, a "7. Open" clip and `# LEDGER off` included."""
+    them in an intro slot, a "7. Open" clip included."""
     from dvr_cowork.videokey import channel_of, homes, split
     ws = ws_of(video_dir or find_video(video))
     ch, me = (channel_of(ws) or "").lower(), split(video)[0].lower()
@@ -469,8 +471,95 @@ def licenses(project, vdir, fname="audio_licenses.md"):
 PRESET = "YouTube 1080 HEVC"
 
 
-def render_done(project, out_dir, timeline=None, name=None):
-    """Render <timeline> with the preset PRESET as Done_<project>.mp4 into out_dir and wait (user order 2026-10-13)."""
+INTRO_FILE = "intro.mp4"  # user 2026-11-13: <video>\shots\intro.mp4 = the channel intro, rendered before the film
+
+
+def master_timeline(project, vdir, body_name):
+    """<video>\\shots\\intro.mp4 (user 2026-11-13) -> imported into bin "7. Open/vidK"; timeline master_<body_name> in
+    "6. Timeline" = the intro (its own sound on A1, level untouched, unrelated to the film) then <body_name> nested whole
+    (edits of channN_vidK show up live). Reused when it already is exactly that (same intro file, same body length),
+    else deleted and rebuilt (a derived timeline: the done command owns it). -> (master name, body timeline) or None."""
+    from dvr_cowork.resolve_ops import (TIMELINE_BIN, _norm, ensure_bin, find_clip, find_timeline, open_bin_path,
+                                        timeline_fps)
+    intro = vdir / "shots" / INTRO_FILE
+    if not intro.is_file():
+        return None
+    body = find_timeline(project, body_name)
+    if not body:
+        raise SystemExit(f'no timeline "{body_name}": nothing rendered')
+    name, mp = f"master_{body_name}", project.GetMediaPool()
+    blen = body.GetEndFrame() - body.GetStartFrame()
+    old = find_timeline(project, name)
+    if old:
+        v1 = old.GetItemListInTrack("video", 1) or []
+        ip = v1[0].GetMediaPoolItem() if v1 else None
+        bp = v1[-1].GetMediaPoolItem() if len(v1) == 2 else None
+        if (ip and _norm(ip.GetClipProperty("File Path")) == _norm(intro) and bp
+                and bp.GetUniqueId() == body.GetMediaPoolItem().GetUniqueId() and v1[1].GetDuration() == blen):
+            print(f"master: {name} reused (intro + {body_name})")
+            return name, body
+        if project.GetCurrentTimeline() and project.GetCurrentTimeline().GetName() == name:
+            project.SetCurrentTimeline(body)
+        assert mp.DeleteTimelines([old]), f'could not delete the stale "{name}": nothing rendered'
+        print(f"master: {name} was not intro + {body_name} at its current length -> rebuilt")
+    prev, cur = mp.GetCurrentFolder(), project.GetCurrentTimeline()
+    try:
+        mp.SetCurrentFolder(ensure_bin(mp, open_bin_path(body_name)))
+        clip = find_clip(mp.GetCurrentFolder(), str(intro)) or (mp.ImportMedia([str(intro)]) or [None])[0]
+        assert clip, f"could not import {intro}: nothing rendered"
+        mp.SetCurrentFolder(ensure_bin(mp, TIMELINE_BIN))
+        tl = mp.CreateEmptyTimeline(name)
+        assert tl, f'could not create timeline "{name}": nothing rendered'
+        if timeline_fps(tl, project) != timeline_fps(body, project):
+            raise SystemExit(f"{name}: fps differs from {body_name}: set the project frame rate, nothing rendered")
+        project.SetCurrentTimeline(tl)
+        assert mp.AppendToTimeline([{"mediaPoolItem": clip}, {"mediaPoolItem": body.GetMediaPoolItem()}]), \
+            f'append intro + {body_name} to "{name}" failed: nothing rendered'
+        v1 = tl.GetItemListInTrack("video", 1) or []
+        assert len(v1) == 2 and v1[1].GetDuration() == blen, f'"{name}" V1 is not intro + {body_name}: check it'
+    finally:
+        mp.SetCurrentFolder(prev or mp.GetRootFolder())
+        if cur:
+            project.SetCurrentTimeline(cur)
+    print(f"master: {name} = {intro.name} ({v1[0].GetDuration()} fr, bin {open_bin_path(body_name)}) + {body_name}")
+    return name, body
+
+
+def _seconds(path):
+    """Container duration of a rendered file (ffprobe) -> float or None."""
+    import subprocess
+    try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                              str(path)], capture_output=True, text=True, timeout=60).stdout.strip()
+        return float(out)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def stale_done(project, vdir, tl_name):
+    """Done_<video>.mp4 rendered before the intro was added (its length != the master timeline's by > 1 s) -> renamed
+    Done_<video>_nointro[N].mp4 (never deleted: the user deletes it), so the master is rendered. -> the new path or None."""
+    from dvr_cowork.resolve_ops import find_timeline, timeline_fps
+    done_mp4 = vdir / f"Done_{vdir.name}.mp4"
+    tl = find_timeline(project, tl_name)
+    have = _seconds(done_mp4) if done_mp4.exists() and tl else None
+    want = (tl.GetEndFrame() - tl.GetStartFrame()) / timeline_fps(tl, project) if tl else None
+    if have is None or abs(have - want) <= 1.0:
+        return None
+    n, dst = 1, vdir / f"Done_{vdir.name}_nointro.mp4"
+    while dst.exists():
+        n += 1
+        dst = vdir / f"Done_{vdir.name}_nointro{n}.mp4"
+    done_mp4.rename(dst)
+    assert dst.exists() and not done_mp4.exists(), f"rename of {done_mp4} failed"
+    print(f"stale: {done_mp4.name} ({have:.1f}s) != {tl_name} ({want:.1f}s) -> renamed {dst.name}; delete it after "
+          f"checking the new render (PowerShell): Remove-Item -LiteralPath \"{dst}\"")
+    return dst
+
+
+def render_done(project, out_dir, timeline=None, name=None, nested=None):
+    """Render <timeline> with the preset PRESET as Done_<project>.mp4 into out_dir and wait (user order 2026-10-13).
+    nested: the body timeline inside a master (its subtitle tracks are switched off for the render too)."""
     import time
     from dvr_cowork.resolve_ops import find_timeline
     name = name or f"Done_{project.GetName()}"
@@ -491,9 +580,10 @@ def render_done(project, out_dir, timeline=None, name=None):
     cur = project.GetCurrentTimeline()
     project.SetCurrentTimeline(tl)
     # user 2026-10-21: the Done render carries no subtitles: switch the subtitle tracks off, restore them in finally
-    subs = [i for i in range(1, int(tl.GetTrackCount("subtitle") or 0) + 1) if tl.GetIsTrackEnabled("subtitle", i)]
-    for i in subs:
-        tl.SetTrackEnable("subtitle", i, False)
+    subs = [(t, i) for t in (tl, nested) if t
+            for i in range(1, int(t.GetTrackCount("subtitle") or 0) + 1) if t.GetIsTrackEnabled("subtitle", i)]
+    for t, i in subs:
+        t.SetTrackEnable("subtitle", i, False)
     # user 2026-10-24: every Done render uses the Resolve render preset "YouTube 1080 HEVC" (no codec fallback: a
     # missing preset or a failed render stops here, nothing moved)
     st, codec = {}, PRESET
@@ -510,8 +600,8 @@ def render_done(project, out_dir, timeline=None, name=None):
         if st.get("JobStatus") != "Complete":
             print(f"render with {codec} failed: {st.get('Error') or st}")
     finally:
-        for i in subs:
-            tl.SetTrackEnable("subtitle", i, True)
+        for t, i in subs:
+            t.SetTrackEnable("subtitle", i, True)
         if cur:
             project.SetCurrentTimeline(cur)
     if st.get("JobStatus") != "Complete":
@@ -534,7 +624,8 @@ def rerender(video, ws=None, proj=None, timeline=None):
     while (vdir / f"Done_{vdir.name}_v{n}.mp4").exists():
         n += 1
     licenses(project, vdir, f"audio_licenses_v{n}.md")
-    render_done(project, vdir, timeline, f"Done_{vdir.name}_v{n}")
+    m = None if timeline else master_timeline(project, vdir, os.environ.get("DVR_TIMELINE"))
+    render_done(project, vdir, m[0] if m else timeline, f"Done_{vdir.name}_v{n}", m[1] if m else None)
 
 
 def licenses_cmd(video, ws=None, proj=None):
@@ -575,18 +666,50 @@ def done(video, ws=None, proj=None, timeline=None, thumb=None, publish_at=None, 
         licenses(project, vdir)
     else:
         print(f"licenses: {vdir / 'audio_licenses.md'} kept (--licenses rewrites it)")
-    render_done(project, vdir, timeline, f"Done_{vdir.name}")
-    yt = "youtube: not uploaded (/doc-edit push uploads)"
-    if upload:  # user 2026-11-08: `/doc-edit done` = render + save only; `/doc-edit push` = done --upload (+ SEO)
-        # User 2026-11-07: no --thumb -> <video>\thumb\done.jpg/.png (the final the user approved and renamed), else none.
-        thumb = thumb or next((str(p) for p in sorted((vdir / "thumb").glob("done.*"))
-                               if p.suffix.lower() in (".jpg", ".jpeg", ".png")), None)
-        try:
-            from dvr_cowork import youtube
-            yt = youtube.upload(vdir, thumb, publish_at=publish_at)
-        except Exception as e:  # quota / network: the render stands, upload again by hand
-            yt = f"youtube: upload FAILED ({e}); retry: python -m dvr_cowork.youtube upload \"{vdir}\""
+    m = master_timeline(project, vdir, timeline or os.environ.get("DVR_TIMELINE"))  # shots\intro.mp4 -> master
+    if m:
+        stale_done(project, vdir, m[0])
+    render_done(project, vdir, m[0] if m else timeline, f"Done_{vdir.name}", m[1] if m else None)
+    timeline = m[0] if m else timeline
+    if upload == "later":  # push of several videos: renders one by one here, uploads side by side in push()
+        return vdir, timeline
+    yt = upload_one(vdir, thumb, publish_at) if upload else "youtube: not uploaded (/doc-edit push uploads)"
     print(yt)
+    finish(vdir, timeline, yt)
+
+
+def upload_one(vdir, thumb=None, publish_at=None):
+    """YouTube upload of Done_<video>.mp4 -> the `youtube:` line (never raises: the render stands)."""
+    # User 2026-11-07: no --thumb -> <video>\thumb\done.jpg/.png (the final the user approved and renamed), else none.
+    thumb = thumb or next((str(p) for p in sorted((vdir / "thumb").glob("done.*"))
+                           if p.suffix.lower() in (".jpg", ".jpeg", ".png")), None)
+    from dvr_cowork.videokey import video_key
+    if not (ROOT / ".work" / "doc_edit" / video_key(vdir) / "youtube_meta.json").exists():
+        return f"youtube: no youtube_meta.json for {vdir.name}: run SEO (--pick N) first, upload skipped"
+    try:
+        from dvr_cowork import youtube
+        return youtube.upload(vdir, thumb, publish_at=publish_at)
+    except Exception as e:  # quota / network: the render stands, upload again by hand
+        return f"youtube: upload FAILED ({e}); retry: python -m dvr_cowork.youtube upload \"{vdir}\" --apply"
+
+
+PUSH_PARALLEL = 3  # user 2026-11-13: uploads side by side (one upload rarely fills the line); YouTube quota ~6 a day
+
+
+def push(videos, ws=None, proj=None, publish_at=None):
+    """`/doc-edit push` of one or more videos (user 2026-11-13): each video's done (ledger, licenses, intro master,
+    render when missing) one after another (one Resolve writer), then the uploads side by side, at most PUSH_PARALLEL
+    (each its own API client; every line prefixed by the video); handoff lines after, in order."""
+    from concurrent.futures import ThreadPoolExecutor
+    ready = [done(v, ws, proj, upload="later") for v in videos]
+    with ThreadPoolExecutor(max_workers=min(PUSH_PARALLEL, len(ready))) as ex:
+        lines = list(ex.map(lambda r: upload_one(r[0], publish_at=publish_at), ready))
+    for (vdir, tl), yt in zip(ready, lines):
+        print(f"{vdir.parent.name[:7]}/{vdir.name} {yt}")
+        finish(vdir, tl, yt)
+
+
+def finish(vdir, timeline, yt):
     handoff(f"done {vdir.name} ({ws_of(vdir)}): rendered Done_{vdir.name}.mp4 (timeline {timeline}); {yt}; folder move = user")
     print(f"done {vdir.name}: rendered, Resolve left open; move {vdir} into {DONE} yourself")
     n, sc = retire(skip=vdir.name)
@@ -691,6 +814,10 @@ if __name__ == "__main__":
         done(a[1], ws, proj, a[a.index("--timeline") + 1] if "--timeline" in a else None,  # user 2026-10-26
              a[a.index("--thumb") + 1] if "--thumb" in a else None,
              a[a.index("--publish-at") + 1] if "--publish-at" in a else None, "--upload" in a, "--licenses" in a)
+    elif a[:1] == ["push"] and len(a) >= 2:  # user 2026-11-13: renders one by one, uploads side by side
+        opts = {"--ws", "--project", "--publish-at"}
+        vids = [x for i, x in enumerate(a[1:], 1) if not x.startswith("--") and a[i - 1] not in opts]
+        push(vids, ws, proj, a[a.index("--publish-at") + 1] if "--publish-at" in a else None)
     elif a[:1] == ["licenses"] and len(a) >= 2:
         licenses_cmd(a[1], ws, proj)
     elif a[:1] == ["rerender"] and len(a) >= 2:

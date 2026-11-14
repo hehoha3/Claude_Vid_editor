@@ -1,4 +1,4 @@
-# doc-edit · full-AI 8-15p (any region, every shot generated)
+# doc-edit · full-AI 8-180p (a_ folders, any region, every shot generated)
 
 `$E8` = `.venv/Scripts/python.exe -m dvr_cowork ai <cmd> "<video>"`, `$Y` = `.venv/Scripts/python.exe -m dvr_cowork
 youtube <cmd>` (one CLI, user 2026-11-05). None of the footage+AI flow applies: plan.py, place.py, intro.py, vo-sync,
@@ -7,16 +7,16 @@ user generates every shot. `python -m dvr_cowork profile context "<video>" --pha
 prints the film's pinned numbers (runtime, body, intro cut range), stage and blockers in one line.
 
 **Profile per film** (`video.project.json` + `.production/profile.lock.json`, written by `$E8 init`): the engine reads
-the pinned snapshot, never the workspace profile. v2 (user 2026-11-05): 8–15 min (default 10), regions himalaya /
-amazon / africa, intro 30 s of 2–4 s cuts from reviewed body sources, no animal contact / stare-down (`build`).
-Films pinned to v1 finish on v1. Descriptor / snapshot mismatch or a disabled profile -> stop before any write; never
+the pinned snapshot, never the workspace profile. full_ai v1 (user 2026-11-12): 8–180 min, 1+ stories (scenes
+`story: k`), regions frozen (ex-himalaya) / amazon / africa, hook 30 s (90 s from 20 min) of 2–4 s cuts from reviewed
+body sources, no animal contact / stare-down (`build`). Films pinned to full_ai_mountain v1-v3 finish on their pin. Descriptor / snapshot mismatch or a disabled profile -> stop before any write; never
 re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai/config.toml` has no
 `[prompts.regions.<region>]` (amazon / africa until the user writes them): tell the user, never invent the locks.
 
 ## Contract (CLAUDE.md rule 1 for this type)
 
-- **Project** = the day project `vid_DDMMYY_N` of the folder name (`<region>_DDMMYY_N` -> `vid_DDMMYY_N`, shared with that
-  day's footage+AI films; films named `vid_DDMMYY_N` keep their name; `resolve_project` in story.json overrides). Per channel bins
+- **Project** = the day project `vid_DDMMYY` of the folder name (`a_<region>_DDMMYY_N` -> `vid_DDMMYY`, shared with that
+  day's footage films; films named `vid_DDMMYY_N` keep their name; `resolve_project` in story.json overrides). Per channel bins
   `1. Other_roll`, `2. Attack_roll`, `3. Run_roll`, `4. Audio/{Narrator,Ambience,SFX,Music}`, `5. Graphics`,
   `6. Timeline`; no `7. Open` (footage+AI only). Shots -> `1. Other_roll`, narrator -> `4. Audio/Narrator`, intro song
   -> `4. Audio/Music`, wind / birds -> `4. Audio/Ambience`, SRT -> `5. Graphics/sub-title`. One timeline **`channN_vidK`** in
@@ -25,8 +25,9 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
 - **Tracks**: V1 picture · A1 the sound of every V1 shot, the **whole** runtime, −12 dB · A2 narrator · A3/A4 wind bed
   per scene after the hook, alternating, 4 s crossfades · A5 birds on calm shots · A7/A8 intro song under the 30 s
   hook · A9 unused. Starting gains in `dvr_cowork/fullai/config.toml`, not a loudness guarantee. Fade handles 2 s.
-- **Runtime** = 30 s hook + 30 s setup + body; every body shot 6–9 s. Hook: 8–15 cuts of 2–4 s (10–12 best) tiling
-  30 s minus the black gap, from body sources, each optionally retimed 1.1–1.25×. Black gap (user 2026-11-06, as
+- **Runtime** = hook (30 s; 90 s from 20 min) + 30 s setup + body (stories); every body shot 3–7 s, mostly 3–5 s (v3 /
+  full_ai, user 2026-11-09; v1 / v2 films keep 6–9 s). Hook: cuts of 2–4 s (`preferred_cut_count` of the pin: 10–12
+  for 30 s, 30–36 for 90 s) tiling the hook minus the black gap, from body sources, each optionally retimed 1.1–1.25×. Black gap (user 2026-11-06, as
   the 1h films): V1 empty for `[intro] gap_black_s` (0.6 s, `config.toml`) at the window's end, between the last
   intro cut (to black 1.5 s) and story 1 (from black 2.5 s); `done` allows only this V1 gap. Every black fade on V1
   (0:00, intro end, story 1, last shot) is set on that shot's A1 too (user 2026-11-06). Sound bridge: A5
@@ -34,8 +35,8 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
   story, 4 s fades, placed by `music` / `finish`; no birds there. A7 hand-edited -> `music` refuses (no
   `--replace`): `.work/scripts/add_prelap.py <video> <song> --apply` adds only the pre-lap.
 - **Files**: source `.production/story.json`; `audios/` = `screenplay.md`, `timestamp.md`, `transcript.md`,
-  `visual_plan.md`; narrator `voice/1..N.mp3` (legacy `audios/mp3/`); shots `shots/1..M.mp4`; prompts
-  `missing-prompt.csv` (19 columns, `shot_id` = file number, `dur_s` = slot + handle) + `lock-assets.md`. The only
+  `visual_plan.md`; narrator `voice/1..N.mp3` (legacy `audios/mp3/`); shots `shots/c3v6_1..M.mp4` (older `1..M.mp4`); prompts
+  `missing-prompt.csv` (19 columns, `shot_id` = `c<chann>v<vid>_<n>` = file name, `--only c3v6_3,7` works, `dur_s` = slot + handle) + `lock-assets.md`. The only
   prompt writer: `$E8 prompts` (never missing.py).
 - **Preservation**: numbered file ID = issued prompt ID, never sort order; ID = the file name's trailing number
   (user 2026-11-06: `7.mp4`, `shot_007.mp4`, `shot-7.mp4`, `S07.mp4` = 7; `.mp4` / `.mp3` alike); duplicate IDs
@@ -65,8 +66,14 @@ Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 st
 (backup, verified) -> prompts for **every** non-hook slot. Idempotent; never ask for a separate prompts call.
 - Conform lists **every** overflowing scene / long pause in one run: no trimming, stretching or guessing. Re-time
   recipe (one question, no re-recording): move whole seconds between shots of the scene and its neighbours (each
-  6–9 s, total unchanged); hook / setup gaps ≤ 6 s get `pause_limit_s` + `pause_reason`. Dry-run on a copy
-  (`story.compile_story(copy, durations)`), offer the passing plan, after the yes back up `story.json`, rerun.
+  inside the pinned shot range, total unchanged); hook / setup gaps ≤ 6 s get `pause_limit_s` + `pause_reason`.
+  Narrator pause limit 4.2 s (user 2026-11-09, `story.PAUSE_S`); the picture keeps changing through it (3–5 s shots).
+  Dry-run on a copy (`story.compile_story(copy, durations)`), offer the passing plan, after the yes back up
+  `story.json`, rerun.
+- v2 film -> v3 (3–7 s shots, 1–2 beats), only while `shots\` is empty: back up `story.json` + the CSV into
+  `.production\`, `dvr_cowork profile migrate <video> --to 3 --apply`, split each shot into two (same moment, second
+  half from a new camera) in `story.json`, `$E8 conform` (narration frames must stay), `$E8 voice --apply` (A2
+  re-verified), `$E8 prompts --renumber` (old manifest kept, IDs from 1).
 - Reply: runtime, A2 count, occupancy, backup, prompt count, save folder `<video>\shots` (`1.mp4…M.mp4`). **Stop**:
   "prompts issued", never "shots generated".
 - New prompt text on the same slots: edit `story.json` keeping every `duration_s` and voice block -> `$E8 conform`

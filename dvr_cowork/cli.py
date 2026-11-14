@@ -1,6 +1,6 @@
 """python -m dvr_cowork - DaVinci Resolve co-worker CLI, one entry point for both video types (user 2026-11-05).
 
-  dvr ai <cmd> <video>         full-AI 8-15p engine (dvr_cowork.fullai.cli; `dvr ai -h` lists its steps)
+  dvr ai <cmd> <video>         full-AI engine, 8-180 min (dvr_cowork.fullai.cli; `dvr ai -h` lists its steps)
   dvr profile detect|context|backfill|list ...   which type a video is, the step's numbers + reference
   dvr youtube login|remove|channels|upload|seo|trends|reference ...
   dvr jobs status|decide|check|fill-report|reject|metrics ...
@@ -286,10 +286,24 @@ def cmd_frames(args, cfg):
         for r in res:
             if r["ok"]:
                 r["stats"] = still_stats(r["path"])
+    verdicts, gstats = {}, None
+    if args.gemini and any(r["ok"] for r in res):  # vision pre-screen: Claude views only the flagged stills
+        from .gemini import screen_frames
+        try:
+            verdicts, gstats = screen_frames([r["path"] for r in res if r["ok"]])
+        except SystemExit as e:
+            log(f"gemini: {e} -> view the stills yourself")
     log(f"stills in {out}")  # one compact line per still (was ~25 indented JSON lines each: tokens)
     for r in res:
         st = json.dumps(r.get("stats"), ensure_ascii=False, separators=(",", ":")) if r.get("stats") else ""
-        log(f"{r['at']} {r['tc']} {'ok' if r['ok'] else 'FAILED'} {Path(r['path']).name} {st}")
+        g = verdicts.get(Path(r["path"]).name, "?" if gstats else "")
+        log(f"{r['at']} {r['tc']} {'ok' if r['ok'] else 'FAILED'} {Path(r['path']).name} {st}"
+            + (f" | gemini: {g}" if g else ""))
+    if gstats:
+        n_flag = sum(v.startswith("FLAG") for v in verdicts.values())
+        log(f"gemini: {n_flag} flagged / {len(verdicts)} ({gstats.get('model')}, in {gstats.get('in', 0)} "
+            f"out {gstats.get('out', 0)} tok) -> view the flagged + '?' stills and one OK as control"
+            + (f" | {gstats['warning']}" if gstats.get("warning") else ""))
     return EXIT_OK if all(r["ok"] for r in res) else EXIT_ERR
 
 
@@ -394,6 +408,7 @@ def build_parser():
     f.add_argument("--at", nargs="+", required=True, help="mm:ss | hh:mm:ss | hh:mm:ss:ff (absolute TC)")
     f.add_argument("--out", help="output folder")
     f.add_argument("--stats", action="store_true", help="add luma/saturation/colour-cast numbers")
+    f.add_argument("--gemini", action="store_true", help="Gemini vision QA per still (OK / FLAG); view only flagged")
     f.set_defaults(fn=cmd_frames)
     a = sub.add_parser("at", help="items under timeline positions (file, src_in)")
     a.add_argument("times", nargs="+", help="mm:ss[.s] | hh:mm:ss")

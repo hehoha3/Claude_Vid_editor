@@ -1,12 +1,17 @@
 # Done / push: `/doc-edit done [<video>]` ("xong video"), `/doc-edit push [<video>]` ("up youtube")
 
-Run it right away: no "exported?" question, no confirmation (the user's "done" is the go). Several videos -> one
-after another. Works in a day project (`vid_DDMMYY`: project / channel / timeline from `.work/doc_edit/<video>/project.txt`).
+Run it right away: no "exported?" question, no confirmation (the user's "done" is the go). Several videos: `done` ->
+one after another (Resolve renders one at a time); `push` -> one `ledger.py push v1 v2 ...` call: renders one by one,
+then the uploads side by side, max 3 (user 2026-11-13: one upload rarely fills the line; the `youtube:` line gives
+MB/s; quota ~6 uploads a day). Never filter its stdout with grep (the `uploading N%` lines are the progress). Works in a day project (`vid_DDMMYY`: project / channel / timeline from `.work/doc_edit/<video>/project.txt`).
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py done <video> [--ws <workspace>] [--project <name>] [--licenses] [--upload [--thumb <image>] [--publish-at "YYYY-MM-DD HH:MM"]]
 
-`/doc-edit done` = steps 1-3 (render + save, no upload, no SEO). `/doc-edit push` = SEO (below, `--pick N`) ->
-`ledger.py done <video> --upload` (render skipped when `Done_<video>.mp4` exists) = steps 1-4.
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/ledger.py push <video> [<video> ...] [--publish-at "YYYY-MM-DD HH:MM"]
+
+`/doc-edit done` = steps 1-3 (render + save, no upload, no SEO). `/doc-edit push` = SEO of every video (below,
+`--pick N`) -> `ledger.py push` (render skipped when `Done_<video>.mp4` exists; no `youtube_meta.json` -> that video
+is not uploaded) = steps 1-4. `--thumb <image>` (one video): `ledger.py done <video> --upload --thumb <image>`.
 `--project` when the Resolve project is not named like the folder and has no project.txt. The render is long (a 60 min
 4K timeline): run it with `run_in_background`.
 
@@ -25,6 +30,13 @@ after another. Works in a day project (`vid_DDMMYY`: project / channel / timelin
    `Done_<video>.mp4` into the video folder, waits; already there -> not rendered again. Subtitle tracks off for the
    render, back on after. Before it `place.black_fades` checks the 4 V1 black fades and puts back a missing one
    (`NOT SET` -> say so).
+   Intro (user 2026-11-13, automatic): `<video folder>\shots\intro.mp4` exists -> imported into `7. Open/vidK`, timeline
+   `master_channN_vidK` in `6. Timeline` = intro (V1 + its own sound on A1, level untouched, no fade, unrelated to the
+   film: no ledger, no license) then `channN_vidK` nested whole; the master is what gets rendered. Reused when it is
+   still intro + the body at its current length, else deleted and rebuilt (derived, owned by this command; never edit
+   it by hand, edit `channN_vidK`). A `Done_<video>.mp4` whose length differs from the master by > 1 s (rendered before
+   the intro) is renamed `Done_<video>_nointro.mp4` (`stale:` line + the user's Remove-Item command), then rendered.
+   No intro file -> `channN_vidK` as before.
 4. Upload (`push` only, `--upload`): `Done_<video>.mp4` -> the YouTube channel `.secrets/youtube/channels.json` maps
    the workspace's `Chann_N` to (`dvr_cowork youtube upload --apply`): title / description / tags from
    `youtube_meta.json` (SEO below, run BEFORE `ledger.py done` when missing), English, Pets & Animals, not for kids,

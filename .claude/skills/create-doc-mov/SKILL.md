@@ -1,6 +1,6 @@
 ---
 name: create-doc-mov
-description: "The only narration writer, two video types of any region (amazon / africa / himalaya): footage+AI 1-3h = the four files (Screenplay, transcript.md, Timestamp_EN_VI, Visual_Edit_Plan) of a 30–180 min wildlife film in <video>\\audios (write, upgrade, re-time to real 1..N.mp3, then voicing + /doc-edit); full-AI 8-15p = an 8–15 min full-AI survival film (story.json + four files, `dvr_cowork ai`, early climax and nonstop action). Use for /create-doc-mov, \"viết kịch bản phim mới\", \"video 8p núi tuyết\", \"tạo Screenplay / transcript / Timestamp\", \"căn lại timestamp theo mp3\", or a pasted wildlife YouTube link to adapt. Not for doc-edit steps that only read them."
+description: "The only narration writer, 8-180 min films of three types (footage f_, footage+AI fa_, full-AI a_) and any region (amazon / africa / frozen): footage types = the four files (Screenplay, transcript.md, Timestamp_EN_VI, Visual_Edit_Plan) in <video>\\audios (write, upgrade, re-time to 1..N.mp3); full-AI = story.json + four files (`dvr_cowork ai`). Use for /create-doc-mov, \"viết kịch bản phim mới\", \"tạo Screenplay / transcript / Timestamp\", \"căn lại timestamp theo mp3\", or a wildlife YouTube link to adapt."
 ---
 
 # create-doc-mov
@@ -12,29 +12,32 @@ An existing source (`.production\story.json` = full-AI, `four_files.src.md` = fo
    limit on channels or films (a channel named twice = two films; each extra film = its own `new_video.py` call / its
    own `next-video`). Step 1 for all films first (one question per film, AskUserQuestion holds 4: more films = more
    calls), then steps 2–4 + write + review stop film by film in the order given, each film fully separate.
-1. **Type + region**: unless the user's words say it (`--type full-AI` / 8p / 8-15p / full AI, or `--type
-   footage+AI` / 1h / 3h / 30+ min / footage; `--minutes N` = runtime; region amazon (jungle, Congo too) / africa
-   (desert, savanna) / himalaya (snow, high mountains)), AskUserQuestion type + region once; never re-asked per phase.
-   Any type goes with any region (user 2026-11-05); folder `<region>_DDMMYY_N`. Full-AI: `$E8 init --region` pins
-   the profile (`video.project.json` + `.production/profile.lock.json`, full_ai_mountain v2: 8–15 min, default 10)
-   before any authoring, and its `reminder` (amazon / africa: no prompt locks yet) goes to the user at once. Full-AI
-   -> `references/full-ai.md` (`$E8` = `.venv/Scripts/python.exe -m dvr_cowork ai`, `$Y` = `... -m dvr_cowork youtube` there) for steps 2–4 and after; nothing after this section applies. Footage+AI
-   -> everything below (himalaya: no footage roots yet, every slot will be THIẾU: say so).
+1. **Type + region + minutes** (user 2026-11-12): type `footage` (f_, real footage only) / `footage+AI` (fa_, AI <= 40 %)
+   / `full-AI` (a_); region amazon (jungle, Congo too) / africa (desert, savanna) / frozen (snow, ice, high mountains,
+   polar; old name himalaya); runtime 8–180 min, the user's choice. Whatever the user's words leave open -> one
+   AskUserQuestion for it, never re-asked per phase. Any type with any region. Then `.venv/Scripts/python.exe -m
+   dvr_cowork profile stories --minutes N` = the story options (count + minutes each, intro 0:30 under 20 min / 1:30
+   from 20 min) and `range` (user 2026-11-12: N ± 3 min, "20p" = 17–23): set `target:` anywhere in the range where the
+   story ends naturally (re-run `profile stories` for that target), never pad or cut to hit N; the card says the target.
+   Full-AI -> `references/full-ai.md` (`$E8` = `.venv/Scripts/python.exe -m dvr_cowork ai`, `$Y` = `... -m dvr_cowork
+   youtube`) for steps 2–4 and after (`$E8 init` pins the profile, its `reminder` goes to the user at once); nothing
+   after this section applies. Footage types -> everything below.
 2. **Trends, one parallel turn**, at most one vidIQ call (credit error -> one line, YouTube API alone; no retry):
    full-AI = `$E8 next-video Chann_N --region <r>` + `$Y trends Chann_N` + `vidiq_outliers` (the region's predator /
-   prey, long-form); footage+AI = research-youtube `top_videos.py <amazon-wildlife|africa-wildlife>` + `vidiq_outliers` (region).
+   prey); footage types = research-youtube `top_videos.py <amazon-wildlife|africa-wildlife>` + `vidiq_outliers` (region).
    Read only the digests; trends steer species pairing, setting, title angle — never copy a plot.
 3. **Three options** (user 2026-11-04: 3 are enough), the strongest by trend evidence, each in a short text card
-   with 1–2 trend proofs (title, views/day), then one AskUserQuestion (free text = own idea):
-   - full-AI: 3 story ideas. Card: working title · archetype · cast (protagonist / antagonist, exact counts) · dual peril ·
-     clock · chokepoint · 30 s highlight hook · 3–4 action passages one line each · runtime (8–11 min default).
-   - footage+AI: 3 format (1) central-question ideas. Card: the question · story names · Story 1 idea (species, goal, first
-     attack, action passages). 4th choice "Multi-story (Claude tự làm)": no card; if picked, Claude designs every
-     story itself (format (2)), Story 1 always the most gripping (storycraft.md Story 1), and shows the plan in the
-     step-4 question.
+   with 1–2 trend proofs (title, views/day) and the story count it uses (`profile stories`; the recommended one unless
+   the idea needs another option), then one AskUserQuestion (free text = own idea):
+   - full-AI: 3 ideas. Card: working title · archetype · cast (protagonist / antagonist, exact counts) · dual peril ·
+     clock · chokepoint · hook · stories (n × min) with 3–4 action passages each, one line each.
+   - footage types: 3 format (1) central-question ideas. Card: the question · story names (n from `profile stories`) ·
+     Story 1 idea (species, goal, first attack, action passages). footage (f_): pick species by the library
+     (`plan.py --species <sp> --region <r>` counts real clips). 4th choice "Multi-story (Claude tự làm)": no card; if
+     picked, Claude designs every story itself (format (2)), Story 1 the most gripping, plan shown in step 4.
 4. **Changes?** After the pick, always one AskUserQuestion with the chosen option's facts in the text (cast + counts,
-   runtime, format / archetype): "Giữ nguyên, viết luôn" / "Đổi dàn nhân vật" / free text. This is the only question
-   left (it is also the cast question); answer applied -> write the content + four .md files, no more asks.
+   runtime, stories n × min, format / archetype): "Giữ nguyên, viết luôn" / "Đổi dàn nhân vật" / free text. This is the
+   only question left; answer applied -> write the content + four .md files, no more asks.
 
 Make a **cuttable film**: every second of the runtime has a planned shot, the transcript is voiced line by line (the user
 records it), the Vietnamese runs on the same onsets, and the plan feeds doc-edit. Narration is otherwise forbidden in this
@@ -66,19 +69,22 @@ or move its pin, rebuild. Report the PASS line and any onset that moved past its
 EN line: rewrite its VI yourself as in C 4b), `--check`, build. Prove the narration did not change: `cmp` old/new transcript.md and diff the timestamp text with onsets
 stripped. A film without a source file: rebuild one from its transcript + timestamp first (scenes = blank-line groups).
 
-**C. New film(s):** the user writes `/create-doc-mov Chann1 sẽ làm về <topic> trong khoảng 1h, Chann2 sẽ làm <topic>
-trong khoảng 30p`. Per film take channel number, region (`amazon` / `africa` / `himalaya`, from the topic; Congo =
-amazon) and runtime in minutes (1h = 60, 3h = 180, 30p = 30); ask if any is unclear. Name + create the folders in one call:
-`scripts\new_video.py 1:africa 2:africa` (dry run: `<region>_DDMMYY_<n>`; each channel numbers its own day, user
-2026-11-09: n = 1 + that channel's highest n today, so Chann_3's first film is `_1` even after Chann_1's
-`africa_091126_1`; all films of the day share the day project `vid_DDMMYY`; one film per channel per call), then the same with `--apply` (creates `<video>\audios` + `.work\doc_edit\<key>`, prints OK; a name shared
-by 2+ channels -> `<key>` = `<video>__Chann_N`, which doc-edit's `video_key` finds).
+**C. New film(s):** the user writes `/create-doc-mov Chann1 footage+AI <topic> 60p, Chann2 footage <topic> 30p`. Per
+film take channel number, type, region (from the topic; Congo = amazon) and runtime in minutes; ask if any is unclear.
+Name + create the folders in one call: `scripts\new_video.py 1:fa:africa 2:f:africa` (dry run:
+`<f|fa|a>_<region>_DDMMYY_<n>`; each channel numbers its own day over every type, n = 1 + that channel's highest n
+today; all films of the day share the day project `vid_DDMMYY`; one film per channel per call), then the same with
+`--apply` (creates `<video>\audios` + `.work\doc_edit\<key>`, prints OK; a name shared by 2+ channels -> `<key>` =
+`<video>__Chann_N`, which doc-edit's `video_key` finds).
 Set `target: <minutes>` in the source header. Several films = write them one after another, each through steps 1–6,
 then one review stop (step 7) with a summary per film. For every film:
 1. Read [storycraft.md](references/storycraft.md) and production.md. Format (user 2026-11-03; not given -> ask):
-   **(1) central question** (3–5 stories, each answers a part) or **(2) multi-story** (3–5 stories, linked or not, each
-   its own question + ending). Both: Story 1 = 8–15 min, fast action within its first 30 s, first attack by ~03:00;
-   intro + Story 1 mostly strong motion shots; no slow motion in shot text (feeds AI prompts), animals always moving (storycraft.md "Motion").
+   **(1) central question** (each story answers a part) or **(2) multi-story** (linked or not, each its own question +
+   ending). Story count and minutes = the option picked from `profile stories` (scene ids `k.x` = story k, `0.x`
+   intro; build warns on another count unless a `stories_reason:` header line says why). Intro 00:00–00:30 under
+   20 min, 00:00–01:30 from 20 min. Story 1 the longest, fast action within its first 30 s, first attack by ~03:00
+   (~01:30 under 20 min); intro + Story 1 mostly strong motion shots; no slow motion in shot text (feeds AI prompts),
+   animals always moving (storycraft.md "Motion"). footage (f_): every shot must exist in the library (no AI).
 2. Research: `check_refs.py` every DOI (and `--abstract` when a sentence carries a number). Say only what the source
    supports; write each source's limit in SP_HEAD. No thoughts, kinship, kills or "deciding" without evidence.
 3. Cast bible (male / female / young, markers, continuity limit, one-line metaphor).
@@ -102,7 +108,7 @@ then one review stop (step 7) with a summary per film. For every film:
 
    ```
    **<video>** · Chann_<n> · <type> · <target> min — <title>
-   Intro 00:00–01:30: 2–3 lines (what is seen + the hook)
+   Intro 00:00–<00:30|01:30>: 2–3 lines (what is seen + the hook) · stories n × min
    Story 1 (mm:ss–mm:ss): 3–5 short beat lines (who, what happens, first attack at mm:ss, outcome)
    Sau đó: Story 2 <name> · Story 3 <name> · … · <lines> dòng (= mp3) · voice <x> % · MUST/PENDING: …
    File: [Screenplay](…) · [transcript](…) · [Timestamp](…) · [Visual_Edit_Plan](…)
@@ -112,8 +118,8 @@ then one review stop (step 7) with a summary per film. For every film:
 1. Count check: N mp3 = nonblank lines of transcript.md; a mismatch -> tell the user which, stop.
 2. Job A (conform the four files to the real mp3), PASS.
 3. Invoke `/doc-edit <audios> <region>` with exactly those films' audios folders (2 films = one call, both folders),
-   region = the folder prefix (`amazon` / `africa` / `himalaya`; an old `congo_*` = amazon). doc-edit's own rules then apply (it stops after
-   the prompts, CLAUDE.md rule 11).
+   region = the folder name's (`fa_africa_…` = africa; old names: `himalaya_*` = frozen, `congo_*` = amazon). doc-edit's
+   own rules then apply (fa_ stops after the prompts, CLAUDE.md rule 11; f_ has no prompts).
 
 Finish every job with one line in `.work\knowledge\handoffs\current.md` and a short Vietnamese summary: file links,
 line/word count, voice share, MUST / PENDING scenes, planned vs conformed.
@@ -122,7 +128,8 @@ line/word count, voice share, MUST / PENDING scenes, planned vs conformed.
 
 - Narrator ≈ 150 wpm (measured). Channel films: 2,850–3,450 words / 60 min ≈ 35–40 % voice; the validator warns
   under 55 % — state the share, the cut map carries the rest. Only use timing-and-voice.md if the user wants another density.
-- Intro 00:00–01:30 (user 2026-11-06): doc-edit opens on black + a string riser into an impact (~0:01; not in the
+- Intro 00:00–01:30 from 20 min (user 2026-11-06; under 20 min the same shape in 00:00–00:30: teasers to 00:25,
+  5 s breath): doc-edit opens on black + a string riser into an impact (~0:01; not in the
   source); on the hit the first shot (an epic wide: place, sun, sky) and the strong intro track (tense, heavy drums);
   the narrator from 00:03.6 (the source's first line at 00:00.6, vo-sync shifts it); **00:03.6–01:15** action
   teasers at 136–150 % (last 2 intro shots calm) using other frames than their story shots, no kill; **01:15–01:30**
@@ -130,7 +137,7 @@ line/word count, voice share, MUST / PENDING scenes, planned vs conformed.
   fades in. doc-edit fits the real track later.
 - Ending: last line ends by ~59:32; ~8 s silent final wide; 59:40–60:00 end-screen zone of moving shots, fade out.
 - Other runtimes scale from the end: last line by target − 0:28 (`vend:`), end screen the last 20 s; words scale
-  with minutes (30 min ≈ 1,425–1,725 words, 2–3 stories). Intro stays 00:00–01:30.
+  with minutes (30 min ≈ 1,425–1,725 words; 10 min ≈ 480–580). Stories: `profile stories --minutes N`.
 - Plan tracks: A2 narrator, A3/A4 ambience, A5 natural, A6 music, A7/A8 SFX (Resolve timeline: A5→A6, A6→A7,
   A7/A8→A8/A9; A1 empty, user 2026-11-05).
 - Screenplay beats `**NNN · mm:ss.s–mm:ss.s**` + `*Narrator:*` lines are what doc-edit `story.py brief` reads.

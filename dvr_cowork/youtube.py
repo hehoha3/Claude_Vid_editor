@@ -19,6 +19,7 @@ import json
 import re
 import sys
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -254,15 +255,17 @@ def upload(vdir, thumb=None, dry=False, publish_at=None):
     yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
     req = yt.videos().insert(part="snippet,status", body=body,
                              media_body=MediaFileUpload(str(video), chunksize=64 * 1024 * 1024, resumable=True))
-    res, shown = None, -10
+    res, shown, t0 = None, -10, time.monotonic()
     while res is None:
         st, res = req.next_chunk(num_retries=5)
         if st and st.progress() * 100 >= shown + 10:
             shown = int(st.progress() * 100)
-            print(f"youtube: uploading {shown}%", flush=True)
+            print(f"youtube: {vdir.parent.name[:7]}/{vdir.name} uploading {shown}%", flush=True)  # parallel pushes
     work.mkdir(parents=True, exist_ok=True)
     mark.write_text(json.dumps({"id": res["id"], "channel": cid, "file": str(video)}), "utf-8")
-    line = f"youtube: https://youtu.be/{res['id']} ({body['status']['privacyStatus']}{when}, channel {cid})"
+    secs = max(time.monotonic() - t0, 1e-3)  # user 2026-11-13: speed decides how many uploads run side by side
+    speed = f"{video.stat().st_size / 2**20 / secs:.1f} MB/s, {secs / 60:.0f} min"
+    line = f"youtube: https://youtu.be/{res['id']} ({body['status']['privacyStatus']}{when}, channel {cid}, {speed})"
     return line + (set_thumb(yt, res["id"], thumb, work) if thumb else "")
 
 

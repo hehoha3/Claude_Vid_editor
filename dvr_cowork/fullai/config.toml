@@ -29,11 +29,13 @@ bed_crossfade_s = 4
 prelap_s = 4
 
 [prompts]
-# Clip length = each slot's next half second (6 s -> 6.5, 8.7 -> 9.0; prompt_rules.dur_s), beats at 20/50/70 %.
+# Clip length = slot + 1 s, up to the half second (6 s -> 7, 8.7 -> 10; prompt_rules.dur_s, user 2026-11-09), beats at 20/50/70 %.
 # Prefix of every prompt, then the shot. `motion` follows the location, right before the timed beats.
-style = "Cinematic nature documentary, BBC Earth style, 4k ultra-realistic, national geographic photography, detailed animal textures, No text, no logo (BBC, National Geographic, ….), No voiceover, no background music, natural sound, normal motion"
+# No "Cinematic / BBC Earth / national geographic photography" (user 2026-11-10: those pulled slow-motion looks);
+# prompt_rules.SPEED is said before this style.
+style = "Wildlife documentary footage, 4k ultra-realistic, detailed animal textures, No text, no logo (BBC, National Geographic, ….), No voiceover, no background music, natural sound"
 # Region locks (user 2026-11-05): motion + color per region. A region without a table here stops `prompts` with a
 # reminder; amazon / africa locks are written by the user later.
-[prompts.regions.himalaya]
+[prompts.regions.frozen]  # was himalaya (user 2026-11-12)
 motion = "Fast, powerful, continuous action in every second: the animals run, leap, scramble, lunge and turn at full real-world speed, bodies always moving, snow and stones flying; no standing still, no slow walking, no posing, no pauses between beats."
 color = "Neutral 5600K white balance, true-white snow, natural warm-neutral color: no blue, cyan or teal tint or grade."

@@ -30,12 +30,18 @@ trong mục 5.
 | Xem phim và nói chỗ cần sửa | Đặt hình, nhạc, tiếng động, chỉnh màu, sửa theo lời bạn |
 | Bấm duyệt | Xuất file phim, viết tiêu đề / mô tả / tags, đăng lên YouTube ở chế độ **riêng tư** |
 
-**Hai loại video.** Video nào cũng thuộc một trong hai loại:
+**Ba loại video** (từ 2026-11-12). Loại nằm ngay trong tên folder; thời lượng do bạn chọn, 8–180 phút, loại nào cũng được:
 
-| Loại | Dài | Hình ảnh từ đâu |
+| Loại | Tiền tố folder | Hình ảnh từ đâu |
 |---|---|---|
-| **footage+AI** | 1–3 giờ | Kho footage quay thật của nhóm, thêm clip AI cho chỗ còn thiếu |
-| **full-AI** | 8–15 phút | Toàn bộ shot do bạn tạo bằng AI theo câu lệnh của Claude |
+| **footage** | `f_` | Chỉ kho footage quay thật, không clip AI |
+| **footage+AI** | `fa_` | Kho footage quay thật, clip AI tối đa 40 % thời lượng hình |
+| **full-AI** | `a_` | Toàn bộ shot do bạn tạo bằng AI theo câu lệnh của Claude |
+
+Thời lượng được lệch ±3 phút (bạn nói 20p → phim 17–23p, 1h → 57–63p, tuỳ câu chuyện).
+Số câu chuyện (story) tính theo thời lượng: `.\dvr.cmd profile stories --minutes 60`. Phim đến 15 phút có thể là 1 story;
+dài hơn thì mỗi story 5–12 phút (Story 1 dài nhất). Ví dụ 12 phút: 1 hoặc 2 story; 60 phút: 6, 7 hoặc 8 story.
+Intro 30 giây nếu phim dưới 20 phút, 1:30 nếu từ 20 phút.
 
 **Bốn vùng.** Loại nào cũng làm được ở vùng nào:
 
@@ -43,8 +49,8 @@ trong mục 5.
 |---|---|
 | `amazon` | Rừng rậm (Amazon, Congo) |
 | `africa` | Sa mạc, đồng cỏ savanna châu Phi |
-| `himalaya` | Núi tuyết, núi cao, băng tuyết quanh năm |
-| `ocean` | Đại dương (chưa làm) |
+| `frozen` | Núi tuyết, núi cao, băng tuyết, vùng cực (tên cũ `himalaya`; footage thật ở `Z:\AI Document`) |
+| `ocean` | Đại dương (đang tắt) |
 
 > Video full-AI ở vùng `amazon` / `africa` còn thiếu "bộ khoá câu lệnh" (quy định chung cho mọi prompt của vùng đó).
 > Khi bạn làm loại này, Claude sẽ nhắc bạn bổ sung trước.
@@ -273,25 +279,32 @@ Gỡ kênh chỉ xoá trên máy này, thư mục kênh vẫn giữ nguyên. Mu�
 
 ```
 D:\Chann_1_ShadowCanopy\          <- thư mục một kênh (tự tạo khi đăng nhập YouTube)
-    amazon_051126_1\              <- một video: <vùng>_<ngàyThángNăm>_<số thứ tự>
+    fa_amazon_051126_1\           <- một video: <loại>_<vùng>_<ngàyThángNăm>_<số thứ tự>
         audios\                   <- kịch bản (Claude viết) + giọng đọc của bạn
         voice\                    <- (full-AI) giọng đọc 1.mp3, 2.mp3 ...
-        shots\                    <- (full-AI) clip bạn tạo 1.mp4, 2.mp4 ...
+        shots\                    <- (fa_ / a_) clip AI bạn tạo cho video này, tên = shot_id (c1v1_7.mp4);
+                                     shots\intro.mp4 (tuỳ chọn) = intro kênh, được render trước phim
+        thumb\                    <- thumbnail (/thumbnail); done.jpg = bản bạn chọn để đăng
+        Done_<video>.mp4          <- file phim xuất ra (/doc-edit done)
     _done\                        <- bạn tự kéo video đã xong vào đây
     _pushed\                      <- thư mục riêng của bạn: Claude không bao giờ đụng vào
 ```
-- **Tên video**: `himalaya_051126_2` = vùng himalaya, ngày 05/11/2026, video thứ 2 trong ngày. Claude tự đặt tên.
+- **Tên video**: `fa_africa_121126_2` = footage+AI, vùng africa, ngày 12/11/2026, video thứ 2 trong ngày của kênh.
+  Claude tự đặt tên. Video cũ không có tiền tố (`africa_101126_1`, `himalaya_101126_3`) vẫn chạy như trước.
 - **Giọng đọc**: mỗi dòng của kịch bản là một file, đánh số 1, 2, 3... đúng thứ tự (`1.mp3` = dòng 1).
-- **Clip full-AI**: đặt tên đúng **số câu lệnh**, ví dụ câu lệnh số 7 lưu thành `shots\7.mp4`.
+- **Clip AI**: lưu đúng tên ở cột `shot_id` của `missing-prompt.csv`: `c<kênh>v<video>_<số>`, ví dụ câu lệnh số 7 của
+  Chann_1, video 1 là `shots\c1v1_7.mp4` (video cũ: `7.mp4`). Clip muốn dùng lại cho nhiều video thì lưu vào kho
+  `_check` của vùng (`/doc-edit ingest` xếp nó vào kho).
 
 **Trong DaVinci Resolve**, mỗi video có:
 - **Một timeline `channN_vidK` cho mỗi video** (Channel N, video thứ K trong ngày; project ngày `vid_DDMMYY`): đây là bản dựng. Các bản sao lưu tên `channN_vidK_bak_...` (Claude tạo trước khi sửa lớn) giúp
   quay lại khi cần.
 - **Các bin** (thư mục trong Media Pool): `1. Other_roll`, `2. Attack_roll`, `3. Run_roll` (hình theo hành động),
-  `4. Audio` (giọng đọc, nhạc, tiếng động), `5. Graphics` (phụ đề), `6. Timeline`; video footage+AI có thêm
-  `7. Open` chứa các shot của đoạn mở đầu (~1 phút 30).
-- **Các track âm thanh**: A1 tiếng gốc của clip (footage+AI để trống), A2 giọng đọc, A3–A6 không khí / tiếng tự nhiên,
-  A7 nhạc, A8–A9 tiếng động.
+  `4. Audio` (giọng đọc, nhạc, tiếng động), `5. Graphics` (phụ đề), `6. Timeline`; video footage / footage+AI có thêm
+  `7. Open/vidK` chứa các shot của đoạn mở đầu.
+- **Các track âm thanh**: A1 tiếng gốc của clip (footage / footage+AI để trống; full-AI: tiếng của shot ở -12 dB),
+  A2 giọng đọc, A3–A4 nền không khí, A5 nền thứ ba (chim / chuyển nhạc), A6 tiếng tự nhiên, A7 nhạc, A8 tiếng động
+  tự nhiên, A9 tiếng động thiết kế (riser → impact ở 0:00).
 
 ---
 
@@ -301,35 +314,38 @@ Mở **DaVinci Resolve** (Claude cần Resolve đang mở), rồi mở **Claude*
 chat của Claude. Mỗi lệnh bắt đầu bằng dấu `/`. Claude trả lời bằng tiếng Việt và luôn nói rõ bước tiếp theo bạn cần
 làm.
 
-### Bước 0: Kịch bản (cả hai loại)
+### Bước 0: Kịch bản (cả ba loại)
 
 Gõ: **`/create-doc-mov Chann_1`**. Muốn dựa theo một video mẫu: **`/create-doc-mov Chann_1 <link YouTube>`**.
 
-Claude hỏi loại video + vùng (nếu bạn chưa nói), tìm video đang hot, đưa 3 ý tưởng để bạn chọn, rồi viết kịch bản vào
-`audios\`. Bạn đọc kịch bản rồi **tạo giọng đọc**: mỗi dòng của file `transcript` là một file mp3, đặt tên theo số.
+Claude hỏi loại video + vùng + thời lượng (nếu bạn chưa nói), tìm video đang hot, đưa 3 ý tưởng để bạn chọn, tạo
+folder video (`f_` / `fa_` / `a_`...) rồi viết kịch bản vào `audios\`. Bạn đọc kịch bản rồi **tạo giọng đọc**: mỗi
+dòng của file `transcript` là một file mp3, đặt tên theo số.
 
-### 5.1 Video footage+AI (1–3 giờ): 3 lần gõ
-
-| Lần | Bạn gõ | Claude làm | Bạn làm tiếp |
-|---|---|---|---|
-| 1 | `/doc-edit D:\Chann_1_ShadowCanopy\amazon_051126_1` | Đặt giọng đọc + phụ đề, chọn footage cho từng câu, dựng intro + thân phim, viết câu lệnh cho các shot **THIẾU**. Rồi dừng | Tạo clip AI theo câu lệnh, lưu vào `D:\AI_video\_check` (africa: `D:\AI_video\_africa\_check`). Clip có logo: gõ `/doc-edit logo` rồi `/doc-edit delogo` |
-| 2 | `/scan-source /tag-source và tiếp` | Xem clip mới, xếp vào kho, lấp vào chỗ THIẾU. Rồi dừng | Xem phim trong Resolve, nói chỗ cần sửa |
-| 3 | `/doc-edit color n done` | Chỉnh màu, viết tiêu đề / mô tả / tags, xuất file phim `Done_<video>.mp4`, đăng YouTube riêng tư | Vào YouTube Studio: thumbnail, công khai / hẹn giờ |
-
-Câu lệnh tạo clip chỉ dành cho phần intro + story 1 (các phần sau tự lấp bằng footage có sẵn). Không muốn tạo clip
-nữa mà muốn lấp nốt chỗ THIẾU bằng footage có sẵn: gõ `/doc-edit fill-THIEU <video>`.
-
-**Mở đầu 0:00 (phim footage+AI 1-3h từ 2026-11-06):** màn hình đen + tiếng dây đàn rít lên → cú impact (~0:01),
-shot mở đầu và nhạc intro vào đúng cú hit, narrator từ 0:03.6, rồi intro ~1:30 như cũ. Claude tự chọn cú impact
-(`D:\Audio_lib\SXF\impact`, hai phim cùng ngày không trùng). Phim full-AI 8-15p vẫn mở bằng hook 30 s từ 0:00.
-
-### 5.2 Video full-AI (8–15 phút): 3 lần gõ
+### 5.1 Video footage (`f_`) và footage+AI (`fa_`)
 
 | Lần | Bạn gõ | Claude làm | Bạn làm tiếp |
 |---|---|---|---|
-| 1 | `/doc-edit D:\Chann_3_WildPeril\himalaya_051126_2` (đã có giọng đọc trong `voice\`) | Đặt giọng đọc + phụ đề, viết câu lệnh cho **mọi** shot (file `missing-prompt.csv`). Rồi dừng | Tạo toàn bộ clip theo câu lệnh, lưu vào `shots\` đúng số (`1.mp4`, `2.mp4`...) |
+| 1 | `/doc-edit D:\Chann_1_ShadowCanopy\fa_amazon_051126_1` | Đặt giọng đọc + phụ đề, chọn footage cho từng câu, dựng intro + thân phim; `fa_`: viết câu lệnh cho các shot **THIẾU** của intro + story 1. Rồi dừng | `fa_`: tạo clip AI theo câu lệnh, lưu vào `shots\` đúng tên `shot_id`. Clip có logo: `/doc-edit logo` rồi `/doc-edit delogo` |
+| 2 | `fa_`: `/doc-edit after-gen-vid <video>`; không tạo clip / phim `f_`: `/doc-edit fill-THIEU <video>` | Đặt mỗi clip vào đúng chỗ của nó, lấp nốt chỗ THIẾU bằng footage có sẵn, chỉnh màu, kiểm tra khung hình. Rồi dừng | Xem phim trong Resolve, nói chỗ cần sửa |
+| 3 | `/doc-edit done <video>` | Ghi license nhạc, xuất `Done_<video>.mp4` (có `shots\intro.mp4` thì intro kênh được ghép trước phim). Không đăng | Kiểm tra file phim, chọn thumbnail `thumb\done.jpg` |
+| 4 | `/doc-edit push <video> [<video> ...]` | Viết tiêu đề / mô tả / tags, đăng YouTube **riêng tư** (nhiều video: xuất lần lượt, đăng song song tối đa 3) | Vào YouTube Studio: công khai / hẹn giờ |
+
+Câu lệnh tạo clip chỉ dành cho phần intro + story 1 (các phần sau tự lấp bằng footage có sẵn). Clip AI chiếm tối đa
+40 % thời lượng hình; phim `f_` không dùng clip AI. Màu tự chỉnh lại khi cần: `/doc-edit color`.
+
+**Mở đầu 0:00 (footage / footage+AI):** màn hình đen + tiếng dây đàn rít lên → cú impact (~0:01), shot mở đầu và
+nhạc intro vào đúng cú hit, narrator từ 0:03.6, rồi intro (30 giây nếu phim dưới 20 phút, 1:30 nếu từ 20 phút).
+Claude tự chọn cú impact (`D:\Audio_lib\SXF\impact`, hai phim cùng ngày không trùng). Phim full-AI mở bằng hook 30 s
+từ 0:00.
+
+### 5.2 Video full-AI (`a_`)
+
+| Lần | Bạn gõ | Claude làm | Bạn làm tiếp |
+|---|---|---|---|
+| 1 | `/doc-edit D:\Chann_3_WildPeril\a_frozen_051126_2` (đã có giọng đọc trong `voice\`) | Đặt giọng đọc + phụ đề, viết câu lệnh cho **mọi** shot (file `missing-prompt.csv`). Rồi dừng | Tạo toàn bộ clip theo câu lệnh, lưu vào `shots\` đúng tên `shot_id` (`c3v2_1.mp4`, `c3v2_2.mp4`...) |
 | 2 | Gõ lại **đúng lệnh trên** | Kiểm tra clip, đặt cả phim lên timeline: 30 giây mở đầu gay cấn, câu chuyện, nhạc, gió, chim hót. Rồi dừng | Xem phim. Shot nào hỏng: "làm lại 3, 7, 12" (Claude đưa lại câu lệnh), tạo lại, ghi đè file cũ |
-| 3 | `/doc-edit done <đường dẫn video>` | Xuất file phim (không chỉnh màu); nếu bạn muốn thì viết SEO và đăng YouTube riêng tư sau khi bạn duyệt | YouTube Studio: thumbnail, công khai / hẹn giờ |
+| 3 | `/doc-edit done <video>` rồi `/doc-edit push <video>` | `done`: xuất file phim (không chỉnh màu). `push`: SEO + đăng YouTube riêng tư | YouTube Studio: thumbnail, công khai / hẹn giờ |
 
 **Mẹo:** lấy đường dẫn video bằng cách mở thư mục video trong Windows, bấm vào thanh địa chỉ ở trên, Ctrl+C, rồi dán
 vào sau `/doc-edit `.
@@ -431,6 +447,6 @@ git pull
 | **Render / xuất phim** | Tạo file video hoàn chỉnh `Done_<video>.mp4` |
 | **SEO** | Tiêu đề, mô tả, tags giúp video dễ được tìm thấy trên YouTube |
 | **Chann_N** | Số thứ tự của kênh YouTube trên máy này |
-| **Vùng** | amazon / africa / himalaya / ocean |
+| **Vùng** | amazon / africa / frozen / ocean |
 
 Muốn hiểu bên trong hệ thống hoạt động thế nào: [docs/SYSTEM.md](docs/SYSTEM.md).

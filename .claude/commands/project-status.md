@@ -1,4 +1,5 @@
 ---
+model: sonnet
 description: Summarise the current Resolve project, the video timeline channN_vidK and tracks
 allowed-tools: Bash(.venv/Scripts/python.exe -m dvr_cowork:*)
 ---

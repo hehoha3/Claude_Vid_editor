@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: thumbnail
 description: Finish a YouTube wildlife thumbnail from an image the user gives - 16:9 crop, bright vivid grade, headline + red line + channel logo - with headless PhotoCraft into <video>\thumb\ (image in a video folder) or D:\Thumbs\<stem>\ (layered PSD, clean PNG 3840x2160, final JPG 3840x2160). Use for /thumbnail, "làm thumbnail", "chỉnh ảnh thumbnail", "thêm chữ/logo vào thumbnail".
 ---
@@ -6,11 +7,11 @@ description: Finish a YouTube wildlife thumbnail from an image the user gives - 
 # Thumbnail finish
 
 `/thumbnail <image> <region> <logo> "<headline>"` (any order: the region is the word `amazon` / `africa` /
-`himalaya` / `ocean`, the logo `avaN` or a path, the headline the quoted text): all four required; ask for a missing
+`frozen` (old `himalaya`) / `ocean`, the logo `avaN` or a path, the headline the quoted text): all four required; ask for a missing
 one (no default logo; user 2026-11-07). Region (user 2026-11-08): when not typed, take it from the video folder name
-the image sits in (`D:\Chann_N_*\africa_061126_2\` -> `africa`; `amazon_` / `himalaya_` / `ocean_` the same); an image
+the image sits in (`D:\Chann_N_*\fa_africa_121126_2\` -> `africa`; old names `africa_061126_2`, `himalaya_` = frozen); an image
 outside a video folder, or a folder name with no region prefix -> ask. Pass `--region <region>`.
-- Region look: `africa` = the Africa rule below; `amazon` / `himalaya` / `ocean` = the default look (one run).
+- Region look: `africa` / `frozen` = their rules below (two runs); `amazon` / `ocean` = the default look (one run).
 - Logo shorthand (user 2026-10-16): `avaN` (ava1, ava2, ...) = `D:\Thumbs\_channel_medias\avaN_gif.gif`, one per
   channel; file missing -> say so, ask. Every `avaN` run gets `--prefix channN_` (-> `chann1_thumb_7.psd` ...).
 - `ava1+ava2[+avaN...]` (user 2026-10-20) = one run per logo, same image / headline / flags; runs after the first use
@@ -23,7 +24,7 @@ outside a video folder, or a folder name with no region prefix -> ask. Pass `--r
 
        .venv/Scripts/python.exe .claude/skills/thumbnail/scripts/thumb.py finish "<image>" --region <region> --text "<headline>" --logo "<logo>"
 
-   No other flags (Africa: the two runs below): the rest is the user's confirmed taste (2026-10-15): centred 16:9 crop -> 3840x2160, layout A, WB
+   No other flags (Africa / Frozen: the two runs below): the rest is the user's confirmed taste (2026-10-15): centred 16:9 crop -> 3840x2160, layout A, WB
    neutralises the R/B cast, BRIGHTNESS + VIBRANCE auto-target `references/look-ref.png` (bright daylight, vivid:
    p50 0.34 / sat 0.50) with one measured correction, Montserrat Black white text auto-sized, thin outline, light
    shadow, red line under the text, logo top-left. Headline block sits LOW: red line bottom 108 px (at 3840) above the
@@ -33,6 +34,8 @@ outside a video folder, or a folder name with no region prefix -> ask. Pass `--r
    - base (`<stem>`): `--vibrance 40 --warm 0 --yellow-sat 0 --wb 0,0,10` (soft olive-gold grass, cast ~-B 0.09);
    - `_v2`: same + `--curve 7 --yellow-sat 8` (slightly more contrast and yellow), on the moved source.
    The rest comes from `AFRICA` in thumb.py (greens +10, gamma 1.3, curve 3, BG_DARKEN 0). Reply with both files.
+   **Frozen** (ex-Himalaya, user 2026-11-11; no colour changes) -> TWO runs per logo, same rest: base `--no-color --curve 0`
+   (light only), `_v2` `--no-color` (light + default contrast, curve 6) on the moved source; only p50 is checked (sat stays the source's). Reply with both files.
 2. JSON: `warnings` empty, `final_vs_target` close (within ~0.03 / 0.05).
 3. Look at `<folder>\<final>` once. QC: who does what in 1 s; text / line / logo cover no face, mouth, claw or contact
    point; no halo or ugly cast; anatomy believable.

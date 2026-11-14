@@ -1,4 +1,5 @@
 ---
+model: sonnet
 name: scan-source
 description: Re-index the source libraries (real footage, AI clips, audio) after files were added, moved, renamed or deleted. Use for /scan-source, when the user added/sorted/moved footage or audio, or to refresh/check the source index.
 ---
@@ -34,9 +35,12 @@ Z: is read-only: its indexes live in `.work/library/` (also SFX / Sound). Never 
 
 Entries are keyed by content hash: moved / renamed files keep their entry (and the older vision tags of 62 video
 clips). Per file: path, folder fields (video: subject, action, setting_folder; audio: category), duration, video specs
-(size, fps, has_audio) or audio specs (sample_rate, channels), title_hint (stock name without date/ID suffix).
+(size, fps, has_audio, vertical) or audio specs (sample_rate, channels), title_hint (stock name without date/ID suffix).
+`vertical` = shown taller than wide, rotation flag counted (phone: 3840x2160 + rotation 90); plan.py never plans those
+clips (user 2026-11-14). The output line adds `vertical N (never planned)` + a VERTICAL list.
 
-**Output** per root: `<kind>: N files | new, moved, removed, duplicates`, then NEW / MOVED / REMOVED / DUPLICATE lists.
+**Output** per root: `<kind>: N files | new, moved, removed, duplicates`, then NEW / MOVED / REMOVED / DUPLICATE lists
+(3 names each on stdout; every name in `.work\library\last_scan.txt`: give the user that path, never Read it whole).
 **Reply** (Vietnamese): counts + lists (shorten long ones); DUPLICATE -> ask which copy to delete; files directly in a
 root (folder field null) -> say they belong in a folder.
 

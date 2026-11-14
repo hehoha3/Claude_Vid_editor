@@ -26,6 +26,7 @@ from collections import Counter
 from pathlib import Path
 
 from .timecode import parse_clock as secs
+from .vtypes import region_id
 
 ROOT = Path(__file__).resolve().parents[1]  # not .config: tests run this file as a script for --selftest
 CACHE = ROOT / ".work" / "seo" / "cache"
@@ -54,7 +55,7 @@ def film_facts(spec_text):
         if m := re.match(r"# FILM (.*)", line):
             f["film"] = m[1].strip()
         elif m := re.match(r"# REGION (\w+)", line):
-            f["region"] = m[1].lower()
+            f["region"] = region_id(m[1]) or m[1].lower()  # himalaya = frozen (user 2026-11-12)
         elif m := re.match(r"# BIBLE \d+ (\d+:\d+)-\S+ (.*)", line):
             f["chapters"].append((secs(m[1]), m[2].strip()[:300]))
         elif m := re.match(r"# CAST \[\w+\] sp=([\w,]+)", line):
@@ -66,7 +67,7 @@ def film_facts(spec_text):
 
 
 def queries(f):
-    region = {"africa": "african savanna"}.get(f["region"], f["region"])
+    region = {"africa": "african savanna", "frozen": "snow mountain arctic"}.get(f["region"], f["region"])
     return [f"{region} wildlife documentary"] + [f"{sp} documentary" for sp in f["species"][:2]]
 
 

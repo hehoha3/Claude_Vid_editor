@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "profile_id": "footage",
+  "profile_version": 1,
+  "enabled": true,
+  "label": "footage 8-180p (no AI)",
+  "engine_id": "footage_long",
+  "default_region": null,
+  "regions": [
+    "amazon",
+    "africa",
+    "frozen"
+  ],
+  "runtime": {
+    "default_minutes": 60,
+    "min_minutes": 8,
+    "max_minutes": 180
+  },
+  "note": "user 2026-11-12: real footage only (vtypes.AI_MAX 0): no prompts; THIẾU -> fill-THIEU / fallback-species. frozen footage = Z:\\AI Document.",
+  "capabilities": {
+    "footage_scan": true,
+    "footage_tag": true,
+    "library_match": true,
+    "ai_clips": false,
+    "external_video_generation": false
+  },
+  "state_backend": "dvr_cowork.jobs",
+  "refs": {
+    "author": [
+      ".claude/skills/create-doc-mov/SKILL.md"
+    ],
+    "edit": [
+      ".claude/skills/doc-edit/SKILL.md"
+    ]
+  }
+}

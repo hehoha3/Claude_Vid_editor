@@ -21,8 +21,8 @@ locks.
 - **Never a silent stare-down**: no "stare / look / gaze at each other", locked eyes, face to face, stand-off.
 - The script appends the same closing sentence to every prompt (moving animals, no stare, no contact, no cuts, no
   blood / gore / VO / music / text / logo / watermark): never write those negatives yourself.
-- **`dur_s`** = the slot's length rounded up to the next half second (3.2 s -> 3.5, 5 s -> 5.5, 2.4 -> 2.5): the
-  clip has a short handle. The script computes it; prompt k of a group belongs to slot k of the group (extras
+- **`dur_s`** = the slot's length + 1 s, up to the half second (user 2026-11-09, both video types: 4 s -> 5, 3.2 s
+  -> 4.5, 2.4 -> 3.5): the clip has a 1 s handle. The script computes it; prompt k of a group belongs to slot k of the group (extras
   beyond the slots: the group's longest slot, no timecode).
 
 ## Steps (1h-footage+AI)
@@ -57,8 +57,11 @@ locks.
    then per clip a line `<role> <vector> | <camera> | <place> | <light>` and its beats as `- ` lines (untimed; the
    script times them to `dur_s`). **Beats per clip by `dur_s`**: under 5 s exactly one clean readable beat; 5–7.5 s
    one main beat + at most one secondary reaction; 8 s and longer up to four (timed by the script across the clip).
-   The script writes the header "Cinematic wildlife documentary, ultra-photorealistic 4K, <dur_s>-second single
-   continuous shot, 16:9, shot on <camera>, <place>, <light>." and the shared closing sentence:
+   **No slow motion (user 2026-11-10)**: a one-beat clip under 5 s needs a real-speed verb (sprints, bolts, leaps,
+   scrambles, darts...) or two actions joined by "then" (gate `pace`); never "Cinematic" or "BBC" words.
+   The script writes the header "Real-time footage at true natural speed (1x playback, 24 fps, ...). Wildlife
+   documentary, ultra-photorealistic 4K, <dur_s>-second single continuous shot, 16:9, shot on <camera>, <place>,
+   <light>." and the shared closing sentence (ends "no slow motion, no speed ramp"):
 
        ## G2
        predator_burst L>R | side-on 300mm telephoto, speed-matched pan, medium-long shot | a muddy rainforest corridor between giant buttress roots, wet leaves | neutral daylight
@@ -116,16 +119,19 @@ locks.
      grass, drifting mist, birds crossing).
 4. `missing.py <video> --check`: QC gates (role/vector valid and stated, no contradicting direction, no direction on
    a still action, no reversal/orbit/slow motion, biome words, biology, species named, contact / stare / pose words,
-   beats per `dur_s`, near-duplicates, budget) + a preview of roles per group. Fix every error in prompts.txt, re-run.
+   beats per `dur_s`, pace, near-duplicates, budget) + a preview of roles per group. Fix every error in prompts.txt, re-run.
 5. `missing.py <key> --write` (re-runs the gates, refuses on errors) -> `<video>/missing-prompt.csv`: THIẾU rows,
-   then extras; `shot_id` `G2-S014` (group + slot) or `G2-X3` (extra), `cluster` = group, `tc_in`/`tc_out` =
+   then extras; `shot_id` `c3v6_9` = row 9 of Chann_3's video _6 (= the clip's file name, user 2026-11-10; CSVs
+   before keep `G2-S014`); a re-write that would move an already generated ID to another slot stops. `cluster` = group, `tc_in`/`tc_out` =
    the slot, `dur_s`, `kind=ai_generated`, `mo_ta` = the slot's need (Vietnamese), `reason` = THIẾU (library empty,
    or an intro WEAK pick) and what the library refused. stdout gives the save folder per group (= species name for tag-source): put them in the
    reply, never in the file. Videos planned before 2026-11-05 keep their `missing_prompts.txt`.
 
 Reply: path, prompt count, per character roles (e.g. "báo: 3 predator_burst, 1 reaction"), skipped coverage and
-why (footage already OK, budget), relationship_wide clips, biology flags. The user saves every generated clip into
-`D:\AI_video\_check` (`/doc-edit logo`, `delogo`, `ingest` check logos, tag and file them into the species folders);
-africa: into `D:\AI_video\_africa\_check` (flat), then logo / delogo on that folder and ingest = scan africa_ai_check
-+ tag + `organize.py --africa --apply` (files them into `_africa\<species>`).
+why (footage already OK, budget), relationship_wide clips, biology flags. The user saves every generated clip of the
+film into its own `<video>\shots` (user 2026-11-13), named by its shot_id: after-gen-vid checks that folder and puts
+each clip on its slot, never tagged or filed (the `missing.py --write` line may still name the region `_check`: say
+`<video>\shots` in the reply). The region `_check` (`D:\AI_video\_check`, `_africa\_check`, `_frozen\_check`) is the
+shared library folder, filed by `/doc-edit ingest` (logo / delogo, tag, `organize.py [--africa|--frozen]`), never by
+after-gen-vid. f_ films: no prompts (`missing.py` refuses).
 Prompt QC cannot catch AI visual errors: the generated clips still need a look (tag-source issues, organize).

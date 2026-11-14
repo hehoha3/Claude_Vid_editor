@@ -91,7 +91,7 @@ def sheet(src, dur, dst):
     fc += "[f0][f1][f2][f3]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[v]"
     r = subprocess.run(["ffmpeg", "-v", "error", "-y", *ins, "-filter_complex", fc, "-map", "[v]",
                         "-frames:v", "1", "-q:v", "4", "-strict", "unofficial", str(dst)],
-                       capture_output=True, text=True)  # unofficial: mjpeg refuses limited-range YUV otherwise
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")  # unofficial: mjpeg refuses limited-range YUV otherwise
     return r.returncode == 0 and dst.exists()
 
 

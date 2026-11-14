@@ -1,8 +1,8 @@
-# create-doc-mov · full-AI 8-15p (any region: himalaya snow / high mountains; amazon, africa once their prompt locks exist)
+# create-doc-mov · full-AI 8-180p (a_ folders; any region: frozen = snow / ice / high mountains, ex-himalaya; amazon, africa once their prompt locks exist)
 
 One CLI (user 2026-11-05): `$E8` = `.venv/Scripts/python.exe -m dvr_cowork ai <cmd>`, `$Y` =
-`.venv/Scripts/python.exe -m dvr_cowork youtube <cmd>`, from the workspace root. None of the footage+AI flow applies:
-four_files.src.md, build_four_files.py, formats (1) / (2), the 90 s intro. Story craft and the source contract
+`.venv/Scripts/python.exe -m dvr_cowork youtube <cmd>`, from the workspace root. None of the footage flow applies:
+four_files.src.md, build_four_files.py, formats (1) / (2). Story craft and the source contract
 are the two sections at the end of this file.
 
 ## Cost discipline (why the run is shaped this way)
@@ -18,13 +18,13 @@ once, fix with small Edits, never pull big files into context.
 
 ## Concept (SKILL.md "Start of a new film": type -> trends -> 3 options -> changes?)
 
-- Trends turn: `$E8 next-video Chann_N --region <region>` (the single `D:\Chann_N_*`, next `<region>_DDMMYY_N`, `next_archetype`, recent
+- Trends turn: `$E8 next-video Chann_N --region <region>` (the single `D:\Chann_N_*`, next `a_<region>_DDMMYY_N`, `next_archetype`, recent
   titles / casts; skips `_pushed`; stops on zero or several channel folders -> ask) + `$Y trends Chann_N
   [--query "..."]` (most viewed 4–20 min mountain predator / prey videos of 90 days by views/day, title patterns,
   tags; 101 units per new query, 0 cached 7 days) + one `vidiq_outliers` (long-form). vidIQ credit / auth error ->
   one line, YouTube alone. YouTube API fails (revoked token: `$Y remove Chann_N` then `$Y login --key Chann_N`; quota) -> stop,
   report. Options avoid the archetype / cast of `recent` unless trends clearly favour it (say so).
-- Folder: a given `<video>\audios` path = `<video>`; use it when it is `next_video` or a `<region>_DDMMYY_N` folder (old films: `vid_DDMMYY_N`) without
+- Folder: a given `<video>\audios` path = `<video>`; use it when it is `next_video` or an `a_<region>_DDMMYY_N` folder (old films: `<region>_…`, `vid_DDMMYY_N`) without
   `.production\story.json` (the user pre-made it, so `next_video` shows N+1); else ask. Never reuse a folder that has
   a source.
 - **Adapt a link** (`/create-doc-mov Chann_N <youtube_url>`): one turn `next-video` + `$Y reference Chann_N
@@ -35,17 +35,20 @@ once, fix with small Edits, never pull big files into context.
   predict your next scene, change the obstacle or the turn; no names, signature lines or distinctive images. Record
   `"reference_url"` + a one-line `"adaptation_note"`. No transcript -> summarise from title / description / tags,
   offer that the user pastes it; never invent the reference's plot.
-- **Runtime**: count the distinct turns the story carries (new obstacle, changed tactic, clock shrinking, reversal,
-  decisive attempt), about one per 1.5–2 min after the first 60 s: 4–5 turns ≈ 8–9 min, 6 ≈ 10–11, 7–8 ≈ 12–15. Don't
-  stretch a 5-turn story; state minutes + why in one line. Default 8–11, over 15 only on request.
+- **Runtime = the user's minutes ± 3 (8–180)**: "20p" = any target 17–23 the story fills naturally (`range` of
+  `python -m dvr_cowork profile stories --minutes N`, then the stories of the chosen target; user 2026-11-12: one story
+  up to 15 min, else 5–12 min each, Story 1 longest; hook 30 s under 20 min, 90 s from 20 min).
+  Each story carries its own turns (new obstacle, changed tactic, clock shrinking, reversal, decisive attempt), about
+  one per 1.5–2 min: 4–5 turns ≈ 8–9 min of story, 6 ≈ 10–11, 7–8 ≈ 12–15. Don't stretch a 5-turn story; a longer
+  film gets more stories, never padded ones.
 - Cast in the option cards and the "changes?" question as two sides with exact counts (protagonist: ibex mother + one
   kid; antagonist: one snow leopard). The answer is the locked cast; don't reopen the concept.
 
 ## Write
 
-1. `$E8 init "<video>" [--minutes <m>] --region himalaya|amazon|africa --title "<title>"` once, after the "changes?"
-   answer (wpm 155, project = the day project `vid_DDMMYY_N` of the folder name). It pins profile full_ai_mountain v2 (8–15 min, default 10; intro cut from
-   body sources; no-contact / no-stare build check) into the film. Its `reminder` line (a region without prompt locks
+1. `$E8 init "<video>" --minutes <m> --title "<title>"` once, after the "changes?" answer (region = the folder name's;
+   wpm 155, project = the day project `vid_DDMMYY`). It pins profile full_ai v1 (8–180 min; hook 30 s, 90 s from 20
+   min, cut from body sources; no-contact / no-stare build check) into the film. Its `reminder` line (a region without prompt locks
    yet: amazon / africa) goes to the user at once (user 2026-11-05): `prompts` will stop until the locks exist. Existing
    source: revise the source, not the outputs; once voice or shots are issued, keep that version and use a new
    folder for an incompatible rewrite. `python -m dvr_cowork profile context "<video>" --phase author` = the film's numbers.
@@ -53,9 +56,11 @@ once, fix with small Edits, never pull big files into context.
    chokepoint; role-reversal moment; the action passages with their reversals (Story craft §2); one central survival
    question, a visible payoff, a cause-and-effect outline; cast IDs with exact counts, `terms`, LEFT / RIGHT marks
    (one entry per individual the viewer must tell apart); route and constant light with no animal named in them.
-3. **Hook and setup**: the hook scene has voice only (no `shots`: `/doc-edit hook` later tiles its 30 s with
-   2–4 s cuts from reviewed body sources). Continuous narration, triangle hook by
-   ~00:18, reversal teased 00:24–00:30 without its result. Setup through action: `build` needs a setup shot with
+3. **Hook and setup**: the hook scene has voice only (no `shots`: `/doc-edit hook` later tiles its 30 s (90 s from
+   20 min) with 2–4 s cuts from reviewed body sources). Continuous narration, triangle hook by ~00:18, reversal teased
+   in the hook's last 6 s without its result. **Stories**: every scene after the hook has `"story": k` (1, 2, … in
+   order); story k ≥ 2 opens on its own `setup` scene (any length, intensity ≥ 3) and every story may close on an
+   `ending` scene; the last scene is an ending. Another count than `profile stories` needs `"stories_reason"`. Setup through action: `build` needs a setup shot with
    `intensity` ≥ 3; no repeat of the hook narration.
 4. **Voice budget per scene before writing it**: the voice math of the Source contract (60 s = 4 blocks 132–144
    words, 75 s = 5 blocks 163–177, 30 s = 3 blocks 62–70). One block = one nonblank transcript line = one MP3.
@@ -63,7 +68,7 @@ once, fix with small Edits, never pull big files into context.
    the Source contract; scene `camera` / `characters` / `location` as defaults, every shot its own `camera`, a
    `title`, four fast continuous `beats` (story moment by 5 s), one short clause per field. A shot's `characters` is
    its complete visible cast and its text (with the scene `direction` / `location` it inherits) names only them.
-   Every scene changes the situation; every shot has one action, start / end state, 6–9 s; shots cover the scene
+   Every scene changes the situation; every shot has one action, start / end state, 3–7 s, mostly 3–5 s (profile v3, user 2026-11-09); shots cover the scene
    exactly. `hook_role` + `spoiler:false` only on strong unresolved body moments, ≥ 1 candidate each for threat,
    vulnerability, pursuit, obstacle, unanswered (aim for 12–15 candidates in total; one role may hold several).
    `build` rejects contact verbs in `action` / `end_state` / beats (bite, gore, ram, grab, pin, shove, knock down,
@@ -79,7 +84,7 @@ once, fix with small Edits, never pull big files into context.
    ```
    **<video>** · Chann_<n> · full-AI · <m:ss> — <title>
    Archetype + motive / dual peril / clock / chokepoint / reversal (one line each)
-   00:00–00:30 highlight · 00:30–01:00 setup · each passage one line (mm:ss) · ending
+   hook (00:00–00:30, or –01:30 from 20 min) · setup · per story: each passage one line (mm:ss) · ending
    Story-1 DNA: first clash mm:ss · passages n (reversal each) · contact none
    Build: runtime · voice blocks (= mp3) · words · occupancy · prompts
    File: [screenplay] · [transcript] · [timestamp] · [visual_plan] · voice -> <video>\voice\1.mp3…N.mp3
@@ -95,8 +100,8 @@ narration to hide a timing problem.
 One continuous survival story, a locked cast and geography, played as **Story 1 of the 1h films** from start to
 finish: an early climax and nonstop strong action (user 2026-11-04). DNA = the lead's practical goal × dual peril ×
 triangle hook; a film missing one of the three is a nature walk, not a survival story. Where this file and the
-contract (Source contract) disagree, the contract wins: 30 s hook (2–4 s cuts from body sources), 6–9 s
-shots, no gore, no animal contact, no silent stare-down. Runtime 8–15 min (default 10).
+contract (Source contract) disagree, the contract wins: 30 s hook (2–4 s cuts from body sources), 3–7 s (v3; v1 / v2 films 6–9 s)
+shots, no gore, no animal contact, no silent stare-down. Runtime 8–180 min (the user's), stories from `profile stories`.
 
 ### 1. Archetype (rotate so consecutive films differ)
 
@@ -119,12 +124,12 @@ respect; a hunt ends in a failed attempt, a retreat or an off-screen implication
 - **Lead with a practical goal** (food, a safe route, offspring, rejoining the herd), so every chase has a reason.
   Species the generators render well: snow leopard, Himalayan ibex, markhor, bharal (never "blue sheep": `build`
   rejects "blue"), Himalayan tahr, wolf, red fox, golden eagle, Eurasian lynx; 2–4 cast IDs.
-- **Runtime 8–11 min** by default (up to 15 only on request).
+- **Runtime** = the user's minutes; stories from `profile stories`.
 - **00:00–00:30 = highlights of the whole film**: hook candidates (`hook_role`, `spoiler:false`) are the biggest
   action of different passages (chase, wall jump, feint, fall-away, chokepoint leap), never an outcome.
 - **Early climax**: the setup (00:30–01:00) already has one fast action (a sprint, a leap, a collapse), not a calm
   tour; the first real clash or chase **opens the first body scene at 01:00**. No calm arrival scene.
-- **Escalation**: 3 action passages for 8–10 min, 4 for 11–15. Each has a reversal (failed approach, dodge, footing
+- **Escalation** (per story): 2 action passages for a 5–7 min story, 3 for 8–10 min, 4 for 11–15. Each has a reversal (failed approach, dodge, footing
   breaks, rival arrives, prey turns, return journey) and leaves the situation changed. Between passages the breather
   is still motion carrying new information (fast traverse, climb, regrouping at a run), ≤ ~30 s. Last ~10 %:
   consequence and local resolution, still moving.
@@ -179,7 +184,7 @@ decisive leap / stand that changes position. Reuse the shape, not the events.
 Every 20–40 s a new fact with a consequence: a route narrows, a foothold fails, the young falls behind, the predator
 finds another line. Show the ledge / crack before it decides the outcome. Intercut threat → vulnerable subject →
 terrain → reaction while holding geography; re-establish the route with a high wide after a big position change.
-Wides explain risk, mediums show action, closes show the mechanism; within a 6–9 s take vary composition and action.
+Wides explain risk, mediums show action, closes show the mechanism; within a 3–7 s take one clear action; vary composition shot to shot.
 
 Consequences stay: a slipped animal remains below, a crossed gap stays crossed, identity, marks and travel direction
 hold; a new scene never magically restores the old arrangement. Cuts are motivated by gaze, action or sound.
@@ -211,7 +216,7 @@ Top fields:
 | schema | 2 |
 | title, premise, central_question, payoff | Original film concept and visible outcome |
 | archetype | `migration`, `lost`, `predator`, `mother` or `throne` (see Story craft); ignored by the compiler, read for rotation |
-| target_minutes | 8–15 (default 10, the film's pinned profile); includes first 60s |
+| target_minutes | 8–180 (the user's; the film's pinned profile); includes the hook + first setup |
 | fps | Default 24; match Resolve before placement |
 | wpm | 155 (measured 2026-11-05 on the real narrator, 157; `init` writes it) |
 | resolve_project | Leave unset: the project is the day project `vid_DDMMYY_N` of the folder name `<region>_DDMMYY_N` (`core.day_project`), shared with every channel's film of that day, footage+AI included |
@@ -238,11 +243,11 @@ Every prompt opens with `IN FRAME — exactly N animals: <locks>` and `NOT IN FR
 - Off-screen presence: a call, scent or tracks of an absent animal may be described without naming it (`a distant bleat`, `fresh paw prints`); otherwise add it to `characters`. A visible shadow or silhouette counts as in frame.
 - Locations and light: each scene sets `location` = that place only + its constant light (`A hoof-wide ledge on a north granite wall, fog-filled drop south; blue dusk`); a shot may override it. Describe places, **never proper names** in any prompt field (`Karsha basin` was burned in as a caption) — names belong in narration only. Locations describe rock, never animals.
 
-Each scene contains `id`, `title`, `phase` (hook/setup/story/ending), `change` (what changes), `shots`, `voice`. First scene is the hook: `voice` only, no `shots` key (`build` makes one 30 s `HOOK` window; `/doc-edit hook` tiles it with 2–4 s cuts from reviewed body sources, no extra prompts). Second scene has five 6s generated shots for setup. Final scene is ending. Main scenes may have any number of 6–9s shots summing to target runtime. IDs must be unique.
+Each scene contains `id`, `title`, `phase` (hook/setup/story/ending), `change` (what changes), `shots`, `voice`. First scene is the hook: `voice` only, no `shots` key (`build` makes one 30 s `HOOK` window; `/doc-edit hook` tiles it with 2–4 s cuts from reviewed body sources, no extra prompts). Second scene is the 30 s setup (v3: 6–10 shots of 3–5 s; v1 / v2: five 6 s). Final scene is ending. Main scenes may have any number of shots in the pinned range (v3: 3–7 s, mostly 3–5) summing to target runtime. IDs must be unique.
 
-Each **non-hook** shot needs `duration_s, title, characters, action, camera, direction, start_state, end_state, beats`. `title` is the prompt heading (`001 — Injured Kid Is Trapped Below the Herd`). A scene may set `direction`, `characters` and `location` once as defaults; a shot's own value wins. **Give every shot its own `camera`** (shot size + angle + movement): `build` rejects consecutive shots with the same camera, because a scene-level camera made eight takes look identical. Vary scale across a scene (wide → close → detail → two-shot) and never repeat a beat already shown (e.g. a second "lowers her horns"). **`beats` is always four explicit, fast, continuous action clauses** for 0-2s, 2-5s, 5-7s and 7-10s of the 10s clip (lower-case clause, no timing). Every beat moves: run, bound, leap, scramble, skid, lunge, wheel, charge, stamp, lash. Tension shots use violent small motion (trembling, tail lashing, snorting), never a pose. The shot's story moment must land in 0-5s: the timeline uses only the first 6–9s, so 5-10s is full-speed follow-through. `build` rejects calm words in beats (still, motionless, slow, gentle, careful, calm, pause, wait, rest, settle, idle, freeze, hold position, small movement). Derived opening-frame/hold beats are gone: they produced gentle, near-static clips.
+Each **non-hook** shot needs `duration_s, title, characters, action, camera, direction, start_state, end_state, beats`. `title` is the prompt heading (`001 — Injured Kid Is Trapped Below the Herd`). A scene may set `direction`, `characters` and `location` once as defaults; a shot's own value wins. **Give every shot its own `camera`** (shot size + angle + movement): `build` rejects consecutive shots with the same camera, because a scene-level camera made eight takes look identical. Vary scale across a scene (wide → close → detail → two-shot) and never repeat a beat already shown (e.g. a second "lowers her horns"). **`beats`** (v3, user 2026-11-09): 1 explicit, fast, continuous action clause when the clip (slot + 1 s) is under 5 s (it must carry a real-speed verb: sprint, bolt, leap, scramble, dart... or two actions joined by "then"; `build` rejects it otherwise, a lone small action renders slow motion), else 1–2; the clip is split evenly between them (lower-case clause, no timing). v1 / v2 films: always four. Every beat moves: run, bound, leap, scramble, skid, lunge, wheel, charge, stamp, lash. Tension shots use violent small motion (trembling, tail lashing, snorting), never a pose. The shot's story moment must land early: the clip is the slot + 1 s, the last second is full-speed follow-through. `build` rejects calm words in beats (still, motionless, slow, gentle, careful, calm, pause, wait, rest, settle, idle, freeze, hold position, small movement). Derived opening-frame/hold beats are gone: they produced gentle, near-static clips.
 
-**Light never goes blue.** Locations, environment, geography, camera and beats must not use blue, bluish, cyan, teal, dusk, twilight, night, moon or stars, or "cold colour" (`build` rejects them). These words gave clips a strong blue cast. Write late-story light as "low warm late-afternoon sun, neutral white balance, snow stays true white" or "golden evening light", even when the narration says dusk. The light lock says neutral 5600K, true-white snow, real-time 1x speed. Every prompt adds "No slow-motion, The video must not have a blue tint". Do not put "high speed phantom camera" in the style, because it renders slow motion.
+**Light never goes blue.** Locations, environment, geography, camera and beats must not use blue, bluish, cyan, teal, dusk, twilight, night, moon or stars, or "cold colour" (`build` rejects them). These words gave clips a strong blue cast. Write late-story light as "low warm late-afternoon sun, neutral white balance, snow stays true white" or "golden evening light", even when the narration says dusk. The light lock says neutral 5600K, true-white snow. Every prompt starts with the real-time speed sentence (prompt_rules `SPEED`), adds "The video must not have a blue tint" and ends "no slow motion, no speed ramp". Do not put "high speed phantom camera", "Cinematic", "BBC Earth" or "national geographic" in the style, because they render slow motion.
 
 Compact scene (preferred):
 
@@ -285,6 +290,6 @@ The compiler stops at the first problem, except voice timing and calm / blue-lig
 gap and every banned word is listed in one run. Word traps: "the rest of", "slowing", "waiting", "still", "settle".
 Scene `direction` / `location` are in every shot's prompt: never name an animal there. Common ones and the cheap fix: `exceeds picture window` → trim that scene's words or add a shot; `narrator gap` → add one short connected sentence to that scene; `Picture totals …` → adjust one shot's `duration_s` in the scene that is off; `Repeated body action` → make the two `action` strings describe distinct moments.
 
-Default maximum inter-block/tail pause is 3s. A scene may set `pause_limit_s` up to 6 with an explicit `pause_reason`; use sparingly. A voice overflow is an error: shorten/re-record the affected approved block with the user, or revise that scene's shot budget in a new production version. Do not change picture durations after prompts have been issued.
+Default maximum inter-block/tail pause is 4.2s (user 2026-11-09, `story.PAUSE_S`). The picture keeps changing through any pause: 3–5 s shots (v3). A scene may set `pause_limit_s` up to 6 with an explicit `pause_reason`; use sparingly. A voice overflow is an error: shorten/re-record the affected approved block with the user, or revise that scene's shot budget in a new production version. Do not change picture durations after prompts have been issued.
 
 After conform, `timestamp.md` uses exact frame-based millisecond onsets in `## English` and `## Vietnamese`; English equals transcript text exactly. SRT spans follow actual placed MP3 durations. Script math does not verify translation quality, factual accuracy, dramatic strength, internal silence or visual continuity; the agent must review them.

@@ -1,0 +1,2024 @@
+{
+  "schema": 2,
+  "title": "The Last Dry Seam",
+  "target_minutes": 8.0,
+  "fps": 24,
+  "wpm": 145,
+  "premise": "In an imagined thawing mountain basin, a mountain hare enters a stone drain to evade a red fox, but rising meltwater and a blocked outlet turn the shelter into a trap.",
+  "central_question": "Can the hare find a dry way through the drain before water below and the fox above close the same exit?",
+  "payoff": "A narrow seam above the water leads to a sheltered willow bench. The hare passes through; the larger fox cannot enter and abandons the immediate pursuit.",
+  "characters": [
+    {
+      "id": "HARE",
+      "species": "Mountain hare, fictional individual",
+      "count": 1,
+      "terms": [
+        "hare"
+      ],
+      "lock": "Exactly one adult mountain hare, compact body, white winter coat with a pale grey saddle, black ear tips, small V-shaped notch in the left ear, four anatomically normal limbs; no new wounds; lower flank becomes wet in scene C03 and remains wet thereafter",
+      "details": [
+        "Fictional mountain hare; appearance per lock, behaviour from shot actions"
+      ]
+    },
+    {
+      "id": "FOX",
+      "species": "Red fox, fictional individual",
+      "count": 1,
+      "terms": [
+        "fox"
+      ],
+      "lock": "Exactly one adult red fox, lean body, rust-orange coat, black lower legs, white throat and tail tip, a small pale crescent on the right shoulder, four anatomically normal limbs; no injuries and no changing markings",
+      "details": [
+        "Fictional red fox; appearance per lock, behaviour from shot actions"
+      ]
+    }
+  ],
+  "environment": "Imagined Greywater Basin, a fictional northern mountain composite. Overcast early spring afternoon throughout; cool grey slate, muted brown willow, patchy old snow, diffuse light without changing sun direction. One gradually rising shallow meltwater channel; no rain, avalanche, blood, gore or additional animals. This is invented action, not a factual field record.",
+  "geography": "One fixed west-to-east route, screen left to right viewed from the south. WEST willow pocket leads past a slate lip to SPLIT STONE. Its west-facing drain entrance opens into a two-metre solid-rock tunnel with a shallow water groove. The EAST outlet is low, screened by flexible dead twigs, with a separate narrow dry seam just above its north edge. The seam leads into EAST willow bench behind a fixed projecting slab. A broad upper shelf runs from west to east over the tunnel; the lower channel prevents an easy return. NORTH rock wall stays in background; south channel stays in foreground. Do not reverse this axis. Distances and positions are fictional production locks, not geographic claims.",
+  "synthetic_disclosure": "An original AI-generated wildlife dramatization in an imagined mountain basin; not footage of a documented event. Species labels describe the designed cast. No scientific behavior claim or real location is asserted.",
+  "scenes": [
+    {
+      "id": "H00",
+      "title": "Two entrances, one answer withheld",
+      "phase": "hook",
+      "change": "Five unresolved glimpses promise danger at both ends of the drain, withholding the escape.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "action": "Threat: fox tests the narrow stone mouth"
+        },
+        {
+          "duration_s": 6,
+          "action": "Vulnerability: wet hare regains a shrinking ledge"
+        },
+        {
+          "duration_s": 6,
+          "action": "Pursuit: fox closes along the same narrow lip"
+        },
+        {
+          "duration_s": 6,
+          "action": "Obstacle: hare finds the blocked eastern screen"
+        },
+        {
+          "duration_s": 6,
+          "action": "Unanswered: hare tests a flexible stem with no clear exit"
+        }
+      ],
+      "voice": [
+        {
+          "en": "A red muzzle reaches the stone, while a white body slides beside the water. The shelter ahead is already wet. Between hunter and hunted, the safe ground has narrowed to a strip.",
+          "vi": "Một chiếc mõm đỏ vươn tới đá, còn thân mình trắng trượt cạnh dòng nước. Chỗ trú phía trước đã ướt. Giữa kẻ săn và con mồi, phần đất an toàn giờ thu lại thành một dải hẹp."
+        },
+        {
+          "en": "Outside, the fox is closing in. Inside, the hare meets a blocked opening. Somewhere beyond these twigs there may be dry ground. Reaching it means choosing a passage before either entrance closes.",
+          "vi": "Bên ngoài, cáo đang tiến lại gần. Bên trong, thỏ gặp một cửa bị chặn. Đâu đó phía sau những cành khô này có thể có nền ráo. Muốn tới đó, nó phải chọn lối đi trước khi cả hai cửa cùng khép lại."
+        }
+      ]
+    },
+    {
+      "id": "S00",
+      "title": "Before the water rises",
+      "phase": "setup",
+      "change": "Establish the two individuals and converging routes before the snow release.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare steps from willow onto the lower dry path",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands in the west willow pocket",
+          "end_state": "Hare is fully visible beside the west channel",
+          "cause": "The water remains below the path before the snow release",
+          "beats": [
+            "Hare stands in the west willow pocket.",
+            "The water remains below the path before the snow release.",
+            "Hare steps from willow onto the lower dry path.",
+            "Hare is fully visible beside the west channel."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare steps from willow onto the lower dry path"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare raises its head toward Split Stone to the east",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands beside the west channel",
+          "end_state": "Hare faces the dark entrance while remaining west of the lip",
+          "cause": "The west drain mouth is visible beyond the slate lip",
+          "beats": [
+            "Hare stands beside the west channel.",
+            "The west drain mouth is visible beyond the slate lip.",
+            "Hare raises its head toward Split Stone to the east.",
+            "Hare faces the dark entrance while remaining west of the lip."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare raises its head toward Split Stone to the east"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox walks east behind a low rock rib",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is on the upper shelf west of Split Stone",
+          "end_state": "Orange back passes east along the same established shelf",
+          "cause": "The broad shelf overlooks the lower route",
+          "beats": [
+            "Fox is on the upper shelf west of Split Stone.",
+            "The broad shelf overlooks the lower route.",
+            "Fox walks east behind a low rock rib.",
+            "Orange back passes east along the same established shelf."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox walks east behind a low rock rib"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "A fine trickle darkens the channel beside the hare",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare waits west of the slate lip",
+          "end_state": "A dark wet line runs east below the still dry path",
+          "cause": "Old snow above the channel feeds a small existing stream",
+          "beats": [
+            "Hare crouches west of the slate lip.",
+            "Old snow above the channel feeds a small existing stream.",
+            "A fine trickle darkens the channel beside the hare.",
+            "A dark wet line runs east below the dry path."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "A fine trickle darkens the channel beside the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE",
+            "FOX"
+          ],
+          "action": "Hare steps toward the west end of the slate lip",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is west below; fox is west above on upper shelf",
+          "end_state": "Hare is beside lip; fox remains separated above and behind",
+          "cause": "High wide identifies both routes converging on the same Split Stone",
+          "beats": [
+            "Hare is west below; fox is west above on upper shelf.",
+            "High wide identifies both routes converging on the same Split Stone.",
+            "Hare steps toward the west end of the slate lip.",
+            "Hare is beside lip; fox remains separated above and behind."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare steps toward the west end of the slate lip"
+        }
+      ],
+      "voice": [
+        {
+          "en": "Earlier, the hare leaves a pocket of willow beside the lower channel. Ahead stands Split Stone, a dark opening under its base. The upper shelf appears empty, but an orange back crosses it.",
+          "vi": "Trước đó, con thỏ rời một cụm liễu cạnh dòng nước thấp. Phía trước là Đá Chẻ với một cửa tối dưới chân. Gờ đá phía trên thoạt nhìn trống vắng, nhưng một tấm lưng màu cam vừa băng qua."
+        },
+        {
+          "en": "This imagined basin holds only two animals in our story. One seeks the next sheltered patch; the other is searching for food. Between them, a narrow ribbon of meltwater begins to darken the slate.",
+          "vi": "Trong câu chuyện này, lòng chảo tưởng tượng chỉ có hai con vật. Một con tìm chỗ trú tiếp theo; con kia đang kiếm ăn. Giữa chúng, một dải nước tuyết tan hẹp bắt đầu làm sẫm những phiến đá."
+        }
+      ]
+    },
+    {
+      "id": "C01",
+      "title": "The path begins to flood",
+      "phase": "story",
+      "change": "The snow release changes the dry approach into a shrinking ledge.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "A snow shelf sloughs into the empty channel beyond the hare",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare waits at the west willow pocket",
+          "end_state": "Snow rests in the channel; the hare remains untouched at the pocket",
+          "cause": "The channel is clear of animals; a small detached snow shelf hangs above it",
+          "beats": [
+            "Hare crouches at the west willow pocket.",
+            "The channel is clear of animals; a small detached snow shelf hangs above it.",
+            "A snow shelf sloughs into the empty channel beyond the hare.",
+            "Snow lies in the channel; the hare remains untouched at the pocket."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "A snow shelf sloughs into the empty channel beyond the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "A new trickle spreads across the lowest path beside the hare",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare remains west of the slate lip",
+          "end_state": "Water crosses the low path; the hare stays on the higher ground",
+          "cause": "The fallen snow redirects the visible water around its edge",
+          "beats": [
+            "Hare remains west of the slate lip.",
+            "The fallen snow redirects the visible water around its edge.",
+            "A new trickle spreads across the lowest path beside the hare.",
+            "Water crosses the low path; the hare stays on the higher ground."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "A new trickle spreads across the lowest path beside the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare pivots its forequarters onto the higher slate lip",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare faces east beside the wet path",
+          "end_state": "Hare is fully facing east on the lip, left of Split Stone",
+          "cause": "The low ground is wet and the lip remains exposed",
+          "beats": [
+            "Hare faces east beside the wet path.",
+            "The low ground is wet and the lip remains exposed.",
+            "Hare pivots its forequarters onto the higher slate lip.",
+            "Hare is fully facing east on the lip, left of Split Stone."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare pivots its forequarters onto the higher slate lip"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare advances one body length along the dry lip",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands on the west end of the lip",
+          "end_state": "Hare is one body length east of its previous position",
+          "cause": "The north wall leaves a single dry strip above the channel",
+          "beats": [
+            "Hare stands on the west end of the lip.",
+            "The north wall leaves a single dry strip above the channel.",
+            "Hare advances one body length along the dry lip.",
+            "Hare is one body length east of its previous position."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare advances one body length along the dry lip"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare raises its head toward the dark entrance ahead",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare pauses on the dry lip",
+          "end_state": "Hare remains on the lip, oriented toward the west drain mouth",
+          "cause": "Split Stone stands east of the lip with its west mouth visible",
+          "beats": [
+            "Hare crouches on the dry lip.",
+            "Split Stone stands east of the lip with its west mouth visible.",
+            "Hare raises its head toward the dark entrance ahead.",
+            "Hare remains on the lip, oriented toward the west drain mouth."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare raises its head toward the dark entrance ahead"
+        }
+      ],
+      "voice": [
+        {
+          "en": "A small shelf of snow lets go above the channel. It lands away from the hare, yet the trickle beneath it spreads across the path. The easiest line toward the willow is disappearing.",
+          "vi": "Một mép tuyết nhỏ phía trên dòng nước rời ra. Nó rơi cách xa con thỏ, nhưng dòng nước bên dưới bắt đầu loang qua lối đi. Đường dễ nhất để tới bụi liễu đang dần biến mất."
+        },
+        {
+          "en": "The hare turns its body toward Split Stone without crossing the water. For now, the slate lip offers a dry connection. It is a useful route only while the channel stays below that edge.",
+          "vi": "Con thỏ hướng thân về Đá Chẻ mà không băng qua nước. Lúc này, mép đá phiến vẫn nối thành một lối khô. Lối ấy chỉ còn hữu ích chừng nào nước vẫn ở thấp hơn mép đá."
+        }
+      ]
+    },
+    {
+      "id": "C02",
+      "title": "The fox finds the ramp",
+      "phase": "story",
+      "change": "The fox obtains a route behind the hare.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox stops at a pale crack above the lower path",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands on the west upper shelf",
+          "end_state": "Fox stands still beside the crack, facing east",
+          "cause": "The crack marks the shelf edge above the lower path",
+          "beats": [
+            "Fox stands on the west upper shelf.",
+            "The crack marks the shelf edge above the lower path.",
+            "Fox stops at a pale crack above the lower path.",
+            "Fox stands beside the crack, facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox stops at a pale crack above the lower path"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox lowers its head over the shelf edge",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is beside the pale crack",
+          "end_state": "Fox head is lowered; all four feet remain on the shelf",
+          "cause": "The bare shelf allows an unobstructed downward view",
+          "beats": [
+            "Fox is beside the pale crack.",
+            "The bare shelf allows an unobstructed downward view.",
+            "Fox lowers its head over the shelf edge.",
+            "Fox head is lowered; all four feet remain on the shelf."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox lowers its head over the shelf edge"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox walks east to the top of the stepped ramp",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands at the shelf edge",
+          "end_state": "Fox reaches the ramp top above the west willow pocket",
+          "cause": "The ramp is the only visible connection down from the shelf",
+          "beats": [
+            "Fox stands at the shelf edge.",
+            "The ramp is the only visible connection down from the shelf.",
+            "Fox walks east to the top of the stepped ramp.",
+            "Fox reaches the ramp top above the west willow pocket."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox walks east to the top of the stepped ramp"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox descends two broad stone steps",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is at the ramp top",
+          "end_state": "Fox is on the lowest broad step facing east",
+          "cause": "Both steps are fixed bare slate, with no leap or slip",
+          "beats": [
+            "Fox is at the ramp top.",
+            "Both steps are fixed bare slate, with no leap or slip.",
+            "Fox descends two broad stone steps.",
+            "Fox is on the lowest broad step facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox descends two broad stone steps"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox steps onto the lower path behind the willow pocket",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is on the lowest step",
+          "end_state": "Fox reaches the lower path, west of Split Stone",
+          "cause": "The ramp joins the same route as the slate lip",
+          "beats": [
+            "Fox is on the lowest step.",
+            "The ramp joins the same route as the slate lip.",
+            "Fox steps onto the lower path behind the willow pocket.",
+            "Fox reaches the lower path, west of Split Stone."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox steps onto the lower path behind the willow pocket"
+        }
+      ],
+      "voice": [
+        {
+          "en": "On the upper shelf, the fox stops beside a pale crack. Below, the white back moves against dark stone. The fox lowers its head and follows the shelf toward the same drain entrance ahead.",
+          "vi": "Trên gờ cao, con cáo dừng cạnh một vết nứt nhạt màu. Bên dưới, tấm lưng trắng di chuyển trên nền đá sẫm. Cáo cúi đầu rồi men theo gờ về phía cửa cống đá phía trước."
+        },
+        {
+          "en": "There is no straight descent from here. A stepped ramp runs behind the willow pocket, then joins the lower path. Taking it brings the fox behind the hare, with the water closing the other side.",
+          "vi": "Từ đây không có lối xuống thẳng. Một dốc bậc vòng sau cụm liễu rồi nối vào đường thấp. Đi theo đó, cáo sẽ ở phía sau thỏ, trong khi nước khép lại phía bên kia."
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "title": "A foothold gives way",
+      "phase": "story",
+      "change": "The hare regains the ledge but remains wet as the fox reaches its level.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare places its left forefoot on the loose flake",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands before a loose flake on the lip",
+          "end_state": "Forefoot rests on the flake; hind feet stay on fixed rock",
+          "cause": "The flake bridges a shallow notch immediately above water",
+          "beats": [
+            "Hare stands before a loose flake on the lip.",
+            "The flake bridges a shallow notch immediately above water.",
+            "Hare places its left forefoot on the loose flake.",
+            "Forefoot lies on the flake; hind feet stay on fixed rock."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare places its left forefoot on the loose flake"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "The loaded flake tilts outward under the hare",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Forefoot bears on the loose flake",
+          "end_state": "Hare leans toward water while hind feet remain on rock",
+          "cause": "The flake has a visible unsupported channel-side edge",
+          "beats": [
+            "Forefoot bears on the loose flake.",
+            "The flake has a visible unsupported channel-side edge.",
+            "The loaded flake tilts outward under the hare.",
+            "Hare leans toward water while hind feet remain on rock."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "The loaded flake tilts outward under the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare slides its lower flank into the water",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare leans over the shallow channel",
+          "end_state": "Lower flank is visibly wet; hind feet retain the fixed ledge",
+          "cause": "The tilted flake drops just below the fixed lip",
+          "beats": [
+            "Hare leans over the shallow channel.",
+            "The tilted flake drops just below the fixed lip.",
+            "Hare slides its lower flank into the water.",
+            "Lower flank is visibly wet; hind feet retain the fixed ledge."
+          ],
+          "hook_role": "vulnerability",
+          "intensity": 5,
+          "spoiler": false,
+          "title": "Hare slides its lower flank into the water"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare pulls its body back onto fixed slate",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare has wet flank beside the lip",
+          "end_state": "Hare stands safely on the lip with a persistent wet grey lower flank",
+          "cause": "The north-side stone rim remains within reach of both forefeet",
+          "beats": [
+            "Hare has wet flank beside the lip.",
+            "The north-side stone rim remains within reach of both forefeet.",
+            "Hare pulls its body back onto fixed slate.",
+            "Hare stands safely on the lip with a persistent wet grey lower flank."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare pulls its body back onto fixed slate"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE",
+            "FOX"
+          ],
+          "action": "Fox steps out from the ramp foot toward the lip",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Wet hare stands east on lip; fox is at ramp foot west",
+          "end_state": "Fox is on the path behind the stationary wet hare",
+          "cause": "The same narrow path connects both positions",
+          "beats": [
+            "Wet hare stands east on lip; fox is at ramp foot west.",
+            "The same narrow path connects both positions.",
+            "Fox steps out from the ramp foot toward the lip.",
+            "Fox is on the path behind the stationary wet hare."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox steps out from the ramp foot toward the lip"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The slate lip narrows beside a loose flake. The hare places one forefoot upon it, and the flake tilts into the channel. Its lower flank touches water before its hind feet recover firm rock.",
+          "vi": "Mép đá phiến hẹp lại bên một mảnh đá lỏng. Con thỏ đặt một chân trước lên đó, khiến mảnh đá nghiêng xuống dòng nước. Sườn dưới của nó chạm nước trước khi hai chân sau tìm lại nền chắc."
+        },
+        {
+          "en": "It remains on the ledge, but the wet grey patch now marks the cost of that step. Behind it, the descending fox reaches the foot of the ramp. Waiting here would surrender the remaining distance.",
+          "vi": "Nó vẫn ở trên gờ, nhưng mảng xám ướt giờ cho thấy cái giá của bước chân ấy. Phía sau, con cáo đang xuống đã tới chân dốc. Nán lại đây sẽ đánh mất khoảng cách còn lại."
+        }
+      ]
+    },
+    {
+      "id": "C04",
+      "title": "One line remains",
+      "phase": "story",
+      "change": "The flooded shortcut commits both animals to the same narrow approach.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare bounds one body length east along the lip",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Wet hare stands on the lip before Split Stone",
+          "end_state": "Hare lands on the same dry strip closer to the west mouth",
+          "cause": "The fixed north wall borders the only dry strip",
+          "beats": [
+            "Wet hare stands on the lip before Split Stone.",
+            "The fixed north wall borders the only dry strip.",
+            "Hare bounds one body length east along the lip.",
+            "Hare lands on the same dry strip closer to the west mouth."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare bounds one body length east along the lip"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox advances low onto the slate lip",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox follows on the west lower path",
+          "end_state": "Fox is on the lip facing east",
+          "cause": "Water borders the lip on its south side",
+          "beats": [
+            "Fox follows on the west lower path.",
+            "Water borders the lip on its south side.",
+            "Fox advances low onto the slate lip.",
+            "Fox is on the lip facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox advances low onto the slate lip"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Water overtops the shortcut beside the hare",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare pauses at a low shortcut beside the lip",
+          "end_state": "Shortcut is submerged; hare stays on high slate",
+          "cause": "A new shallow pulse reaches the low notch from the west",
+          "beats": [
+            "Hare crouches at a low shortcut beside the lip.",
+            "A new shallow pulse reaches the low notch from the west.",
+            "Water overtops the shortcut beside the hare.",
+            "Shortcut is submerged; hare stays on high slate."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Water overtops the shortcut beside the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE",
+            "FOX"
+          ],
+          "action": "Fox closes two body lengths along the same lip",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is west on lip; hare is east at flooded notch",
+          "end_state": "Fox ends behind hare with open stone still between them",
+          "cause": "There is no dry side route between the north wall and channel",
+          "beats": [
+            "Fox is west on lip; hare is east at flooded notch.",
+            "There is no dry side route between the north wall and channel.",
+            "Fox closes two body lengths along the same lip.",
+            "Fox ends behind hare with open stone between them."
+          ],
+          "hook_role": "pursuit",
+          "intensity": 5,
+          "spoiler": false,
+          "title": "Fox closes two body lengths along the same lip"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare advances to the shadow of the west drain mouth",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands east of the flooded notch",
+          "end_state": "Hare is just outside the west entrance, still facing east",
+          "cause": "The entrance is the next cover on the continuous lip",
+          "beats": [
+            "Hare stands east of the flooded notch.",
+            "The entrance is the next cover on the continuous lip.",
+            "Hare advances to the shadow of the west drain mouth.",
+            "Hare is just outside the west entrance, facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare advances to the shadow of the west drain mouth"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The hare moves right along the last exposed strip. The fox comes onto the same strip behind it, keeping low against the wall. Between them lies open stone; ahead lies the mouth of the drain.",
+          "vi": "Con thỏ đi sang phải dọc dải đá cuối cùng còn lộ. Cáo bước lên chính dải đá ấy ở phía sau, hạ thấp người sát vách. Giữa chúng là đá trống; phía trước là miệng cống đá."
+        },
+        {
+          "en": "Water washes over the lower shortcut before the hare can use it. The chase must follow the narrow upper edge instead. Split Stone offers cover, but neither animal can see where its dark passage ends.",
+          "vi": "Nước tràn qua lối tắt thấp trước khi thỏ kịp dùng nó. Cuộc đuổi bắt buộc phải men theo mép cao hẹp. Đá Chẻ có thể che chắn, nhưng cả hai đều chưa thấy đường hầm tối kết thúc ở đâu."
+        }
+      ]
+    },
+    {
+      "id": "C05",
+      "title": "Shelter becomes a trap",
+      "phase": "story",
+      "change": "A roof separates the pair, but the low exit is blocked.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare slips headfirst beneath the solid roof",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare waits just outside west entrance",
+          "end_state": "Hare is inside the west end of the tunnel facing east",
+          "cause": "The low mouth clears its ears without contact",
+          "beats": [
+            "Hare crouches just outside west entrance.",
+            "The low mouth clears its ears without contact.",
+            "Hare slips headfirst beneath the solid roof.",
+            "Hare is inside the west end of the tunnel facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare slips headfirst beneath the solid roof"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare follows the raised floor toward eastern daylight",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is inside the west tunnel end",
+          "end_state": "Hare reaches the tunnel middle on the dry rib",
+          "cause": "A shallow water groove runs beside a higher continuous stone rib",
+          "beats": [
+            "Hare is inside the west tunnel end.",
+            "A shallow water groove runs beside a higher continuous stone rib.",
+            "Hare follows the raised floor toward eastern daylight.",
+            "Hare reaches the tunnel middle on the dry rib."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare follows the raised floor toward eastern daylight"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare stops before the east twig screen",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands on the middle rib",
+          "end_state": "Hare is one head length from the screen without passing it",
+          "cause": "Interlocked dead willow stems cross the low outlet",
+          "beats": [
+            "Hare stands on the middle rib.",
+            "Interlocked dead willow stems cross the low outlet.",
+            "Hare stops before the east twig screen.",
+            "Hare is one head length from the screen without passing it."
+          ],
+          "hook_role": "obstacle",
+          "intensity": 5,
+          "spoiler": false,
+          "title": "Hare stops before the east twig screen"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare turns its ears toward the west entrance",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is before east twig screen",
+          "end_state": "Hare stays facing east with ears angled toward the entrance",
+          "cause": "The roof hides the outside path but the west mouth remains visible",
+          "beats": [
+            "Hare is before east twig screen.",
+            "The roof hides the outside path but the west mouth remains visible.",
+            "Hare turns its ears toward the west entrance.",
+            "Hare stays facing east with ears angled toward the entrance."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare turns its ears toward the west entrance"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "A thin stream runs past the hare toward the screened outlet",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands before twig screen",
+          "end_state": "Water reaches the screen while the hare remains above it",
+          "cause": "The groove slopes gently to the east beneath the fixed roof",
+          "beats": [
+            "Hare stands before twig screen.",
+            "The groove slopes firmly to the east beneath the fixed roof.",
+            "A thin stream runs past the hare toward the screened outlet.",
+            "Water reaches the screen while the hare remains above it."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "A thin stream runs past the hare toward the screened outlet"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The hare reaches the west entrance and slips beneath the stone roof. For a moment, the fox loses sight of the white body. A shallow groove carries water along the tunnel floor toward daylight ahead.",
+          "vi": "Con thỏ tới cửa phía tây rồi lách dưới mái đá. Trong thoáng chốc, cáo không còn thấy thân mình trắng. Một rãnh cạn dẫn nước dọc nền đường hầm về phía ánh sáng phía trước."
+        },
+        {
+          "en": "That light is divided by a screen of dead twigs at the low outlet. The hare stops short of it. Shelter has bought a little separation, while the blocked opening removes the simple route through.",
+          "vi": "Ánh sáng ấy bị chia cắt bởi một màn cành khô ở cửa ra thấp. Con thỏ dừng ngay trước đó. Chỗ trú vừa tạo thêm chút khoảng cách, nhưng cửa bị chặn cũng làm mất lối xuyên qua đơn giản."
+        }
+      ]
+    },
+    {
+      "id": "C06",
+      "title": "A muzzle at the entrance",
+      "phase": "story",
+      "change": "The fox blocks retreat while the screened exit remains unresolved.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox pushes its muzzle beneath the west roof edge",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands outside the west mouth",
+          "end_state": "Only muzzle and head extend inside; shoulders remain outside",
+          "cause": "The opening is too low for the fox shoulders",
+          "beats": [
+            "Fox stands outside the west mouth.",
+            "The opening is too low for the fox shoulders.",
+            "Fox pushes its muzzle beneath the west roof edge.",
+            "Only muzzle and head extend inside; shoulders remain outside."
+          ],
+          "hook_role": "threat",
+          "intensity": 5,
+          "spoiler": false,
+          "title": "Fox pushes its muzzle beneath the west roof edge"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE",
+            "FOX"
+          ],
+          "action": "Hare presses forward along the rib toward the screen",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox head is at west mouth; hare is east at screen",
+          "end_state": "Hare is against the screen; fox head stays at the distant mouth",
+          "cause": "The fixed tunnel keeps the two animals at opposite ends",
+          "beats": [
+            "Fox head is at west mouth; hare is east at screen.",
+            "The fixed tunnel keeps the two animals at opposite ends.",
+            "Hare presses forward along the rib toward the screen.",
+            "Hare is against the screen; fox head stays at the distant mouth."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare presses forward along the rib toward the screen"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare noses one flexible stem outward",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare nose touches the east twig screen",
+          "end_state": "Stem bends slightly but no clear passage opens",
+          "cause": "The stem is wedged among several thicker dead twigs",
+          "beats": [
+            "Hare nose touches the east twig screen.",
+            "The stem is wedged among several thicker dead twigs.",
+            "Hare noses one flexible stem outward.",
+            "Stem bends slightly but no clear passage opens."
+          ],
+          "hook_role": "unanswered",
+          "intensity": 5,
+          "spoiler": false,
+          "title": "Hare noses one flexible stem outward"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "The flexible stem springs back across the outlet",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "A bent stem is against hare nose",
+          "end_state": "Screen is closed again and the hare has not passed",
+          "cause": "Its lower end remains caught behind a fixed stone nub",
+          "beats": [
+            "A bent stem is against hare nose.",
+            "Its lower end remains caught behind a fixed stone nub.",
+            "The flexible stem springs back across the outlet.",
+            "Screen is closed again and the hare has not passed."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "The flexible stem springs back across the outlet"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox withdraws its head and sets one forepaw by the entrance",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox head extends under the west roof edge",
+          "end_state": "Fox stands fully outside with forepaw beside one loose pebble",
+          "cause": "The same solid roof prevents a deeper head-first entry",
+          "beats": [
+            "Fox head extends under the west roof edge.",
+            "The same solid roof prevents a deeper head-first entry.",
+            "Fox withdraws its head and sets one forepaw by the entrance.",
+            "Fox stands fully outside with forepaw beside one loose pebble."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox withdraws its head and sets one forepaw by the entrance"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The fox arrives at the entrance and pushes its muzzle under the roof. Only its head fits. Inside, the hare presses toward the twig screen, leaving the hunter a view of one black ear tip.",
+          "vi": "Cáo tới cửa rồi thọc mõm dưới mái đá. Chỉ phần đầu lọt vào. Bên trong, thỏ ép mình về phía màn cành khô, để kẻ săn nhìn thấy đúng một chóp tai đen."
+        },
+        {
+          "en": "A flexible stem bends against the hare, then settles back into place. There is space beyond it, but no clear opening yet. The fox withdraws its muzzle and lays one forepaw beside the entrance stone.",
+          "vi": "Một cành mềm cong dưới sức ép của thỏ rồi trở về chỗ cũ. Phía sau vẫn có khoảng trống, nhưng chưa có cửa thông. Cáo rút mõm ra và đặt một chân trước cạnh phiến đá ở lối vào."
+        }
+      ]
+    },
+    {
+      "id": "C07",
+      "title": "The floor gets smaller",
+      "phase": "story",
+      "change": "Digging at the entrance admits water while the hare uses a higher rib.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox scrapes the single pebble away from the west mouth",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox forepaw rests beside a loose entrance pebble",
+          "end_state": "Pebble rests clear of the mouth; solid roof is unchanged",
+          "cause": "Wet grit under the pebble gives beneath the paw",
+          "beats": [
+            "Fox forepaw lies beside a loose entrance pebble.",
+            "Wet grit under the pebble gives beneath the paw.",
+            "Fox scrapes the single pebble away from the west mouth.",
+            "Pebble lies clear of the mouth; solid roof is unchanged."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox scrapes the single pebble away from the west mouth"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Water fills the hollow at the fox forepaw",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands beside the new shallow hollow",
+          "end_state": "Water occupies the hollow; fox paw is on firm stone",
+          "cause": "The hollow connects visibly to the channel beside the entrance",
+          "beats": [
+            "Fox stands beside the new shallow hollow.",
+            "The hollow connects visibly to the channel beside the entrance.",
+            "Water fills the hollow at the fox forepaw.",
+            "Water occupies the hollow; fox paw is on firm stone."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Water fills the hollow at the fox forepaw"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox sweeps soft mud from the entrance edge",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands on firm stone beside wet grit",
+          "end_state": "Entrance edge is muddy and wet but does not enlarge enough for shoulders",
+          "cause": "Only loose mud moves, with fixed roof and floor remaining stable",
+          "beats": [
+            "Fox stands on firm stone beside wet grit.",
+            "Only loose mud moves, with fixed roof and floor remaining stable.",
+            "Fox sweeps soft mud from the entrance edge.",
+            "Entrance edge is muddy and wet but does not enlarge enough for shoulders."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox sweeps soft mud from the entrance edge"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Water rises against the lower edge of the hare rib",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands on east rib beside the groove",
+          "end_state": "Water line is higher; hare body remains above it",
+          "cause": "A stronger trickle enters the same groove from the west",
+          "beats": [
+            "Hare stands on east rib beside the groove.",
+            "A stronger trickle enters the same groove from the west.",
+            "Water rises against the lower edge of the hare rib.",
+            "Water line is higher; hare body remains above it."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Water rises against the lower edge of the hare rib"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare steps its forefeet onto a higher stone ridge",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare forefeet stand near wet lower rib edge",
+          "end_state": "Both forefeet are above water; wet flank and east-facing body persist",
+          "cause": "The ridge is a fixed continuation toward the east screen",
+          "beats": [
+            "Hare forefeet stand near wet lower rib edge.",
+            "The ridge is a fixed continuation toward the east screen.",
+            "Hare steps its forefeet onto a higher stone ridge.",
+            "Both forefeet are above water; wet flank and east-facing body persist."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare steps its forefeet onto a higher stone ridge"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The fox draws a loose pebble away from the entrance. Water immediately fills the tiny hollow it leaves. Another sweep exposes mud beneath the stone, but the solid roof above the hare does not move.",
+          "vi": "Cáo kéo một viên sỏi rời khỏi cửa. Nước lập tức lấp hốc nhỏ vừa xuất hiện. Một lượt cào nữa làm lộ bùn dưới chân đá, nhưng mái đá chắc phía trên thỏ vẫn không dịch chuyển."
+        },
+        {
+          "en": "Inside, the water line climbs along the groove. The hare raises its front feet onto a higher rib and keeps its body facing the far outlet. The space that held it dry is becoming smaller.",
+          "vi": "Bên trong, mực nước dâng dọc rãnh. Thỏ nhấc hai chân trước lên một sống đá cao hơn, vẫn hướng thân về cửa xa. Khoảng không từng giữ nó khô ráo đang nhỏ dần."
+        }
+      ]
+    },
+    {
+      "id": "C08",
+      "title": "The screen loosens",
+      "phase": "story",
+      "change": "Water moves a stem but reveals that the low outlet is no longer safe ground.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Water lifts a strip of willow bark beside the hare",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is on higher rib beside east screen",
+          "end_state": "Bark floats toward the screen with hare unmoved",
+          "cause": "The bark lies loose in the shallow groove",
+          "beats": [
+            "Hare is on higher rib beside east screen.",
+            "The bark lies loose in the shallow groove.",
+            "Water lifts a strip of willow bark beside the hare.",
+            "Bark floats toward the screen with hare unmoved."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Water lifts a strip of willow bark beside the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "The caught bark pulls one slender stem sideways",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Floating bark reaches the screen below hare nose",
+          "end_state": "Stem shifts sideways, leaving a small low gap",
+          "cause": "Bark snags against the stem as the current presses it",
+          "beats": [
+            "Floating bark reaches the screen below hare nose.",
+            "Bark snags against the stem as the current presses it.",
+            "The caught bark pulls one slender stem sideways.",
+            "Stem shifts sideways, leaving a small low gap."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "The caught bark pulls one slender stem sideways"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare probes the loosened screen edge with its nose",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare nose is beside the shifted stem",
+          "end_state": "Hare nose enters the small gap; body stays on the rib",
+          "cause": "The shifted stem flexes without moving the solid stone above",
+          "beats": [
+            "Hare nose is beside the shifted stem.",
+            "The shifted stem flexes without moving the solid stone above.",
+            "Hare probes the loosened screen edge with its nose.",
+            "Hare nose enters the small gap; body stays on the rib."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare probes the loosened screen edge with its nose"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare lifts its nose away from water passing through the gap",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare nose is at the low gap",
+          "end_state": "Nose is above the water line; hare does not enter the stream",
+          "cause": "The gap opens directly into the flowing lower outlet",
+          "beats": [
+            "Hare nose is at the low gap.",
+            "The gap opens directly into the flowing lower outlet.",
+            "Hare lifts its nose away from water passing through the gap.",
+            "Nose is above the water line; hare does not enter the stream."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare lifts its nose away from water passing through the gap"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare raises its ears beside a higher dry seam",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare holds its nose above the lower gap",
+          "end_state": "Ears point toward the dry seam, which remains unentered",
+          "cause": "A narrow dark seam remains dry above the screen north edge",
+          "beats": [
+            "Hare holds its nose above the lower gap.",
+            "A narrow dark seam remains dry above the screen north edge.",
+            "Hare raises its ears beside a higher dry seam.",
+            "Ears point toward the dry seam, which remains unentered."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare raises its ears beside a higher dry seam"
+        }
+      ],
+      "voice": [
+        {
+          "en": "At the outlet, the current lifts a strand of willow bark. It catches the twig screen and pulls one stem sideways. The hare follows with its nose, testing the newly loosened edge.",
+          "vi": "Ở cửa ra, dòng nước nhấc một dải vỏ liễu. Dải vỏ mắc vào màn cành rồi kéo một cành sang bên. Thỏ đưa mũi theo, thử mép vừa được nới lỏng."
+        },
+        {
+          "en": "The screen gives a little, yet the opening below is full of water. Pushing through would place the hare directly in the stream. Above its shoulder, another line of darkness remains dry.",
+          "vi": "Màn cành nhường ra một chút, nhưng khoảng mở bên dưới đầy nước. Chui qua sẽ đưa thỏ thẳng vào dòng chảy. Phía trên vai nó, một vệt tối khác vẫn còn khô."
+        }
+      ]
+    },
+    {
+      "id": "C09",
+      "title": "The fox takes the upper route",
+      "phase": "story",
+      "change": "The hunter circles to the far outlet while water prevents a simple retreat.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox steps onto a broad ramp toward the upper shelf",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands at the west entrance",
+          "end_state": "Fox is halfway up the ramp facing east",
+          "cause": "The broad ramp adjoins the same west entrance stone",
+          "beats": [
+            "Fox stands at the west entrance.",
+            "The broad ramp adjoins the same west entrance stone.",
+            "Fox steps onto a broad ramp toward the upper shelf.",
+            "Fox is halfway up the ramp facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox steps onto a broad ramp toward the upper shelf"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox climbs onto the upper shelf above the drain",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is halfway up broad ramp",
+          "end_state": "Fox stands over the west half of the tunnel",
+          "cause": "The shelf is continuous bare stone above the fixed roof",
+          "beats": [
+            "Fox is halfway up broad ramp.",
+            "The shelf is continuous bare stone above the fixed roof.",
+            "Fox climbs onto the upper shelf above the drain.",
+            "Fox stands over the west half of the tunnel."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox climbs onto the upper shelf above the drain"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox walks east along the broad upper shelf",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is above the west tunnel half",
+          "end_state": "Fox reaches the shelf middle above the tunnel",
+          "cause": "The north wall borders the shelf and the east outlet lies ahead",
+          "beats": [
+            "Fox is above the west tunnel half.",
+            "The north wall borders the shelf and the east outlet lies ahead.",
+            "Fox walks east along the broad upper shelf.",
+            "Fox reaches the shelf middle above the tunnel."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox walks east along the broad upper shelf"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Water spreads across the low west entrance behind the hare",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare remains inside beside east screen",
+          "end_state": "West entrance is wet and partly flooded; hare stays at east rib",
+          "cause": "The camera looks west from the same south-side orientation without reversing geography",
+          "beats": [
+            "Hare remains inside beside east screen.",
+            "The camera looks west from the same south-side orientation without reversing geography.",
+            "Water spreads across the low west entrance behind the hare.",
+            "West entrance is wet and partly flooded; hare stays at east rib."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Water spreads across the low west entrance behind the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare plants its rear feet more firmly on the rib",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is at east rib above the groove",
+          "end_state": "All feet stay on stone above water, head facing east",
+          "cause": "Water occupies the lower floor and no dry return route is visible",
+          "beats": [
+            "Hare is at east rib above the groove.",
+            "Water occupies the lower floor and no dry return route is visible.",
+            "Hare plants its rear feet more firmly on the rib.",
+            "All feet stay on stone above water, head facing east."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare plants its rear feet more firmly on the rib"
+        }
+      ],
+      "voice": [
+        {
+          "en": "Outside, the fox leaves the west mouth and climbs onto the upper shelf. Its orange back crosses above the tunnel roof. This route leads toward the far outlet without entering the passage.",
+          "vi": "Bên ngoài, cáo rời cửa tây rồi leo lên gờ cao. Tấm lưng cam băng qua phía trên mái đường hầm. Lối này dẫn tới cửa xa mà không cần chui vào đường hầm."
+        },
+        {
+          "en": "The entrance behind the hare is clear, but water covers its approach. Turning back would exchange a roof for a channel. The hare stays on the rib as the fox passes overhead.",
+          "vi": "Cửa sau lưng thỏ thông thoáng, nhưng nước phủ lối tới đó. Quay lại sẽ đổi mái che lấy dòng nước. Thỏ vẫn ở trên sống đá khi cáo đi qua phía trên."
+        }
+      ]
+    },
+    {
+      "id": "C10",
+      "title": "The way behind narrows",
+      "phase": "story",
+      "change": "A patch of crust closes the west mouth while the hare remains under stable rock.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox places a forefoot onto soft snow beside bare rock",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is at shelf middle beside old snow",
+          "end_state": "Forefoot rests on crust while other feet stay on bare stone",
+          "cause": "The snow is a shallow patch over the outer shelf edge",
+          "beats": [
+            "Fox is at shelf middle beside old snow.",
+            "The snow is a shallow patch over the outer shelf edge.",
+            "Fox places a forefoot onto soft snow beside bare rock.",
+            "Forefoot lies on crust while other feet stay on bare stone."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox places a forefoot onto soft snow beside bare rock"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "The crust yields beneath the fox forefoot",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox forefoot rests on shallow crust",
+          "end_state": "Forefoot sinks slightly; small snow fragments fall west of the roof",
+          "cause": "A small unsupported snow edge faces the west entrance below",
+          "beats": [
+            "Fox forefoot lies on shallow crust.",
+            "A small unsupported snow edge faces the west entrance below.",
+            "The crust yields beneath the fox forefoot.",
+            "Forefoot sinks slightly; small snow fragments fall west of the roof."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "The crust yields beneath the fox forefoot"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox steps that forefoot onto adjoining bare rock",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox has one forefoot sunk in shallow snow",
+          "end_state": "All fox feet are on stable rock; no injury",
+          "cause": "Bare rock is directly beside the shallow depression",
+          "beats": [
+            "Fox has one forefoot sunk in shallow snow.",
+            "Bare rock is directly beside the shallow depression.",
+            "Fox steps that forefoot onto adjoining bare rock.",
+            "All fox feet are on stable rock; no injury."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox steps that forefoot onto adjoining bare rock"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Falling snow plants across the distant west mouth",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is sheltered at east rib inside tunnel",
+          "end_state": "West mouth narrows under snow; hare remains untouched",
+          "cause": "A fixed solid roof spans the entire hare position",
+          "beats": [
+            "Hare is sheltered at east rib inside tunnel.",
+            "A fixed solid roof spans the entire hare position.",
+            "Falling snow plants across the distant west mouth.",
+            "West mouth narrows under snow; hare remains untouched."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Falling snow plants across the distant west mouth"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare lifts its chin toward eastern daylight",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stays east inside the tunnel",
+          "end_state": "Hare chin points toward the upper east seam, still inside",
+          "cause": "The west mouth is dimmer and the twig-screened east opening remains bright",
+          "beats": [
+            "Hare stays east inside the tunnel.",
+            "The west mouth is dimmer and the twig-screened east opening remains bright.",
+            "Hare lifts its chin toward eastern daylight.",
+            "Hare chin points toward the upper east seam, inside."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare lifts its chin toward eastern daylight"
+        }
+      ],
+      "voice": [
+        {
+          "en": "Near the shelf's middle, the fox tests a patch of snow. Its forefoot sinks through the crust, shedding a curtain toward the west mouth. The fox shifts onto bare rock beside it.",
+          "vi": "Gần giữa gờ, cáo thử một mảng tuyết. Chân trước xuyên qua lớp vỏ, làm một màn tuyết rơi về cửa tây. Cáo chuyển sang phần đá trần cạnh đó."
+        },
+        {
+          "en": "Snow settles across the entrance while water continues beneath it. The hare remains under the fixed roof, clear of the fall. The way behind narrows; the outlet carries the only visible space.",
+          "vi": "Tuyết phủ ngang cửa trong khi nước tiếp tục chảy bên dưới. Thỏ vẫn dưới mái đá cố định, ngoài chỗ tuyết rơi. Lối sau hẹp lại; cửa ra còn giữ khoảng trống duy nhất có thể thấy."
+        }
+      ]
+    },
+    {
+      "id": "C11",
+      "title": "The hunter reaches the outlet",
+      "phase": "story",
+      "change": "The fox watches the low opening as the hare discovers a higher line.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox walks to the shelf east end above twig screen",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands on upper shelf east of soft snow",
+          "end_state": "Fox reaches the east shelf end without entering the bench",
+          "cause": "The projecting slab separates the shelf from the east bench",
+          "beats": [
+            "Fox stands on upper shelf east of soft snow.",
+            "The projecting slab separates the shelf from the east bench.",
+            "Fox walks to the shelf east end above twig screen.",
+            "Fox reaches the east shelf end without entering the bench."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox walks to the shelf east end above twig screen"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox lowers its head toward the screened water outlet",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands above east lower outlet",
+          "end_state": "Fox watches the low outlet with shoulders on shelf",
+          "cause": "The slab conceals the higher north seam from this angle",
+          "beats": [
+            "Fox stands above east lower outlet.",
+            "The slab conceals the higher north seam from this angle.",
+            "Fox lowers its head toward the screened water outlet.",
+            "Fox watches the low outlet with shoulders on shelf."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox lowers its head toward the screened water outlet"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "The light at the lower outlet dims beside the hare",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands at east screen with head raised",
+          "end_state": "Lower outlet dims briefly; upper seam remains visible",
+          "cause": "Diffuse daylight is locally blocked above the low mouth",
+          "beats": [
+            "Hare stands at east screen with head raised.",
+            "Diffuse daylight is locally blocked above the low mouth.",
+            "The light at the lower outlet dims beside the hare.",
+            "Lower outlet dims briefly; upper seam remains visible."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "The light at the lower outlet dims beside the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare lifts its nose along the higher stone rib",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare head is beside lower screen",
+          "end_state": "Hare nose reaches the dry seam entrance",
+          "cause": "The rib slopes to the dry seam just above the screen north edge",
+          "beats": [
+            "Hare head is beside lower screen.",
+            "The rib slopes to the dry seam just above the screen north edge.",
+            "Hare lifts its nose along the higher stone rib.",
+            "Hare nose reaches the dry seam entrance."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare lifts its nose along the higher stone rib"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare presses its nose firmly into the upper opening",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare nose is at the upper dry seam",
+          "end_state": "Nose is within the seam; shoulders remain inside the tunnel",
+          "cause": "A fixed smooth lip leads beyond the flexible stems",
+          "beats": [
+            "Hare nose is at the upper dry seam.",
+            "A fixed smooth lip leads beyond the flexible stems.",
+            "Hare presses its nose firmly into the upper opening.",
+            "Nose is within the seam; shoulders remain inside the tunnel."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare presses its nose firmly into the upper opening"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The fox reaches the shelf's east end and looks down beside the screen. Its shadow crosses the outlet. The hare lifts its head away from that movement, toward the dry seam above.",
+          "vi": "Cáo tới đầu đông của gờ rồi nhìn xuống cạnh màn cành. Bóng nó lướt qua cửa ra. Thỏ ngẩng đầu tránh chuyển động ấy, hướng tới khe khô phía trên."
+        },
+        {
+          "en": "A rib connects its forefeet to that seam. This rise was hidden behind the twigs from outside. The hare presses its nose against the upper opening while the fox watches the water.",
+          "vi": "Một sống đá nối chỗ hai chân trước tới khe đó. Nhìn từ ngoài, cành khô đã che phần nhô này. Thỏ áp mũi vào cửa trên khi cáo nhìn dòng nước."
+        }
+      ]
+    },
+    {
+      "id": "C12",
+      "title": "Halfway through",
+      "phase": "story",
+      "change": "The hare reaches dry footing but has not cleared the seam as the fox turns.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare stretches forequarters forward along the rib",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare nose is in the upper seam",
+          "end_state": "Head and chest enter the seam; hindquarters stay inside",
+          "cause": "The rib leads continuously to the dry upper lip",
+          "beats": [
+            "Hare nose is in the upper seam.",
+            "The rib leads continuously to the dry upper lip.",
+            "Hare stretches forequarters forward along the rib.",
+            "Head and chest enter the seam; hindquarters stay inside."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare stretches forequarters forward along the rib"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare presses one stem sideways with its shoulder",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare chest is at flexible stems beside seam",
+          "end_state": "Shoulder advances with stem bent aside; no stone moves",
+          "cause": "The stem flexes away from a fixed stone lip",
+          "beats": [
+            "Hare chest is at flexible stems beside seam.",
+            "The stem flexes away from a fixed stone lip.",
+            "Hare presses one stem sideways with its shoulder.",
+            "Shoulder advances with stem bent aside; no stone moves."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare presses one stem sideways with its shoulder"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare plants both forefeet on the dry outer lip",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare shoulder is in upper seam",
+          "end_state": "Both forefeet are outside; wet hindquarters remain inside",
+          "cause": "A narrow ledge lies directly behind the projecting slab",
+          "beats": [
+            "Hare shoulder is in upper seam.",
+            "A narrow ledge lies directly behind the projecting slab.",
+            "Hare plants both forefeet on the dry outer lip.",
+            "Both forefeet are outside; wet hindquarters remain inside."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Hare plants both forefeet on the dry outer lip"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox turns its head toward movement above the low screen",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox watches lower outlet from shelf east end",
+          "end_state": "Fox head faces the slab corner beside the hidden seam",
+          "cause": "The slab hides most of the upper lip, leaving a faint ear-tip movement",
+          "beats": [
+            "Fox watches lower outlet from shelf east end.",
+            "The slab hides most of the upper lip, leaving a faint ear-tip movement.",
+            "Fox turns its head toward movement above the low screen.",
+            "Fox head faces the slab corner beside the hidden seam."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox turns its head toward movement above the low screen"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox steps around the projecting slab toward east outlet",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox head faces slab corner",
+          "end_state": "Fox has reached the slab corner, the seam still concealed",
+          "cause": "The slab corner permits a broad outside approach but conceals the narrow seam",
+          "beats": [
+            "Fox head faces slab corner.",
+            "The slab corner permits a broad outside approach but conceals the narrow seam.",
+            "Fox steps around the projecting slab toward east outlet.",
+            "Fox has reached the slab corner, the seam concealed."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": false,
+          "title": "Fox steps around the projecting slab toward east outlet"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The hare stretches along the rib, pressing flexible stems aside with its shoulder. Its forefeet find a dry lip beyond the seam. Behind, the wet hindquarters remain inside, above the rising groove.",
+          "vi": "Thỏ vươn dọc sống đá, dùng vai ép các cành mềm sang bên. Hai chân trước tìm thấy mép khô ngoài khe. Phía sau, nửa thân ướt vẫn ở bên trong, phía trên rãnh đang dâng nước."
+        },
+        {
+          "en": "The fox turns toward movement above the outlet and steps around the slab. That turn brings it closer, but the stone hides the narrow seam. The hare has yet to draw itself through.",
+          "vi": "Cáo quay về phía chuyển động trên cửa ra rồi vòng quanh phiến đá. Cú rẽ đưa nó tới gần hơn, nhưng đá che khe hẹp. Thỏ vẫn chưa kéo được toàn thân qua."
+        }
+      ]
+    },
+    {
+      "id": "C13",
+      "title": "The dry seam holds",
+      "phase": "story",
+      "change": "The hare clears the passage; the fox cannot follow through the same opening.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare pulls hindquarters through the upper seam",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare forefeet are planted on dry outer lip",
+          "end_state": "Whole hare is outside on dry lip; wet flank remains visible",
+          "cause": "Firm forefoot purchase on the lip supports the single pull",
+          "beats": [
+            "Hare forefeet are planted on dry outer lip.",
+            "Firm forefoot purchase on the lip supports the single pull.",
+            "Hare pulls hindquarters through the upper seam.",
+            "Whole hare is outside on dry lip; wet flank remains visible."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Hare pulls hindquarters through the upper seam"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare steps into the adjoining east willow bench",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands on the outer lip behind slab",
+          "end_state": "Hare is concealed behind east willow stems",
+          "cause": "The lip continues directly into a sheltered willow-root pocket",
+          "beats": [
+            "Hare stands on the outer lip behind slab.",
+            "The lip continues directly into a sheltered willow-root pocket.",
+            "Hare steps into the adjoining east willow bench.",
+            "Hare is concealed behind east willow stems."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Hare steps into the adjoining east willow bench"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox reaches the upper opening from the outer stone edge",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands at slab corner east of tunnel",
+          "end_state": "Fox muzzle reaches the seam; shoulders remain outside",
+          "cause": "The same seam is visibly narrower than the fox shoulders",
+          "beats": [
+            "Fox stands at slab corner east of tunnel.",
+            "The same seam is visibly narrower than the fox shoulders.",
+            "Fox reaches the upper opening from the outer stone edge.",
+            "Fox muzzle reaches the seam; shoulders remain outside."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Fox reaches the upper opening from the outer stone edge"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox tests the lower seam edge with one forepaw",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox muzzle reaches upper seam",
+          "end_state": "Forepaw rests at edge; shoulders cannot enter",
+          "cause": "Fixed rock above and below the seam does not yield",
+          "beats": [
+            "Fox muzzle reaches upper seam.",
+            "Fixed rock above and below the seam does not yield.",
+            "Fox tests the lower seam edge with one forepaw.",
+            "Forepaw lies at edge; shoulders cannot enter."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Fox tests the lower seam edge with one forepaw"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox withdraws from the narrow opening",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox has one forepaw at the seam edge",
+          "end_state": "Fox stands back on outer stone, immediate pursuit stopped",
+          "cause": "The opening remains unchanged beyond the slab",
+          "beats": [
+            "Fox has one forepaw at the seam edge.",
+            "The opening remains unchanged beyond the slab.",
+            "Fox withdraws from the narrow opening.",
+            "Fox stands back on outer stone, immediate pursuit stopped."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Fox withdraws from the narrow opening"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The hare draws its hind legs onto the dry lip. The last white foot clears the seam before the fox rounds the slab. Willow stems conceal the hare on the bench beyond.",
+          "vi": "Thỏ kéo hai chân sau lên mép khô. Bàn chân trắng cuối cùng vừa qua khe thì cáo vòng tới phiến đá. Các thân liễu che thỏ trên bậc đá phía bên kia."
+        },
+        {
+          "en": "The fox reaches the opening and cannot bring its shoulders through. It tests the lower edge once, then pulls back. The passage has separated them; the pursuit ends at the narrow wall.",
+          "vi": "Cáo tới cửa nhưng không thể đưa vai qua. Nó thử mép dưới một lần rồi rút lại. Lối đi đã tách chúng ra; cuộc đuổi bắt kết thúc tại vách hẹp."
+        }
+      ]
+    },
+    {
+      "id": "E01",
+      "title": "A short reprieve",
+      "phase": "ending",
+      "change": "The hare has dry cover and the fox leaves the immediate hunt without food.",
+      "shots": [
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "Hare lowers its body onto the dry bench",
+          "camera": "high south-side wide establishing the fixed wall, channel and route, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare stands within east willow-root pocket",
+          "end_state": "Hare rests low on dry ground, wet flank still visible",
+          "cause": "The root pocket is sheltered behind the fixed projecting slab",
+          "beats": [
+            "Hare stands within east willow-root pocket.",
+            "The root pocket is sheltered behind the fixed projecting slab.",
+            "Hare lowers its body onto the dry bench.",
+            "Hare lies low on dry ground, wet flank visible."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Hare lowers its body onto the dry bench"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox steps down onto open east gravel",
+          "camera": "south-side medium telephoto on the stated single action, very slow lateral track",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox stands back from the upper seam",
+          "end_state": "Fox is on east gravel facing away from the seam",
+          "cause": "A broad shallow step joins outer stone to east gravel below the slab",
+          "beats": [
+            "Fox stands back from the upper seam.",
+            "A broad shallow step joins outer stone to east gravel below the slab.",
+            "Fox steps down onto open east gravel.",
+            "Fox is on east gravel facing away from the seam."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Fox steps down onto open east gravel"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "FOX"
+          ],
+          "action": "Fox walks east along the channel away from Split Stone",
+          "camera": "south-side close detail including the relevant paws or nose and adjacent terrain, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Fox is on east gravel below slab",
+          "end_state": "Fox is farther east with no prey and no renewed approach",
+          "cause": "The gravel strip extends downstream beyond the chase route",
+          "beats": [
+            "Fox is on east gravel below slab.",
+            "The gravel strip extends downstream beyond the chase route.",
+            "Fox walks east along the channel away from Split Stone.",
+            "Fox is farther east with no prey and no renewed approach."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Fox walks east along the channel away from Split Stone"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE"
+          ],
+          "action": "A loosened bark strip floats past the low outlet below the hare",
+          "camera": "south-side medium profile with both start and end positions readable, locked camera",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare rests behind willow roots above channel",
+          "end_state": "Bark passes east of Split Stone; hare remains sheltered",
+          "cause": "Water continues through the same groove from west to east",
+          "beats": [
+            "Hare lies behind willow roots above channel.",
+            "Water continues through the same groove from west to east.",
+            "A loosened bark strip floats past the low outlet below the hare.",
+            "Bark passes east of Split Stone; hare remains sheltered."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "A loosened bark strip floats past the low outlet below the hare"
+        },
+        {
+          "duration_s": 6,
+          "characters": [
+            "HARE",
+            "FOX"
+          ],
+          "action": "Fox continues east out of the wide frame",
+          "camera": "high south-side wide with a gentle eastward pan, preserve all landmarks",
+          "direction": "West to east is screen left to right; north wall background and south channel foreground; remain on the south side of the axis",
+          "start_state": "Hare is hidden on bench; fox is farther east on gravel",
+          "end_state": "Hare remains under willow cover; fox has left the frame without contact",
+          "cause": "High south-side wide preserves fixed stone, bench and channel geography",
+          "beats": [
+            "Hare is hidden on bench; fox is farther east on gravel.",
+            "High south-side wide preserves fixed stone, bench and channel geography.",
+            "Fox continues east out of the wide frame.",
+            "Hare remains under willow cover; fox has left the frame without contact."
+          ],
+          "hook_role": "none",
+          "intensity": 0,
+          "spoiler": true,
+          "title": "Fox continues east out of the wide frame"
+        }
+      ],
+      "voice": [
+        {
+          "en": "The hare lowers itself behind willow roots on the dry bench. Its flank remains wet; nothing erases the crossing. Below the slab, the fox steps onto gravel and follows the channel away.",
+          "vi": "Thỏ hạ mình sau rễ liễu trên bậc đá khô. Sườn nó vẫn ướt; không điều gì xóa được dấu quãng đường vừa qua. Dưới phiến đá, cáo bước ra sỏi rồi men theo dòng nước rời đi."
+        },
+        {
+          "en": "Water continues through Split Stone, carrying loosened bark beyond both openings. For this moment, the hare has dry footing and cover. The fox leaves without a meal. Nothing promises an easier hour.",
+          "vi": "Nước tiếp tục chảy qua Đá Chẻ, mang vỏ cây đã bung đi qua cả hai cửa. Lúc này, thỏ có nền khô và chỗ che. Cáo rời đi khi chưa có bữa ăn. Không điều gì hứa hẹn một giờ dễ dàng hơn."
+        }
+      ]
+    }
+  ],
+  "count_lock": [
+    "Exactly 1 hare and 1 fox in the film; never a second of either, no other animals"
+  ],
+  "zones": [
+    "WEST willow pocket",
+    "Slate lip",
+    "SPLIT STONE drain tunnel",
+    "EAST outlet",
+    "Narrow dry seam",
+    "EAST willow bench",
+    "Broad upper shelf"
+  ],
+  "terrain_lock": [
+    "cool grey slate, muted brown willow, patchy old snow",
+    "one shallow meltwater channel rising slowly"
+  ],
+  "light_lock": [
+    "overcast early spring afternoon throughout; diffuse light, sun direction never changes",
+    "no slow motion"
+  ]
+}

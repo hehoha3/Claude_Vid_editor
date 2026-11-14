@@ -5,11 +5,22 @@ import copy
 import math
 import re
 from .core import Stop, atomic_text, config, event, frames, object_hash, prod, read_json, stamp, video_path, write_json
-from ..prompt_rules import TAIL, dur_s, issues
+from ..prompt_rules import SPEED, TAIL, dur_s, issues, paced
 
 OUTPUTS = ("screenplay.md", "timestamp.md", "transcript.md", "visual_plan.md")
 PHASES = {"hook", "setup", "story", "ending"}
 ROLES = {"threat", "vulnerability", "pursuit", "obstacle", "unanswered", "none"}
+PAUSE_S = 4.2  # user 2026-11-09: max narrator pause (between / after blocks) of an 8-15 min film; up to 6 with pause_reason
+
+
+def max_beats(profile, seconds):
+    """Beats a shot's prompt may carry: None = exactly four (profiles v1 / v2); v3 (user 2026-11-09, 3-7 s shots):
+    `max_beats` [[clip limit s, n], ...] on the clip length (slot + 1 s): < 5 s one beat, else up to two."""
+    pr = (profile or {}).get("prompts") or {}
+    if pr.get("beat_count", 4) == 4:
+        return None
+    g = dur_s(seconds)
+    return next(n for lim, n in pr["max_beats"] if g < lim)
 
 
 def compile_story(source, durations=None, profile=None):
@@ -20,17 +31,27 @@ def compile_story(source, durations=None, profile=None):
     for key in required:
         if not s.get(key):
             raise Stop(f"Story source requires {key}")
+    from ..profile import for_runtime, load
+    from ..vtypes import stories as story_options
     if profile is None:
-        from ..profile import load
-        profile = load("full_ai_mountain")
-    p = profile
+        profile = load("full_ai")
+    fps, target = float(s.get("fps", 24)), float(s.get("target_minutes", 8)) * 60
+    p = for_runtime(profile, target / 60) if math.isfinite(target) else profile  # a pin is resolved already
     intro, rt, rules = p["intro"], p["runtime"], p.get("story") or {}
     lo_s, hi_s = p["body"]["shot_min_s"], p["body"]["shot_max_s"]
-    fps, target = float(s.get("fps", 24)), float(s.get("target_minutes", 8)) * 60
     if not 1 <= fps <= 120 or not math.isfinite(target) or target < rt["min_minutes"] * 60 \
             or (rt["max_minutes"] is not None and target > rt["max_minutes"] * 60):
         raise Stop(f"Use a valid frame rate and target_minutes {rt['min_minutes']}–{rt['max_minutes'] or 'open'} "
                    "(this film's pinned profile).")
+    # Stories (user 2026-11-12): scenes carry `story: k` (default 1), k = 1.. in order; each story k >= 2 may open on
+    # its own setup scene and every story may close on an ending scene. The count is one of vtypes.stories(minutes).
+    sk = [int(sc.get("story", 1)) for sc in s["scenes"]]
+    if sk and (sk[1:2] not in ([], [1]) or any(b not in (a, a + 1) for a, b in zip(sk[1:], sk[2:]))):
+        raise Stop(f"Scene story numbers must start at 1 and rise by one: {sk}")
+    allowed = [o["stories"] for o in story_options(target / 60)["options"]] if 8 <= target / 60 <= 180 else []
+    if allowed and max(sk[1:] or [1]) not in allowed and not s.get("stories_reason"):
+        raise Stop(f"{max(sk[1:] or [1])} stories in {target / 60:g} min; options {allowed} "
+                   "(dvr_cowork profile stories), or state stories_reason")
     if len(s["characters"]) < 2 or any(not all(c.get(k) for k in ("id", "species", "lock", "terms")) for c in s["characters"]):
         raise Stop("Define at least two central roles with id, species, complete visual lock and terms (names used in shot text).")
     chars = {c["id"]: c for c in s["characters"]}
@@ -88,18 +109,23 @@ def compile_story(source, durations=None, profile=None):
                 raise Stop(f"{sc['id']}: shot length is outside {lo_s}–{hi_s}s on this frame rate")
             if phase != "hook":
                 # Scene-level camera/direction/characters are shot defaults; omitted beats derive from the shot's own
-                # fields. Both only shorten the source the agent writes; the prompt still gets four timed beats.
+                # fields. Both only shorten the source the agent writes; beat count per max_beats().
                 sh = {**{k: sc[k] for k in ("camera", "direction", "characters", "location") if sc.get(k)}, **sh}
                 for k in ("title", "characters", "action", "camera", "direction", "start_state", "end_state", "beats"):
                     if not sh.get(k):
                         raise Stop(f"{sc['id']}: shot requires {k}")
-                if len(sh["beats"]) != 4 or any(not isinstance(b,str) or not b.strip() for b in sh["beats"]):
-                    raise Stop("Every generated shot needs exactly four action beats.")
+                nb = max_beats(p, d)
+                if any(not isinstance(b,str) or not b.strip() for b in sh["beats"]) or \
+                        (len(sh["beats"]) != 4 if nb is None else not 1 <= len(sh["beats"]) <= nb):
+                    raise Stop(f"{sc['id']} '{sh['title']}': needs " + ("exactly four action beats" if nb is None else
+                               f"1–{nb} action beat(s) for a {dur_s(d):g} s clip") + f", got {len(sh['beats'])}")
                 # Derived "opening frame / small movement / hold" beats rendered gentle, near-static clips.
                 calm = sorted({m.lower() for b in sh["beats"] for m in CALM.findall(b)})
                 if calm:
                     words.append(f"{sc['id']} '{sh['title']}': beats must be fast, continuous action; rewrite without: "
                                  + ", ".join(calm))
+                if pace := paced(sh["beats"], dur_s(d)):  # shared with 1h: a lone slow beat renders slow motion
+                    words.append(f"{sc['id']} '{sh['title']}': {pace}")
                 tint = sorted({m.lower() for k in ("location", "camera", "direction") for m in TINT.findall(sh.get(k) or "")}
                               | {m.lower() for b in sh["beats"] for m in TINT.findall(b)})
                 if tint:
@@ -129,12 +155,15 @@ def compile_story(source, durations=None, profile=None):
         opening = float(intro["duration_s"]) + float(p.get("setup_s", 30))
         if index == 1 and (phase != "setup" or abs(cursor/fps-opening) > 1/fps):
             raise Stop(f"Scene 2 must be the {p.get('setup_s', 30)}-second setup (ending at {opening:g}s).")
-        if index == 1 and rules.get("setup_min_intensity") and \
+        story_start = index > 1 and sk[index] != sk[index-1]
+        if phase == "setup" and (index == 1 or story_start) and rules.get("setup_min_intensity") and \
                 max(float(x.get("intensity", 0)) for x in local) < rules["setup_min_intensity"]:
             raise Stop(f"{sc['id']}: the setup needs action that changes the situation (a shot with intensity >= "
                        f"{rules['setup_min_intensity']}), not a calm landscape opening")
-        if index > 1 and phase in ("hook", "setup"):
-            raise Stop("Hook/setup may appear only once at the beginning.")
+        if index > 1 and (phase == "hook" or (phase == "setup" and not story_start)):
+            raise Stop(f"{sc['id']}: hook only at the beginning; setup only as scene 2 or the first scene of a later story.")
+        if phase == "ending" and index < len(s["scenes"])-1 and sk[index+1] == sk[index]:
+            raise Stop(f"{sc['id']}: an ending closes its story; the next scene must start story {sk[index]+1}.")
         if index == len(s["scenes"])-1 and phase != "ending":
             raise Stop("The final scene must be ending.")
         lines = []
@@ -163,8 +192,8 @@ def compile_story(source, durations=None, profile=None):
             for j in range(1,len(lines)):
                 gaps[j] = remainder//(len(lines)-1) + (j <= remainder%(len(lines)-1))
         max_gap = max(gaps)/fps
-        limit = float(sc.get("pause_limit_s", 3))
-        if limit > 3 and not sc.get("pause_reason"):
+        limit = float(sc.get("pause_limit_s", PAUSE_S))
+        if limit > PAUSE_S and not sc.get("pause_reason"):
             raise Stop(f"{sc['id']}: a longer intentional pause needs pause_reason")
         if limit > 6 or max_gap > limit + 1/fps:
             timing.append(f"{sc['id']}: narrator gap {max_gap:.2f}s exceeds {limit}s (spare {spare/fps:.2f}s)")
@@ -174,7 +203,7 @@ def compile_story(source, durations=None, profile=None):
             v["start_f"], v["end_f"] = onset, onset+v["duration_f"]
             voice.append(v)
             onset = v["end_f"] + gaps[j+1]
-        scenes.append(dict(id=sc["id"], title=sc["title"], phase=phase, change=sc["change"],
+        scenes.append(dict(id=sc["id"], title=sc["title"], phase=phase, change=sc["change"], story=sk[index],
                            start_f=start, end_f=cursor, voice_ids=[v["id"] for v in lines],
                            shot_ids=[v["id"] for v in local], max_gap_s=max_gap))
     if words:
@@ -232,12 +261,14 @@ def cast_leaks(source, slots):
                    + "\n".join(f"{w}: '{t}' names {c} (not in frame) in {', '.join(f)}" for (w, c, t), f in problems.items()))
 
 
-SNOW = {"alps", "andes", "rockies", "tibet", "generic_snow"}  # v1 mountain regions share the himalaya locks
+SNOW = {"alps", "andes", "rockies", "tibet", "generic_snow"}  # v1 mountain regions share the frozen locks
 
 
-def region_locks(region="himalaya"):
-    """{motion, color} of a region (config.toml [prompts.regions.<region>]); missing -> Stop with the reminder."""
-    region = "himalaya" if region in SNOW or not region else region
+def region_locks(region="frozen"):
+    """{motion, color} of a region (config.toml [prompts.regions.<region>]); missing -> Stop with the reminder.
+    Old pins say himalaya (= frozen since 2026-11-12) or a v1 mountain name."""
+    from ..vtypes import region_id
+    region = "frozen" if region in SNOW or not region else (region_id(region) or region)
     locks = config().get("prompts", {}).get("regions", {}).get(region)
     if not locks:
         raise Stop(f"No full-AI prompt locks for region {region!r} yet: write [prompts.regions.{region}] motion + color "
@@ -245,30 +276,30 @@ def region_locks(region="himalaya"):
     return locks
 
 
-def prompt_text(plan, shot, region="himalaya"):
+def prompt_text(plan, shot, region="frozen"):
     source, fps = plan["source"], plan["fps"]
     d = float(shot["duration_s"])
     cast = [c for c in source["characters"] if c["id"] in shot["characters"]]
     absent = [c for c in source["characters"] if c["id"] not in shot["characters"]]
     total = sum(c["count"] for c in cast)
     p = config().get("prompts", {}) | region_locks(region)
-    g = dur_s(d)  # clip length = the slot's next half second (6 -> 6.5, 8.7 -> 9.0), user 2026-11-05
+    g = dur_s(d)  # clip length = slot + 1 s, up to the half second (6 -> 7, 8.7 -> 10), user 2026-11-09
     # Cast first: generators weight early text, and the absent list is the only thing stopping them adding the rest.
     cast_text = "; ".join(c["lock"] + (f" (ABSOLUTE: {c['absolute_lock']})" if c.get("absolute_lock") else "") for c in cast)
     absent_text = ("NOT IN FRAME: " + "; ".join(c["species"] for c in absent) + " — absent from the entire take, "
                    "not in the background or distance, not as silhouettes, shadows or reflections. ") if absent else ""
     # Beats span the whole clip (20/50/70 % ticks): no static hold; the story moment lands by the middle.
-    ticks = [round(x * g * 2) / 2 for x in (0, .2, .5, .7, 1)]
+    n = len(shot["beats"])  # 4 (v1 / v2) on 20/50/70 % ticks; 1-2 (v3) split the clip evenly
+    ticks = [round(x * g * 2) / 2 for x in ((0, .2, .5, .7, 1) if n == 4 else [i / n for i in range(n + 1)])]
     beats = " ".join(f"{ticks[i]:g}-{ticks[i+1]:g}s: {b}." for i, b in enumerate(b.rstrip(". ") for b in shot["beats"]))
     # Generators drift through every place a prompt names, so a shot gets only its own location, never the whole route.
     place = shot.get("location") or source["geography"]
-    return (f"{p.get('style', 'Cinematic nature documentary, natural sound, normal motion')}, {GRADE} - "
+    return (f"{SPEED}. {p.get('style', 'Wildlife documentary footage, natural sound')}, {GRADE} - "
             f"{g:g}-second 16:9 photorealistic wildlife documentary shot, {shot['camera']}, ONE SINGLE CONTINUOUS TAKE "
             "with no cuts, transitions or change of location or light, of exactly "
             f"{total} animal{'s' * (total > 1)} for the whole take, no more and no fewer: {cast_text}. {absent_text}"
             f"Location: {place} {source['environment']} Screen direction: {shot['direction']}, maintained throughout. "
             f"{p.get('motion', '')} {beats} "
-            "Real-time 1x speed for the whole take: no slow motion, no speed ramp, no high-frame-rate look. "
             f"{p['color']} "
             "No captions, place names or subtitles. "
             "No animals beyond those listed, no duplicated individuals, identity or marking changes, "
@@ -276,8 +307,9 @@ def prompt_text(plan, shot, region="himalaya"):
 
 
 BIBLE = ("count_lock", "zones", "terrain_lock", "light_lock")
-# Said up front in every prompt: generated clips came back in slow motion and with a strong blue cast.
-GRADE = "No slow-motion, The video must not have a blue tint"
+# Said up front in every prompt: generated clips came back with a strong blue cast (speed: prompt_rules.SPEED first,
+# the one "no slow motion" in TAIL, user 2026-11-10).
+GRADE = "The video must not have a blue tint"
 # Prompt light words that pushed generators into a blue grade ("blue dusk", "cold color", "first stars").
 TINT = re.compile(r"\b(?:blue|bluish|cyan|teal|cold colou?r|dusk|twilight|night|moon(?:lit|light)?|stars?)\b", re.I)
 # Words that turn a beat into a pose; terrain words like "frozen spring" stay allowed.
@@ -337,7 +369,9 @@ def documents(plan):
     for sc in plan["scenes"]:
         vv=[v for v in plan["voice"] if v["scene"] == sc["id"]]
         transcript.append("\n".join(v["en"] for v in vv))
-        sp += [f"## {sc['id']} · {tc(sc['start_f'])}–{tc(sc['end_f'])} — {sc['title']}",
+        many = max((x.get("story", 1) for x in plan["scenes"]), default=1) > 1  # one-story films keep their text
+        sp += [f"## {'Story %d · ' % sc.get('story', 1) if many else ''}{sc['id']} · {tc(sc['start_f'])}–{tc(sc['end_f'])}"
+               f" — {sc['title']}",
                f"Change: {sc['change']}", "\n\n".join(v["en"] for v in vv)]
     ts=[base,"## English\n"]+[f"[{tc(v['start_f'])}] {v['en']}" for v in plan["voice"]]
     ts += ["\n## Vietnamese\n"]+[f"[{tc(v['start_f'])}] {v['vi']}" for v in plan["voice"]]
@@ -356,7 +390,11 @@ def build(video, durations=None, persist=True):
             # Shot wording may change on the placed timeline; any slot or narration frame may not.
             timing=lambda p:([(x["id"],x["start_f"],x["end_f"],x["prompt_id"]) for x in p["slots"]],
                              [(v["id"],v["start_f"],v["end_f"],v["en"]) for v in p["voice"]],p["runtime_f"])
-            if timing(old) != timing(plan):
+            # User 2026-11-09 (v2 -> v3 re-split): slots may change while no shot exists, if every narration frame stays.
+            from ..vtypes import shot_media
+            empty=not shot_media(video)
+            same_voice=timing(old)[1:]==timing(plan)[1:]
+            if timing(old) != timing(plan) and not (empty and same_voice):
                 raise Stop("A2 has already been placed. Do not rebuild/retime a reviewed timeline; create a new project/version.")
         for name,content in documents(plan).items():
             atomic_text(video/"audios"/name,content)
@@ -369,7 +407,7 @@ def build(video, durations=None, persist=True):
 def pinned_profile(video):
     """The film's pinned profile (video.project.json + .production/profile.lock.json), else the workspace one."""
     from ..profile import load, pinned
-    return pinned(video)[1] or load("full_ai_mountain")
+    return pinned(video)[1] or load("full_ai")
 
 
 def load_plan(video, conformed=False):

@@ -2,7 +2,7 @@
 """Keep the source indexes in sync with what the user sorted on disk. No vision, no file moves.
 
     scan_source.py            scan all roots
-    scan_source.py video|ai|audio|africa_video|africa_ai|africa_ai_check|savannah|sfx|audio_lib
+    scan_source.py video|ai|audio|africa_video|africa_ai|africa_ai_check|savannah|frozen_video|frozen_ai_check|sfx|audio_lib
 
 video  Z:\\Unseen\\Amazona\\video  real stock footage  <subject>/ = still, <subject>/action/ = action,
                                                       birds/ insects/ flat, landscape/<setting>/
@@ -12,6 +12,8 @@ africa_ai     ...\\AAA Trên cạn\\AI_copyright        AI clips, AI/<action>/<s
 africa_ai_check  <ai_video>\\_africa                 Africa AI clips (user 2026-10-22): _check/ = new generated clips,
                                                       <species>/ = filed by organize.py --africa; excluded from `ai`
 savannah      Z:\\Unseen\\savannah                    real landscape footage (subject = landscape)
+frozen_video  Z:\\AI Document                        frozen real footage (user 2026-11-12; not AI despite the name), <species>/
+frozen_ai_check  <ai_video>\\_frozen                 frozen AI clips: _check/ new, <species>/ filed by organize.py --frozen
 audio  Z:\\Unseen\\Amazona\\audio  music / ambience    <category>/
 sfx    Z:\\Unseen\\SFX               (user 2026-10-20: the audio roots of every region; more will be added)
 audio_lib  config.toml paths.audio_lib  Epidemic / Suno downloads (default D:\\Audio_lib), <category>/ like audio
@@ -26,6 +28,7 @@ import re
 import subprocess
 import sys
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
@@ -33,6 +36,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from dvr_cowork.config import load_config  # noqa: E402
 AFRICA = Path(r"Z:\Unseen\Động vật\AAA Trên cạn")
+FROZEN = Path(r"Z:\AI Document")  # user 2026-11-12: real footage despite the name (bear, snow_leopard, muskox ...)
 AI_VIDEO = Path(load_config()["paths"]["ai_video"])  # config.toml, per machine
 AUDIO_LIB = Path(load_config()["paths"]["audio_lib"])  # config.toml, per machine (writable D:, not the NAS)
 # name -> (root, media kind, source label stored on every clip)
@@ -42,6 +46,8 @@ ROOTS = {"video": (Path(r"Z:\Unseen\Amazona\video"), "video", "real"),
          "africa_ai": (AFRICA / "AI_copyright", "video", "ai"),
          "africa_ai_check": (AI_VIDEO / "_africa", "video", "ai"),          # Africa AI: _check + species folders
          "savannah": (Path(r"Z:\Unseen\savannah"), "video", "real"),
+         "frozen_video": (FROZEN, "video", "real"),                       # user 2026-11-12: frozen real footage, <species>/
+         "frozen_ai_check": (AI_VIDEO / "_frozen", "video", "ai"),          # frozen AI: _check + species folders
          "audio": (Path(r"Z:\Unseen\Amazona\audio"), "audio", None),
          "sfx": (Path(r"Z:\Unseen\SFX"), "audio", None),                 # animal foley + species calls (English names)
          "audio_lib": (AUDIO_LIB, "audio", None)}  # Epidemic / Suno downloads (fetch.py): <category>/ like `audio`
@@ -49,16 +55,17 @@ ROOTS = {"video": (Path(r"Z:\Unseen\Amazona\video"), "video", "real"),
 # 2026-11-04 (user: no longer used; music now comes from Epidemic / Suno into audio_lib); old index files unused.
 # video root -> region (user 2026-10-20); everything used so far (Amazon, Congo...) = amazon. Audio roots: no region.
 REGION = {"video": "amazon", "ai": "amazon", "africa_video": "africa", "africa_ai": "africa",
-          "africa_ai_check": "africa", "savannah": "africa"}
-REGIONS = ("amazon", "africa", "himalaya")  # user 2026-11-05: amazon = jungle (Amazon, Congo), africa = desert /
-# savanna, himalaya = snow / high mountains (no footage roots yet: every slot THIẾU), ocean later
+          "africa_ai_check": "africa", "savannah": "africa", "frozen_video": "frozen", "frozen_ai_check": "frozen"}
+from dvr_cowork.vtypes import REGIONS, region_id  # noqa: E402  amazon / africa / frozen (user 2026-11-12: was
+# himalaya; frozen = snow, ice, high mountains, polar)
 # user rule 2026-10-11: drive Z: is READ + COPY only - nothing is ever written, moved or deleted on it (save() refuses)
 WORK = Path(__file__).resolve().parents[4] / ".work" / "library"
 EXTS = {"video": {".mp4", ".mov", ".mxf", ".mkv", ".m4v"}, "audio": {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}}
 INDEX = "_library.json"
 INDEX_NAME = {AFRICA: "africa_video", AFRICA / "AI_copyright": "africa_ai",  # ASCII index names for accented roots
-              AI_VIDEO / "_africa": "africa_ai_check"}
-SHOW = 15
+              AI_VIDEO / "_africa": "africa_ai_check", FROZEN: "frozen_video", AI_VIDEO / "_frozen": "frozen_ai_check"}
+SHOW = 3  # stdout examples per list (tokens, 2026-11-14); every name goes to LISTS
+LISTS = WORK / "last_scan.txt"  # full NEW / MOVED / REMOVED / DUPLICATE lists of the last run, for the user
 FLAT = {"birds", "insects", "flowers"}
 SKIP_DIRS = {"_nologo", "_z_nologo", "__MACOSX"}  # logo-free copies (hide-logo); macOS zip leftovers ("._x.mov")
 # Africa folders (Vietnamese / English, user-named) -> species name the tags use. A folder already named like a
@@ -88,7 +95,8 @@ AFRICA_ACTION = {"chạy", "rình", "đi bộ tới mồi", "hunting"}  # folder
 
 
 def video_roots(region):
-    """{name: (root, kind, source)} of the video roots of one region."""
+    """{name: (root, kind, source)} of the video roots of one region (himalaya = frozen, congo = amazon)."""
+    region = region_id(region) or region
     assert region in REGIONS, f"region {region!r} not in {REGIONS}"
     return {n: ROOTS[n] for n, r in REGION.items() if r == region}
 
@@ -124,7 +132,7 @@ def fast_hash(p):
 def probe(p):
     j = json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_entries",
                                    "stream=codec_type,width,height,r_frame_rate,sample_rate,channels"
-                                   ":format=duration", "-of", "json", str(p)],
+                                   ":stream_side_data=rotation:format=duration", "-of", "json", str(p)],
                                   capture_output=True, text=True).stdout or "{}")
     st = j.get("streams", [])
     dur = round(float(j.get("format", {}).get("duration") or 0), 2)
@@ -132,8 +140,11 @@ def probe(p):
     a = next((s for s in st if s.get("codec_type") == "audio"), None)
     if v and v.get("width"):
         n, d = map(int, v.get("r_frame_rate", "0/1").split("/"))
+        # phone clips: 3840x2160 stored + rotation 90 = shown 2160x3840; vertical clips are never planned (user 2026-11-14)
+        rot = next((x["rotation"] for x in v.get("side_data_list", []) if "rotation" in x), 0)
+        w, h = (v.get("height"), v["width"]) if abs(int(rot)) % 180 == 90 else (v["width"], v.get("height"))
         return {"width": v["width"], "height": v.get("height"), "fps": round(n / d, 3) if d else None,
-                "duration": dur, "has_audio": a is not None}
+                "duration": dur, "has_audio": a is not None, "vertical": bool(h and w and h > w)}
     return {"duration": dur, "sample_rate": int(a["sample_rate"]) if a else None,
             "channels": a.get("channels") if a else None}
 
@@ -142,7 +153,7 @@ def title_hint(name):
     """Stock file names: Envato <slug>-YYYY-MM-DD-HH-MM-SS-utc, Storyblocks <slug>-SBA-<id> / -SBV-<id>-HD."""
     s = re.sub(r"-\d{4}(-\d{2}){5}-utc$", "", Path(name).stem)
     s = re.sub(r"-SB[AV]-\d+(-(HD|4K|UHD))?$", "", s, flags=re.I)
-    if re.fullmatch(r"shot_\d+", s, re.I):   # AI shot numbers say nothing about content
+    if re.fullmatch(r"shot_\d+|c\d+v\d+_\d+|G\d+-[SX]\d+", s, re.I):   # AI shot / prompt IDs say nothing about content
         return None
     return s.replace("-", " ").replace("_", " ").strip()
 
@@ -158,6 +169,9 @@ def folder_info(kind, rel, name=None):
         keys = [fold(x) for x in parts]
         return {"subject": next((AFRICA_FOLDERS[k] for k in reversed(keys) if k in AFRICA_FOLDERS), None),
                 "action": bool(AFRICA_ACTION & set(keys)), "setting_folder": None}
+    if name in ("frozen_video", "frozen_ai_check") and top and top != "landscape":  # English folders: snow_leopard
+        return {"subject": None if top == "_check" else top.replace("_", " "), "action": "action" in parts[1:],
+                "setting_folder": None}
     if top == "landscape":
         return {"subject": top, "action": None, "setting_folder": parts[1] if len(parts) > 1 else None}
     if top == "supplementary_shots":   # small subjects for cutaways: frogs, insects, gecko, flowers...
@@ -204,10 +218,13 @@ def save(root, kind, idx):
     tmp.replace(p)
 
 
-def listing(label, names):
+def listing(label, names, name=""):
     if names:
         print(f"  {label} ({len(names)}): " + ", ".join(names[:SHOW])
-              + (f" ... +{len(names) - SHOW}" if len(names) > SHOW else ""))
+              + (f" ... +{len(names) - SHOW} (all in {LISTS})" if len(names) > SHOW else ""))
+        LISTS.parent.mkdir(parents=True, exist_ok=True)
+        with LISTS.open("a", encoding="utf-8") as fh:
+            fh.write(f"## {name} {label} ({len(names)})\n" + "\n".join(names) + "\n\n")
 
 
 def scan(name):
@@ -247,13 +264,21 @@ def scan(name):
         if source:
             c["source"] = source
     removed = [clips.pop(k)["path"] for k in [k for k in clips if k not in seen]]
+    vert = []
+    if kind == "video":  # entries indexed before 2026-11-14 get the vertical flag once (header-only ffprobe)
+        old = [k for k in clips if "vertical" not in clips[k]]
+        with ThreadPoolExecutor(8) as ex:
+            for k, v in zip(old, ex.map(lambda k: probe(root / clips[k]["path"]).get("vertical", False), old)):
+                clips[k]["vertical"] = v
+        vert = [c["path"] for c in clips.values() if c.get("vertical")]
     save(root, kind, idx)
     print(f"{name} ({root}): {len(clips)} files | new {len(new)}, moved {len(moved)}, removed {len(removed)}, "
-          f"duplicates {len(dups)}")
-    listing("NEW", new)
-    listing("MOVED", moved)
-    listing("REMOVED", removed)
-    listing("DUPLICATE (delete one)", dups)
+          f"duplicates {len(dups)}" + (f", vertical {len(vert)} (never planned)" if vert else ""))
+    listing("NEW", new, name)
+    listing("VERTICAL (never planned)", vert, name)
+    listing("MOVED", moved, name)
+    listing("REMOVED", removed, name)
+    listing("DUPLICATE (delete one)", dups, name)
 
 
 def selftest():
@@ -268,6 +293,9 @@ def selftest():
     assert not any(v.endswith("s") for v in AFRICA_FOLDERS.values()), "tag_source.folder_species strips a final s"
     assert index_of(ROOTS["africa_ai"][0]).name == "africa_ai_library.json" and index_of(ROOTS["video"][0]).name == "video_library.json"
     assert set(video_roots("africa")) == {"africa_video", "africa_ai", "africa_ai_check", "savannah"}
+    assert set(video_roots("himalaya")) == {"frozen_video", "frozen_ai_check"}
+    assert folder_info("video", Path("snow_leopard/action/a.mp4"), "frozen_video") == \
+        {"subject": "snow leopard", "action": True, "setting_folder": None}
     assert ROOTS["ai"][0] in ROOTS["africa_ai_check"][0].parents  # scan() keeps _africa out of the amazon index
     assert set(REGION) == {n for n, (_, k, _) in ROOTS.items() if k == "video"}, "every video root needs a region"
     print("selftest ok")
@@ -277,5 +305,6 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]:
         selftest()
     else:
+        LISTS.unlink(missing_ok=True)  # our own .work file, rewritten every run
         for k in sys.argv[1:] or list(ROOTS):
             scan(k)
