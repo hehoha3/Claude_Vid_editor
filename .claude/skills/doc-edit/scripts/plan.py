@@ -1649,7 +1649,7 @@ def match_audio(slots, lib, end):
                 k = (sum(w in a["words"] for w in e["kw"]),)
                 return k + (a["duration"] >= e["span"], -abs(a["duration"] - e["span"])) if "span" in e \
                     else k + (-used[a["abs"]] + 0.5 * sum(w in a["words"].split() for w in e.get("prefer", ())),)
-            pool = [a for a in lib if a["category"] in AUDIO_POOL[e["track"]]]
+            pool = [a for a in lib if a["category"] in e.get("cats", AUDIO_POOL[e["track"]])]
             if e.get("pool_no"):  # frozen_a6: words its files never carry
                 pool = [a for a in pool if not set(e["pool_no"]) & set(a["words"].split())]
             if e["track"] == 7 and len(pool) > 1:  # never the same track twice in a row (edit-grammar)
@@ -1678,30 +1678,50 @@ def match_audio(slots, lib, end):
                 bird_rotation(e, pool, a, used)
 
 
-# user 2026-11-14: a frozen film's A6 (natural sound) = wind only, birdsong at a few calm daylight places
-# (>= FROZEN_BIRD_GAP s apart); no footsteps / grass / eating. Files: no water, rain, forest, riser, tropical birds.
-FROZEN_BIRD_GAP = 120.0
+# Frozen (himalaya) film's A6 (natural sound), user 2026-11-15 (was 2026-11-14): 100 % wind, strong or light by the
+# scene and kept even across neighbouring shots; birdsong only at the start / end of a story (FROZEN_EDGE s) on a
+# peaceful daylight shot, one per edge, never mid-story or in the intro. No footsteps / grass / eating.
+FROZEN_EDGE = 40.0
 FROZEN_A6_NO = {"water", "river", "stream", "creek", "brook", "waterfall", "rain", "forest", "trees", "jungle",
                 "tropical", "riser", "whoosh", "parrot", "macaw", "dove", "owl", "night", "insects", "cricket", "frog",
                 "toucan", "hornbill", "hummingbird", "kingfisher", "kookaburra", "cockatoo", "peacock", "guineafowl",
                 "storm", "thunder", "city", "traffic", "people"}
+FROZEN_WIND_NO = FROZEN_A6_NO - {"storm"} | {"bird", "birds", "grass", "savanna", "african", "bush", "bushes", "leaves",
+                                             "reeds", "cicadas", "swamp", "crickets", "dry", "designed"}
+FROZEN_CATS = ("Nature_sound", "ambience_sound")  # the snow / polar wind beds live in ambience_sound
 FROZEN_NO_BIRD = re.compile(r"bão|đêm|tuyết cuốn|blizzard|whiteout|squall|storm|night|avalanche", re.I)
+FROZEN_STRONG = re.compile(r"bão|tuyết cuốn|gió (mạnh|rít|giật|gào|quất)|đỉnh|sườn|vách|blizzard|whiteout|squall|storm|"
+                           r"gale|summit|ridge|avalanche|lở", re.I)
+WIND_PREFER = {"strong": ["blizzard", "howling", "heavy", "storm", "gusts", "gust", "polar", "snow"],
+               "light": ["calm", "alpine", "silence", "light", "breeze", "mountain"]}
 
 
-def frozen_a6(slots):
-    """Frozen region: every A6 cue -> wind, or birds (daylight, calm act, no storm, FROZEN_BIRD_GAP apart). -> counts."""
-    last, n = -1e9, Counter()
-    for s in slots:
-        for e in s["audio"]:
-            if e["track"] != 6 or e["kw"] == ["off"] or e.get("fixed"):
-                continue
-            f = s.get("filter", {})
-            calm = not set(f.get("act", [])) & (STRIKE | {"hide", "fall", "slip"}) and "night" not in f.get("light", [])
-            bird = calm and s["start"] - last >= FROZEN_BIRD_GAP and not FROZEN_NO_BIRD.search(s.get("need", ""))
-            e.update(kw=["bird"] if bird else ["wind"], pool_no=sorted(FROZEN_A6_NO), any_sp=True,
-                     prefer=["mountain", "songbird", "singing", "wind", "howling", "gust"])
-            last = s["start"] if bird else last
-            n[e["kw"][0]] += 1
+def frozen_a6(slots, stories=(), end=None):
+    """Frozen region: every A6 cue -> wind (strong / light) or, at a story edge, birds. -> counts.
+    stories: [(n, start s)] of '# STORY' lines; end: film end (last story runs to it)."""
+    cues = [(s, e) for s in slots for e in s["audio"] if e["track"] == 6 and e["kw"] != ["off"] and not e.get("fixed")]
+    raw = []
+    for s, _ in cues:
+        f = s.get("filter", {})
+        raw.append(bool(FROZEN_STRONG.search(s.get("need", "")) or set(f.get("act", [])) & (STRIKE | {"fall", "slip"})))
+    strong = [sum(raw[max(0, i - 2):i + 3]) * 2 > len(raw[max(0, i - 2):i + 3]) for i in range(len(raw))]  # even out
+    starts = [t for _, t in stories]
+    bounds = list(zip(starts, starts[1:] + [end if end is not None else float("inf")]))
+    used, n = set(), Counter()
+    for (s, e), hard, own in zip(cues, strong, raw):
+        f, t = s.get("filter", {}), s["start"]
+        calm = not set(f.get("act", [])) & (STRIKE | {"hide", "fall", "slip"}) and "night" not in f.get("light", [])
+        edge = next(((i, "in") if t < a + FROZEN_EDGE else (i, "out") for i, (a, b) in enumerate(bounds)
+                     if a <= t < b and (t < a + FROZEN_EDGE or t >= b - FROZEN_EDGE)), None)
+        bird = edge is not None and edge not in used and calm and not own and not FROZEN_NO_BIRD.search(s.get("need", ""))
+        if bird:
+            used.add(edge)
+            e.update(kw=["bird"], pool_no=sorted(FROZEN_A6_NO), any_sp=True, cats=FROZEN_CATS,
+                     prefer=["mountain", "songbird", "singing", "alpine"])
+        else:
+            e.update(kw=["wind"], pool_no=sorted(FROZEN_WIND_NO), cats=FROZEN_CATS,
+                     prefer=WIND_PREFER["strong" if hard else "light"])
+        n["bird" if bird else "wind strong" if hard else "wind light"] += 1
     return n
 
 
@@ -1952,7 +1972,7 @@ def main(folder, sem=True):
     if errs:  # every problem at once: fix them all in one edit, then re-run
         raise SystemExit(f"{len(errs)} spec errors:\n" + "\n".join(errs))
     if region == "frozen":
-        print(f"frozen A6: wind / birds only {dict(frozen_a6(slots))}")
+        print(f"frozen A6: wind / birds at story edges only {dict(frozen_a6(slots, meta['stories'], end))}")
     match_audio(slots, load_audio(), end)  # before the footage: the intro cuts follow the intro music
     imsg = intro_music(slots, work, intro)  # intro.py: the chosen track replaces the intro's A7 cues
     bmsg = intro_beats(slots, intro, meta["opening"])
@@ -2407,12 +2427,17 @@ def selftest():
     assert set_biome("frozen", spec_meta(pol), pol) == "polar"
     assert hard(bm("towering icebergs stuck in a frozen polar ocean"), {"sp": ["none"]})[0] is None
     assert set_biome("africa", spec_meta("# BIOME savanna\n"), "") == "savanna" and has_word("snowy ridge", FILM["no"])
-    # frozen A6 (user 2026-11-14): wind, birds only calm daylight and FROZEN_BIRD_GAP apart
+    # frozen A6 (user 2026-11-15): 100 % wind (strong / light, evened out), birds only at a story's first / last
+    # FROZEN_EDGE s on a calm daylight shot, one per edge; intro (before STORY 1) and mid-story: wind
     fa = [{"start": t, "need": nd, "filter": fl, "audio": [{"track": 6, "kw": ["footsteps", "grass"]}]} for t, nd, fl in
-          [(100, "Ibex gặm cỏ", {"act": ["eat"]}), (150, "Ibex đi", {"act": ["walk"]}), (300, "Báo lao tới", {"act": ["chase"]}),
-           (320, "Bão tuyết", {}), (400, "Sườn núi", {})]]
-    assert dict(frozen_a6(fa)) == {"bird": 2, "wind": 3} and [x["audio"][0]["kw"] for x in fa] == \
-        [["bird"], ["wind"], ["wind"], ["wind"], ["bird"]]
+          [(50, "Ibex gặm cỏ", {"act": ["eat"]}), (100, "Ibex gặm cỏ", {"act": ["eat"]}), (110, "Ibex đi", {"act": ["walk"]}),
+           (200, "Ibex nằm", {}), (300, "Báo lao tới", {"act": ["chase"]}), (310, "Bão tuyết", {}),
+           (320, "Gió rít trên đỉnh", {}), (380, "Thung lũng yên", {})]]
+    kws = lambda: [x["audio"][0]["kw"][0] for x in fa]  # noqa: E731
+    n = frozen_a6(fa, [(1, 90), (2, 250)], 400)
+    assert kws() == ["wind", "bird", "wind", "wind", "wind", "wind", "wind", "bird"], kws()
+    assert n["bird"] == 2 and fa[5]["audio"][0]["prefer"] == WIND_PREFER["strong"]
+    assert fa[0]["audio"][0]["prefer"] == WIND_PREFER["light"] and "bird" in fa[0]["audio"][0]["pool_no"]
     assert not has_word("vultures on a carcass", SCENERY_NO) and has_word("a safari jeep on a dirt road", SCENERY_NO)
     # one long clip: <= REUSE_MAX slots >= REUSE_GAP apart; other parts first, then the same frames, no frame more
     # than SAME_MAX times and those repeats >= SAME_GAP apart; real beats a better AI clip

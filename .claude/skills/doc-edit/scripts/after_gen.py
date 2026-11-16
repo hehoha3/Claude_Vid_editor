@@ -6,7 +6,7 @@ shot_id; one-time: never tagged, never filed, never another video's slot). The r
 folder (`/doc-edit ingest`), never read here.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/after_gen.py finish <video folder>
-        prep, then plan --sub-broad -> place --fill -> gen_swap --apply -> gaps -> fill-report -> light.py plan + apply
+        prep, then plan --sub-broad -> place --fill -> gen_swap --apply -> gaps -> fill-report -> reframe --fill-only (letterbox zoom) -> light.py plan + apply
         (each Resolve write backs up first)
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/after_gen.py prep <video folder>
         only the check: jobs check of <video>\\shots (still copying / broken / not a prompt of this video) + decide ingest
@@ -89,7 +89,9 @@ def finish(vdir):
         print(f"  {e} (gaps listed by `dvr_cowork gaps`)")
     o = run(["-m", "dvr_cowork.jobs", "fill-report", key], keep=r"slots \||THIEU:")
     print(f"  FALLBACK 'any light' to look at: {o.count('any light: look')}")
-    print("[6] color (light pass)")
+    print("[6] letterbox fill (top/bottom bars -> light zoom, user 2026-11-15)")
+    run([SK / "doc-edit/scripts/reframe.py", vdir, "--fill-only", "--apply"], keep=r"^V1 |fill  |^backup|failed")
+    print("[7] color (light pass)")
     run([SK / "colorist/scripts/light.py", "plan"], keep=r"^V1 |^story |^golden|^slope", env={"DVR_TIMELINE": tl}, last=15)
     run([SK / "colorist/scripts/light.py", "apply"], keep=r"^backup", env={"DVR_TIMELINE": tl}, last=15)
     print(f"after-gen-vid {vdir.name} ({tl}): done -> frame check (doc-edit SKILL.md: frames --stats --gemini), then report")
