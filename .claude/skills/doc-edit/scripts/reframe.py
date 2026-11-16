@@ -2,7 +2,11 @@
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video>            # dry-run: what would change
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --apply    # backup the timeline, then set
+    .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --fill-only [--apply]  # letterbox fill only
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py --selftest
+
+User 2026-11-15: top/bottom black bars (letterbox) -> light zoom to fill, automatic (after_gen.py runs --fill-only
+--apply). Side bars (pillarbox / vertical) are never zoomed: swap the clip.
 
 1. fill: shots that leave black bars (source wider than 16:9, or bars baked into the file, ffmpeg cropdetect) are
    zoomed just enough to fill the frame.
@@ -23,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).parent))
 CROP = ROOT / ".work" / "library" / "active_area.json"  # path -> [w, h, x, y] of the picture inside the file
+SARF = ROOT / ".work" / "library" / "sar.json"  # path -> pixel aspect (1.0667 = 16:15, Resolve shows it wider)
 STRIKE = re.compile(r"vồ|tấn công|lao (tới|vào|ra)|cắn|tóm|đớp|quật|bắt (mồi|được|gọn)|giết|xông|chồm", re.I)
 GROUP = re.compile(r"đàn|bầy|cả |hai |những con", re.I)
 TINY, MAX_SHARE = 0.18, 0.15
@@ -44,6 +49,14 @@ def cropdetect(path, dur):
     return max(got, key=lambda c: c[0] * c[1]) if got else None
 
 
+def probe_sar(path):
+    """Sample (pixel) aspect ratio of the file's video stream; 1.0 when square / unknown."""
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                        "stream=sample_aspect_ratio", "-of", "csv=p=0", path], capture_output=True, text=True)
+    m = re.match(r"(\d+):(\d+)", r.stdout.strip())
+    return int(m[1]) / int(m[2]) if m and int(m[1]) and int(m[2]) else 1.0
+
+
 def plan_shot(W, H, sw, sh, area, boxes, need, prev_side, cap, group=False):
     """-> (zoom, pan, tilt, reason, side_after) for one V1 item, or None when it stays as is.
     boxes: YOLO boxes of the shot's character (normalized to the file), [] = none / not the character.
@@ -51,6 +64,7 @@ def plan_shot(W, H, sw, sh, area, boxes, need, prev_side, cap, group=False):
     s = min(W / sw, H / sh)                       # scale-to-fit
     aw, ah, ax, ay = area or (sw, sh, 0, 0)
     z0 = max(W / (aw * s), H / (ah * s))          # zoom that fills the frame with the picture area
+    z0 = 1.0 if aw / ah < W / H * 0.99 else z0     # side bars (pillarbox / vertical): never zoomed, swap (user)
     z0 = 1.0 if z0 < 1.004 else z0 * 1.002        # 0.2% over: no hairline at the edge
     cx0, cy0 = (ax + aw / 2) / sw, (ay + ah / 2) / sh  # picture-area centre
     z, reason, cx, cy, side = z0, "fill" if z0 > 1 else None, cx0, cy0, None
@@ -95,7 +109,14 @@ def size_of(side):
     return next(n for lim, n in SIZE_SIDE if side >= lim)
 
 
-def main(video, apply):
+def letterbox(area, sw, sh):
+    """The cropdetect area only when it is symmetric top/bottom bars over the full width, else None."""
+    if area and area[0] >= 0.97 * sw and area[1] <= 0.95 * sh and abs(area[3] - (sh - area[1] - area[3])) <= 8:
+        return area
+    return None
+
+
+def main(video, apply, fill_only=False):
     from dvr_cowork.config import load_config
     from dvr_cowork.resolve_conn import connect
     from dvr_cowork.resolve_ops import clip_fps, get_project, timeline_fps, use_video, video_timeline
@@ -103,7 +124,8 @@ def main(video, apply):
     import yolo
 
     from dvr_cowork.videokey import video_key
-    slots = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))["slots"]
+    plan = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))
+    slots = plan["slots"]
     cfg = load_config()
     pm, project = get_project(connect(cfg))
     use_video(video)
@@ -136,9 +158,20 @@ def main(video, apply):
         for p, c in zip(todo, ex.map(lambda p: cropdetect(p, dur[p]), todo)):
             crop[p.lower()] = c
     CROP.write_text(json.dumps(crop, separators=(",", ":")), "utf-8")
+    sar = json.loads(SARF.read_text("utf-8")) if SARF.exists() else {}
+    todo_s = sorted({r["path"] for r in rows if r["path"].lower() not in sar})
+    with ThreadPoolExecutor(6) as ex:
+        for p, v in zip(todo_s, ex.map(probe_sar, todo_s)):
+            sar[p.lower()] = v
+    SARF.write_text(json.dumps(sar, separators=(",", ":")), "utf-8")
+    for r in rows:  # display width: 1920x1080 at SAR 16:15 shows as 2048x1080 -> Resolve letterboxes it
+        k, a = sar.get(r["path"].lower(), 1.0), letterbox(crop.get(r["path"].lower()), r["sw"], r["sh"])
+        r["sw"] = round(r["sw"] * k)
+        r["area"] = a and [round(a[0] * k), a[1], round(a[2] * k), a[3]]
+        r["bars"] = bool(r["area"]) or r["sw"] / r["sh"] > W / H * 1.004  # top/bottom bars on the timeline
 
-    lib = {c["abs"].lower(): c for c in P.load_clips()}
-    clips = [lib[p] for p in {r["path"].lower() for r in rows} if p in lib]
+    lib = {c["abs"].lower(): c for c in P.load_clips(plan["region"])}
+    clips = [lib[p] for p in {r["path"].lower() for r in rows if not fill_only or r["bars"]} if p in lib]
     new, sec = yolo.measure(clips)
     cache = json.loads(yolo.CACHE.read_text("utf-8"))
     print(f"yolo: {len(clips)} clips on V1, {new} measured now ({sec}s); cropdetect: {len(todo)} files now")
@@ -155,10 +188,9 @@ def main(video, apply):
         boxes = [b for b in f[int(r["in"] * yolo.FPS):int(r["out"] * yolo.FPS) + 1] if b]
         rng = int(r["out"] * yolo.FPS) - int(r["in"] * yolo.FPS) + 1
         boxes = boxes if len(boxes) >= 0.5 * rng else []
-        area = crop.get(r["path"].lower())
-        if area and not (area[0] >= 0.97 * r["sw"] and area[1] <= 0.95 * r["sh"]
-                         and abs(area[3] - (r["sh"] - area[1] - area[3])) <= 8):
-            area = None                            # only symmetric top/bottom bars count as a letterbox
+        area = r["area"]                           # only top/bottom bars count
+        if fill_only and not r["bars"]:
+            continue
         cap = CAP[2160] if r["sh"] >= 2000 else CAP[1080]
         res = None if r["manual"] else plan_shot(W, H, r["sw"], r["sh"], area, boxes, need, prev, cap, group)
         prev = res[-1] if res else None
@@ -166,7 +198,7 @@ def main(video, apply):
             out.append((r, *res[:4]))
     fills = [o for o in out if o[4] == "fill"]
     creative = sorted((o for o in out if o[4] != "fill"), key=lambda o: ("strike", "tiny", "size").index(o[4]))
-    creative = creative[:int(MAX_SHARE * len(rows))]
+    creative = [] if fill_only else creative[:int(MAX_SHARE * len(rows))]
     tcs = lambda r: (lambda s: f"{int(s // 60):02d}:{s % 60:04.1f}")((int(r["it"].GetStart()) - t0) / fps)  # noqa: E731
     print(f"V1 {len(rows)} shots; manual Transform kept {sum(r['manual'] for r in rows)}; "
           f"fill (black bars) {len(fills)}; punch-in {len(creative)}: "
@@ -197,6 +229,10 @@ def selftest():
     z, *_ = plan_shot(W, H, 1920, 1080, [1920, 816, 0, 132], [], "", None, 1.35)  # baked 2.35 bars
     assert abs(z - 1080 / 816 * 1.002) < 1e-3
     assert plan_shot(W, H, 1920, 1080, None, [], "", None, 1.35) is None
+    assert letterbox([1920, 816, 0, 132], 1920, 1080) and not letterbox([1440, 1080, 240, 0], 1920, 1080)  # pillarbox: no
+    z, *_ = plan_shot(W, H, 2048, 1080, None, [], "", None, 1.35)  # 1920x1080 at SAR 16:15 -> 1.896:1
+    assert abs(z - 2048 / 1080 / (16 / 9) * 1.002) < 1e-3
+    assert plan_shot(W, H, 1440, 1080, None, [], "", None, 1.35) is None  # 4:3 = side bars: never zoomed
     lone = [[0.7, 0.6, 0.1, 0.1]] * 8                       # tiny animal right of centre, character shot
     z, pan, tilt, why, side = plan_shot(W, H, 1920, 1080, None, lone, "[J] báo đốm đứng", None, 1.35)
     assert why == "tiny" and z == 1.35 and pan < 0 and tilt > 0  # image slides left/up to bring it to the centre
@@ -212,4 +248,4 @@ def selftest():
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
-    selftest() if "--selftest" in sys.argv else main(a[0], "--apply" in sys.argv)
+    selftest() if "--selftest" in sys.argv else main(a[0], "--apply" in sys.argv, "--fill-only" in sys.argv)

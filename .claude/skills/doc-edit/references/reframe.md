@@ -5,8 +5,10 @@ Zoom / Position X-Y on V1 of the video timeline only (Transform; nothing moved, 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video>           # dry-run list
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/reframe.py <video> --apply   # backup <timeline>_bak_reframe_*, set
 
-- `fill`: black bars (file wider than 16:9 or baked-in bars, cropdetect cache `.work/library/active_area.json`)
-  -> smallest zoom that fills, crop slid toward the animal.
+- `fill`: top/bottom black bars (file wider than 16:9 incl. pixel aspect e.g. 1920x1080 SAR 16:15, or baked-in bars;
+  caches `.work/library/active_area.json`, `sar.json`) -> smallest zoom that fills, crop slid toward the animal.
+  Side bars (pillarbox / vertical) are never zoomed: swap the clip. `--fill-only` = fill alone, no punch-in; runs
+  automatically in after-gen-vid (user 2026-11-15).
 - punch-in, <= 15% of shots, centred on the YOLO box, only if the animal stays in frame on every sample: `strike`
   (strike/attack/catch shot, 1.2x), `tiny` (character < 18% of frame), `size` (same size as previous -> next size).
   Max zoom 1.35 on 1080p, 1.7 on UHD.
