@@ -292,7 +292,7 @@ D:\Chann_1_ShadowCanopy\          <- thư mục một kênh (tự tạo khi đă
 - **Tên video**: `fa_africa_121126_2` = footage+AI, vùng africa, ngày 12/11/2026, video thứ 2 trong ngày của kênh.
   Claude tự đặt tên. Video cũ không có tiền tố (`africa_101126_1`, `himalaya_101126_3`) vẫn chạy như trước.
 - **Giọng đọc**: mỗi dòng của kịch bản là một file, đánh số 1, 2, 3... đúng thứ tự (`1.mp3` = dòng 1).
-- **Clip AI**: lưu đúng tên ở cột `shot_id` của `missing-prompt.csv`: `c<kênh>v<video>_<số>`, ví dụ câu lệnh số 7 của
+- **Clip AI**: lưu đúng tên ở mã `shot_id` đầu mỗi khối prompt của `missing-prompt.txt`: `c<kênh>v<video>_<số>`, ví dụ câu lệnh số 7 của
   Chann_1, video 1 là `shots\c1v1_7.mp4` (video cũ: `7.mp4`). Clip muốn dùng lại cho nhiều video thì lưu vào kho
   `_check` của vùng (`/doc-edit ingest` xếp nó vào kho).
 
@@ -343,7 +343,7 @@ từ 0:00.
 
 | Lần | Bạn gõ | Claude làm | Bạn làm tiếp |
 |---|---|---|---|
-| 1 | `/doc-edit D:\Chann_3_WildPeril\a_frozen_051126_2` (đã có giọng đọc trong `voice\`) | Đặt giọng đọc + phụ đề, viết câu lệnh cho **mọi** shot (file `missing-prompt.csv`). Rồi dừng | Tạo toàn bộ clip theo câu lệnh, lưu vào `shots\` đúng tên `shot_id` (`c3v2_1.mp4`, `c3v2_2.mp4`...) |
+| 1 | `/doc-edit D:\Chann_3_WildPeril\a_frozen_051126_2` (đã có giọng đọc trong `voice\`) | Đặt giọng đọc + phụ đề, viết câu lệnh cho **mọi** shot (file `missing-prompt.txt`). Rồi dừng | Tạo toàn bộ clip theo câu lệnh, lưu vào `shots\` đúng tên `shot_id` (`c3v2_1.mp4`, `c3v2_2.mp4`...) |
 | 2 | Gõ lại **đúng lệnh trên** | Kiểm tra clip, đặt cả phim lên timeline: 30 giây mở đầu gay cấn, câu chuyện, nhạc, gió, chim hót. Rồi dừng | Xem phim. Shot nào hỏng: "làm lại 3, 7, 12" (Claude đưa lại câu lệnh), tạo lại, ghi đè file cũ |
 | 3 | `/doc-edit done <video>` rồi `/doc-edit push <video>` | `done`: xuất file phim (không chỉnh màu). `push`: SEO + đăng YouTube riêng tư | YouTube Studio: thumbnail, công khai / hẹn giờ |
 

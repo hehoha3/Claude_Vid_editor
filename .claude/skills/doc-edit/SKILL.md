@@ -46,7 +46,8 @@ candidate sets) -> one AskUserQuestion: each candidate (path, count, missing / e
   remaining still, say so. Gemini error / no verdicts -> Read 6 stills (old way). Reply: frames checked (Gemini N,
   Claude K), flags confirmed / rejected, fixes.
 
-Tracks of `channN_vidK`: A1 empty (older videos keep theirs) · A2 narrator · A3/A4 bed (alternating, 4 s crossfades,
+Tracks of `channN_vidK`: A1 empty (older videos keep theirs), except 1-3 h films: AI clips' own audio at -12 dB in
+the intro + story 1 (user 2026-11-17, `place.a1_ok`) · A2 narrator · A3/A4 bed (alternating, 4 s crossfades,
 ~-32 LUFS) · A5 Ambience 3 (extra bed, story-1 pre-lap, music crossfade tails) · A6 natural · A7 music · A8 natural SFX · A9 designed SFX
 (0:00 riser -> impact). Bins: `7. Open/vidK`
 = that video's intro shots (0:00 -> story 1; one sub-bin per video, user 2026-11-09; plan.py prefers only the clips the
@@ -65,12 +66,12 @@ the intro of another video of its channel within 7 days (plan.py `intro week` li
 planned-only videos and "7. Open" clips included; never lift it by hand.
 
 ## After the prompts: Case 1 / Case 2 per video
-`/doc-edit <audios...>` ends when the video is placed and `missing-prompt.csv` (intro + story 1) is out: reply THIẾU
+`/doc-edit <audios...>` ends when the video is placed and `missing-prompt.txt` (intro + story 1) is out: reply THIẾU
 count + timecode ranges + prompt numbers, then wait (never a fallback; Claude never opens Muse / Chrome or generates
 footage). State: `python -m dvr_cowork.jobs status`. The user decides per video; record it with
 `jobs decide <video> ingest|fill-existing "<their words>"`:
 - **Case 1** ("đã generate / lưu clip vào `shots`") = `/doc-edit after-gen-vid <video>`. Clip -> slot = its name
-  (`shot_id` of `missing-prompt.csv`); `still copying` -> wait; `broken` -> list for the user; a clip not named after
+  (`shot_id` of `missing-prompt.txt`); `still copying` -> wait; `broken` -> list for the user; a clip not named after
   this video's prompts -> ask whose. One home (user 2026-11-13): every generated clip of a video is in its own
   `<video>\shots`: plan.py puts each on its own slot only (any slot, no tags), never filed, never another slot
   (`shots/: N one-time clips`). after-gen-vid never reads the region `_check`: that is the shared library folder
@@ -109,7 +110,7 @@ epic opener on the hit, teaser to ~1:30.
 |---|---|---|
 | `/doc-edit <video folder>` of a full-AI film | `references/full-ai.md` from its state | that file's replies |
 | `/doc-edit <audios-folder> [...]` | `references/new-video.md` per video: preflight -> A narration (background) + B plan -> C intro music + re-plan -> D prompts (intro + story 1) -> E place on empty tracks; several folders = one agent per video for B + D, A / C / E one after the other | new-video reply |
-| `/doc-edit after-gen-vid <video>` ("đã gen video xong") | ONE `after_gen.py finish <video>` (run_in_background): jobs check of `<video>\shots` only (user 2026-11-13; no tagging; copying / broken -> STOP) -> plan `--sub-broad` -> place `--fill` -> `gen_swap.py --apply` (V1 items at a generated clip's slot replaced, Orange, backup) -> gaps -> fill-report -> `reframe.py --fill-only --apply` (top/bottom bars -> light zoom, backup) -> light.py plan + apply (backup) -> frame check (Working rules); the command = the yes for all of it | one reply: shots clips checked (stray / broken), generated used / unused, placed, swapped, THIẾU left, color spread, frames checked, backups |
+| `/doc-edit after-gen-vid <video>` ("đã gen video xong") | ONE `after_gen.py finish <video>` (run_in_background): jobs check of `<video>\shots` only (user 2026-11-13; no tagging; copying / broken -> STOP) -> plan `--sub-broad` -> place `--fill` -> `gen_swap.py --apply` (V1 items at a generated clip's slot replaced, Orange, backup) -> `place.py --a1-only` (1-3 h films: AI audio on free A1, intro + story 1) -> gaps -> fill-report -> `reframe.py --fill-only --apply` (top/bottom bars -> light zoom, backup) -> light.py plan + apply (backup) -> frame check (Working rules); the command = the yes for all of it | one reply: shots clips checked (stray / broken), generated used / unused, placed, swapped, THIẾU left, color spread, frames checked, backups |
 | `/doc-edit plan` | B2-B3 of new-video.md (`story.py expand` when beats exist) with the WEAK pin round | B reply part 3 |
 | `/doc-edit missing-prompts [mm:ss-mm:ss]` | `references/missing-prompts.md` (default intro + story 1; `--range=A-B`, `--all`) | prompts reply |
 | `/doc-edit logo` | `hide_logo.py "D:\AI_video\_check"` (africa: `_africa\_check`) | LOGO / SUSPECT + `.work\hide_logo\check_list.txt` |

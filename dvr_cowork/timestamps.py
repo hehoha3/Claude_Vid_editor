@@ -35,6 +35,16 @@ def _sections(lines: list[str]) -> list[str]:
     return [s.strip()[3:].strip().lower() for s in lines if s.strip().startswith("## ")]
 
 
+def narration_lang(video: str | Path) -> str:
+    """'es' when the video's timestamp file (<video>\\audios\\*timestamp*.md, every type) has `## Spanish`, else 'en'.
+    Narrator language = META lang / story.json lang (user 2026-11-17); the Spanish part is the file's first section,
+    so parse_timestamp_file's default ("english" missing -> first heading) reads it unchanged."""
+    for p in Path(video, "audios").glob("*.md"):
+        if "timestamp" in p.name.lower() and "\n## Spanish" in p.read_text(encoding="utf-8-sig"):
+            return "es"
+    return "en"
+
+
 def parse_timestamp_file(path: str | Path, section: str = "english") -> list[Cue]:
     """`## English` / `## Vietnamese` headings split a bilingual file: only `section` is read
     (no such heading -> the cues before the first heading if there are any, else the first heading).

@@ -167,8 +167,9 @@ def status():
                 continue
             st, nxt = stage(vdir, False)
             d = last_decision(c, v)
-            prompts = next((vdir / n for n in ("missing-prompt.csv", "missing_prompts.txt") if (vdir / n).exists()),
-                           vdir / "missing-prompt.csv")
+            from .prompt_rules import PROMPT_FILES  # .txt, .csv (2026-11-05..16); missing_prompts.txt before
+            prompts = next((vdir / n for n in (*PROMPT_FILES, "missing_prompts.txt") if (vdir / n).exists()),
+                           vdir / PROMPT_FILES[0])
             if st.startswith("planned") and not place_of(v):  # place.py writes project.txt
                 st, nxt = "planned, not placed", "/doc-edit <audios> (A2 + intro music + place)"
             elif st.startswith("planned") and not ai_max(vdir):  # f_ footage film: no prompts, no Case 1
@@ -301,7 +302,7 @@ def generated(video):
 
 def generated_names(video):
     """{content hash: file name when checked} of the generated clips; the name (c3v6_9.mp4, before 2026-11-10 G1-S016.mp4) is the
-    missing-prompt.csv shot_id the clip was made for, kept here after organize renamed the file."""
+    missing-prompt.txt shot_id the clip was made for, kept here after organize renamed the file."""
     try:
         with db() as c:
             return {h: Path(p).name for h, p in

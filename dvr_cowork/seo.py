@@ -41,6 +41,15 @@ ANIMALS = set("jaguar lion lioness tiger leopard cheetah puma cougar hyena wolf 
               "harpy tapir turtle frog".split())
 DISCLOSURE = ("This film combines real wildlife footage with AI-generated imagery. The scenes are based on documented "
               "animal behaviour; some encounters are dramatized reconstructions and were not filmed as one event.")
+# Spanish-narrated films (narration_lang = es, user 2026-11-17): every text the viewer reads is Spanish
+TEXT = {"en": {"chapters": "Chapters", "about": "About this film", "part": "Part", "disclosure": DISCLOSURE,
+               "subscribe": "Subscribe to {} for more stories from the wild."},
+        "es": {"chapters": "Capítulos", "about": "Sobre esta película", "part": "Parte",
+               "disclosure": ("Esta película combina imágenes reales de vida salvaje con imágenes generadas por IA. "
+                              "Las escenas se basan en comportamientos animales documentados; algunos encuentros son "
+                              "reconstrucciones dramatizadas y no se filmaron como un solo evento."),
+               "subscribe": "Suscríbete a {} para ver más historias de la vida salvaje."}}
+REGION_ES = {"africa": "ÁFRICA", "amazon": "AMAZONÍA", "frozen": "INVIERNO"}  # "<REGIÓN> SALVAJE | ..."
 
 
 def clock(s):
@@ -85,15 +94,16 @@ def youtube_client(vdir):
     sys.exit("seo: no valid YouTube token: run `python -m dvr_cowork youtube login --key Chann_N` once")
 
 
-def search(yt, q):
+def search(yt, q, lang="en"):
     """Most viewed long videos of the last DAYS_BACK days for q -> [{title, views, days, tags}], cached CACHE_DAYS."""
     CACHE.mkdir(parents=True, exist_ok=True)
-    cf = CACHE / (hashlib.sha256(q.encode()).hexdigest()[:16] + ".json")
+    key = q if lang == "en" else f"{q}|{lang}"  # en keeps the old cache names
+    cf = CACHE / (hashlib.sha256(key.encode()).hexdigest()[:16] + ".json")
     if cf.exists() and time.time() - cf.stat().st_mtime < CACHE_DAYS * 86400:
         return json.loads(cf.read_text("utf-8")), 0
     after = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=DAYS_BACK)).strftime("%Y-%m-%dT%H:%M:%SZ")
     res = yt.search().list(part="snippet", q=q, type="video", order="viewCount", publishedAfter=after,
-                           videoDuration="long", relevanceLanguage="en", maxResults=25).execute()
+                           videoDuration="long", relevanceLanguage=lang, maxResults=25).execute()
     ids = [i["id"]["videoId"] for i in res.get("items", [])]
     items = yt.videos().list(part="snippet,statistics", id=",".join(ids)).execute().get("items", []) if ids else []
     today = dt.datetime.now(dt.timezone.utc)
@@ -147,12 +157,23 @@ tags: 25-30 search phrases (trend tags that fit + species + place), lowercase. h
 JSON: {"titles":["","",""],"hook":"","bullets":[""],"summary":"","chapters":[""],"tags":[""],"hashtags":[""]}"""
 
 
-def ask_gemini(gdir, film_txt, trend_txt):
+def task_text(lang="en"):
+    if lang == "en":
+        return TASK
+    frame = 'no "Wild ..." and no "Documentary": code wraps it as "WILD <REGION> | <middle> | Wildlife Documentary".'
+    assert frame in TASK
+    return (TASK.replace("English.", "Neutral Latin-American Spanish: every text field, tags and hashtags included.")
+            .replace(frame, 'no "... Salvaje" and no "Documental": code wraps it as '
+                            '"<REGIÓN> SALVAJE | <middle> | Documental de Vida Salvaje".')
+            .replace("Middle part examples:", "Middle part examples (yours in Spanish):"))
+
+
+def ask_gemini(gdir, film_txt, trend_txt, lang="en"):
     from dvr_cowork.gemini import ask
     gdir.mkdir(parents=True, exist_ok=True)
     (gdir / "film.txt").write_text(film_txt, "utf-8")
     (gdir / "trend.txt").write_text(trend_txt, "utf-8")
-    text, stats = ask(TASK, [gdir / "film.txt", gdir / "trend.txt"], json_out=True)
+    text, stats = ask(task_text(lang), [gdir / "film.txt", gdir / "trend.txt"], json_out=True)
     g = json.loads(text)
     g = g[0] if isinstance(g, list) and g else g  # flash-lite sometimes wraps the object in a list (2026-11-01)
     if not isinstance(g, dict) or not isinstance(g.get("titles"), list) or len(g["titles"]) < 3:
@@ -172,26 +193,30 @@ def tag_budget(tags, limit=500):
     return out
 
 
-def full_title(mid, region):
-    """The user's format (2026-10-31): WILD <REGION> | <middle> | Wildlife Documentary; a frame Gemini added is dropped."""
+def full_title(mid, region, lang="en"):
+    """The user's format (2026-10-31): WILD <REGION> | <middle> | Wildlife Documentary (es: <REGIÓN> SALVAJE | <middle> |
+    Documental de Vida Salvaje); a frame Gemini added is dropped."""
     parts = [p.strip() for p in mid.split("|")]
-    mid = " ".join(p for p in parts if p and not re.fullmatch(r"(?i)wild \w+|(wildlife )?documentary", p))
+    frame = r"(?i)wild \w+|(wildlife )?documentary|.+ salvaje|documental.*"
+    mid = " ".join(p for p in parts if p and not (len(parts) > 1 and re.fullmatch(frame, p)))
+    if lang == "es":
+        return f"{REGION_ES.get(region, region.upper())} SALVAJE | {mid} | Documental de Vida Salvaje"[:100]
     return f"WILD {region.upper()} | {mid} | Wildlife Documentary"[:100]
 
 
-def assemble(g, f, channel):
+def assemble(g, f, channel, lang="en"):
     """Gemini parts + spec facts -> youtube_meta dict + flags."""
-    flags = []
-    titles = [{"text": full_title(t["text"] if isinstance(t, dict) else t, f["region"])} for t in g["titles"][:3]]
+    flags, tx = [], TEXT[lang]
+    titles = [{"text": full_title(t["text"] if isinstance(t, dict) else t, f["region"], lang)} for t in g["titles"][:3]]
     names = g.get("chapters", [])
     if len(names) != len(f["chapters"]):
         flags.append(f"chapter names {len(names)} != {len(f['chapters'])} chapters: generic names used for the rest")
-    chap = [f"{clock(s)} {names[i] if i < len(names) else f'Part {i}'}" for i, (s, _) in enumerate(f["chapters"])]
+    chap = [f"{clock(s)} {names[i] if i < len(names) else tx['part'] + f' {i}'}" for i, (s, _) in enumerate(f["chapters"])]
     if len(chap) < 3:
         flags.append("fewer than 3 chapters: YouTube shows none")
     body = [g["hook"], "\n".join(g.get("bullets", [])), g["summary"]]
-    desc = "\n\n".join([titles[0]["text"], *body, "Chapters\n" + "\n".join(chap), "About this film\n" + DISCLOSURE,
-                        f"Subscribe to {channel} for more stories from the wild." if channel else "",
+    desc = "\n\n".join([titles[0]["text"], *body, tx["chapters"] + "\n" + "\n".join(chap),
+                        tx["about"] + "\n" + tx["disclosure"], tx["subscribe"].format(channel) if channel else "",
                         " ".join(h for h in g.get("hashtags", [])[:3] if re.fullmatch(r"#\w+", h))]).strip()
     if "http" in desc:
         flags.append("description has a URL Gemini made up: remove it")
@@ -200,7 +225,7 @@ def assemble(g, f, channel):
         if extra := {w for w in re.findall(r"[a-z]+", t["text"].lower()) if w in ANIMALS and w not in cast}:
             flags.append(f"title '{t['text']}' names {', '.join(sorted(extra))}: not in the cast")
     meta = {"title": titles[0]["text"], "titles": titles, "description": desc[:5000], "tags": tag_budget(g["tags"]),
-            "synthetic": True}
+            "synthetic": True, "lang": lang}
     return meta, flags
 
 
@@ -214,16 +239,18 @@ def run(vdir, force=False):
     if not (work / "spec.txt").exists():
         sys.exit(f"seo: {work / 'spec.txt'} not found")
     f = film_facts((work / "spec.txt").read_text("utf-8"))
+    from dvr_cowork.timestamps import narration_lang
+    lang = narration_lang(vdir)
     yt, channel = youtube_client(vdir)
     videos, units = [], 0
     for q in queries(f):
-        vs, u = search(yt, q)
+        vs, u = search(yt, q, lang)
         videos += vs
         units += u
     film_txt = "\n".join([f"FILM: {f['film']}", f"REGION: {f['region']}", "CAST: " + ", ".join(f["species"]),
                           "CHAPTERS:"] + [f"{i} {clock(s)} {t}" for i, (s, t) in enumerate(f["chapters"])])
-    g, stats = ask_gemini(ROOT / ".work" / "gemini" / vdir.name, film_txt, trend_digest(videos))
-    meta, flags = assemble(g, f, channel)
+    g, stats = ask_gemini(ROOT / ".work" / "gemini" / vdir.name, film_txt, trend_digest(videos), lang)
+    meta, flags = assemble(g, f, channel, lang)
     if meta_f.exists():
         meta_f.replace(work / "youtube_meta_prev.json")
     work.mkdir(parents=True, exist_ok=True)
@@ -276,6 +303,13 @@ def selftest():
     assert "00:00 Cold open\n01:34 The bank\n08:03 The forest" in meta["description"], meta["description"]
     assert meta["description"].endswith("#WildAmazon #Jaguar") and "Shadow Canopy" in meta["description"]
     assert flags == ["title 'WILD AMAZON | The Lion Waits | Wildlife Documentary' names lion: not in the cast"], flags
+    es = dict(g, titles=["AMAZONÍA SALVAJE | ¿Por qué trepa el jaguar? | Documental", "El río salvaje", "x"])
+    meta, _ = assemble(es, f, "Shadow Canopy", "es")
+    assert meta["title"] == "AMAZONÍA SALVAJE | ¿Por qué trepa el jaguar? | Documental de Vida Salvaje", meta["title"]
+    assert meta["titles"][1]["text"].startswith("AMAZONÍA SALVAJE | El río salvaje |"), meta["titles"]  # no frame cut
+    assert meta["lang"] == "es" and "Capítulos\n00:00 Cold open" in meta["description"]
+    assert "Suscríbete a Shadow Canopy" in meta["description"] and "imágenes generadas por IA" in meta["description"]
+    assert "Spanish" in task_text("es") and "Documental de Vida Salvaje" in task_text("es") and task_text() == TASK
     print("selftest ok")
 
 

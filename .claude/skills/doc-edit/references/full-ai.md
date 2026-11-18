@@ -36,7 +36,7 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
   `--replace`): `.work/scripts/add_prelap.py <video> <song> --apply` adds only the pre-lap.
 - **Files**: source `.production/story.json`; `audios/` = `screenplay.md`, `timestamp.md`, `transcript.md`,
   `visual_plan.md`; narrator `voice/1..N.mp3` (legacy `audios/mp3/`); shots `shots/c3v6_1..M.mp4` (older `1..M.mp4`); prompts
-  `missing-prompt.csv` (19 columns, `shot_id` = `c<chann>v<vid>_<n>` = file name, `--only c3v6_3,7` works, `dur_s` = slot + handle) + `lock-assets.md`. The only
+  `missing-prompt.txt` (per prompt: label line `shot_id | slot | dur_s s` + one-paragraph prompt; `shot_id` = `c<chann>v<vid>_<n>` = file name, `--only c3v6_3,7` works, `dur_s` = slot + handle) + `lock-assets.md`. The only
   prompt writer: `$E8 prompts` (never missing.py).
 - **Preservation**: numbered file ID = issued prompt ID, never sort order; ID = the file name's trailing number
   (user 2026-11-06: `7.mp4`, `shot_007.mp4`, `shot-7.mp4`, `S07.mp4` = 7; `.mp4` / `.mp3` alike); duplicate IDs
@@ -70,7 +70,7 @@ Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 st
   Narrator pause limit 4.2 s (user 2026-11-09, `story.PAUSE_S`); the picture keeps changing through it (3–5 s shots).
   Dry-run on a copy (`story.compile_story(copy, durations)`), offer the passing plan, after the yes back up
   `story.json`, rerun.
-- v2 film -> v3 (3–7 s shots, 1–2 beats), only while `shots\` is empty: back up `story.json` + the CSV into
+- v2 film -> v3 (3–7 s shots, 1–2 beats), only while `shots\` is empty: back up `story.json` + `missing-prompt.txt` into
   `.production\`, `dvr_cowork profile migrate <video> --to 3 --apply`, split each shot into two (same moment, second
   half from a new camera) in `story.json`, `$E8 conform` (narration frames must stay), `$E8 voice --apply` (A2
   re-verified), `$E8 prompts --renumber` (old manifest kept, IDs from 1).
@@ -125,7 +125,7 @@ never overwrites (`_v2`), returns a job ID. Poll `$E8 render-status` until VERIF
 **YouTube** (a time given -> `--publish-at <ISO time +07:00>`, none -> private): `$Y seo "<video>"` prints film facts + a trend digest (~200 quota units, cached 7 days; thin
 digest -> once more with `--query "snow leopard mountain goat"`). Write `.production/seo_draft.json`:
 `{"titles":[3 full titles],"pick":1,"hook":"2–3 sentences","summary":"2–3 sentences, no payoff","tags":[20–30],
-"hashtags":[...],"chapters":[optional]}` -> `$Y seo "<video>" --write` builds `youtube_meta.json`; fix every FLAG.
+"hashtags":[...],"chapters":[optional]}` (story.json `"lang": "es"`: the digest says `LANGUAGE: es` -> every text in Spanish, chapters required) -> `$Y seo "<video>" --write` builds `youtube_meta.json`; fix every FLAG.
 - Titles, plain title case, no caps / emoji / colons: **Clash** `<Predator> Hunts / vs <Mother|Lone|Young> <Prey>
   [and Her Baby] on a <Deadly Terrain> | <label>` or **Vulnerable moment** `A <Baby|Young|Lone> <Prey> <situation>…
   Can It <concrete test>? | <label>`. Label: `Wildlife Documentary`, `Wild Animals` or the channel's name. Story

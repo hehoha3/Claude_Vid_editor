@@ -17,7 +17,7 @@ Claude, not Gemini; one prompt per slot; 2026-11-05: intro + story 1 only, so no
 Prompt k of a group = slot k of the group (extras = the group's longest slot); clip length dur_s = the slot + 1 s,
 up to the half second (3.2 -> 4.5, 4 -> 5, user 2026-11-09); beats per clip: < 5 s one, < 8 s up to two, else up to four.
 --check / --write run the QC gates (references/missing-prompts.md); --write refuses on errors and writes
-<video>/missing-prompt.csv: the 19-column missing-scenes schema (prompt_rules.COLUMNS). <video> = the work key, the video folder or its audios folder.
+<video>/missing-prompt.txt: one block per prompt: label line 'shot_id | tc_in -> tc_out | dur_s s' + the prompt as one paragraph (prompt_rules.txt_text). <video> = the work key, the video folder or its audios folder.
 """
 import difflib, json, math, re, sys
 from collections import Counter, defaultdict
@@ -30,7 +30,7 @@ from dvr_cowork.config import load_config  # noqa: E402
 from dvr_cowork.timecode import parse_clock as secs  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 from plan import AGE_CAP, KILL, SEX_CAP  # noqa: E402  the story-truth words plan.py checks, same in the prompts
-from dvr_cowork.prompt_rules import SPEED, TAIL, csv_text, dur_s, issues, paced, render as render_prompt, shot_id, shot_size  # noqa: E402  shared with full-AI
+from dvr_cowork.prompt_rules import PROMPT_FILES, SPEED, TAIL, dur_s, prompt_rows, txt_text, issues, paced, render as render_prompt, shot_id, shot_size  # noqa: E402  shared with full-AI
 # where the user saves generated clips, per plan.json region: amazon = AI root of this machine (config.toml);
 # africa = D:\AI_video\_africa\_check (user 2026-10-22; organize.py --africa files them into _africa\<species>)
 from dvr_cowork.vtypes import ai_max, check_dir, region_id  # noqa: E402
@@ -273,8 +273,8 @@ def main(video, mode, rng=None):
     sys.path.insert(0, str(Path(__file__).parent))
     import ledger  # video folder looked up in the workspaces (plan.json may hold a path from before a rename)
     vdir = Path(plan.get("video_dir", ""))  # plan.json knows the exact folder (same video name in two workspaces)
-    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / "missing-prompt.csv"
-    # one row per prompt (user 2026-11-05): THIEU groups, then extras; the 19-column missing-scenes schema
+    out = (vdir if vdir.is_dir() else ledger.find_video(video)) / PROMPT_FILES[0]
+    # one row per prompt (user 2026-11-05): THIEU groups, then extras; rows keep the 19 schema columns, txt_text writes label + prompt
     order = [g["id"] for g in gs if g["id"] in p] + extra
     need = {s["slot"]: s for s in slots}
     table = []
@@ -299,7 +299,7 @@ def main(video, mode, rng=None):
                 "reason": ("THIẾU: clip WEAK của intro" if g and any("intro WEAK" in (need[x].get("why") or "") for x in g["slots"])
                            else "THIẾU: không có trong kho") + (f" (kho bị loại: {refused})" if refused else "")})
     renumbered(out, table, video_key(video))
-    out.write_text(csv_text(table), "utf-8", newline="")
+    out.write_text(txt_text(table), "utf-8")
     print(f"{len(table)} prompts in {len(p)} groups -> {out}")
     for g in gs:
         if g["id"] in p:
@@ -315,11 +315,10 @@ def main(video, mode, rng=None):
 def renumbered(out, table, key):
     """shot_id = the row number (c3v6_9, user 2026-11-10) and the clip's file name: a re-write that moves an ID
     already generated to another slot would place that clip wrong -> stop (--range / new rows go after)."""
-    import csv
     from dvr_cowork.jobs import generated_names
-    if not out.exists():
+    old = {r["shot_id"]: r.get("tc_in", "") for r in prompt_rows(out.parent)}  # .txt, or the .csv of before
+    if not old:
         return
-    old = {r["shot_id"]: r.get("tc_in", "") for r in csv.DictReader(out.open(encoding="utf-8-sig"))}
     new = {r["shot_id"]: r["tc_in"] for r in table}
     made = {Path(n).stem for n in generated_names(key).values()}
     moved = sorted(i for i in made & set(old) if new.get(i) != old[i])

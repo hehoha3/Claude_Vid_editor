@@ -1,13 +1,14 @@
 """Prompt rules shared by both engines (user 2026-11-05): footage+AI missing.py and full-AI dvr_cowork.fullai.story.
 
 Every generated shot: no physical contact between animals, every animal in frame keeps moving, never a silent
-stare-down. 8p prompts add the character / environment / light locks; 1h prompts do not. CSV = the 19-column
-missing-scenes schema (input/missing-scenes-2-cinematic-revised.csv).
+stare-down. 8p prompts add the character / environment / light locks; 1h prompts do not. Every prompt carries the
+shot_id + slot + length and the prompt as one paragraph, in missing-prompt.txt (user 2026-11-17).
 """
 import csv
 import io
 import math
 import re
+from pathlib import Path
 
 # Contact verbs (a keyword gate, not proof: QC still views the frames).
 CONTACT = re.compile(r"\b(?:bit(?:e|es|ing|ten)|gor(?:e|es|ed|ing)|ram(?:s|med|ming)|headbutt\w*|tackl\w+|"
@@ -44,8 +45,6 @@ FAST = re.compile(r"\b(?:run|runs|running|ran|sprint\w*|bolt\w*|dash\w*|rac(?:e|
                   r"tumbl\w+|surg(?:e|es|ing)|swing(?:s|ing)|swung|hop(?:s|ping)?|takes? off|taking off|zigzag\w*|"
                   r"accelerat\w+|full[- ]speed|flat out)\b", re.I)
 THEN = re.compile(r"\bthen\b", re.I)
-COLUMNS = ("shot_id,cluster,tc_in,tc_out,dur_s,kind,animal,action,environment,time_of_day,shot_size,camera_angle,"
-           "direction,position,keep_whole,mo_ta,search_keywords,generation_prompt,reason").split(",")
 SIZES = re.compile(r"\b(extreme wide|very wide|wide|establishing|medium[- ]long|medium|close[- ]up|extreme close[- ]up|"
                    r"detail|aerial|top-down)\b", re.I)
 
@@ -67,7 +66,7 @@ def paced(beats, clip_s):
 
 
 def shot_id(video, n):
-    """CSV shot_id = file name of the clip (user 2026-11-10): D:\\Chann_3_x\\africa_101126_6, shot 9 -> 'c3v6_9'.
+    """shot_id = file name of the clip (user 2026-11-10): D:\\Chann_3_x\\africa_101126_6, shot 9 -> 'c3v6_9'.
     A folder outside a channel keeps the plain number."""
     from .videokey import timeline_name
     m = re.fullmatch(r"chann(\d+)_vid(\d+)", timeline_name(video) or "")
@@ -105,14 +104,43 @@ def shot_size(camera):
     return m[1].lower() if m else ""
 
 
-def csv_text(rows):
-    """19-column CSV, UTF-8 BOM (Excel), every field quoted where needed."""
-    buf = io.StringIO(newline="")
-    w = csv.DictWriter(buf, fieldnames=COLUMNS, extrasaction="raise")
-    w.writeheader()
+# User 2026-11-17: the prompts file is a .txt (no CSV any more); videos prompted before keep their .csv (read only).
+PROMPT_FILES = ("missing-prompt.txt", "missing-prompt.csv")
+
+
+def txt_text(rows):
+    """One block per prompt (user 2026-11-17): a label line 'shot_id | tc_in -> tc_out | dur_s s' (file name to save,
+    timeline slot, clip length), then the prompt as ONE paragraph (no line break: copy-paste into the generator; it
+    already says length, camera, place, light, the action + direction, the shared TAIL). A blank line between blocks."""
+    out = []
     for r in rows:
-        w.writerow({k: "" if r.get(k) is None else r.get(k) for k in COLUMNS})
-    return "﻿" + buf.getvalue()
+        slot = f"{r['tc_in']} -> {r['tc_out']}" if r.get("tc_in") else "no slot"
+        out.append(f"{r['shot_id']} | {slot} | {r.get('dur_s') or '?'} s\n" + " ".join(str(r["generation_prompt"]).split()))
+    return "\n\n".join(out) + "\n"
+
+
+def prompt_file(vdir):
+    """<vdir>/missing-prompt.txt, else the .csv of a video prompted before 2026-11-17, else the .txt path."""
+    return next((p for p in (Path(vdir) / n for n in PROMPT_FILES) if p.exists()), Path(vdir) / PROMPT_FILES[0])
+
+
+def prompt_rows(vdir):
+    """[{shot_id, tc_in, tc_out, dur_s, generation_prompt}] of the video's .txt (the old .csv: all its columns);
+    [] when there is none."""
+    p = prompt_file(vdir)
+    if not p.exists():
+        return []
+    text = p.read_text("utf-8-sig")
+    if p.suffix == ".csv":
+        return list(csv.DictReader(io.StringIO(text)))
+    rows = []
+    for block in re.split(r"\n\s*\n", text.strip()):
+        head, _, prompt = block.partition("\n")
+        sid, slot, dur = (x.strip() for x in (head.split("|") + ["", ""])[:3])
+        tin, _, tout = slot.partition("->")
+        rows.append({"shot_id": sid, "tc_in": tin.strip() if tout else "", "tc_out": tout.strip(),
+                     "dur_s": dur.removesuffix("s").strip(), "generation_prompt": " ".join(prompt.split())})
+    return rows
 
 
 if __name__ == "__main__":
@@ -127,6 +155,18 @@ if __name__ == "__main__":
     assert paced(["no running, it trots"], 4.5) and paced(["trots"], 6) is None and paced(["a", "b"], 4.5) is None
     assert shot_id(r"D:\Chann_3_Wild\africa_101126_6", 9) == "c3v6_9" and shot_id(r"C:\tmp\x", 9) == "9"
     assert render("long lens", "savanna", "daylight", ["a"], 4.5).startswith(SPEED + ". Wildlife documentary")
-    rows = list(csv.DictReader(io.StringIO(csv_text([{"shot_id": "1", "generation_prompt": 'a, "b"'}])[1:])))
-    assert list(rows[0]) == COLUMNS and rows[0]["generation_prompt"] == 'a, "b"'
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        assert prompt_rows(d) == [] and prompt_file(d).name == "missing-prompt.txt"
+        (Path(d) / "missing-prompt.csv").write_text("shot_id,tc_in\nc1v1_1,00:05\n", "utf-8-sig")
+        assert prompt_rows(d) == [{"shot_id": "c1v1_1", "tc_in": "00:05"}]  # old videos' .csv still read
+        src = [{"shot_id": "c1v1_1", "tc_in": "00:12.0", "tc_out": "00:15.5", "dur_s": 4.5, "generation_prompt": 'a | b\nc'},
+               {"shot_id": "c1v1_2", "tc_in": "", "dur_s": "", "generation_prompt": "x"}]
+        txt = txt_text(src)
+        assert txt.startswith("c1v1_1 | 00:12.0 -> 00:15.5 | 4.5 s\na | b c\n\nc1v1_2 | no slot | ? s\nx")
+        prompt_file(d).with_suffix(".txt").write_text(txt, "utf-8")
+        rows = prompt_rows(d)  # .txt wins over the .csv
+        assert rows[0] == {"shot_id": "c1v1_1", "tc_in": "00:12.0", "tc_out": "00:15.5", "dur_s": "4.5",
+                           "generation_prompt": "a | b c"}
+        assert rows[1]["shot_id"] == "c1v1_2" and rows[1]["tc_in"] == "" and rows[1]["generation_prompt"] == "x"
     print("prompt_rules ok")

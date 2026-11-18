@@ -1,7 +1,7 @@
 """/doc-edit after-gen-vid <video> (user 2026-11-08): the clips generated for this video -> fill-THIEU on the whole V1
 (every generated clip at its own slot) -> color, one summary.
 
-User 2026-11-13: the generated clips of a video live ONLY in its own <video>\\shots (named by the missing-prompt.csv
+User 2026-11-13: the generated clips of a video live ONLY in its own <video>\\shots (named by the missing-prompt.txt
 shot_id; one-time: never tagged, never filed, never another video's slot). The region _check is the shared library
 folder (`/doc-edit ingest`), never read here.
 
@@ -13,14 +13,15 @@ folder (`/doc-edit ingest`), never read here.
 
 Prints only summary lines (token cost, user 2026-11-08). A step that fails stops the run with its last lines.
 """
-import csv, os, re, subprocess, sys
+import os, re, subprocess, sys
 from itertools import islice
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT)]
-sys.stdout.reconfigure(encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # a log file shows each step as it ends
 from dvr_cowork import jobs  # noqa: E402
+from dvr_cowork.prompt_rules import prompt_rows  # noqa: E402  missing-prompt.txt (or an older video's .csv)
 from dvr_cowork.resolve_ops import use_channel  # noqa: E402
 from dvr_cowork.videokey import video_key  # noqa: E402
 from dvr_cowork.vtypes import shot_media  # noqa: E402
@@ -44,8 +45,7 @@ def run(args, keep=r".", last=6, env=None):
 
 
 def prompt_ids(vdir):
-    p = vdir / "missing-prompt.csv"
-    return {r["shot_id"] for r in csv.DictReader(p.open(encoding="utf-8-sig"))} if p.exists() else set()
+    return {r["shot_id"] for r in prompt_rows(vdir)}
 
 
 def prep(vdir):
@@ -82,6 +82,10 @@ def finish(vdir):
         keep=r"^backup|^V1 placed|^V1 still empty|^black fades|FAILED|failed: \[.+\]")
     print("[4] generated clips onto their slots")
     run([SK / "doc-edit/scripts/gen_swap.py", vdir, "--apply"], keep=r".")
+    try:  # user 2026-11-17: 1-3 h films keep the AI clips' own audio on A1 in the intro + story 1 (free A1 only)
+        run([SK / "doc-edit/scripts/place.py", vdir, "--a1-only"], keep=r"A1 audio|no AI clips|FAILED|failed: \[.+\]")
+    except SystemExit as e:
+        print(f"  A1: {e}")
     print("[5] check")
     try:  # gaps exits non-zero when it finds gaps: report them, still colour
         run(["-m", "dvr_cowork", "gaps"], keep=r"gaps to fill|^\s+\d\d:\d\d", env={"DVR_TIMELINE": tl})

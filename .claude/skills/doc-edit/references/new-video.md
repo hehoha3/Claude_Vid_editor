@@ -18,11 +18,11 @@ deletes, Write tool for beats parts) and asks back for the reply parts 3-4 plus 
 `ls "<folder>"` + `ls "<video>"` + `.venv/Scripts/python.exe -m dvr_cowork info` (with `DVR_TIMELINE=channN_vidK`) +
 `ls "<folder>/mp3" | wc -l` + `find "<folder>/mp3" -name '*.mp3' -size -2000c` + `ls .work/doc_edit/<key>/`.
 - The folder needs (case-insensitive) one `*timestamp*.md` (`[MM:SS] sentence` / `[HH:MM:SS]`, decimals ok, `#`
-  lines ignored; bilingual `## English` + `## Vietnamese` (user 2026-10-20): English = A2 + plan, Vietnamese =
+  lines ignored; bilingual `## English` (or `## Spanish`, an es narrator) + `## Vietnamese` (user 2026-10-20): English / Spanish = A2 + plan, Vietnamese =
   `<video>\subtitles_vi.srt` on Subtitle 1 by vo-sync, same line count) and one `*screenplay*.md` (`script*.md` /
   `kịch_bản.md` are not read; `*Visual_Edit_Plan*.md` optional, both go into the brief). Missing or several -> say
   which, stop.
-- Narration = `mp3\1.mp3 … N.mp3`, one per English timestamp line (user 2026-10-16; already cut). Count = lines, no
+- Narration = `mp3\1.mp3 … N.mp3`, one per English / Spanish timestamp line (user 2026-10-16; already cut). Count = lines, no
   file under 2000 bytes (ElevenLabs failures are 1686 bytes); any problem -> list every number at once, stop.
   vo-sync also decodes every file first. Old style (one narration `.mp3`/`.wav` in the folder, Whisper cuts it) still
   works when there is no `mp3\`.
@@ -165,7 +165,7 @@ bars. Read `intro music:` / `intro beat:` (cuts not on a beat = narration onsets
 ### D. Prompts: intro + story 1 (`references/missing-prompts.md`)
 `missing.py <key>` lists the THIẾU groups of 0:00 -> story 2 (body slots are filled, never prompted; `--all` /
 `--range=A-B` on request). Claude writes `.work/doc_edit/<key>/prompts.txt` by hand (typically 20-60 prompts: no bank
-generator), `--check`, `--write` -> `<video>\missing-prompt.csv`. No THIẾU there -> skip, say so.
+generator), `--check`, `--write` -> `<video>\missing-prompt.txt`. No THIẾU there -> skip, say so.
 
 ### E. Place (after C and D; Resolve one video at a time)
 `place.py <key>` (no flag; `DVR_TIMELINE=channN_vidK` in front in a day project): intro + body on empty tracks (not
@@ -180,7 +180,7 @@ Then `dvr_cowork gaps` (must say 0 gaps to fill) and `dvr_cowork backups`.
    the intro + story 1, audio THIẾU (slot, timecode, sound), the `truth:` numbers in one line. Opening: the hook
    promise and form, the mute test at 0:30 / 1:00 / 1:30 (subject, event, outcome, open question), teaser integrity
    (no preview acts on the anchor animal, no outcome shown), the 1:30 reset, opening THIẾU, how story 1 ends on screen.
-5. Prompts: `<video>\missing-prompt.csv` path, count, roles per character ("báo: 3 predator_burst, 1 reaction"),
+5. Prompts: `<video>\missing-prompt.txt` path, count, roles per character ("báo: 3 predator_burst, 1 reaction"),
    relationship_wide clips, biology flags; the user saves the clips into `D:\AI_video\_check` (amazon),
    `D:\AI_video\_africa\_check` (africa, flat) or `D:\AI_video\_frozen\_check` (library, reusable), or one-time
    clips of this film into `<video>\shots` (same names).

@@ -177,6 +177,25 @@ def dry_safe(c1, f1, d):
     return None
 
 
+def grab8(r):
+    """M.grab kept as uint8 (exact: the cache is uint8). float32 of every V1 shot + its graded copy = ~4 MB a shot:
+    7 GB on a 60-min film (2026-11-17)."""
+    im = M.grab(r)
+    return None if im is None else np.rint(im * 255).astype(np.uint8)
+
+
+def f32(r):
+    return r["img"].astype(np.float32) / 255  # what M.grab returned
+
+
+def c1_of(r):
+    """The first-pass graded frame; plan() rebuilds it on demand (only golden-grass candidates), selftest passes it."""
+    if "c1" in r:
+        return r["c1"]
+    c = r["c"]
+    return G.cdl(f32(r), c["slope"], c["offset"], c["power"], c["sat"])
+
+
 def dry_pass(rows):
     """Golden grass only inside a burnt / golden daytime stretch: among the same story's day shots within DRY_WIN,
     >= DRY_SHARE (and >= 3) have golden ground (hue <= match.DRY_HUE). A shot there whose ground is DRY_GAP greener
@@ -196,7 +215,7 @@ def dry_pass(rows):
         greener = g["hue"] >= med + M.DRY_GAP
         paler = g["gold"] is not None and g["gold"][1] < DRY_PALE * ref[1]
         if greener or paler:
-            d = dry_safe(r["c1"], r["f1"], dict(src=g["grass"] or g["gold"], ref=ref, k=DRY_K))
+            d = dry_safe(c1_of(r), r["f1"], dict(src=g["grass"] or g["gold"], ref=ref, k=DRY_K))
             if d:
                 r["dry"] = dict(d, why="greener" if greener else "paler")
                 n += 1
@@ -221,11 +240,11 @@ def plan():
     pm, project, tl, rows = G.timeline()
     t_intro = intro_end(project.GetName(), tl.GetName()) * 24
     with ThreadPoolExecutor(6) as ex:
-        imgs = list(ex.map(M.grab, rows))
+        imgs = list(ex.map(grab8, rows))
     rows = [dict(r, img=im) for r, im in zip(rows, imgs) if im is not None]
     tags = tags_by_path()
     for r in rows:
-        r["st"] = mark_night(G.stats(r["img"]), tags.get(r["path"].lower()))
+        r["st"] = mark_night(G.stats(f32(r)), tags.get(r["path"].lower()))
     film = {"p50": float(np.clip(np.median([r["st"]["p50"] for r in rows if not r["st"]["lowkey"]]), 0.34, 0.46))}
     cuts, story = M.story_cuts(project.GetName(), tl.GetName(), rows), 0
     for r in rows:
@@ -235,10 +254,11 @@ def plan():
     out, n_ai, n_int = [], 0, 0
     for r in rows:
         ai, intro = is_ai(r["path"]), r["start"] < t_intro
-        c, f = safe(r["img"], r["st"], decide(r["st"], spaces[r["story"]], ai, INTRO_K if intro else 1.0))
+        img = f32(r)
+        c, f = safe(img, r["st"], decide(r["st"], spaces[r["story"]], ai, INTRO_K if intro else 1.0))
         r.update(c=c, f=f, ai=ai, intro=intro)
-        r["c1"] = G.cdl(r["img"], c["slope"], c["offset"], c["power"], c["sat"])
-        r["f1"], r["gd"] = G.stats(r["c1"]), M.ground(r["c1"])
+        c1 = G.cdl(img, c["slope"], c["offset"], c["power"], c["sat"])  # not kept: c1_of() rebuilds it
+        r["f1"], r["gd"] = G.stats(c1), M.ground(c1)
         r["ok"] = dry_ok(r, tags)
     n_dry = dry_pass(rows) if is_africa(project.GetName(), tl.GetName()) else 0
     for r in rows:

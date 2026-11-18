@@ -25,6 +25,7 @@ STOP=set("a an the of and or in on at to for with from by is are was be it its t
 ANIMALS=set("leopard lynx wolf wolves bear eagle vulture fox ibex markhor chamois goat goats tahr yak puma cougar deer "
             "sheep bharal".split())
 GOATS={"ibex","markhor","chamois","tahr","bharal"}  # the niche titles these "mountain goat"
+DISCLOSURE_ES="Una dramatización original de vida salvaje generada con IA; no son imágenes de un hecho documentado."
 
 
 def clock(s):
@@ -45,16 +46,17 @@ def film(v):
     return s,species,chapters
 
 
-def search(yt,q):
+def search(yt,q,lang="en"):
     """Most viewed 4–20 min videos of the last DAYS_BACK days -> ([{title,channel,views,days,tags}], quota used)."""
     CACHE.mkdir(parents=True,exist_ok=True)
-    cf=CACHE/(hashlib.sha256(q.lower().encode()).hexdigest()[:16]+".json")
+    key=q.lower() if lang=="en" else f"{q.lower()}|{lang}"  # en keeps the old cache names
+    cf=CACHE/(hashlib.sha256(key.encode()).hexdigest()[:16]+".json")
     if cf.exists() and time.time()-cf.stat().st_mtime<CACHE_DAYS*86400 and (cached:=json.loads(cf.read_text("utf-8"))):
         return cached,0  # an empty result is never reused: a bad query shouldn't block a week
     now=datetime.now(timezone.utc)
     after=(now-timedelta(days=DAYS_BACK)).strftime("%Y-%m-%dT%H:%M:%SZ")
     ids=[x["id"]["videoId"] for x in yt.search().list(part="id",q=q,type="video",order="viewCount",publishedAfter=after,
-         videoDuration="medium",relevanceLanguage="en",maxResults=25).execute().get("items",[])]
+         videoDuration="medium",relevanceLanguage=lang,maxResults=25).execute().get("items",[])]
     items=yt.videos().list(part="snippet,statistics",id=",".join(ids)).execute().get("items",[]) if ids else []
     out=[{"title":x["snippet"]["title"],"channel":x["snippet"]["channelTitle"],"views":int(x["statistics"].get("viewCount",0)),
           "days":max(1,(now-datetime.fromisoformat(x["snippet"]["publishedAt"].replace("Z","+00:00"))).days),
@@ -95,10 +97,12 @@ def research(video,queries=None,yt=None):
         cid=channel_of(v) or next((p.stem for p in sorted(TOKENS.glob("*.json"))),None)
         if not cid: raise Stop("No YouTube token: dvr_cowork youtube login --key Chann_N")
         yt=client(cid)
-    videos,units=[],0
+    videos,units,lang=[],0,s.get("lang","en")
     for q in queries:
-        found,u=search(yt,q); videos+=found; units+=u
-    return "\n".join([f"FILM: {s['title']} | archetype {s.get('archetype','?')}",f"PREMISE: {s['premise']}",
+        found,u=search(yt,q,lang); videos+=found; units+=u
+    spanish=["LANGUAGE: es - write every seo_draft.json text in neutral Latin-American Spanish (titles, hook, summary, "
+             f"tags, hashtags) and give all {len(chapters)} chapter names in Spanish"] if lang=="es" else []
+    return "\n".join(spanish+[f"FILM: {s['title']} | archetype {s.get('archetype','?')}",f"PREMISE: {s['premise']}",
                       f"PAYOFF (do not reveal): {s['payoff']}","CAST: "+", ".join(species),
                       f"CHAPTERS ({len(chapters)}): "+" / ".join(f"{clock(t)} {n}" for t,n in chapters),
                       f"QUERIES: {'; '.join(queries)} ({units} quota units; 0 = 7-day cache)","",trend_digest(videos)])
@@ -164,12 +168,16 @@ def assemble(video,d=None):
     d=d or read_json(prod(v)/"seo_draft.json")
     if len(d.get("titles",[]))!=3 or not d.get("hook") or not d.get("tags"): raise Stop("Draft needs 3 titles, hook, tags")
     titles=[full_title(t) for t in d["titles"]]
+    lang=s.get("lang","en")  # Spanish narrator -> Spanish metadata (user 2026-11-17); scene titles are English
+    if lang=="es" and not d.get("chapters"): raise Stop(f"Spanish film: give all {len(chapters)} chapter names in Spanish")
     names=d.get("chapters") or [n for _,n in chapters]
     if len(names)!=len(chapters): raise Stop(f"Draft chapters: give {len(chapters)} names in order, or omit them")
     hashtags=" ".join(h for h in d.get("hashtags",[])[:3] if re.fullmatch(r"#\w+",h))
+    heads=("Capítulos","Sobre esta película",DISCLOSURE_ES) if lang=="es" else \
+        ("Chapters","About this film",s["synthetic_disclosure"])
     desc="\n\n".join(x for x in [d["hook"],d.get("summary",""),
-                                 "Chapters\n"+"\n".join(f"{clock(t)} {n}" for (t,_),n in zip(chapters,names)),
-                                 "About this film\n"+s["synthetic_disclosure"],hashtags] if x)
+                                 heads[0]+"\n"+"\n".join(f"{clock(t)} {n}" for (t,_),n in zip(chapters,names)),
+                                 heads[1]+"\n"+heads[2],hashtags] if x)
     flags=["fewer than 3 chapters: YouTube shows none"] if len(chapters)<3 else []
     if "http" in desc: flags.append("description contains a URL: remove it")
     cast=" ".join(species)
@@ -180,7 +188,8 @@ def assemble(video,d=None):
     tags=tag_budget(d["tags"])
     if len(tags)<len(set(d["tags"])): flags.append(f"tags trimmed to {len(tags)} (500-char limit)")
     pick=int(d.get("pick",1))
-    write_json(prod(v)/"youtube_meta.json",{"title":titles[pick-1],"titles":titles,"description":desc[:5000],"tags":tags})
+    write_json(prod(v)/"youtube_meta.json",{"title":titles[pick-1],"titles":titles,"description":desc[:5000],"tags":tags,
+                                            "lang":lang})
     return "\n".join([f"youtube_meta.json written ({len(tags)} tags, {len(chapters)} chapters)"]
                      +[f"  {i}. {t}"+("  <- title" if i==pick else "") for i,t in enumerate(titles,1)]
                      +[f"  FLAG {x}" for x in flags])

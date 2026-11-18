@@ -57,11 +57,14 @@ def main() -> int:
         parser.error(f"not a directory: {folder}")
     files = sorted(folder.glob("*.md"))
     transcript = folder / "transcript.md"
-    screenplay = [p for p in files if p.name.endswith("_Screenplay_EN.md")]
-    timestamp = [p for p in files if p.name.endswith("_Timestamp_EN_VI.md")]
+    # narrator language from the file names (META lang: en | es); the plan stays _EN
+    code = "ES" if any(p.name.endswith("_Timestamp_ES_VI.md") for p in files) else "EN"
+    lang = {"EN": "English", "ES": "Spanish"}[code]
+    screenplay = [p for p in files if p.name.endswith(f"_Screenplay_{code}.md")]
+    timestamp = [p for p in files if p.name.endswith(f"_Timestamp_{code}_VI.md")]
     visual = [p for p in files if p.name.endswith("_Visual_Edit_Plan_EN.md")]
     if len(files) != 4 or not transcript.is_file() or any(len(x) != 1 for x in (screenplay, timestamp, visual)):
-        fail(errors, "expected exactly four .md files with screenplay, transcript.md, timestamp EN_VI and Visual_Edit_Plan EN")
+        fail(errors, f"expected exactly four .md files with screenplay {code}, transcript.md, timestamp {code}_VI and Visual_Edit_Plan EN")
     if errors:
         for error in errors:
             print("ERROR:", error, file=sys.stderr)
@@ -78,33 +81,33 @@ def main() -> int:
         warnings.append("no blank scene separators were found in transcript.md")
 
     raw = timestamp[0].read_text(encoding="utf-8")
-    if raw.count("## English") != 1 or raw.count("## Vietnamese") != 1:
-        fail(errors, "timestamp needs exactly one ## English and one ## Vietnamese")
+    if raw.count(f"## {lang}") != 1 or raw.count("## Vietnamese") != 1:
+        fail(errors, f"timestamp needs exactly one ## {lang} and one ## Vietnamese")
         en = vi = []
     else:
-        before, rest = raw.split("## English", 1)
+        before, rest = raw.split(f"## {lang}", 1)
         en_text, vi_text = rest.split("## Vietnamese", 1)
-        en = parse_section(en_text, "English", errors)
+        en = parse_section(en_text, lang, errors)
         vi = parse_section(vi_text, "Vietnamese", errors)
         if re.search(r"^\[", before, re.M):
-            fail(errors, "timestamp entries appear before ## English")
+            fail(errors, f"timestamp entries appear before ## {lang}")
     if len(voice) != len(en) or len(voice) != len(vi):
-        fail(errors, f"line count mismatch: transcript={len(voice)}, English={len(en)}, Vietnamese={len(vi)}")
+        fail(errors, f"line count mismatch: transcript={len(voice)}, {lang}={len(en)}, Vietnamese={len(vi)}")
     for i, (original, entry) in enumerate(zip(voice, en), 1):
         if original != entry[1]:
-            fail(errors, f"English line {i} differs from transcript")
+            fail(errors, f"{lang} line {i} differs from transcript")
             if len(errors) > 20:
                 break
     for i, (a, b) in enumerate(zip(en, vi), 1):
         if abs(a[0] - b[0]) > 0.01:
-            fail(errors, f"Vietnamese onset {i} differs from English")
+            fail(errors, f"Vietnamese onset {i} differs from {lang}")
         if not b[1].strip():
             fail(errors, f"Vietnamese translation {i} is empty")
     if en:
         if abs(en[0][0] - args.allow_first_onset) > 0.01:
             fail(errors, f"first onset {en[0][0]:.1f}s, expected {args.allow_first_onset:.1f}s")
         if any(en[i][0] >= en[i + 1][0] for i in range(len(en) - 1)):
-            fail(errors, "English onsets must be strictly increasing")
+            fail(errors, f"{lang} onsets must be strictly increasing")
         if en[-1][0] >= args.target_minutes * 60:
             fail(errors, "final onset is outside target runtime")
     for p, name in ((screenplay[0], "screenplay"), (visual[0], "visual plan")):
@@ -139,7 +142,7 @@ def main() -> int:
         print("ERROR:", error, file=sys.stderr)
     if errors:
         return 1
-    print(f"PASS: {len(voice)} transcript blocks = {len(en)} EN onsets = {len(vi)} VI onsets")
+    print(f"PASS: {len(voice)} transcript blocks = {len(en)} {code} onsets = {len(vi)} VI onsets")
     print(f"Voice words: {words}; voice time: {voiced / 60:.1f} min ({source}); target: {args.target_minutes:.1f} min")
     print(f"First onset: {en[0][0]:.1f}s; last onset: {en[-1][0]:.1f}s")
     return 0

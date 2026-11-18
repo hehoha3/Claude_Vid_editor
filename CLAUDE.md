@@ -14,7 +14,7 @@ film may run +-3 min: "20p" = 17-23, "1h" = 57-63, `vtypes.runtime_range`):
   prompts for intro + story 1, Case 1 / 2, place, color, done). Generated clips: the region `_check` (filed into the
   library, reusable) or `<video>\shots` (one-time clips of that film, named by shot_id, never filed). Full-AI: `shots\`.
 - **full-AI** (`a_`): every shot generated; `dvr_cowork ai <cmd>`; doc-edit `references/full-ai.md` (no color).
-- Folder `D:\Chann_N_<Name>\<f|fa|a>_<region>_DDMMYY_N` (e.g. `fa_africa_121126_1`); names without the prefix are older
+- Folder `D:\Chann_N_<Name>\<f|fa|a>_<en|es>_<region>_DDMMYY_N` (lang = narrator; e.g. `fa_en_africa_151126_1`, `a_es_frozen_151126_2`); names without prefix / lang are older
   films. Type = `dvr_cowork profile detect <video>` (prefix, else the descriptor / files); `profile context <video>
   --phase <step>` = that step's numbers + the one reference to read. Stories = `profile stories --minutes N` (1 story
   only up to 15 min, else 5-12 min each, Story 1 longest; intro 0:30 under 20 min, 1:30 from 20 min).
@@ -32,7 +32,7 @@ without `--apply`). DaVinci MCP: general ops. Skills load on demand.
 ## Rules
 1. One timeline per video, **`channN_vidK`** (K = the folder's `_K`), in `Chann_N/6. Timeline` of the day project
    **`vid_DDMMYY`**; missing -> a copy of that bin's template `channN_vidK` (none: empty + A1-A9 named). Backups `<timeline>_bak_*`, keep the newest 3; restore the user's current
-   timeline after scripts. Tracks: A1 footage types empty (older videos keep theirs) / full-AI each V1 shot's sound at
+   timeline after scripts. Tracks: A1 footage types empty (older videos keep theirs; 1-3 h films: AI clips' audio -12 dB in intro + story 1) / full-AI each V1 shot's sound at
    -12 dB (say the dB); A2 narrator only; A3/A4 ambience bed; A5 ambience 3 (extra bed / birds + music crossfades); A6
    natural; A7 music; A8 natural SFX, A9 designed SFX (footage types A9 at 0:00 = riser -> impact; full-AI A8 song crossfade). Bins: `7. Open/vidK` = that video's intro shots (footage types);
    all music / sound -> `4. Audio/*`.

@@ -1,7 +1,7 @@
 """/doc-edit fallback-species (user 2026-10-29): swap the FALLBACK V1 shots (scenery / other species) of a range for a
 clip of the slot's own species (or its family when the library has none), action and setting ignored. Item ranges
 unchanged; shots the user changed by hand (file or source-in differs from plan.json) are left alone; the last intro
-shot / first story-1 shot keep their black fades. Swapped items Teal, reused frames zoom 1.15, A1 stays empty (place.A1_UNTIL).
+shot / first story-1 shot keep their black fades. Swapped items Teal, reused frames zoom 1.15, A1 = AI audio only where place.a1_ok().
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=00:00-08:00]           # dry run
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/fallback_swap.py <video> [--range=...] --apply   # backup <timeline>_bak_fbspecies_<stamp>, swap
@@ -98,7 +98,7 @@ def main(apply):
         sc, c, sin, n, tier = best
         uses.setdefault(_norm(c["abs"]), []).append([a, sin, sin + s["dur"], None])
         uses[path] = [x for x in uses.get(path, []) if x[3] is not ti]
-        picks.append((ti, path, a, b, c, sin, n))
+        picks.append((ti, path, a, b, c, sin, n, s.get("open_ok")))
         print(f"{tc} l{s['line']} [{sp}] {Path(path).stem[:34]} -> {Path(c['abs']).stem[:44]}"
               f"{' (family)' if tier < 1 else ''} [{','.join(c['tags'].get('action') or [])}]{' reuse' if n else ''}")
     print(f"swaps {len(picks)}/{len(todo)}")
@@ -113,7 +113,7 @@ def main(apply):
     print(f"backup: {tl.GetName()}_bak_fbspecies_{stamp}")
     have = place.bin_index(root)
     done = fail = a1_n = 0
-    for ti, path, a, b, c, sin, n in picks:
+    for ti, path, a, b, c, sin, n, open_ok in picks:
         ra, rb = int(ti.GetStart()), int(ti.GetEnd())
         it = have.get(_norm(c["abs"]))
         if not it:
@@ -130,7 +130,7 @@ def main(apply):
         new.SetClipColor(COLOR)
         if n:
             new.SetProperty("ZoomX", 1.15) and new.SetProperty("ZoomY", 1.15)
-        if c["source"] == "ai" and a < place.A1_UNTIL:  # footage+AI A1 stays empty (2026-11-05)
+        if place.a1_ok({"source": c["source"], "open_ok": open_ok}, p):  # intro + story 1 of a 1-3 h film
             au = put(mp, tl, it, 2, ra, rb - ra, sin, fps)
             a1_n += bool(au and au.SetProperty("AudioVolume", place.A1_DB))
         done += 1

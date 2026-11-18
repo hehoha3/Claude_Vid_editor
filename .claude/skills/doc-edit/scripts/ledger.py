@@ -79,6 +79,15 @@ def load(ws):
     return json.loads(p.read_text("utf-8")) if p.exists() else {"workspace": ws, "videos": []}
 
 
+ONCE = "shots/"  # user 2026-11-16: <video>\shots clips are one-time (id shots/<name>, names repeat across films):
+# never in a ledger set, never banned by another video's plan.json (guard + ledger = library clips only)
+
+
+def lib_ids(slots, until=None):
+    """Clip ids of plan.json slots (start < until when given), <video>\\shots one-time clips left out."""
+    return {s["id"] for s in slots if s.get("id") and not s["id"].startswith(ONCE) and (until is None or s["start"] < until)}
+
+
 def banned(video, video_dir=None):
     """(clip ids, video names) banned for <video>: the RECENT newest other videos of its workspace."""
     ws = ws_of(video_dir or find_video(video))
@@ -95,7 +104,7 @@ def open15_of(ws, v):
     for key in (f"{v['video']}__{channel_of(ws)}", v["video"]):
         p = ROOT / ".work" / "doc_edit" / key / "plan.json"
         if p.exists():
-            return sorted({s["id"] for s in json.loads(p.read_text("utf-8"))["slots"] if s.get("id") and s["start"] < OPEN15})
+            return sorted(lib_ids(json.loads(p.read_text("utf-8"))["slots"], OPEN15))
     return v.get("clips", []) + v.get("open_clips", [])
 
 
@@ -151,7 +160,7 @@ def intro_week(video, video_dir=None, work=None, days=INTRO_DAYS):
                               not any(ws_of(h).lower() == ws.lower() for h in homes(name, GLOBS))):
             continue
         end = plan_intro(p)
-        ids |= {s["id"] for s in json.loads(p.read_text("utf-8"))["slots"] if s.get("id") and s["start"] < end}
+        ids |= lib_ids(json.loads(p.read_text("utf-8"))["slots"], end)
         names.add(name)
     return ids, sorted(names)
 
@@ -205,7 +214,7 @@ def active_ids(skip=None):
     for p in (ROOT / ".work" / "doc_edit").glob("*/plan.json"):
         name = split(p.parent.name)[0]
         if name.lower() != (skip or "").lower() and any(h.parent.name.lower() != DONE for h in homes(name, GLOBS)):
-            out |= {s.get("id") for s in json.loads(p.read_text("utf-8"))["slots"]} - {None}
+            out |= lib_ids(json.loads(p.read_text("utf-8"))["slots"])
     return out
 
 

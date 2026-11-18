@@ -57,6 +57,16 @@ class ProductionTests(unittest.TestCase):
             self.assertEqual(d["timestamp.md"].count("["),2*len(lines))
             self.assertTrue(all(6<=(s["end_f"]-s["start_f"])/24<=9 for s in p["slots"] if s["id"]!="HOOK"))
 
+    def test_spanish_narrator(self):
+        s=source();s["lang"]="es"
+        for sc in s["scenes"]:
+            for v in sc["voice"]: v["es"]=v.pop("en")
+        p=story.compile_story(s);d=story.documents(p)
+        self.assertIn("## Spanish",d["timestamp.md"]);self.assertNotIn("## English",d["timestamp.md"])
+        self.assertEqual([x for x in d["transcript.md"].splitlines() if x],[v["en"] for v in p["voice"]])
+        s["lang"]="fr"
+        with self.assertRaisesRegex(core.Stop,"lang must be en or es"): story.compile_story(s)
+
     def test_dense_narration_overflow_and_sparse_script(self):
         s=source();s["scenes"][2]["voice"][0]["en"]="word "*200
         with self.assertRaisesRegex(core.Stop,"exceeds picture window"): story.compile_story(s)
@@ -72,7 +82,7 @@ class ProductionTests(unittest.TestCase):
         s=core.read_json(core.prod(ch/f"vid_{today}_1")/"story.json");s["archetype"]="mother"
         core.write_json(core.prod(ch/f"vid_{today}_1")/"story.json",s)
         r=pipeline.next_video("Chann_4","himalaya",str(self.root)+"/")  # old region name = frozen, type prefix a_
-        self.assertTrue(r["next_video"].endswith(f"a_frozen_{today}_3"));self.assertEqual(r["next_archetype"],"throne")
+        self.assertTrue(r["next_video"].endswith(f"a_en_frozen_{today}_3"));self.assertEqual(r["next_archetype"],"throne")
         self.assertEqual(r["recent"][0]["cast"],["ibex","ibex"])
         with self.assertRaisesRegex(core.Stop,"Expected one"):pipeline.next_video("Chann_5","himalaya",str(self.root)+"/")
 
@@ -161,11 +171,11 @@ class ProductionTests(unittest.TestCase):
         head=(self.video/"lock-assets.md").read_text("utf-8")
         for part in ("1. CỐ ĐỊNH NHÂN VẬT","### A. ibex (M)","- leads the climb","**ABSOLUTE LOCK:** Notch on the RIGHT ear only.",
                      "2. COUNT LOCK","1. Fixture shelf","4. TERRAIN LOCK","5. ÁNH SÁNG"): self.assertIn(part,head)
-        import csv
-        rows=list(csv.DictReader((self.video/"missing-prompt.csv").open(encoding="utf-8-sig")))
-        self.assertEqual(len(rows),61);self.assertEqual(len(rows[0]),19)
-        self.assertEqual((rows[0]["shot_id"],rows[0]["dur_s"],rows[0]["kind"]),("c1v1_1","7.0","ai_generated"))  # 6 s slot + 1 s
-        self.assertEqual(rows[6]["dur_s"],"10.0");self.assertIn("save as shots/c1v1_1.mp4",rows[0]["reason"])
+        from dvr_cowork.prompt_rules import prompt_rows
+        rows=prompt_rows(self.video)
+        self.assertEqual(len(rows),61)
+        self.assertEqual((rows[0]["shot_id"],rows[0]["dur_s"]),("c1v1_1","7.0"))  # 6 s slot + 1 s
+        self.assertEqual(rows[6]["dur_s"],"10.0")
         self.assertIn("(ABSOLUTE: Notch on the RIGHT ear only.)",rows[0]["generation_prompt"])
         self.assertIn("7-second 16:9",rows[0]["generation_prompt"]);self.assertIn("5-7s: Moment",rows[0]["generation_prompt"])
         self.assertFalse((self.video/"missing-prompt.md").exists())
@@ -330,9 +340,9 @@ class ProductionTests(unittest.TestCase):
         self.prepare_shots()
         out=pipeline.missing_prompts(self.video,only=[3,7])
         self.assertEqual(out["prompts"],2)
-        text=(self.video/"missing-prompt.csv").read_text(encoding="utf-8")
-        self.assertIn("save as shots/c1v1_3.mp4",text);self.assertIn("save as shots/c1v1_7.mp4",text)
-        self.assertNotIn("save as shots/4.mp4",text)
+        text=(self.video/"missing-prompt.txt").read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("c1v1_3 |"));self.assertIn("\n\nc1v1_7 |",text)
+        self.assertNotIn("c1v1_4 |",text)
         with self.assertRaisesRegex(core.Stop,"No prompt with ID"):pipeline.missing_prompts(self.video,only=[999])
 
     def test_mixed_source_fps_conforms_to_exact_timeline_frames(self):
@@ -431,6 +441,14 @@ class ProductionTests(unittest.TestCase):
         self.assertTrue(meta["description"].endswith("not actual event footage.\n\n#Wildlife"))
         flags=[x for x in out.splitlines() if "FLAG" in x]
         self.assertEqual(len(flags),2,out)  # wolf + leopard are not in the ibex-only fixture cast; goat is fine
+        self.assertEqual(youtube.upload_body(meta)["snippet"]["defaultAudioLanguage"],"en")
+        st=core.read_json(core.prod(self.video)/"story.json");st["lang"]="es"
+        core.write_json(core.prod(self.video)/"story.json",st)
+        with self.assertRaisesRegex(core.Stop,"chapter names in Spanish"): seo.assemble(self.video,draft)
+        seo.assemble(self.video,dict(draft,chapters=[f"Capítulo {i}" for i in range(len(seo.film(self.video)[2]))]))
+        meta=core.read_json(core.prod(self.video)/"youtube_meta.json")
+        self.assertIn("Capítulos\n00:00 Capítulo 0",meta["description"]);self.assertIn("generada con IA",meta["description"])
+        self.assertEqual(youtube.upload_body(meta)["snippet"]["defaultLanguage"],"es")
         self.assertEqual(youtube.channel_of(self.root/"Chann_9_x"/"v"),None)
 
     def test_youtube_remove_forgets_key_and_unshared_token(self):

@@ -26,7 +26,8 @@ TOLERANCE_MIN = 3  # user 2026-11-12: "20p" = 17-23 min, "1h" = 57-63 min: the s
 # Story 1 the longest (x1.3, <= 15). Intro 30 s under 20 min, 1:30 from 20 min; the last line ends by target - 0:28.
 LONG_FROM_MIN, INTRO_SHORT_S, INTRO_LONG_S, END_S = 20, 30, 90, 28
 ONE_STORY_MAX, STORY_MIN, STORY_MAX, STORY_AIM, STORY1_GAIN, STORY1_MAX = 15.0, 5.0, 12.0, 8.5, 1.3, 15.0
-NAME = re.compile(r"^(?:(fa|f|a)_)?([a-z]+)_(\d{6})(?:_(\d+))?$", re.I)
+LANGS = ("en", "es")  # narrator language in the folder name (user 2026-11-17): a_es_frozen_151126_2; older films: none
+NAME = re.compile(r"^(?:(fa|f|a)_(?:(en|es)_)?)?([a-z]+)_(\d{6})(?:_(\d+))?$", re.I)
 
 
 def type_id(x) -> str | None:
@@ -46,17 +47,18 @@ def parse(name) -> dict | None:
     prefix) -> type None. Not a film name (vid_*, ocean_*) -> None."""
     base = Path(str(name)).name.split("__")[0]
     m = NAME.fullmatch(base)
-    if not m or not (region := region_id(m[2])):
+    if not m or not (region := region_id(m[3])):
         return None
-    return {"name": base, "type": TYPES[m[1].lower()] if m[1] else None, "region": region, "day": m[3],
-            "n": int(m[4] or 1), "legacy": not m[1]}
+    return {"name": base, "type": TYPES[m[1].lower()] if m[1] else None, "region": region, "day": m[4],
+            "n": int(m[5] or 1), "legacy": not m[1], "lang": m[2].lower() if m[2] else None}
 
 
-def folder(vtype, region, day, n) -> str:
-    t, r = type_id(vtype), region_id(region)
-    if not t or not r:
-        raise ValueError(f"type {vtype!r} must be one of {list(PREFIX)}, region {region!r} one of {REGIONS}")
-    return f"{PREFIX[t]}_{r}_{day}_{n}"
+def folder(vtype, region, day, n, lang) -> str:
+    t, r, lg = type_id(vtype), region_id(region), str(lang or "").lower()
+    if not t or not r or lg not in LANGS:
+        raise ValueError(f"type {vtype!r} must be one of {list(PREFIX)}, region {region!r} one of {REGIONS}, "
+                         f"lang {lang!r} one of {LANGS}")
+    return f"{PREFIX[t]}_{lg}_{r}_{day}_{n}"
 
 
 def ai_max(video) -> float:
@@ -123,7 +125,14 @@ def selftest():
     h = parse("himalaya_101126_3")
     assert h["region"] == "frozen" and h["legacy"] and h["type"] is None
     assert parse("congo_1") is None and parse("vid_051126_1") is None and parse("amazon_311026")["n"] == 1
-    assert folder("footage+AI", "himalaya", "121126", 1) == "fa_frozen_121126_1" and type_id("8p") is None
+    assert folder("footage+AI", "himalaya", "121126", 1, "es") == "fa_es_frozen_121126_1" and type_id("8p") is None
+    p = parse("a_es_frozen_151126_2__Chann_1")
+    assert (p["lang"], p["region"], p["n"], p["type"]) == ("es", "frozen", 2, "full_ai") and parse("fa_africa_161126_1")["lang"] is None
+    try:
+        folder("fa", "africa", "151126", 1, None)
+        raise AssertionError("lang is required")
+    except ValueError:
+        pass
     assert ai_max("fa_amazon_121126_1") == 0.40 and ai_max("f_africa_121126_1") == 0 and ai_max("africa_121126_2") == 0.40
     got = {m: [o["stories"] for o in stories(m)["options"]] for m in (8, 10, 12, 15, 20, 30, 60, 90)}
     assert got == {8: [1], 10: [1], 12: [1, 2], 15: [1, 2], 20: [2, 3], 30: [3, 4, 5], 60: [6, 7, 8], 90: [10, 11, 12]}, got

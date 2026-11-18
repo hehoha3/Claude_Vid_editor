@@ -11,7 +11,7 @@ SCENES, per scene:
   - dur | size | picture / observable action | A5 natural sound | why the viewer keeps watching | flags
                       dur in s or '*' (= rest of the scene span, once); flags: ! key shot, long (<= 12 s),
                       black, cb (callback: other frames of a used clip)
-  > EN || VI || hold weight || @shot+offset
+  > NARRATION || VI || hold weight || @shot+offset   (narration in META lang: en (default) | es)
                       weight = share of the scene's spare time after this line; @3+0.5 pins the onset
                       0.5 s after shot 3 starts (picture-locked line; unpinned lines float around pins)
 Onsets: planned from words at --wpm (+0.4 s) or conformed to measured 1.mp3..N.mp3 durations (--mp3 / --durations-json).
@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from dvr_cowork.vtypes import parse as parse_name, stories  # noqa: E402  story count by runtime (user 2026-11-12)
 
 TARGET = 3600.0
+LANGS = {"en": "English", "es": "Spanish"}  # narrator language (META lang:, user 2026-11-17)
 SHOT_MAX, LONG_MAX, SHOT_MIN = 8.0, 12.0, 0.8
 REST_LIST, REST_HOOK = 3.0, 6.0
 MIN_GAP, PIN_SLIP, HEADROOM = 0.2, 1.5, 0.10
@@ -171,6 +172,10 @@ def build(src_path, out, check=False):
     global TARGET
     meta, sec, scenes = parse(Path(src_path).read_text(encoding="utf-8"))
     TARGET = float(meta.get("target", 60)) * 60
+    lang = meta.get("lang", "en").strip().lower()
+    if lang not in LANGS:
+        sys.exit(f"META lang: {lang!r} - use en or es")
+    code, lang_name = lang.upper(), LANGS[lang]
     err, warn = [], []
     check = check or "--report" in sys.argv
     wpm = float(sys.argv[sys.argv.index("--wpm") + 1]) if "--wpm" in sys.argv else 150.0
@@ -284,15 +289,15 @@ def build(src_path, out, check=False):
     (out / "transcript.md").write_text(
         "\n\n".join("\n".join(l["en"] for l in sc["lines"]) for sc in scenes if sc["lines"]) + "\n", encoding="utf-8")
 
-    ts = [f"# {meta['title']} — Timestamp EN / VI", "",
+    ts = [f"# {meta['title']} — Timestamp {code} / VI", "",
           f"{status}. One onset per voice block (1.mp3 … {len(lines)}.mp3). "
           f"{sum(1 for l in lines if l['pin'])} onsets are locked to picture events; the others float inside their scene "
           f"and are re-timed by `build_four_files.py --mp3 <mp3 folder>` once the audio exists.", "",
-          "## English", ""]
+          f"## {lang_name}", ""]
     ts += [f"[{stamp(l['t'])}] {l['en']}" for l in lines]
     ts += ["", "## Vietnamese", ""]
     ts += [f"[{stamp(l['t'])}] {l['vi']}" for l in lines]
-    (out / f"{slug}_Timestamp_EN_VI.md").write_text("\n".join(ts) + "\n", encoding="utf-8")
+    (out / f"{slug}_Timestamp_{code}_VI.md").write_text("\n".join(ts) + "\n", encoding="utf-8")
 
     def shot_txt(s):
         return f"{s['id']} {stamp(s['t'])} {s['dur']:.1f} s {s['size']} — {s['act']}"
@@ -320,7 +325,7 @@ def build(src_path, out, check=False):
         sp += [f"*Narrator:* [{stamp(l['t'])}] {l['en']}" for l in sc["lines"]] + [""] if sc["lines"] else \
             ["*Narrator:* none — picture and natural sound only.", ""]
     sp += [fill(sec["SP_TAIL"])]
-    (out / f"{slug}_Screenplay_EN.md").write_text("\n".join(sp) + "\n", encoding="utf-8")
+    (out / f"{slug}_Screenplay_{code}.md").write_text("\n".join(sp) + "\n", encoding="utf-8")
 
     # intro: one row per second
     intro = [sc for sc in scenes if sc["id"].startswith("0.")]
@@ -439,6 +444,20 @@ def selftest():
             raise AssertionError("untranslated Vietnamese was not caught")
         except SystemExit as e:
             assert "untranslated" in str(e), e
+        es = SELFTEST.replace("target: 0.5", "target: 0.5\nlang: es").replace("The river is calm.", "El río está en calma.")
+        src.write_text(es, encoding="utf-8")
+        build(src, Path(d) / "es")  # the validator inside must accept the ES names
+        names = sorted(x.name for x in (Path(d) / "es").iterdir())
+        assert names == ["Test_Film_Screenplay_ES.md", "Test_Film_Timestamp_ES_VI.md",
+                         "Test_Film_Visual_Edit_Plan_EN.md", "transcript.md"], names
+        ts = (Path(d) / "es" / "Test_Film_Timestamp_ES_VI.md").read_text(encoding="utf-8")
+        assert "## Spanish" in ts and "## English" not in ts and "[00:00.6] El río está en calma." in ts, ts
+        src.write_text(es.replace("lang: es", "lang: fr"), encoding="utf-8")
+        try:
+            build(src, Path(d) / "fr", check=True)
+            raise AssertionError("lang: fr was not refused")
+        except SystemExit as e:
+            assert "use en or es" in str(e), e
     print("selftest ok")
 
 
