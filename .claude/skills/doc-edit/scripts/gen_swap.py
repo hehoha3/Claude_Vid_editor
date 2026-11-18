@@ -99,7 +99,8 @@ def main(video, apply):
         ra, rb = min(int(x[0].GetStart()) for x in inside), max(int(x[0].GetEnd()) for x in inside)
         clip_len = 2 * s["src_in"] + s["dur"]  # plan.py centred the slot in the clip
         n = min(rb - ra, int(clip_len * FPS + 1e-6))
-        tl.DeleteClips([x[0] for x in inside], False)
+        old_a1 = [x for x in tl.GetItemListInTrack("audio", 1) or [] if int(x.GetStart()) >= ra and int(x.GetEnd()) <= rb]
+        tl.DeleteClips([x[0] for x in inside] + old_a1, False)  # the old shot's A1 audio goes too; place --a1-only re-adds
         new = put(mp, tl, it, 1, ra, n, max(0.0, min(s["src_in"], clip_len - n / FPS)), FPS)
         if not new:
             fail.append(f"place {Path(s['path']).name} at {s['start']:.1f}s (empty now, backup has the old shot)"); continue

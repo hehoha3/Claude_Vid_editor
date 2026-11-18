@@ -39,7 +39,7 @@ is not uploaded) = steps 1-4. `--thumb <image>` (one video): `ledger.py done <vi
    No intro file -> `channN_vidK` as before.
 4. Upload (`push` only, `--upload`): `Done_<video>.mp4` -> the YouTube channel `.secrets/youtube/channels.json` maps
    the workspace's `Chann_N` to (`dvr_cowork youtube upload --apply`): title / description / tags from
-   `youtube_meta.json` (SEO below, run BEFORE `ledger.py done` when missing), English, Pets & Animals, not for kids,
+   `youtube_meta.json` (SEO below, run BEFORE `ledger.py done` when missing; written in the narrator's language: `## Spanish` in the timestamp file = Spanish SEO + audio language es, else English), Pets & Animals, not for kids,
    private. Thumbnail: `--thumb <image>` if given, else `<video folder>\thumb\done.jpg|.png`, else none ("no thumbnail:
    thumb\done.* missing"). `--publish-at` = "đăng vào 18 giờ" (PC time; a time already past -> no upload, ask again).
    Once per video (`.work/doc_edit/<video>/youtube.json`); a later `--thumb` sets only the thumbnail. Not mapped / not

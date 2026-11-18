@@ -150,7 +150,7 @@ bạn bổ sung rồi gõ lại đúng lệnh trên.
 Nếu có THIẾU thì sang Bước 4A.
 
 **Phim `footage+AI` (`fa_`):** Claude dừng lại và đưa **danh sách prompt** cho phần mở đầu + Story 1
-(file `missing-prompt.csv`). Sang Bước 4B.
+(file `missing-prompt.txt`). Sang Bước 4B.
 
 ---
 
@@ -170,8 +170,8 @@ Sau đó chuyển thẳng sang **Bước 5**.
 ### 4B. Phim `footage+AI` (`fa_`): 2 cách
 
 **Cách 1: bạn tự tạo clip AI (đẹp hơn, tốn thời gian hơn)**
-1. Mở `missing-prompt.csv`, lấy từng prompt, tạo clip bằng Veo/Kling.
-2. Lưu clip vào thư mục `<video>\shots\`. **Tên file = mã shot trong cột `shot_id`** (Claude không tự đoán,
+1. Mở `missing-prompt.txt`, lấy từng prompt, tạo clip bằng Veo/Kling.
+2. Lưu clip vào thư mục `<video>\shots\`. **Tên file = mã `shot_id` ở dòng đầu mỗi khối prompt** (Claude không tự đoán,
    đặt sai tên là clip không vào đúng chỗ).
 3. Đợi **copy xong hẳn** (không còn đang chép), rồi gõ:
 

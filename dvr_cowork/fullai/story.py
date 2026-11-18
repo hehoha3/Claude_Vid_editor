@@ -8,6 +8,7 @@ from .core import Stop, atomic_text, config, event, frames, object_hash, prod, r
 from ..prompt_rules import SPEED, TAIL, dur_s, issues, paced
 
 OUTPUTS = ("screenplay.md", "timestamp.md", "transcript.md", "visual_plan.md")
+LANGS = {"en": "English", "es": "Spanish"}  # narrator language, story.json "lang" (user 2026-11-17)
 PHASES = {"hook", "setup", "story", "ending"}
 ROLES = {"threat", "vulnerability", "pursuit", "obstacle", "unanswered", "none"}
 PAUSE_S = 4.2  # user 2026-11-09: max narrator pause (between / after blocks) of an 8-15 min film; up to 6 with pause_reason
@@ -76,6 +77,9 @@ def compile_story(source, durations=None, profile=None):
     wpm = float(s.get("wpm", 155))  # measured 2026-11-05: Chann_3 narrator 157 wpm (140 left 3-5 s gaps)
     if not 120 <= wpm <= 180:
         raise Stop("wpm must be 120–180; default 155, calibrate to your actual voice.")
+    lang = s.get("lang", "en")
+    if lang not in LANGS:
+        raise Stop(f"lang must be en or es, not {lang!r}")
     cursor, ideal_time, prompt_id, voice_id, slots, voice, scenes = 0, 0.0, 0, 0, [], [], []
     timing = []  # collect every scene's timing problem so one conform run reports them all
     words = []  # likewise every calm / blue-light word: one build lists them all (2026-11-04: one fix round, not N)
@@ -168,9 +172,11 @@ def compile_story(source, durations=None, profile=None):
             raise Stop("The final scene must be ending.")
         lines = []
         for block in sc["voice"]:
-            en, vi = str(block.get("en", "")).strip(), str(block.get("vi", "")).strip()
+            # ponytail: plan.json keeps the narration under "en" whatever the language (A2 receipt check, tests read it)
+            en, vi = str(block.get(lang, "")).strip(), str(block.get("vi", "")).strip()
             if not en or "\n" in en or not vi or "\n" in vi or vi == en or vi.isascii():
-                raise Stop(f"{sc['id']}: each voice block needs one English paragraph and full Vietnamese translation.")
+                raise Stop(f"{sc['id']}: each voice block needs one {LANGS[lang]} paragraph (key {lang!r}) "
+                           "and full Vietnamese translation.")
             voice_id += 1
             duration = float(durations[voice_id-1]) if durations is not None and voice_id <= len(durations) else len(en.split())*60/wpm
             if not math.isfinite(duration) or duration <= 0:
@@ -373,7 +379,7 @@ def documents(plan):
         sp += [f"## {'Story %d · ' % sc.get('story', 1) if many else ''}{sc['id']} · {tc(sc['start_f'])}–{tc(sc['end_f'])}"
                f" — {sc['title']}",
                f"Change: {sc['change']}", "\n\n".join(v["en"] for v in vv)]
-    ts=[base,"## English\n"]+[f"[{tc(v['start_f'])}] {v['en']}" for v in plan["voice"]]
+    ts=[base,f"## {LANGS[s.get('lang', 'en')]}\n"]+[f"[{tc(v['start_f'])}] {v['en']}" for v in plan["voice"]]
     ts += ["\n## Vietnamese\n"]+[f"[{tc(v['start_f'])}] {v['vi']}" for v in plan["voice"]]
     vp += [f"\nVoice-file occupancy: {plan['voice_occupancy']:.1%}. This measures scheduled audio duration, not detected speech. "
            "Listen to generated files for internal silence. Prompt metadata predicts hook potential; actual images require QC."]

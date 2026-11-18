@@ -28,7 +28,7 @@ clips already in those three bins (media pool only, timeline untouched); 4. Audi
 V1 frame-exact (WEAK yellow) + A3-A9 (A1 stays empty, user 2026-11-05) (crossfades, fades, starting Clip Volume), markers: red
 THIẾU (note = shot needed), yellow WEAK, blue GFX. A2 never touched. V1/A3-A9 not empty -> it stops: say what is
 there and ask before `--replace` (clears those tracks after the backup; destructive, CLAUDE.md rule 2).
-`--video-only` = V1 + A1 + markers. `--a1-only` = A1 of AI clips only (A1 must be empty, no backup).
+`--video-only` = V1 + A1 + markers. `--a1-only` = A1 of AI clips only, where A1 is free (intro + story 1 of a 1-3 h film, `place.a1_ok`; no backup).
 `--fill` = keeps every item on the timeline, places only plan clips whose V1 range is still empty (+ their A1),
 removes only those slots' markers; audio untouched; backup first. "V1 gaps of 1-3 frames" must be 0.
 

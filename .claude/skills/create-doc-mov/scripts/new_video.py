@@ -1,11 +1,11 @@
-"""Name and create the folders of new films: <type>_<region>_DDMMYY_<n> (user 2026-11-12: type prefix f_ footage,
-fa_ footage+AI, a_ full-AI; dvr_cowork.vtypes).
+"""Name and create the folders of new films: <type>_<lang>_<region>_DDMMYY_<n> (user 2026-11-12: type prefix f_
+footage, fa_ footage+AI, a_ full-AI; user 2026-11-17: narrator language en | es; dvr_cowork.vtypes).
 
-usage: python new_video.py CHANN:TYPE:REGION [CHANN:TYPE:REGION ...] [--date DDMMYY] [--apply]
+usage: python new_video.py CHANN:TYPE:LANG:REGION [CHANN:TYPE:LANG:REGION ...] [--date DDMMYY] [--apply]
        python new_video.py --selftest
 
-  1:fa:africa 2:f:africa -> D:\\Chann_1_*\\fa_africa_051126_1\\audios + D:\\Chann_2_*\\f_africa_051126_1\\audios
-  TYPE f | fa | a (or footage | footage+AI | full-AI), REGION amazon | africa | frozen. A full-AI film continues with
+  1:fa:en:africa 2:f:es:africa -> D:\\Chann_1_*\\fa_en_africa_051126_1\\audios + D:\\Chann_2_*\\f_es_africa_051126_1\\audios
+  TYPE f | fa | a (or footage | footage+AI | full-AI), LANG en | es, REGION amazon | africa | frozen. A full-AI film continues with
   `dvr_cowork ai init` (it pins the profile). fa_ / a_ also get <video>\\shots (user 2026-11-12: one-time generated
   clips of that film, named by shot_id).
 Every film is in the day project vid_DDMMYY. Each channel numbers its own films (user 2026-11-09): n = 1 + the
@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 from dvr_cowork.videokey import SEP, channel_of, day_index, homes  # noqa: E402
-from dvr_cowork.vtypes import folder, region_id, type_id  # noqa: E402
+from dvr_cowork.vtypes import LANGS, folder, region_id, type_id  # noqa: E402
 
 D = Path("D:/")
 WORK = ROOT / ".work" / "doc_edit"
@@ -35,17 +35,17 @@ def plan(jobs, day, d_root, work):
     region, or on a twin of a film in another channel that still uses the plain work key."""
     chann, seen = [], set()
     for j in jobs:
-        n, vt, rg = (j.split(":") + ["", ""])[:3]
+        n, vt, lg, rg = (j.split(":") + ["", "", ""])[:4]
         hits = sorted(d_root.glob(f"Chann_{n}_*"))
-        vt, rg = type_id(vt), region_id(rg)
-        if len(hits) != 1 or not vt or not rg:
-            sys.exit(f"STOP {j}: channel folders {[h.name for h in hits]}; want CHANN:TYPE:REGION, TYPE f / fa / a, "
-                     "REGION amazon / africa / frozen")
+        vt, rg, lg = type_id(vt), region_id(rg), lg.lower()
+        if len(hits) != 1 or not vt or not rg or lg not in LANGS:
+            sys.exit(f"STOP {j}: channel folders {[h.name for h in hits]}; want CHANN:TYPE:LANG:REGION, TYPE f / fa / a, "
+                     "LANG en / es, REGION amazon / africa / frozen")
         if n in seen:
             sys.exit(f"STOP {j}: Chann_{n} twice in one call (one film per channel per day project)")
         seen.add(n)
-        chann.append((hits[0], vt, rg))
-    films = [(folder(vt, rg, day, day_index(day, c, work)), c) for c, vt, rg in chann]
+        chann.append((hits[0], vt, lg, rg))
+    films = [(folder(vt, rg, day, day_index(day, c, work), lg), c) for c, vt, lg, rg in chann]
     out = []
     for video, c in films:
         there = {channel_of(h) for h in homes(video, [str(d_root / "Chann_*")])} - {channel_of(c)}
@@ -83,27 +83,27 @@ def selftest():
             (t / p).mkdir(parents=True)
         w = t / "work"
         # each channel numbers its own day: Chann_1 used 1 and 4, the homeless plain key africa_301026_2 counts for all
-        assert [v for v, _, _ in plan(["1:fa:amazon", "2:f:africa", "3:a:himalaya"], "301026", t, w)] == \
-            ["fa_amazon_301026_5", "f_africa_301026_3", "a_frozen_301026_3"]
-        (w / "fa_africa_301026_6__Chann_2").mkdir()  # a key of Chann_2 counts for Chann_2 only
-        assert [v for v, _, _ in plan(["2:fa:africa", "3:footage:amazon"], "301026", t, w)] == \
-            ["fa_africa_301026_7", "f_amazon_301026_3"]
-        p = plan(["1:fa:africa", "2:fa:africa"], "311026", t, w)  # same name, both keyed by channel
-        assert [(v, k) for v, _, k in p] == [("fa_africa_311026_1", "fa_africa_311026_1__Chann_1"),
-                                             ("fa_africa_311026_1", "fa_africa_311026_1__Chann_2")]
-        p = plan(["1:fa:amazon", "2:fa:africa", "3:fa:africa"], "311026", t, w)  # keys per shared name
-        assert [(v, k) for v, _, k in p] == [("fa_amazon_311026_1", "fa_amazon_311026_1"),
-                                             ("fa_africa_311026_1", "fa_africa_311026_1__Chann_2"),
-                                             ("fa_africa_311026_1", "fa_africa_311026_1__Chann_3")]
-        (t / "Chann_1_x" / "fa_africa_311026_1").mkdir()  # Chann_1's first film today (user's example)
-        (w / "fa_africa_311026_1__Chann_1").mkdir()
-        assert [(v, k) for v, _, k in plan(["3:a:frozen"], "311026", t, w)] == [("a_frozen_311026_1", "a_frozen_311026_1")]
-        assert [v for v, _, _ in plan(["1:fa:africa"], "311026", t, w)] == ["fa_africa_311026_2"]
-        assert [k for _, _, k in plan(["2:fa:africa"], "311026", t, w)] == ["fa_africa_311026_1__Chann_2"]  # keyed twin
-        (t / "Chann_1_x" / "fa_amazon_311026_1").mkdir()
-        (w / "fa_amazon_311026_1").mkdir()  # Chann_1's film with the plain key: a twin in Chann_2 must stop
-        assert [v for v, _, _ in plan(["1:f:frozen"], "311026", t, w)] == ["f_frozen_311026_2"]  # Z:\AI Document
-        for jobs in (["2:fa:amazon"], ["1:fa:africa", "1:fa:amazon"], ["1:africa"], ["1:x:africa"]):
+        assert [v for v, _, _ in plan(["1:fa:en:amazon", "2:f:en:africa", "3:a:en:himalaya"], "301026", t, w)] == \
+            ["fa_en_amazon_301026_5", "f_en_africa_301026_3", "a_en_frozen_301026_3"]
+        (w / "fa_en_africa_301026_6__Chann_2").mkdir()  # a key of Chann_2 counts for Chann_2 only
+        assert [v for v, _, _ in plan(["2:fa:en:africa", "3:footage:en:amazon"], "301026", t, w)] == \
+            ["fa_en_africa_301026_7", "f_en_amazon_301026_3"]
+        p = plan(["1:fa:en:africa", "2:fa:en:africa"], "311026", t, w)  # same name, both keyed by channel
+        assert [(v, k) for v, _, k in p] == [("fa_en_africa_311026_1", "fa_en_africa_311026_1__Chann_1"),
+                                             ("fa_en_africa_311026_1", "fa_en_africa_311026_1__Chann_2")]
+        p = plan(["1:fa:en:amazon", "2:fa:en:africa", "3:fa:en:africa"], "311026", t, w)  # keys per shared name
+        assert [(v, k) for v, _, k in p] == [("fa_en_amazon_311026_1", "fa_en_amazon_311026_1"),
+                                             ("fa_en_africa_311026_1", "fa_en_africa_311026_1__Chann_2"),
+                                             ("fa_en_africa_311026_1", "fa_en_africa_311026_1__Chann_3")]
+        (t / "Chann_1_x" / "fa_en_africa_311026_1").mkdir()  # Chann_1's first film today (user's example)
+        (w / "fa_en_africa_311026_1__Chann_1").mkdir()
+        assert [(v, k) for v, _, k in plan(["3:a:en:frozen"], "311026", t, w)] == [("a_en_frozen_311026_1", "a_en_frozen_311026_1")]
+        assert [v for v, _, _ in plan(["1:fa:en:africa"], "311026", t, w)] == ["fa_en_africa_311026_2"]
+        assert [k for _, _, k in plan(["2:fa:en:africa"], "311026", t, w)] == ["fa_en_africa_311026_1__Chann_2"]  # keyed twin
+        (t / "Chann_1_x" / "fa_en_amazon_311026_1").mkdir()
+        (w / "fa_en_amazon_311026_1").mkdir()  # Chann_1's film with the plain key: a twin in Chann_2 must stop
+        assert [v for v, _, _ in plan(["1:f:en:frozen"], "311026", t, w)] == ["f_en_frozen_311026_2"]  # Z:\AI Document
+        for jobs in (["2:fa:en:amazon"], ["1:fa:en:africa", "1:fa:en:amazon"], ["1:africa"], ["1:x:en:africa"]):
             try:
                 plan(jobs, "311026", t, w)
                 raise AssertionError(f"{jobs} must stop")

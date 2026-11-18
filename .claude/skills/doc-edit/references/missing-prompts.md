@@ -6,10 +6,13 @@ placed here. **Footage+AI (user 2026-11-05): prompts only for the THIẾU slots 
 and there are **no WEAK prompts** (an intro WEAK pick is THIẾU in plan.py and gets its prompt as THIẾU).
 In a new-video run (`/doc-edit <audios-folder>`) brief.md (the screenplay) is already in context: use it, never
 re-read it; and the reply is SKILL.md's combined one (its part 4 = the Reply below).
-Output (user 2026-11-05): **`<video>/missing-prompt.csv`**, the 19-column missing-scenes schema
-(`shot_id,cluster,tc_in,tc_out,dur_s,kind,animal,action,environment,time_of_day,shot_size,camera_angle,direction,
-position,keep_whole,mo_ta,search_keywords,generation_prompt,reason`; UTF-8 BOM, opens in Excel), one row per prompt.
-Full-AI films write the same CSV plus `lock-assets.md` (`dvr_cowork ai prompts`, `references/full-ai.md`); footage+AI prompts carry no
+Output (user 2026-11-17, no CSV any more): **`<video>/missing-prompt.txt`**, one block per prompt, blocks split by a
+blank line; each block = a label line `c3v6_9 | 01:12.0 -> 01:15.5 | 4.5 s` (shot_id = file name to save, the
+slot, clip length) + the prompt as ONE paragraph, no line break (the user pastes it as is; it already carries the
+essentials: length, camera / shot size, place, light, the animal's action + direction, the shared TAIL). Nothing
+else goes in the file (group, need, reason -> the reply). Written by `prompt_rules.txt_text`, read back with
+`prompt_rules.prompt_rows` (also reads the `missing-prompt.csv` of videos prompted 2026-11-05..16).
+Full-AI films write the same file plus `lock-assets.md` (`dvr_cowork ai prompts`, `references/full-ai.md`); footage+AI prompts carry no
 locks.
 
 ## Rules shared by both video types (`dvr_cowork/prompt_rules.py`, gated by `--check` and `dvr_cowork ai build`)
@@ -85,7 +88,7 @@ locks.
      eye level, never body-mounted) · side-on 200–400 mm speed-matched tracking · elevated oblique aerial / top-down
      for route and formation · low ground-level profile with grass parallax · over-shoulder from behind a stalker ·
      wide static the animal crosses and exits · a motivated whip-pan reacquisition. Name the shot size in the camera
-     field (wide / medium / close-up...): it fills the CSV `shot_size`. No drone flying through branches, no lens so
+     field (wide / medium / close-up...): it fills the `shot_size` field. No drone flying through branches, no lens so
      close the animal would be disturbed.
    - **Chase camera DNA** (adjust to the story): ~40% elevated extreme-wide / high-oblique distant, ~25% high-angle
      telephoto with pan or controlled zoom, ~20% horizontal medium-long side tracking, ~15% rear / three-quarter
@@ -120,11 +123,9 @@ locks.
 4. `missing.py <video> --check`: QC gates (role/vector valid and stated, no contradicting direction, no direction on
    a still action, no reversal/orbit/slow motion, biome words, biology, species named, contact / stare / pose words,
    beats per `dur_s`, pace, near-duplicates, budget) + a preview of roles per group. Fix every error in prompts.txt, re-run.
-5. `missing.py <key> --write` (re-runs the gates, refuses on errors) -> `<video>/missing-prompt.csv`: THIẾU rows,
-   then extras; `shot_id` `c3v6_9` = row 9 of Chann_3's video _6 (= the clip's file name, user 2026-11-10; CSVs
-   before keep `G2-S014`); a re-write that would move an already generated ID to another slot stops. `cluster` = group, `tc_in`/`tc_out` =
-   the slot, `dur_s`, `kind=ai_generated`, `mo_ta` = the slot's need (Vietnamese), `reason` = THIẾU (library empty,
-   or an intro WEAK pick) and what the library refused. stdout gives the save folder per group (= species name for tag-source): put them in the
+5. `missing.py <key> --write` (re-runs the gates, refuses on errors) -> `<video>/missing-prompt.txt`: THIẾU blocks,
+   then extras; `shot_id` `c3v6_9` = block 9 of Chann_3's video _6 (= the clip's file name, user 2026-11-10; files
+   before keep `G2-S014`); a re-write that would move an already generated ID to another slot stops. stdout gives the save folder per group (= species name for tag-source): put them in the
    reply, never in the file. Videos planned before 2026-11-05 keep their `missing_prompts.txt`.
 
 Reply: path, prompt count, per character roles (e.g. "báo: 3 predator_burst, 1 reaction"), skipped coverage and

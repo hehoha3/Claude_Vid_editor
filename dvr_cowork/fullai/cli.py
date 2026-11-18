@@ -31,7 +31,7 @@ def parser():
     q.add_argument("--wind");q.add_argument("--beds",help="JSON {scene id: licensed bed file}; default .production/beds.json")
     q.add_argument("--birds",help="JSON {prompt id: licensed bird file}; default .production/birds.json")
     q.add_argument("--replace",action="store_true");q.add_argument("--apply",action="store_true")
-    q=sub.add_parser("next-video");q.add_argument("channel");q.add_argument("--region",default="frozen")
+    q=sub.add_parser("next-video");q.add_argument("channel");q.add_argument("--region",default="frozen");q.add_argument("--lang",required=True,choices=("en","es"))
     return p
 
 
@@ -41,7 +41,7 @@ def main(argv=None):
         from . import pipeline,story
         cmd=args.command
         if cmd=="init": result=pipeline.initialize(args.video,args.minutes,args.title,args.region,args.type)
-        elif cmd=="next-video": result=pipeline.next_video(args.channel,args.region)
+        elif cmd=="next-video": result=pipeline.next_video(args.channel,args.region,lang=args.lang)
         elif cmd=="build":
             with pipeline.lock(prod(args.video)/"files.lock"):
                 plan=story.build(args.video)

@@ -19,7 +19,7 @@ black_fades() checks the 4 V1 black fades (intro end out + story 1 in too) and r
 Multi-channel project: plan.json's video_dir D:/Chann_N_*/... -> bins and timeline channN_vidK inside bin Chann_N (resolve_ops).
 Audio rules: A3/A4 entry = bed change, the bed alternates A3/A4 with BED_OVERLAP crossfades until the next change;
 A5 / A7 run from their slot until the next entry on that track, 'off', or the timeline end (looped by
-re-placing the file); A1 = own audio of every AI clip on V1 starting before A1_UNTIL (08:00) at A1_DB (--a1-only adds just that, nothing else touched); A6 = its slot only; A8 = natural SFX, A9 = designed SFX (riser / impact / whoosh...), one hit at the slot start, busy -> dropped.
+re-placing the file); A1 = own audio of every AI clip in the intro + story 1 of a 1-3 h film (a1_ok()) at A1_DB (--a1-only adds just that where A1 is free, nothing else touched); A6 = its slot only; A8 = natural SFX, A9 = designed SFX (riser / impact / whoosh...), one hit at the slot start, busy -> dropped.
 A5 (Ambience 3) also carries the music crossfades (user 2026-11-09): where A7 changes song, the old song goes on for
 MUSIC_XF s on A5 (at A7's level, fading out) under the new one's fade-in; A5 busy there -> a plain A7 fade.
 """
@@ -48,7 +48,13 @@ def level(tr, start, body):
 BED_OVERLAP = 4.0
 SFX_TAIL = 2.0  # s an A8/A9 hit may run past the end of its slot
 A1_DB = -12  # AI clips bring their own audio to A1, this much below the clip level (user rule 2026-10-09)
-A1_UNTIL = 0.0  # s: footage+AI A1 stays empty (user 2026-11-05; was 08:00). Items already on A1 are never removed
+A1_LONG_S = 57 * 60  # films of 1-3 h ("1h" = 57-63 min, vtypes.runtime_range); shorter films keep A1 empty (2026-11-05)
+
+
+def a1_ok(s, plan):
+    """User 2026-11-17: an AI clip's own audio goes on A1 in the intro + story 1 (plan.py open_ok) of a film >= 57 min.
+    Items already on A1 are never removed."""
+    return s.get("source") == "ai" and bool(s.get("open_ok")) and plan.get("end", 0) >= A1_LONG_S
 FADE = {3: 4.0, 4: 4.0, 5: 2.0, 6: 0.5, 7: 3.0, 8: 0.0, 9: 0.0}
 EDGE_IN, EDGE_OUT = 1.0, 3.0  # s: the video opens from black / ends to black on every track but A2 (user 2026-10-26)
 BIRD_ON, BIRD_OFF = 30.0, 30.0  # s: a birds bed = one bird file this long, then the non-bird bed, next time another bird (user 2026-10-27)
@@ -431,10 +437,12 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         vids = [s for s in vids if free(v1_used, f(s["start"]), fe(s)) and s["start"] < until]
         full = {}
         print(f"fill: {len(vids)} empty V1 slots get a clip; existing items untouched")
+    if a1_only:  # additive: an AI clip's audio only where A1 is still free
+        full, vids = {}, [s for s in vids if a1_ok(s, plan)]
+        if not vids:
+            raise SystemExit("no AI clips for A1 in plan (intro + story 1 of a 1-3 h film only)")
     if full and not replace:
         raise SystemExit(f"tracks not empty {full}; re-run with --replace to clear them (backup is made first)")
-    if a1_only and not [s for s in slots if s["source"] == "ai" and s["start"] < A1_UNTIL and s["status"] in ("OK", "WEAK", "FALLBACK")]:
-        raise SystemExit("no AI clips in plan")
     if dry:
         print("dry-run: nothing changed")
         return
@@ -517,7 +525,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
     dev = v1 = a1 = 0
     for s in vids:
         a, b = f(s["start"]), fe(s)
-        if s["source"] == "ai" and s["start"] < A1_UNTIL and free(a1_used, a, b):  # own audio on A1 (< 08:00), lowered
+        if a1_ok(s, plan) and free(a1_used, a, b):  # own audio on A1 (intro + story 1, 1-3 h film), lowered
             n0 = len(failed)
             au = put(s["path"], 2, 1, a, b - a, s["src_in"])
             if au:
@@ -583,7 +591,7 @@ def main(video, replace=False, dry=False, video_only=False, a1_only=False, audio
         print(f'back on timeline "{orig.GetName()}"')
     v = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda t: t.GetStart())
     small = sum(1 for x, y in zip(v, v[1:]) if 0 < int(y.GetStart()) - int(x.GetEnd()) <= 3)
-    print(f"V1 gaps of 1-3 frames: {small}; A1 audio of AI clips: {a1} at {A1_DB} dB (before {A1_UNTIL // 60:.0f}:00 only)")
+    print(f"V1 gaps of 1-3 frames: {small}; A1 audio of AI clips: {a1} at {A1_DB} dB (intro + story 1 of a 1-3 h film only)")
     print(f"V1 placed {v1}/{len(vids)}, max start dev {dev}f; audio pieces {len(events) - (len(failed) - (len(vids) - v1))}"
           f"/{len(events)}; volume not set on {vol_fail}; failed: {failed[:20]}")
     if fill:  # what is still empty on V1 after this fill (the user's next decision), as mm:ss
@@ -642,6 +650,8 @@ def selftest():
     assert [e for e in ce if e[0] == 9] == [[9, 0, 5.0, "imp", 0.84, (0.08, 0.5)]], ce
     assert min(e[1] for e in ce if e[0] == 7) == 1.0
     assert free([(0, 10), (20, 30)], 10, 20) and not free([(0, 10)], 9, 12) and free([], 0, 5)  # --fill gaps
+    ai, lp, sp = {"source": "ai", "open_ok": True}, {"end": 3600}, {"end": 1200}  # A1 (user 2026-11-17)
+    assert a1_ok(ai, lp) and not a1_ok(ai, sp) and not a1_ok(dict(ai, open_ok=False), lp) and not a1_ok(dict(ai, source="real"), lp)
     assert kind_of("x", ["run", "hunt"]) == "attack" and kind_of("x", ["run"]) == "run" and kind_of("x", ["walk"]) == "other"
     assert kind_of(r"Z:\AI\Chạy\lion\a.mp4", []) == "run" and kind_of(r"D:\lion_hunts_zebra.mp4", []) == "attack"
     assert kind_of(r"Z:\savannah\brunei_grass.mov", []) == "other" and kind_of(r"D:\lion_runs.mp4", []) == "run"

@@ -7,15 +7,15 @@ from pathlib import Path
 from .core import (Stop, atomic_text, digest, event, frames, lock, numbered, object_hash,
                    probe, prod, read_json, run, stamp, unchanged, video_path, write_json, day_project)
 from .story import bible, build, load_plan, pinned_profile, prompt_text, region_locks
-from ..prompt_rules import csv_text, dur_s, shot_id, shot_size
+from ..prompt_rules import PROMPT_FILES, txt_text, dur_s, shot_id, shot_size
 from ..vtypes import shot_media
 
 
 ROTATION=("migration","lost","predator","mother","throne")
 
 
-def next_video(key, region="frozen", base="D:/"):
-    """One call for /create-doc-mov Chann_N: channel dir, next a_<region>_DDMMYY_N (user 2026-11-12: type prefix), recent
+def next_video(key, region="frozen", base="D:/", lang="en"):
+    """One call for /create-doc-mov Chann_N: channel dir, next a_<lang>_<region>_DDMMYY_N (user 2026-11-12 type prefix, 2026-11-17 en|es), recent
     archetypes/casts. Skips _pushed."""
     import re
     from datetime import datetime
@@ -25,7 +25,7 @@ def next_video(key, region="frozen", base="D:/"):
     if len(roots)!=1: raise Stop(f"Expected one {base}Chann_{m[1]}_* folder, found {[str(p) for p in roots]}")
     root=roots[0]; today=datetime.now().strftime("%d%m%y")
     from ..vtypes import folder
-    name=lambda n: folder("full_ai",region,today,n)
+    name=lambda n: folder("full_ai",region,today,n,lang)
     folders=[p for d in (root,root/"_done") if d.is_dir() for p in d.iterdir() if p.is_dir() and p.name.lower()!="_pushed"]
     # each channel numbers its own day (user 2026-11-09), as create-doc-mov new_video.py: Chann_3's first film is _1
     from ..videokey import day_index
@@ -142,7 +142,8 @@ def missing_prompts(video, reissue=False, only=None, renumber=False):
         unknown=sorted(set(only)-{r["prompt_id"] for r in rows})
         if unknown: raise Stop(f"No prompt with ID {unknown}")
         rows=[r for r in rows if r["prompt_id"] in set(only)]
-    # Two files for the user (2026-11-05): missing-prompt.csv (19-column schema, shot_id = the file number to save
+    # Two files for the user (2026-11-05): missing-prompt.txt (.txt since 2026-11-17: one block per prompt: label
+    # line shot_id | slot | dur_s + one-paragraph prompt; shot_id = the file number to save
     # as shots/<id>.mp4) + lock-assets.md (character / environment / light locks for the generator project).
     fps,src=plan["fps"],plan["source"]
     by={s["id"]:s for s in plan["slots"]}; names={c["id"]:c["species"] for c in src["characters"]}
@@ -160,11 +161,11 @@ def missing_prompts(video, reissue=False, only=None, renumber=False):
                       "generation_prompt":r["prompt"],
                       "reason":f"save as shots/{sid}.mp4"+(f"; hook candidate ({r['hook_role']})"
                                                                       if r.get("hook_role","none")!="none" else "")})
-    atomic_text(v/"missing-prompt.csv",csv_text(table))
+    atomic_text(v/PROMPT_FILES[0],txt_text(table))
     atomic_text(v/"lock-assets.md",bible(src))
     if only: event(v,"WAITING_FOR_REDO",redo=sorted(only))
     else: event(v,"WAITING_FOR_SHOTS",prompt_count=len(rows))
-    return {"prompts":len(rows),"path":str(v/"missing-prompt.csv"),"locks":str(v/"lock-assets.md"),"save_folder":str(v/"shots")}
+    return {"prompts":len(rows),"path":str(v/PROMPT_FILES[0]),"locks":str(v/"lock-assets.md"),"save_folder":str(v/"shots")}
 
 
 def assert_voice_media(video, plan):

@@ -27,7 +27,7 @@ audio:  A3=forest,day A6=bird A8=branch,snap A7=off   (keywords matched against 
 'NxK' / '*xK' = N s (or the rest) as K shots of the same need + filter, uneven lengths, audio on the first part.
 --yolo-cached: use the YOLO cache only (unmeasured clips rank by tags); yolo.py --warm measures the rest.
 """
-import csv, functools, json, os, re, sys
+import functools, json, os, re, sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -1033,7 +1033,7 @@ GEN_SHORT = 0.042  # a generated clip may be up to 1 frame (24 fps) shorter than
 
 def mark_generated(clips, video):
     """User 2026-11-08: fill-THIEU uses every clip generated for this video (jobs check; filed by organize or still
-    in _check). c["gen"] = timeline seconds of the missing-prompt.csv rows it was made for (name = shot_id); match()
+    in _check). c["gen"] = timeline seconds of the missing-prompt.txt rows it was made for (name = shot_id); match()
     puts it there first, hold / issues ignored (WEAK + marker note when held). Logo / text clips stay out (delogo)."""
     from dvr_cowork.jobs import generated_names
     names = generated_names(video_key(video))
@@ -1049,7 +1049,7 @@ def mark_generated(clips, video):
 
 
 def shots_clips(video):
-    """<video>\\shots (user 2026-11-12): one-time clips generated for this film only, named by their missing-prompt.csv
+    """<video>\\shots (user 2026-11-12): one-time clips generated for this film only, named by their missing-prompt.txt
     shot_id. Each goes onto its own slot (match() pre-pass, like a _check clip) and nowhere else: never another slot,
     never the library / organize. -> (clips, message)."""
     files = shot_media(video)
@@ -1073,12 +1073,12 @@ def shots_clips(video):
 
 
 def prompt_times(video):
-    """{shot_id: timeline seconds of its tc_in} of <video>\\missing-prompt.csv."""
-    csvp, at = Path(video) / "missing-prompt.csv", {}
-    if csvp.exists():
-        for r in csv.DictReader(csvp.open(encoding="utf-8-sig")):
-            m, _, s = (r.get("tc_in") or "").rpartition(":")
-            at[r["shot_id"]] = (int(m or 0) * 60 + float(s)) if s else None
+    """{shot_id: timeline seconds of its tc_in} of <video>\\missing-prompt.txt (or an older video's .csv)."""
+    from dvr_cowork.prompt_rules import prompt_rows
+    at = {}
+    for r in prompt_rows(video):
+        m, _, s = (r.get("tc_in") or "").rpartition(":")
+        at[r["shot_id"]] = (int(m or 0) * 60 + float(s)) if s else None
     return at
 
 
@@ -1469,7 +1469,7 @@ PICK_KEYS = ("path", "id", "source", "src_in", "src_out", "caption", "reuse", "s
 def intro_guard(slots, banned):
     """Last check after every pass (generated pre-pass, highlights, fix_water...): an intro slot holding a clip of
     another channel video's intro this week (ledger.intro_week) -> THIẾU. -> summary line."""
-    hit = [s for s in slots if s.get("intro") and s.get("id") in banned]
+    hit = [s for s in slots if s.get("intro") and s.get("id") in banned and not s["id"].startswith(ledger.ONCE)]
     for s in hit:
         for k in PICK_KEYS:
             s.pop(k, None)
@@ -2486,9 +2486,11 @@ def selftest():
     assert window(dict(pc, intro_week=True, open=True), dict(ps, intro=True), ()) is None
     assert window(dict(pc, intro_week=True), dict(ps, intro=False), ()) is not None
     ig = [{"intro": True, "id": "x", "path": "p", "status": "OK", "start": 1.0},
-          {"intro": False, "id": "x", "path": "p", "status": "OK", "start": 200.0}]
-    assert intro_guard(ig, {"x"}).startswith("intro week guard: 1") and ig[0]["status"] == "THIEU" \
-        and "path" not in ig[0] and ig[1]["path"] == "p", ig
+          {"intro": False, "id": "x", "path": "p", "status": "OK", "start": 200.0},
+          {"intro": True, "id": "shots/c1v1_1.mp4", "path": "g", "gen": True, "status": "OK", "start": 2.0}]
+    assert intro_guard(ig, {"x", "shots/c1v1_1.mp4"}).startswith("intro week guard: 1") and ig[0]["status"] == "THIEU" \
+        and "path" not in ig[0] and ig[1]["path"] == "p" and ig[2]["path"] == "g", ig  # one-time shots/ clip: never banned
+    assert ledger.lib_ids([{"id": "a", "start": 1.0}, {"id": "shots/c1v1_1.mp4", "start": 1.0}, {"start": 1.0}]) == {"a"}
     assert old_pen({"open15": True}) == OPEN15_PEN and old_pen({"recent": True, "open15": True}) == OLD_PEN + OPEN15_PEN
     # a part already on timeline Open counts toward REUSE_MAX and is never shown again
     rv = [{"slot": k, "dur": 4, "src": "any", "filter": {"sp": ["none"]}, "start": t} for k, t in enumerate(range(0, 1200, 100))]

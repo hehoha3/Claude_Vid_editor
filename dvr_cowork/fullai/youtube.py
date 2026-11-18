@@ -24,7 +24,8 @@ def upload_body(meta,publish_at=None):
         if t<=datetime.now(timezone.utc): raise Stop("Publish time is in the past; would publish immediately")
         status["publishAt"]=t.astimezone(timezone.utc).isoformat().replace("+00:00","Z")
     return {"snippet":{"title":meta["title"],"description":meta["description"],"tags":meta["tags"],
-                       "categoryId":"15","defaultLanguage":"en","defaultAudioLanguage":"en"},"status":status}
+                       "categoryId":"15","defaultLanguage":meta.get("lang","en"),
+                       "defaultAudioLanguage":meta.get("lang","en")},"status":status}  # narrator language (seo writes it)
 
 
 def upload(video,channel=None,publish_at=None,apply=False,yt=None):

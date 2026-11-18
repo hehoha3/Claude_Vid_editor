@@ -234,9 +234,11 @@ def upload(vdir, thumb=None, dry=False, publish_at=None):
     if not (TOKENS / f"{cid}.json").exists():
         return f"youtube: channel {cid} not logged in ({relogin(cid)}), upload skipped"
     meta = json.loads((work / "youtube_meta.json").read_text("utf-8")) if (work / "youtube_meta.json").exists() else {}
+    from .timestamps import narration_lang
+    lang = meta.get("lang") or narration_lang(vdir)  # en | es: seo writes it; older meta -> the timestamp file
     body = {"snippet": {"title": meta.get("title", vdir.name), "description": meta.get("description", ""),
-                        "tags": meta.get("tags", []), "categoryId": "15", "defaultLanguage": "en",
-                        "defaultAudioLanguage": "en"},
+                        "tags": meta.get("tags", []), "categoryId": "15", "defaultLanguage": lang,
+                        "defaultAudioLanguage": lang},
             # synthetic: realistic AI footage must be disclosed (YouTube "altered or synthetic content")
             "status": {"privacyStatus": PRIVACY, "selfDeclaredMadeForKids": False,
                        "containsSyntheticMedia": meta.get("synthetic", False)}}

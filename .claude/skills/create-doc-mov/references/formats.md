@@ -9,6 +9,10 @@ intro map **one row per second**, a footage status table and a cut map of every 
 
 One film directory holds only its four final files. The slug is descriptive and stable. Keep temporary research, generation scripts and validation reports outside the deliverable directory.
 
+Narrator language (source META `lang: en | es`, user 2026-11-17): below, "English" = the narrator's language. A
+Spanish film is `Film_Slug_Screenplay_ES.md` + `Film_Slug_Timestamp_ES_VI.md` with `## Spanish` + `## Vietnamese`;
+transcript.md holds the Spanish lines; Visual_Edit_Plan stays `_EN` (its prose and shot text are English for every film).
+
 ### 1. Film_Slug_Screenplay_EN.md
 
 Use:

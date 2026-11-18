@@ -9,7 +9,7 @@ Sections start with `=== NAME`:
 
 | Section | Content |
 | --- | --- |
-| META | `slug: Africa_Who_Drinks_Last`, `title: …`, optional `target: 60` (minutes) |
+| META | `slug: Africa_Who_Drinks_Last`, `title: …`, optional `target: 60` (minutes), `lang: en` or `lang: es` (narrator language; no line = en) |
 | BIBLE | the animal bible table (copied into both plans; must contain male/female/young + metaphor) |
 | SP_HEAD / SP_TAIL | screenplay prose before / after the timed beats (question, runtime map, research, alternates, mix gates) |
 | VP_HEAD / VP_TAIL | plan prose (thesis, intro rules, track map / sourcing log, final gates, conform, planned-vs-fixed) |
@@ -39,7 +39,8 @@ Shot line: `- duration | size | observable action | A5 natural sound | why the v
 Flags: `!` key shot (named in the screenplay; must exist), `long` (continuous take, 8–12 s), `cb` (callback: other
 frames of a clip already used), `black` (black slug, 0.5 s+). Shot ids are generated: `1.4-09`.
 
-Voice line: `> EN || VI || weight || @shot+offset`. Weight = share of the scene's spare time placed after the line
+Voice line: `> EN || VI || weight || @shot+offset` (EN = the narration in META `lang`: English, or Spanish for `es`;
+VI translates that line). Weight = share of the scene's spare time placed after the line
 (default 1; `tail:` for the last). A pin fixes the onset to a shot start (+offset); unpinned lines float between
 anchors. Pin only lines that describe a visible event (reveal, strike, miss, storm) — those must survive conform.
 
@@ -64,7 +65,8 @@ what it wrote (with `--durations-json` after conform) and fails if the validator
   shots, every voice-free rest ≥ 3 s as `in–out (dur): shot (dur) action → … Sound … Why watch …`, then
   `*Narrator:* [onset] line` (story.py brief drops these and inserts the real timed sentences).
 - **Timestamp:** heading, status note (PLANNED / CONFORMED, number of picture-locked onsets), `## English`,
-  `## Vietnamese` — nothing else (validator contract).
+  `## Vietnamese` — nothing else (validator contract). `lang: es` -> `_Screenplay_ES.md`, `_Timestamp_ES_VI.md` with
+  `## Spanish`; the plan stays `_Visual_Edit_Plan_EN.md`.
 - **Visual_Edit_Plan:** VP_HEAD, animal bible, intro cut map **one row per second** (shot, picture when it starts,
   narrator line starting / continuing, music bar), footage status table (MUST / ALT / PENDING), cut map of every shot
   (in, out, duration, size, action, A5 sound, voice block numbers over it, flags), beat table (footage index — skipped

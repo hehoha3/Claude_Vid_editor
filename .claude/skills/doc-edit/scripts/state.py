@@ -7,7 +7,7 @@ starts from the user's own edits, less typing).
 
 Snapshot = items of the video timeline channN_vidK (track, start, end, file; read only, the user's timeline restored) when
 the open Resolve project holds <video> (own project, or day project vid_DDMMYY: only its Chann_N timelines), files of
-D:/AI_video/_check and _nologo, and the mtimes of the files the user edits (spec.txt, plan.md, missing-prompt.csv, the hide-logo check list, the audios folder). Stored in
+D:/AI_video/_check and _nologo, and the mtimes of the files the user edits (spec.txt, plan.md, missing-prompt.txt, the hide-logo check list, the audios folder). Stored in
 .work/doc_edit/<video>/state.json; diff prints the last step and every change, grouped, short.
 """
 import datetime as dt, json, sys
@@ -51,7 +51,7 @@ def files(video, audios):
             for p in (AI / "_africa" / "_check").rglob("*") if p.is_file()}  # Africa holding folder (user 2026-10-22)
     watch = [work / "spec.txt", ROOT / ".work" / "hide_logo" / "check_list.txt"]
     if vdir:
-        watch += [vdir / "plan.md", vdir / "missing-prompt.csv", vdir / "missing_prompts.txt", *Path(audios).rglob("*")]
+        watch += [vdir / "plan.md", vdir / "missing-prompt.txt", vdir / "missing-prompt.csv", vdir / "missing_prompts.txt", *Path(audios).rglob("*")]
     return out | {f"mtime {p}": round(p.stat().st_mtime) for p in watch if p.is_file()}
 
 
@@ -108,8 +108,9 @@ def stage(vdir, done):
         return "no plan", "/doc-edit <audios-folder>"
     if any(vdir.glob("Done_*.mp4")):
         return "rendered", "/doc-edit done"
-    # missing-prompt.csv since 2026-11-05; videos planned before keep missing_prompts.txt
-    miss = next((vdir / n for n in ("missing-prompt.csv", "missing_prompts.txt") if (vdir / n).exists()), vdir / "missing-prompt.csv")
+    # missing-prompt.txt since 2026-11-17, missing-prompt.csv 2026-11-05..16, missing_prompts.txt before
+    miss = next((vdir / n for n in ("missing-prompt.txt", "missing-prompt.csv", "missing_prompts.txt") if (vdir / n).exists()),
+                vdir / "missing-prompt.txt")
     st = ROOT / ".work" / "doc_edit" / video_key(vdir) / "state.json"
     last = json.loads(st.read_text("utf-8")).get("step") if st.exists() else None
     if last in ("P6", "color"):

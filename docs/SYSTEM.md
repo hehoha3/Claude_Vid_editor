@@ -213,7 +213,7 @@ audios/ (screenplay + timestamp EN/VI + mp3/1..n)
   │     (phần sau story 1: slot THIẾU tự lấp bằng clip thay thế ngay mỗi lần plan, marker cyan)
   ▼
  intro.py tự chọn nhạc intro + cú impact → plan.py lại (cắt intro theo nhịp)
-  │ missing.py ──► missing-prompt.csv (fa_ only: slot THIẾU của intro + story 1; Claude viết tay, không prompt WEAK;
+  │ missing.py ──► missing-prompt.txt (fa_ only: slot THIẾU của intro + story 1; Claude viết tay, không prompt WEAK;
   │                 shot_id = c<N>v<K>_<n> = tên file clip; clip dài = slot + 1 s)
   │ place.py: backup → intro + thân phim cùng lúc (V1 + A3-A9 + marker; 0:00 đen + A9 impact, shot mở đầu vào đúng cú hit;
   │           A7 sau intro = nhạc nền -36 LUFS)
@@ -286,7 +286,7 @@ shot ≤ 2 s 0 % → 30 %, `# TURN` 0 → 11, SFX 5 → 27, âm thanh tự nhiê
 ### 5.3 Track của timeline video (channN_vidK)
 
 Mỗi video **một timeline `channN_vidK`** trong `Chann_N/6. Timeline` của project ngày `vid_DDMMYY` (user 2026-11-06, bỏ "Edit"; + backup `<timeline>_bak_*`, giữ 3 cái mới nhất). A1 footage /
-footage+AI để trống (video đặt trước 2026-11-05 giữ A1 cũ; `place.py A1_UNTIL = 0`), full-AI = tiếng của chính mỗi shot
+footage+AI để trống, trừ phim 1-3 h: tiếng của clip AI ở intro + story 1 (-12 dB, `place.a1_ok`, user 2026-11-17; video đặt trước 2026-11-05 giữ A1 cũ), full-AI = tiếng của chính mỗi shot
 (-12 dB) · A2 narrator (mỗi câu một item) · A3/A4 nền ambience (luân phiên, crossfade 4 s) · A5 lớp môi trường thứ ba
 / chim / crossfade nhạc · A6 âm thanh tự nhiên · A7 nhạc (sau intro là nền -36 LUFS, footage types) · A8 SFX tự nhiên ·
 A9 SFX thiết kế (ở 0:00 = riser → impact trước intro, từ 2026-11-06; full-AI: A8 crossfade bài hát). Subtitle 1 = phụ đề tiếng Việt. Marker: đỏ THIẾU (ghi chú = shot cần), vàng WEAK, xanh

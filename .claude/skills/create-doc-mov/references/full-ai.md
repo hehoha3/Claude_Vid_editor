@@ -18,13 +18,13 @@ once, fix with small Edits, never pull big files into context.
 
 ## Concept (SKILL.md "Start of a new film": type -> trends -> 3 options -> changes?)
 
-- Trends turn: `$E8 next-video Chann_N --region <region>` (the single `D:\Chann_N_*`, next `a_<region>_DDMMYY_N`, `next_archetype`, recent
+- Trends turn: `$E8 next-video Chann_N --region <region> --lang <en|es>` (the single `D:\Chann_N_*`, next `a_<lang>_<region>_DDMMYY_N`, `next_archetype`, recent
   titles / casts; skips `_pushed`; stops on zero or several channel folders -> ask) + `$Y trends Chann_N
   [--query "..."]` (most viewed 4–20 min mountain predator / prey videos of 90 days by views/day, title patterns,
   tags; 101 units per new query, 0 cached 7 days) + one `vidiq_outliers` (long-form). vidIQ credit / auth error ->
   one line, YouTube alone. YouTube API fails (revoked token: `$Y remove Chann_N` then `$Y login --key Chann_N`; quota) -> stop,
   report. Options avoid the archetype / cast of `recent` unless trends clearly favour it (say so).
-- Folder: a given `<video>\audios` path = `<video>`; use it when it is `next_video` or an `a_<region>_DDMMYY_N` folder (old films: `<region>_…`, `vid_DDMMYY_N`) without
+- Folder: a given `<video>\audios` path = `<video>`; use it when it is `next_video` or an `a_<lang>_<region>_DDMMYY_N` folder (old films: `<region>_…`, `vid_DDMMYY_N`) without
   `.production\story.json` (the user pre-made it, so `next_video` shows N+1); else ask. Never reuse a folder that has
   a source.
 - **Adapt a link** (`/create-doc-mov Chann_N <youtube_url>`): one turn `next-video` + `$Y reference Chann_N
@@ -72,7 +72,7 @@ once, fix with small Edits, never pull big files into context.
    exactly. `hook_role` + `spoiler:false` only on strong unresolved body moments, ≥ 1 candidate each for threat,
    vulnerability, pursuit, obstacle, unanswered (aim for 12–15 candidates in total; one role may hold several).
    `build` rejects contact verbs in `action` / `end_state` / beats (bite, gore, ram, grab, pin, shove, knock down,
-   kill, wound, blood, horns clash…): write the miss ("swipes past a body length short"). Vietnamese (`vi`) written by Claude in the same Write: complete,
+   kill, wound, blood, horns clash…): write the miss ("swipes past a body length short"). `"lang"` (en / es, step 1) at the top. Vietnamese (`vi`) written by Claude in the same Write: complete,
    natural, the narrator's calm tone.
 6. `$E8 build "<video>" && $E8 validate "<video>"`. Build lists every timing and banned-word problem in one run, other
    errors one at a time: fix with targeted Edits (never rewrite the file), rerun. Then judge what the compiler can't:
@@ -238,7 +238,7 @@ Every prompt opens with `IN FRAME — exactly N animals: <locks>` and `NOT IN FR
 - **One entry per individual the viewer must tell apart** (lead, mother, injured kid, torn-ear wolf). Interchangeable members share one group entry with `count` > 1. Split a group when a subset separates on screen: a 10-goat herd whose injured kid falls and whose mother climbs down = `LEAD`, `MOTHER`, `KID` + `HERD_REST` (count 7); "9 above" = all but `KID`, "reunion" = all four.
 - `count`: exact animals this entry puts in frame. IN FRAME total = sum of the shot's counts.
 - `terms`: every word you use for it in shot text (`["yearling"]`, `["leopard"]`, `["herd", "twelve ibex", "silhouettes"]`); distinct across characters, plurals matched automatically. `build` stops listing each shot/field that names a character absent from that shot.
-- **Production bible**: `build` refuses a source without `details` on every character and `count_lock`, `zones`, `terrain_lock`, `light_lock`; they print as sections 1–5 of `lock-assets.md` (beside `missing-prompt.csv`). `name` is the display heading (`YEARLING — CHIPPED-HORN FEMALE (LEAD)`); `details` lists appearance bullets then role/behaviour bullets; `absolute_lock` is the one rule that must never flip (`Scar only at the base of the LEFT horn`) and is also appended to that character's lock in every prompt.
+- **Production bible**: `build` refuses a source without `details` on every character and `count_lock`, `zones`, `terrain_lock`, `light_lock`; they print as sections 1–5 of `lock-assets.md` (beside `missing-prompt.txt`). `name` is the display heading (`YEARLING — CHIPPED-HORN FEMALE (LEAD)`); `details` lists appearance bullets then role/behaviour bullets; `absolute_lock` is the one rule that must never flip (`Scar only at the base of the LEFT horn`) and is also appended to that character's lock in every prompt.
 - `lock` (one line, repeated verbatim): `Exactly N <age/sex> <species>` + build/size relative to others + coat colour + eyes/nose + horns/ears/tail + hooves/paws + **permanent asymmetric marks with the side in CAPS** (`pale scar at base of LEFT horn — never on the right`, `injured LEFT hind leg only`). Give look-alikes one distinct mark each and say what they do NOT have (`no scar, unlike the lead`). Appearance only: behaviour belongs in shot actions.
 - Off-screen presence: a call, scent or tracks of an absent animal may be described without naming it (`a distant bleat`, `fresh paw prints`); otherwise add it to `characters`. A visible shadow or silhouette counts as in frame.
 - Locations and light: each scene sets `location` = that place only + its constant light (`A hoof-wide ledge on a north granite wall, fog-filled drop south; blue dusk`); a shot may override it. Describe places, **never proper names** in any prompt field (`Karsha basin` was burned in as a caption) — names belong in narration only. Locations describe rock, never animals.
@@ -278,7 +278,7 @@ Compact scene (preferred):
 
 Allowed hook roles: threat, vulnerability, pursuit, obstacle, unanswered, none. Intensity is 0–5. Omission of `spoiler:false` makes a shot ineligible for hook selection. Mark the actual resolution as a spoiler. Metadata is a candidate hint; `shot_qc.json` supplies actual visual approval and a clean hook source-in later.
 
-`voice` is a list of `{en: "one English paragraph", vi: "full Vietnamese translation"}`. No newlines inside a block. Several blocks in the same scene remain adjacent physical lines in transcript; blank lines separate scenes. **Global nonblank physical-line order** maps to `1.mp3…N.mp3`. Do not use rendered Markdown paragraph count. The compiler schedules their starts inside each scene from estimated or measured durations. It never cuts the source audio.
+Narrator language (user 2026-11-17, asked at step 1, never assumed): top-level `"lang": "en"` (default) or `"es"`; the voice key is that code. `voice` is a list of `{en: "one English paragraph", vi: "full Vietnamese translation"}` (es: `{es: "one Spanish paragraph", vi: "..."}`, written natively in neutral Latin-American Spanish, VI from the Spanish; shots, beats, bible and prompts stay English). `timestamp.md` then opens `## Spanish`; `$Y seo` prints `LANGUAGE: es` -> the whole seo_draft.json in Spanish, all chapter names included; upload sends audio language es. Words are still counted at the profile wpm (155, English voice): a Spanish block may run longer, conform shows it. No newlines inside a block. Several blocks in the same scene remain adjacent physical lines in transcript; blank lines separate scenes. **Global nonblank physical-line order** maps to `1.mp3…N.mp3`. Do not use rendered Markdown paragraph count. The compiler schedules their starts inside each scene from estimated or measured durations. It never cuts the source audio.
 
 **Voice math** (the floor `build` enforces): inter-block gaps ≤ 3 s, lead 0.3 s, tail 0.5 s, so a scene of T s with
 n blocks needs ≥ (T − 3(n−1) − 0.8) × wpm/60 words, counted as `len(en.split())` (a spaced " — " is a word: write
