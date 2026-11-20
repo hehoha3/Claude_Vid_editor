@@ -24,6 +24,7 @@ Drive Z: is READ + COPY only (user rule 2026-10-11). Every index lives in the wo
 Clips are keyed by a content hash, so moved/renamed files keep their entry (and any earlier tags)."""
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -115,6 +116,10 @@ def audio_blocked(path):
     """True if an audio path matches a line of .work/library/audio_blocked.txt (claimed tracks: never picked)."""
     f = WORK / "audio_blocked.txt"
     frags = [l.strip().lower() for l in f.read_text("utf-8").splitlines() if l.strip() and not l.startswith("#")] if f.exists() else []
+    ch = os.environ.get("DVR_AUDIO_CHANNEL")  # set by plan.py / intro.py from the video's path (user 2026-11-20: Epidemic = Chann_2 / 3 only)
+    if ch is not None:
+        from dvr_cowork.videokey import epidemic_blocked
+        if epidemic_blocked(path, ch): return True
     return any(x in str(path).lower().replace("\\", "/") for x in frags)
 
 

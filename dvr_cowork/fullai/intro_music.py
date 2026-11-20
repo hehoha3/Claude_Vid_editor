@@ -56,15 +56,26 @@ def analyse(x):
     return db, period / FPS, phase / FPS, hit
 
 
-def plan(path, total_s, open_s=8.0, end_s=9.0):
+# user 2026-11-20: one cut form made every film's intro sound alike. (opening s, ending s, crossfade s); A = the old form.
+FORMS = {"A": (8.0, 9.0, 1.0), "B": (16.0, 7.0, 2.0), "C": (4.0, 12.0, 0.5), "D": (12.0, 5.0, 1.5)}
+
+
+def form_of(video):
+    """Form letter: DVR_INTRO_FORM (A-D) forces one, else a stable pick from the film's folder name."""
+    import os, zlib
+    f = os.environ.get("DVR_INTRO_FORM", "").upper()
+    return f if f in FORMS else sorted(FORMS)[zlib.crc32(str(video).replace("\\", "/").rstrip("/").split("/")[-1].encode()) % len(FORMS)]
+
+
+def plan(path, total_s, form="A"):
     """Three segments on the timeline (seconds from the hook start) for a total_s hook."""
+    open_s, end_s, X = FORMS[form]
     x = load(path)
     dur = len(x) / SR
     db, P, ph, hit = analyse(x)
     beat = lambda t: ph + round((t - ph) / P) * P
     s0 = np.flatnonzero(db > -40)[0] / FPS                # the song's first real sound
     dend = (np.flatnonzero(db > -50)[-1] + 1) / FPS       # where its own ending has decayed
-    X = 1.0                                                # crossfade centred on the beat; long enough to be smooth
     e2 = beat(dend - end_s)                                # ending starts on a beat
     t1 = beat(s0 + open_s) - s0                            # opening hands over on a beat
     t2 = total_s - (dend - e2)
@@ -86,7 +97,7 @@ def plan(path, total_s, open_s=8.0, end_s=9.0):
     drive = float(np.mean(beats(b1) >= 0.5))  # share of the climax beats with a real kick / bass hit
     end_src = e2 + (total_s - t2)
     if end_src > dur + 1e-6: raise Stop("Song ending runs past the file; choose another song")
-    return {"bpm": round(60 / P, 1), "crossfade_s": round(X, 3), "song_s": round(dur, 2),
+    return {"form": form, "bpm": round(60 / P, 1), "crossfade_s": round(X, 3), "song_s": round(dur, 2),
             "climax_src_s": round(float(b1), 2), "climax_drive": round(drive, 2), "cuts_s": [round(float(t1), 3), round(float(t2), 3)],
             "segments": [
                 {"label": "Music intro open", "track": 7, "start_s": 0.0, "end_s": t1 + X / 2,

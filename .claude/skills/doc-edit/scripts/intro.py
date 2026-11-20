@@ -211,6 +211,8 @@ def main(video, music=None):
     work = ROOT / ".work" / "doc_edit" / video_key(video)
     pj = json.loads((work / "plan.json").read_text("utf-8"))
     vdir = Path(pj["video_dir"])
+    from dvr_cowork.videokey import channel_of as _chan
+    os.environ["DVR_AUDIO_CHANNEL"] = _chan(vdir) or ""  # Epidemic audio only on Chann_2 / 3 (scan_source.audio_blocked)
     T = story1(vdir)
     imp = None
     if pj["slots"][0].get("opener") or pj["slots"][0].get("black"):  # 2026-11-06: black + riser -> impact, the music from the hit
