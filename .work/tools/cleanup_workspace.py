@@ -17,6 +17,9 @@ W = ROOT / ".work"
 # 2026-10-23: a hard-coded list would have deleted africa_2's narration job started in another session
 ACTIVE = {re.sub(r"[^a-z0-9]", "", p.name.lower()) for ws in Path("D:/").glob("Chann_*") if ws.is_dir()
           for p in ws.iterdir() if p.is_dir() and not p.name.startswith("_")}
+# .work/grade names its folders vid_DDMMYY_channN_vidK, not by the video folder: map the active ones too (2026-11-20)
+ACTIVE_GRADE = {f"vid_{m[1]}_chann{ws.name.split('_')[1]}_vid{m[2]}" for ws in Path("D:/").glob("Chann_*")
+                if ws.is_dir() for p in ws.iterdir() if p.is_dir() and (m := re.search(r"_(\d{6})_(\d+)$", p.name))}
 OLD = time.time() - 6 * 3600  # one-off scripts younger than 6 h may belong to a running session: kept
 # 2026-10-24: the scripts the docs name moved into git (bench_story_first.py, make_africa_ai_folders.ps1 -> skill
 # scripts, this file -> .work/tools); .work/scripts holds one-offs only; one naming an active video is kept
@@ -35,7 +38,7 @@ TARGETS = [  # (path, why)
     *[(p, "dvr_cowork frames exports (one-off QC stills)") for p in sorted((W / "stills").glob("*"))],
     (W / "grade" / "frames320", "light.py / match.py frame cache (rebuilt on the next color run, ~1-3 min)"),
     *[(p, "grade plan / stdout of a finished video") for p in sorted((W / "grade").glob("*"))
-      if p.name != "frames320" and done(p)],
+      if p.name != "frames320" and p.name not in ACTIVE_GRADE and done(p)],
     *[(p, "old copy of a plan folder") for p in sorted((W / "doc_edit").glob("*_old*"))],
     *[(p, "narration job of a finished video") for p in sorted(W.glob("*_mp3")) if done(p)],
     *[(W / n, "stdout dump") for n in ("plan_fill_stdout.txt",)],
@@ -54,6 +57,11 @@ TARGETS = [  # (path, why)
       for pat in ("*.drt", "done_*", "grade_plan_*", "match_*_out.txt", "match_*_stdout.txt", "rerender_*",
                   "scripts_*.py", "lic_times.txt", "hide_logo_list.txt", "vosync_*.txt")
       for p in sorted(W.glob(pat)) if p.is_file() and done(p)],
+    # 2026-11-20: loose logs / stdout / old json copies of past sessions (.work/audio_licenses.md stays: intro.py names it)
+    *[(p, "log / stdout / old copy of a past session, loose in .work")
+      for pat in ("*.log", "*_stdout.txt", "light_*.txt", "place_*.txt", "story_*.bak.json", "story_*.pre_retime.json",
+                  "open_unused.sql", "fin.json", "audio_missing.md")
+      for p in sorted(W.glob(pat)) if p.is_file() and p.stat().st_mtime < OLD and done(p)],
     *[(p, "Whisper / stdout folder of a finished video") for pat in ("voice_*", "congo_1")
       for p in sorted(W.glob(pat)) if done(p)],
     *[(p, "audio-expert run of a finished video") for p in sorted((W / "audio_expert").glob("*"))
@@ -83,9 +91,12 @@ def files_of(p):
 
 
 def main(apply):
-    total = 0
+    total, seen = 0, set()
     for p, why in TARGETS:
         p = p.resolve()
+        if p in seen:  # a file matched by two patterns
+            continue
+        seen.add(p)
         assert p.is_relative_to(ROOT) and p != W and not any(p.is_relative_to(k) or k.is_relative_to(p)
                                                             for k in PROTECTED), f"refused: {p}"
         if not p.exists():

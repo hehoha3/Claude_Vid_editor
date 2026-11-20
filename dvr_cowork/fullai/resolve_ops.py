@@ -567,7 +567,7 @@ def a3_beds(video,plan,intro,wind=None,beds=None,birds=None):
     a=config().get("audio",{}); fps=plan["fps"]
     cut=hook_window(plan)[1]; end=plan["runtime_f"]
     license_note(intro)
-    score=intro_music.plan(intro,cut/fps)
+    score=intro_music.plan(intro,cut/fps,intro_music.form_of(video))
     ops=[{"label":g["label"],"kind":"audio","track":g["track"],"bin":MUSIC_BIN,"path":str(intro),"source_fps":fps,
           "start_f":frames(g["start_s"],fps),"end_f":min(cut,frames(g["end_s"],fps)),"source_start_s":g["source_start_s"],
           "db":"music_db","fade_in_s":g["fade_in_s"],"fade_out_s":g["fade_out_s"],"score":score}
@@ -615,6 +615,9 @@ def music(video,path,wind=None,replace=False,resolve=None,beds=None,birds=None):
     if beds is not None and not isinstance(beds,dict): beds=read_json(beds)
     if birds is None and (prod(video)/"birds.json").exists(): birds=prod(video)/"birds.json"
     if birds is not None and not isinstance(birds,dict): birds=read_json(birds)
+    from ..videokey import channel_of,epidemic_blocked  # user 2026-11-20: Epidemic Sound audio only on Chann_2 / 3
+    bad=[p for p in [path,*(beds or {}).values(),*(birds or {}).values()] if epidemic_blocked(p,channel_of(video))]
+    if bad: raise Stop(f"{channel_of(video)} has no Epidemic Sound right; replace: {', '.join(Path(p).name for p in bad)}")
     with resolve_lock(),lock(prod(video)/"files.lock"):
         s=Session(video,resolve)
         try:

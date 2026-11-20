@@ -1918,6 +1918,8 @@ def main(folder, sem=True):
     folder = Path(folder)
     cues, vo, vmsg = narration(folder)
     video = folder.parent
+    from dvr_cowork.videokey import channel_of as _chan
+    os.environ["DVR_AUDIO_CHANNEL"] = _chan(video) or ""  # scan_source.audio_blocked: Epidemic audio only on Chann_2 / 3
     work = ROOT / ".work" / "doc_edit" / video_key(video)
     spec = Path(SPEC) if SPEC else work / "spec.txt"
     assert spec.exists(), f"write {spec} first"

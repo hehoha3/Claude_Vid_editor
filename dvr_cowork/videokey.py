@@ -19,6 +19,15 @@ def channel_of(path) -> str | None:
     return f"Chann_{m[1]}" if m else None
 
 
+EPIDEMIC_CHANNELS = {"Chann_2", "Chann_3"}  # user 2026-11-20: only these channels may use Epidemic Sound audio
+
+
+def epidemic_blocked(path, channel) -> bool:
+    """True for an Epidemic Sound file (audio-expert names carry `[es-<id>]`) on a channel that has no Epidemic right."""
+    p = str(path).lower()
+    return channel not in EPIDEMIC_CHANNELS and ("[es-" in p or "epidemic" in p)
+
+
 def day_project(name: str) -> str:
     """[f_|fa_|a_]<region>_DDMMYY_N (or its work key <video>__Chann_N) -> the day project vid_DDMMYY that holds every
     film of every channel of that day (user 2026-11-06; before: vid_DDMMYY_N); any other name, vid_* included, stays
