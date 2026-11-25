@@ -6,8 +6,9 @@ shot_id; one-time: never tagged, never filed, never another video's slot). The r
 folder (`/doc-edit ingest`), never read here.
 
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/after_gen.py finish <video folder>
-        prep, then plan --sub-broad -> place --fill -> gen_swap --apply -> gaps -> fill-report -> reframe --fill-only (letterbox zoom) -> light.py plan + apply
-        (each Resolve write backs up first)
+        prep, then plan --sub-broad -> place --fill -> gen_swap --apply -> gaps -> fill-report -> reframe --fill-only (letterbox zoom) -> light.py plan + apply -> the 4 black fades
+        (each Resolve write backs up first); full-AI (<video>\\.production): ai shots-ready --apply only, Claude goes on
+        with references/full-ai.md B
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/after_gen.py prep <video folder>
         only the check: jobs check of <video>\\shots (still copying / broken / not a prompt of this video) + decide ingest
 
@@ -67,7 +68,19 @@ def prep(vdir):
     return key  # shots\ clips are never tagged (user 2026-11-12 / 2026-11-13)
 
 
+def finish_full_ai(vdir):
+    """User 2026-11-24: full-AI films take the same /doc-edit after-gen-vid. The engine part runs here (ingest ->
+    body on V1/A1 -> hook contact sheets); Claude then reviews the hook, picks the sounds and runs `ai finish`
+    (doc-edit references/full-ai.md B, steps 2-5)."""
+    run(["-m", "dvr_cowork", "ai", "shots-ready", vdir, "--apply"], keep=r'"(technical_pass|placed|verified|backup|black_fades)"',
+        last=20)
+    print(f"after-gen-vid {vdir.name} (full-AI): shots on the timeline -> hook review + sound picks + `ai finish` "
+          "(references/full-ai.md B 2-5)")
+
+
 def finish(vdir):
+    if (vdir / ".production").is_dir():
+        return finish_full_ai(vdir)
     key = prep(vdir)  # one call (2026-11-14): the check stops the run on copying / broken clips
     tl = os.environ["DVR_TIMELINE"]
     print("[2] plan --sub-broad (whole V1)")
@@ -98,6 +111,10 @@ def finish(vdir):
     print("[7] color (light pass)")
     run([SK / "colorist/scripts/light.py", "plan"], keep=r"^V1 |^story |^golden|^slope", env={"DVR_TIMELINE": tl}, last=15)
     run([SK / "colorist/scripts/light.py", "apply"], keep=r"^backup", env={"DVR_TIMELINE": tl}, last=15)
+    # user 2026-11-24: the 4 black fades must be on the timeline when the user reviews, not only set before render;
+    # set last, after every step that touches V1 (2026-11-23 chann2_vid2 lost 3 of the 4 set at place).
+    import place  # this script's folder (doc-edit/scripts) is on sys.path
+    print("[8] " + place.black_fades(str(vdir)))
     print(f"after-gen-vid {vdir.name} ({tl}): done -> frame check (doc-edit SKILL.md: frames --stats --gemini), then report")
 
 

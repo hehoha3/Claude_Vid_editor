@@ -15,9 +15,10 @@ Web search only for one specific factual claim you keep; otherwise narrate obser
 - Trends, one turn: `$E8 next-video Chann_N --region <region> --lang <en|es>` (the single `D:\Chann_N_*`, next
   `a_<lang>_<region>_DDMMYY_N`, `next_archetype`, recent titles / casts; skips `_pushed`; zero / several channel
   folders -> ask) + `$Y trends Chann_N [--query "..."]` (most viewed 4–20 min mountain predator / prey videos of 90
-  days, views/day, title patterns, tags; 101 units per new query, 0 cached 7 days) + one `vidiq_outliers` (long-form).
-  vidIQ credit / auth error -> one line, YouTube alone; YouTube API fails (revoked token: `$Y remove Chann_N` then
-  `$Y login --key Chann_N`; quota) -> stop, report. Options avoid the archetype / cast of `recent` unless trends
+  days by raw views, title patterns, tags; 2 requests per new query, 0 cached 7 days in the shared research cache).
+  No vidIQ by default: one `vidiq_outliers` (long-form) only when the user asks or the digest has < 5 titles; credit /
+  auth error -> one line, YouTube alone; YouTube API fails (revoked token: `$Y remove Chann_N` then
+  `$Y login --key Chann_N`; quota / budget STOP) -> stop, report. Options avoid the archetype / cast of `recent` unless trends
   clearly favour it (say so).
 - Folder: a given `<video>\audios` = `<video>`; use it if it is `next_video` or an `a_<lang>_<region>_DDMMYY_N` folder
   (old: `<region>_…`, `vid_DDMMYY_N`) without `.production\story.json` (pre-made: `next_video` shows N+1); else ask.
@@ -216,7 +217,7 @@ name anyone outside it.
   distinct across characters, plurals matched automatically. `build` stops listing each shot/field that names a
   character absent from that shot.
 - **Production bible**: `build` refuses a source without `details` on every character and `count_lock`, `zones`,
-  `terrain_lock`, `light_lock`; they print as sections 1–5 of `lock-assets.md` (beside `missing-prompt.txt`). `name` =
+  `terrain_lock`, `light_lock`; the prompts in `missing-prompt.txt` carry them (no `lock-assets.md` since 2026-11-24). `name` =
   display heading (`YEARLING — CHIPPED-HORN FEMALE (LEAD)`); `details` = appearance bullets, then role/behaviour
   bullets; `absolute_lock` = the one rule that must never flip (`Scar only at the base of the LEFT horn`), also
   appended to that character's lock in every prompt.

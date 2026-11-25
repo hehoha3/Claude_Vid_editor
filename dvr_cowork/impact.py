@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from .videokey import day_project, video_key
+from .videokey import channel_of, day_project, epidemic_blocked, video_key
 
 ROOT = Path(__file__).resolve().parents[1]
 IMPACT_MAX = 1.0  # s: the hit lands here at the latest; a longer riser starts part-way in
@@ -39,12 +39,15 @@ def hit_of(samples, sr):
     return round(max(0, j - 1) * w / sr, 3)
 
 
-def impact(key, files=None, reg=None, save=True):
+def impact(key, files=None, reg=None, save=True, channel=None):
     """The film's impact: kept once picked; else the least used file no other film of the same day project has.
+    `channel` (e.g. 'Chann_1'): Epidemic files are left out where the channel has no Epidemic right (user 2026-11-20).
     -> {path, hit, src_in, at, dur}."""
     reg = reg if reg is not None else (json.loads(REG.read_text("utf-8")) if REG.exists() else {"hits": {}, "used": {}})
     files = sorted(files if files is not None else
                    [p for p in sfx_dir().glob("*") if p.suffix.lower() in (".mp3", ".wav")], key=str)
+    if channel:
+        files = [f for f in files if not epidemic_blocked(f, channel)]
     if not files:
         raise SystemExit(f"no impact file in {sfx_dir()} (audio-expert fetch: string riser + impact)")
     used, day = reg["used"], day_project(key)
@@ -92,7 +95,7 @@ def main(argv=None):
         print(__doc__); return 2
     v = Path(argv[0])
     v = v.parent if v.name.lower() == "audios" else v
-    print(json.dumps(impact(video_key(v)), ensure_ascii=False, indent=1))
+    print(json.dumps(impact(video_key(v), channel=channel_of(v)), ensure_ascii=False, indent=1))
     return 0
 
 

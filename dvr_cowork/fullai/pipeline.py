@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from .core import (Stop, atomic_text, digest, event, frames, lock, numbered, object_hash,
                    probe, prod, read_json, run, stamp, unchanged, video_path, write_json, day_project)
-from .story import bible, build, load_plan, pinned_profile, prompt_text, region_locks
+from .story import build, load_plan, pinned_profile, prompt_text, region_locks
 from ..prompt_rules import PROMPT_FILES, txt_text, dur_s, shot_id, shot_size
 from ..vtypes import shot_media
 
@@ -142,9 +142,9 @@ def missing_prompts(video, reissue=False, only=None, renumber=False):
         unknown=sorted(set(only)-{r["prompt_id"] for r in rows})
         if unknown: raise Stop(f"No prompt with ID {unknown}")
         rows=[r for r in rows if r["prompt_id"] in set(only)]
-    # Two files for the user (2026-11-05): missing-prompt.txt (.txt since 2026-11-17: one block per prompt: label
-    # line shot_id | slot | dur_s + one-paragraph prompt; shot_id = the file number to save
-    # as shots/<id>.mp4) + lock-assets.md (character / environment / light locks for the generator project).
+    # One file for the user, as footage+AI (2026-11-24: no lock-assets.md, every prompt already carries the locks):
+    # missing-prompt.txt (.txt since 2026-11-17: one block per prompt: label line shot_id | slot | dur_s +
+    # one-paragraph prompt; shot_id = the file number to save as shots/<id>.mp4).
     fps,src=plan["fps"],plan["source"]
     by={s["id"]:s for s in plan["slots"]}; names={c["id"]:c["species"] for c in src["characters"]}
     table=[]
@@ -162,10 +162,9 @@ def missing_prompts(video, reissue=False, only=None, renumber=False):
                       "reason":f"save as shots/{sid}.mp4"+(f"; hook candidate ({r['hook_role']})"
                                                                       if r.get("hook_role","none")!="none" else "")})
     atomic_text(v/PROMPT_FILES[0],txt_text(table))
-    atomic_text(v/"lock-assets.md",bible(src))
     if only: event(v,"WAITING_FOR_REDO",redo=sorted(only))
     else: event(v,"WAITING_FOR_SHOTS",prompt_count=len(rows))
-    return {"prompts":len(rows),"path":str(v/PROMPT_FILES[0]),"locks":str(v/"lock-assets.md"),"save_folder":str(v/"shots")}
+    return {"prompts":len(rows),"path":str(v/PROMPT_FILES[0]),"save_folder":str(v/"shots")}
 
 
 def assert_voice_media(video, plan):

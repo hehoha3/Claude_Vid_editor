@@ -9,7 +9,7 @@ class T(unittest.TestCase):
         self.assertTrue(epidemic_blocked(f, None))
         self.assertFalse(epidemic_blocked(f, "Chann_2"))
         self.assertFalse(epidemic_blocked(f, "Chann_3"))
-        self.assertFalse(epidemic_blocked(r"D:\Music\pixabay\x.mp3", "Chann_1"))
+        self.assertFalse(epidemic_blocked(r"D:\Audio_lib\pixalbay\x.mp3", "Chann_1"))
 
     def test_form_is_stable_and_valid(self):
         v = r"D:\Chann_3_FrozenWild\a_en_frozen_201126_1"

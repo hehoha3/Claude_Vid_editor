@@ -6,7 +6,7 @@ body (music on A7, bin "4. Audio/Music"; --intro = only 0:00 -> story 1, for a r
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py <video> "<music file>"  fit the user's track
     .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py --selftest
 
-Pick (measured, never listened): candidates = D:\Music tracks with their Pixabay license beside them (user
+Pick (measured, never listened): candidates = D:\Audio_lib\pixalbay + \intro tracks with their Pixabay license beside them (user
 2026-10-30; the library's music only when there is none); tracks already on this video's A7 after the intro and the
 intro tracks of the 6 latest videos of the same channel and of every other film of this day project (from the folder
 name before place.py wrote project.txt) are skipped; only 'căng, dồn dập' tracks (driving(): tense name, no calm
@@ -30,8 +30,8 @@ ROOT = HERE.parents[3]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT))
 from dvr_cowork.config import load_config  # noqa: E402
-# user 2026-10-25: intro music outside the indexed library; audio_lib/intro = Epidemic / Suno intros (fetch.py, 2026-11-04)
-MUSIC_DIRS = [Path(r"D:\Music"), Path(load_config()["paths"]["audio_lib"]) / "intro"]
+# audio_lib/pixalbay = Pixabay tracks + license txt (D:\Music\pixalbay until 2026-11-24); audio_lib/intro = Epidemic / Suno
+MUSIC_DIRS = [Path(load_config()["paths"]["audio_lib"]) / d for d in ("pixalbay", "intro")]
 EXTS = {".mp3", ".wav", ".m4a", ".flac", ".aac", ".ogg"}
 HINT = re.compile(r"open|intro|trailer|epic|tense|tension|suspense|dread|action|drum|war|dark|myster|tribal|percussi|"
                   r"wild|primal|savage|hunt|chase|battle|timpani|taiko")
@@ -113,7 +113,7 @@ def driving(p, path):
 
 
 def candidates():
-    """Intro music = D:\\Music tracks with their license beside them (user 2026-10-30; the license goes into
+    """Intro music = MUSIC_DIRS tracks with their license beside them (user 2026-10-30; the license goes into
     audio_licenses.md at done); the library's music (plan.py AUDIO_POOL[7]) only when there is none."""
     import ledger
     from scan_source import audio_blocked
@@ -217,7 +217,7 @@ def main(video, music=None):
     imp = None
     if pj["slots"][0].get("opener") or pj["slots"][0].get("black"):  # 2026-11-06: black + riser -> impact, the music from the hit
         from dvr_cowork.impact import impact
-        imp = impact(video_key(video))
+        imp = impact(video_key(video), channel=_chan(vdir))
         print(f"impact: {Path(imp['path']).name} (hit {imp['hit']}s, from {imp['src_in']}s -> lands at {imp['at']}s)")
     at = imp["at"] if imp else 0.0
     T = round(T - at, 3)
@@ -232,7 +232,8 @@ def main(video, music=None):
         other = recent_intros(work.parent, video)
         if other:
             print(f"intro music of the {RECENT} latest videos of this channel + this day project skipped: {', '.join(Path(x).name for x in other)}")
-        paths = [p for p in candidates() if p not in body | other]
+        used = {Path(x).name.lower() for x in body | other}  # by name: old intro_music.json keep D:\Music paths
+        paths = [p for p in candidates() if Path(p).name.lower() not in used]
         prof, bad = profiles(paths)
         drive = [p for p in prof if driving(prof[p], p)]
         print(f"tense + driving: {len(drive)} of {len(prof)}" + ("" if drive else " -> none: every candidate ranked"))

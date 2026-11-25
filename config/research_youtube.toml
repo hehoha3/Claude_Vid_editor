@@ -1,0 +1,67 @@
+# /research-youtube engine (python -m dvr_cowork.youtube_research). No secrets here: tokens stay in .secrets/youtube.
+# Data: .work/youtube_research/ (local only). Edit by hand; `doctor` checks it.
+
+[budget]
+# This engine's own ceiling per Google quota bucket and Pacific-time day (Google resets at 00:00 PT).
+# Google defaults (2026): search.list = own bucket, 100 requests/day, 1 unit each; videos / channels / playlistItems
+# .list = the shared 10,000 units/day bucket, 1 unit each. A stop is a stop: never switch to another key or project.
+search_requests_per_day = 60
+standard_requests_per_day = 500
+
+[cache]
+search_hours = 6        # same query + filters within this -> 0 requests
+stats_hours = 6         # a video's views younger than this are reused (a cache hit never adds a snapshot)
+channel_days = 7        # channel id / handle / uploads playlist
+uploads_hours = 6       # a watchlist channel's uploads list
+seo_days = 7            # /doc-edit seo + full-AI `youtube trends` searches
+pack_hours = 6          # /create-doc-mov research pack
+
+[policy]
+# YouTube API Developer Policies III.E.4.h: views/day, VPH, growth, outlier ratios or any other metric computed from
+# API Data need an accepted "Analytics & Reporting" use case (support form https://support.google.com/youtube/contact/yt_api_form,
+# Section 5). Set "approved" ONLY with the acceptance reference and a review date; anything else = unverified and the
+# engine shows raw API numbers only (fail closed). Owning a channel or an OAuth login does NOT grant this.
+metrics_permission = "unverified"
+approval_ref = ""       # ticket / email id of Google's acceptance (no secrets)
+review_by = ""          # YYYY-MM-DD; past -> treated as unverified again
+# Storage (III.E.4): Non-Authorized Data is deleted after 30 days. With an accepted use case statistics may stay
+# 36 months; titles / names / tags still follow the 30-day rule. The engine purges by these on every run.
+
+# Channels left out of every list (broadcasters when you want the creator market): channel ids "UC...".
+exclude_channels = []
+
+# Presets: queries in the words creators title the niche. min_minutes = long-form market (legacy `top` keeps 20).
+# exclude = title regex for search drift. watchlist = competitor channels whose new uploads join the candidates.
+[presets.africa-wildlife]
+queries = ["african savannah predators documentary", "lion survival africa wildlife documentary",
+           "africa predators vs prey full episode", "brutal africa nature documentary"]
+min_minutes = 30
+exclude = '(?i)\b(safari tour|travel vlog|hotel|lodge review|reaction)\b'
+watchlist = "africa"
+
+[presets.amazon-wildlife]
+queries = ["amazon jungle predators documentary", "congo jungle wildlife documentary",
+           "rainforest predators nature documentary", "brutal jungle survival animals documentary"]
+min_minutes = 30
+exclude = '(?i)\b(prime|aws|alexa|kindle|shopping|haul|unboxing|delivery|warehouse|fba|seller|stock)\b'
+watchlist = "amazon"
+
+[presets.ocean-wildlife]  # research only: ocean production stays disabled in /doc-edit
+queries = ["ocean predators documentary", "shark orca wildlife documentary", "deep sea creatures documentary"]
+min_minutes = 30
+exclude = '(?i)\b(aquarium tour|fishing|cruise)\b'
+watchlist = "ocean"
+
+[presets.frozen-wildlife]
+queries = ["snow leopard ibex", "wolf pack mountain goat", "eagle mountain goat cliff", "wolves hunting sheep mountain"]
+min_minutes = 4
+exclude = ''
+watchlist = "frozen"
+
+# Watchlists: competitor channels by "UC..." id (stable) or "@handle" (resolved once, 1 unit; ids win when a handle
+# changes). Up to ~20 per list keeps a scan at ~20 playlistItems + a few videos.list requests.
+[watchlists]
+africa = []
+amazon = []
+ocean = []
+frozen = []

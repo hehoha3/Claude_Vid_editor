@@ -534,56 +534,52 @@ def master_timeline(project, vdir, body_name):
     return name, body
 
 
-def _seconds(path):
-    """Container duration of a rendered file (ffprobe) -> float or None."""
+def render_problem(path, want_s):
+    """User 2026-11-25 (a 1 h film went up as 13 min): a Done file is uploadable only when ffprobe reads it, it has
+    video + audio and its length is the timeline's (+-1 s). -> None when fine, else the reason."""
     import subprocess
     try:
-        out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
-                              str(path)], capture_output=True, text=True, timeout=60).stdout.strip()
-        return float(out)
-    except (OSError, ValueError, subprocess.SubprocessError):
-        return None
-
-
-def stale_done(project, vdir, tl_name):
-    """Done_<video>.mp4 rendered before the intro was added (its length != the master timeline's by > 1 s) -> renamed
-    Done_<video>_nointro[N].mp4 (never deleted: the user deletes it), so the master is rendered. -> the new path or None."""
-    from dvr_cowork.resolve_ops import find_timeline, timeline_fps
-    done_mp4 = vdir / f"Done_{vdir.name}.mp4"
-    tl = find_timeline(project, tl_name)
-    have = _seconds(done_mp4) if done_mp4.exists() and tl else None
-    want = (tl.GetEndFrame() - tl.GetStartFrame()) / timeline_fps(tl, project) if tl else None
-    if have is None or abs(have - want) <= 1.0:
-        return None
-    n, dst = 1, vdir / f"Done_{vdir.name}_nointro.mp4"
-    while dst.exists():
-        n += 1
-        dst = vdir / f"Done_{vdir.name}_nointro{n}.mp4"
-    done_mp4.rename(dst)
-    assert dst.exists() and not done_mp4.exists(), f"rename of {done_mp4} failed"
-    print(f"stale: {done_mp4.name} ({have:.1f}s) != {tl_name} ({want:.1f}s) -> renamed {dst.name}; delete it after "
-          f"checking the new render (PowerShell): Remove-Item -LiteralPath \"{dst}\"")
-    return dst
+        r = json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type",
+                                       "-of", "json", str(path)], capture_output=True, text=True, timeout=120).stdout)
+        have = float(r["format"]["duration"])
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+        return "ffprobe cannot read it (broken / partial file)"
+    kinds = {s.get("codec_type") for s in r.get("streams", [])}
+    if not {"video", "audio"} <= kinds:
+        return f"streams {sorted(kinds)}, video + audio needed"
+    if abs(have - want_s) > 1.0:
+        return f"{have:.1f}s, timeline is {want_s:.1f}s (partial or stale render)"
+    return None
 
 
 def render_done(project, out_dir, timeline=None, name=None, nested=None):
     """Render <timeline> with the preset PRESET as Done_<project>.mp4 into out_dir and wait (user order 2026-10-13).
     nested: the body timeline inside a master (its subtitle tracks are switched off for the render too)."""
     import time
-    from dvr_cowork.resolve_ops import find_timeline
+    from dvr_cowork.resolve_ops import find_timeline, timeline_fps, video_timeline
     name = name or f"Done_{project.GetName()}"
-    if (Path(out_dir) / f"{name}.mp4").exists():
-        print(f"render: {name}.mp4 already in {out_dir}, not rendered again")
-        return
-    from dvr_cowork.videokey import video_key
-    if (ROOT / ".work" / "doc_edit" / video_key(out_dir) / "plan.json").exists():  # the 4 black fades, before any render
-        import place
-        print(place.black_fades(video_key(out_dir)))
-    from dvr_cowork.resolve_ops import video_timeline
     tl = find_timeline(project, timeline) if timeline else video_timeline(project)  # default: the video's channN_vidK
     timeline = timeline or os.environ.get("DVR_TIMELINE")
     if not tl:
         raise SystemExit(f'no timeline "{timeline}" to render: nothing changed')
+    want = (tl.GetEndFrame() - tl.GetStartFrame()) / timeline_fps(tl, project)
+    out = Path(out_dir) / f"{name}.mp4"
+    if out.exists():
+        bad = render_problem(out, want)
+        if not bad:
+            print(f"render: {name}.mp4 already in {out_dir} and checked ({want:.0f}s, video + audio), not rendered again")
+            return
+        n, dst = 1, out.with_name(f"{name}_bad.mp4")  # never deleted here: renamed, the user deletes it
+        while dst.exists():
+            n += 1
+            dst = out.with_name(f"{name}_bad{n}.mp4")
+        out.rename(dst)
+        print(f"render: old {out.name} {bad} -> renamed {dst.name}, rendering again; delete it after checking "
+              f"(PowerShell): Remove-Item -LiteralPath \"{dst}\"")
+    from dvr_cowork.videokey import video_key
+    if (ROOT / ".work" / "doc_edit" / video_key(out_dir) / "plan.json").exists():  # the 4 black fades, before any render
+        import place
+        print(place.black_fades(video_key(out_dir)))
     if not any(tl.GetItemListInTrack("video", i) for i in range(1, int(tl.GetTrackCount("video")) + 1)):
         raise SystemExit(f'timeline "{timeline}" is empty (no video): assemble it first, nothing rendered or moved')
     cur = project.GetCurrentTimeline()
@@ -614,8 +610,12 @@ def render_done(project, out_dir, timeline=None, name=None, nested=None):
         if cur:
             project.SetCurrentTimeline(cur)
     if st.get("JobStatus") != "Complete":
-        raise SystemExit(f"render {name} failed ({st})")
-    print(f"render: {Path(out_dir) / name}.mp4 ({codec}, timeline {timeline}, {st.get('TimeTakenToRenderInMs', 0) // 1000}s)")
+        raise SystemExit(f"render {name} failed ({st}); a partial {out.name} may be left: it is checked before any upload")
+    bad = render_problem(out, want)
+    if bad:
+        raise SystemExit(f"render {out} looks wrong: {bad}; NOT uploaded")
+    print(f"render: {out} ({codec}, timeline {timeline}, {st.get('TimeTakenToRenderInMs', 0) // 1000}s; "
+          f"checked {want:.0f}s, video + audio)")
 
 
 def rerender(video, ws=None, proj=None, timeline=None):
@@ -676,8 +676,6 @@ def done(video, ws=None, proj=None, timeline=None, thumb=None, publish_at=None, 
     else:
         print(f"licenses: {vdir / 'audio_licenses.md'} kept (--licenses rewrites it)")
     m = master_timeline(project, vdir, timeline or os.environ.get("DVR_TIMELINE"))  # shots\intro.mp4 -> master
-    if m:
-        stale_done(project, vdir, m[0])
     render_done(project, vdir, m[0] if m else timeline, f"Done_{vdir.name}", m[1] if m else None)
     timeline = m[0] if m else timeline
     if upload == "later":  # push of several videos: renders one by one here, uploads side by side in push()
@@ -705,17 +703,50 @@ def upload_one(vdir, thumb=None, publish_at=None):
 PUSH_PARALLEL = 3  # user 2026-11-13: uploads side by side (one upload rarely fills the line); YouTube quota ~6 a day
 
 
+def render_fullai(vdir, poll=30):
+    """Full-AI film (a_, .production\\): `ai done` render, waited for -> its render.json status. A VERIFIED render is
+    kept (render_start would add a _v2), a running one is only waited for."""
+    import time
+    from dvr_cowork.fullai import resolve_ops as ro
+    rj = vdir / ".production" / "render.json"
+    st = json.loads(rj.read_text("utf-8")).get("status") if rj.exists() else None
+    if st not in ("VERIFIED", "RUNNING"):
+        ro.render_start(str(vdir))
+    while (r := ro.render_status(str(vdir)))["status"] not in ("VERIFIED", "FAILED"):
+        if not r.get("resolve_status"):  # job gone from Resolve's queue (restart / deleted): never wait forever
+            return "LOST (job not in Resolve's render queue; run `ai done` again)"
+        time.sleep(poll)
+    return r["status"]
+
+
 def push(videos, ws=None, proj=None, publish_at=None):
-    """`/doc-edit push` of one or more videos (user 2026-11-13): each video's done (ledger, licenses, intro master,
-    render when missing) one after another (one Resolve writer), then the uploads side by side, at most PUSH_PARALLEL
-    (each its own API client; every line prefixed by the video); handoff lines after, in order."""
+    """`/doc-edit push` of one or more videos, any channels / types (user 2026-11-23): ALL renders first, one after
+    another (one Resolve writer; footage types = done: ledger, licenses, intro master, render when missing; full-AI =
+    `ai done` + wait), then the uploads side by side, at most PUSH_PARALLEL. One failing video never stops the others
+    (its line says why). Full-AI uploads stay out: they need the user's approved upload preview (fullai/youtube.py)."""
     from concurrent.futures import ThreadPoolExecutor
-    ready = [done(v, ws, proj, upload="later") for v in videos]
-    with ThreadPoolExecutor(max_workers=min(PUSH_PARALLEL, len(ready))) as ex:
+    from dvr_cowork.resolve_ops import CHANNEL_ENV, TIMELINE_ENV
+    ready, out = [], []
+    for v in videos:
+        for k in (CHANNEL_ENV, TIMELINE_ENV):  # each video sets its own channel (the last one's would refuse it)
+            os.environ.pop(k, None)
+        try:
+            p = Path(v)
+            if p.is_dir() and (p / ".production").is_dir() and p.name.lower().startswith("a_"):
+                st = render_fullai(p)
+                out.append(f"{p.parent.name[:7]}/{p.name} render {st}; youtube: full-AI = upload preview + approval "
+                           f"(doc-edit references/full-ai.md), not uploaded here")
+            else:
+                ready.append(done(v, ws, proj, upload="later"))
+        except (Exception, SystemExit) as e:  # one video's problem never stops the rest of the batch
+            out.append(f"{v}: FAILED before upload ({e}); nothing uploaded for it")
+    with ThreadPoolExecutor(max_workers=max(1, min(PUSH_PARALLEL, len(ready)))) as ex:
         lines = list(ex.map(lambda r: upload_one(r[0], publish_at=publish_at), ready))
     for (vdir, tl), yt in zip(ready, lines):
         print(f"{vdir.parent.name[:7]}/{vdir.name} {yt}")
         finish(vdir, tl, yt)
+    for line in out:
+        print(line)
 
 
 def finish(vdir, timeline, yt):

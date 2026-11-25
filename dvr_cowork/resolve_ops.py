@@ -301,6 +301,40 @@ def timeline_fps(tl, project):
         raise OpsError(f"Cannot read timeline frame rate (got {v!r})") from e
 
 
+def apply_fades(want, t0, fps):
+    """Black fades = plain SetFades, never transitions (user 2026-11-23). want = [(item, fade_in, fade_out)] in frames:
+    only a missing / shorter fade is raised (a longer one the user made stays), then read back (Resolve 21.1 can
+    refuse or, at a project reopen, drop it: callers re-check at place, after-gen and render). -> (set, [refused at s])."""
+    fixed, bad = 0, []
+    for it, fi, fo in want:
+        g = it.GetFades() or {}
+        old = (int(g.get("FadeIn", 0)), int(g.get("FadeOut", 0)))
+        new = (max(old[0], fi), max(old[1], fo))
+        if new == old:
+            continue
+        fixed += 1
+        it.SetFades({"FadeIn": new[0], "FadeOut": new[1]})
+        g = it.GetFades() or {}
+        if (int(g.get("FadeIn", 0)), int(g.get("FadeOut", 0))) != new:
+            bad.append(f"{(int(it.GetStart()) - t0) / fps:.1f}s")
+    return fixed, bad
+
+
+def v1_clips(tl):
+    """V1 items by start, without transitions (none are made; old timelines of 2026-11-21 may still hold some)."""
+    items = [i for i in tl.GetItemListInTrack("video", 1) or [] if i.GetType() != "transition"]
+    return sorted(items, key=lambda i: int(i.GetStart()))
+
+
+def story_start(v, near, window):
+    """Index of story 1's first shot in the sorted V1 items v (user 2026-11-23): the shot after the real black gap
+    (>= 2 f) whose start is nearest frame `near` (plan intro / hook end), within `window` frames; 0 = none. Story 1's
+    landscape can sit under the intro music, so the plan's intro time alone is not the cut."""
+    gaps = [j for j in range(1, len(v)) if int(v[j].GetStart()) - int(v[j - 1].GetEnd()) >= 2
+            and abs(int(v[j].GetStart()) - near) <= window]
+    return min(gaps, key=lambda j: abs(int(v[j].GetStart()) - near), default=0)
+
+
 def clip_fps(item, default):
     try:
         v = float(item.GetClipProperty("FPS"))

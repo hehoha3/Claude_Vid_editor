@@ -34,9 +34,11 @@ is not uploaded) = steps 1-4. `--thumb <image>` (one video): `ledger.py done <vi
    `master_channN_vidK` in `6. Timeline` = intro (V1 + its own sound on A1, level untouched, no fade, unrelated to the
    film: no ledger, no license) then `channN_vidK` nested whole; the master is what gets rendered. Reused when it is
    still intro + the body at its current length, else deleted and rebuilt (derived, owned by this command; never edit
-   it by hand, edit `channN_vidK`). A `Done_<video>.mp4` whose length differs from the master by > 1 s (rendered before
-   the intro) is renamed `Done_<video>_nointro.mp4` (`stale:` line + the user's Remove-Item command), then rendered.
-   No intro file -> `channN_vidK` as before.
+   it by hand, edit `channN_vidK`). No intro file -> `channN_vidK` as before.
+   **Render check before any upload** (user 2026-11-25: a 1 h film went up as 13 min): `ledger.render_problem` =
+   ffprobe reads the file, video + audio streams, length = the rendered timeline's +-1 s. An existing `Done_<video>.mp4`
+   that fails it (partial render, rendered before the intro) is renamed `Done_<video>_bad[N].mp4` (`render: old ...`
+   line + the user's Remove-Item command), then rendered; a fresh render that fails stops that video, no upload.
 4. Upload (`push` only, `--upload`): `Done_<video>.mp4` -> the YouTube channel `.secrets/youtube/channels.json` maps
    the workspace's `Chann_N` to (`dvr_cowork youtube upload --apply`): title / description / tags from
    `youtube_meta.json` (SEO below, run BEFORE `ledger.py done` when missing; written in the narrator's language: `## Spanish` in the timestamp file = Spanish SEO + audio language es, else English), Pets & Animals, not for kids,
@@ -47,7 +49,7 @@ is not uploaded) = steps 1-4. `--thumb <image>` (one video): `ledger.py done <vi
 Resolve stays open; no relink, no folder move: the user moves the folder into `_done`.
 
 ## SEO: `python -m dvr_cowork youtube seo <video folder> [--force | --pick N]`
-YouTube Data API trend search (~300 quota units, cached 7 days) + one Gemini call -> `.work/doc_edit/<video>/
+YouTube Data API trend search (~6 requests, shared research cache 7 days) + one Gemini call -> `.work/doc_edit/<video>/
 youtube_meta.json`: the 3 most trending titles, always `WILD <REGION> | <Gemini's middle part> | Wildlife Documentary`,
 description (chapters from the spec, AI disclosure), tags <= 500 chars. Read only the stdout lines: each title must be
 true to the film (no species, kill, fight or "only / first / biggest" claim the film does not show). Pick the best true

@@ -25,7 +25,8 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
 - **Tracks**: V1 picture · A1 the sound of every V1 shot, the **whole** runtime, −12 dB · A2 narrator · A3/A4 wind bed
   per scene after the hook, alternating, 4 s crossfades · A5 birds on calm shots · A7/A8 intro song under the 30 s
   hook · A9 unused. Starting gains in `dvr_cowork/fullai/config.toml`, not a loudness guarantee. Fade handles 2 s.
-- **Runtime** = hook (30 s; 90 s from 20 min) + 30 s setup + body (stories); every body shot 3–7 s, mostly 3–5 s (v3 /
+- **Runtime** = hook (~30 s; ~90 s from 20 min; user 2026-11-23: `compile_story` grows / shrinks it ± 20 % to fit
+  its voice) + 30 s setup + body (stories), total anywhere in target ± 3 min (`vtypes.runtime_range`); every body shot 3–7 s, mostly 3–5 s (v3 /
   full_ai, user 2026-11-09; v1 / v2 films keep 6–9 s). Hook: cuts of 2–4 s (`preferred_cut_count` of the pin: 10–12
   for 30 s, 30–36 for 90 s) tiling the hook minus the black gap, from body sources, each optionally retimed 1.1–1.25×. Black gap (user 2026-11-06, as
   the 1h films): V1 empty for `[intro] gap_black_s` (0.6 s, `config.toml`) at the window's end, between the last
@@ -36,7 +37,7 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
   `--replace`): `.work/scripts/add_prelap.py <video> <song> --apply` adds only the pre-lap.
 - **Files**: source `.production/story.json`; `audios/` = `screenplay.md`, `timestamp.md`, `transcript.md`,
   `visual_plan.md`; narrator `voice/1..N.mp3` (legacy `audios/mp3/`); shots `shots/c3v6_1..M.mp4` (older `1..M.mp4`); prompts
-  `missing-prompt.txt` (per prompt: label line `shot_id | slot | dur_s s` + one-paragraph prompt; `shot_id` = `c<chann>v<vid>_<n>` = file name, `--only c3v6_3,7` works, `dur_s` = slot + handle) + `lock-assets.md`. The only
+  `missing-prompt.txt` (per prompt: label line `shot_id | slot | dur_s s` + one-paragraph prompt; `shot_id` = `c<chann>v<vid>_<n>` = file name, `--only c3v6_3,7` works, `dur_s` = slot + handle); no `lock-assets.md` since 2026-11-24 (every prompt carries the locks). The only
   prompt writer: `$E8 prompts` (never missing.py).
 - **Preservation**: numbered file ID = issued prompt ID, never sort order; ID = the file name's trailing number
   (user 2026-11-06: `7.mp4`, `shot_007.mp4`, `shot-7.mp4`, `S07.mp4` = 7; `.mp4` / `.mp3` alike); duplicate IDs
@@ -54,10 +55,12 @@ re-pin by hand. **Region prompt locks**: `prompts` stops when `dvr_cowork/fullai
 | narrator `1..N.mp3` (N = voice blocks) | `voice\`, else `audios\mp3\` | `audios\*.mp3`, `*.zip`, other folders of numbered MP3s |
 | shots `1..M.mp4` (M = prompt rows) | `shots\` only | `shots_old\`, `shots_v*\`, `clips\`, `*.zip`, other folders of numbered MP4s |
 
-Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 status` and run the stage:
-- no `voice_receipt.json` -> **A. Voice**.
-- `WAITING_FOR_SHOTS` / `WAITING_FOR_REDO` / `READY_TO_ASSEMBLE` with `shots\` complete -> **B. Shots**; incomplete
-  -> list the missing numbers, stop.
+Same two calls as footage / footage+AI (user 2026-11-24): `/doc-edit <video>` = **A** (audio on the timeline +
+`missing-prompt.txt`, stop); `/doc-edit after-gen-vid <video>` (or "shots xong" / "đã gen video xong") = **B**.
+Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 status`:
+- `/doc-edit <video>`: no `voice_receipt.json` -> **A. Voice**; `WAITING_FOR_SHOTS` / `WAITING_FOR_REDO` -> say the
+  prompts are out and the next call is `/doc-edit after-gen-vid <video>` (no B on this call).
+- `after-gen-vid`: `shots\` complete -> **B. Shots**; incomplete -> list the missing numbers, stop.
 - `WAITING_FOR_REVIEW` or later -> `$E8 check`, wait for `/doc-edit done <video>`.
 
 ### A. Voice -> prompts (one call, then stop)
@@ -74,8 +77,8 @@ Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 st
   `.production\`, `dvr_cowork profile migrate <video> --to 3 --apply`, split each shot into two (same moment, second
   half from a new camera) in `story.json`, `$E8 conform` (narration frames must stay), `$E8 voice --apply` (A2
   re-verified), `$E8 prompts --renumber` (old manifest kept, IDs from 1).
-- Reply: runtime, A2 count, occupancy, backup, prompt count, save folder `<video>\shots` (`1.mp4…M.mp4`). **Stop**:
-  "prompts issued", never "shots generated".
+- Reply: runtime, A2 count, occupancy, backup, prompt count, `missing-prompt.txt` path, save folder `<video>\shots`
+  (`c<N>v<K>_1.mp4…`), next call `/doc-edit after-gen-vid <video>`. **Stop**: "prompts issued", never "shots generated".
 - New prompt text on the same slots: edit `story.json` keeping every `duration_s` and voice block -> `$E8 conform`
   -> `$E8 voice --apply` -> `$E8 prompts --reissue` (old manifest kept); list the numbers to regenerate.
 
@@ -84,7 +87,8 @@ Incomplete set -> candidates + the copy fix in one AskUserQuestion. Then `$E8 st
 User 2026-11-06: "shots generated" = steps 1-4 in one go (story V1/A1 -> hook -> every audio track -> finish),
 never a stop after step 1; one reply at the end. Then the user calls `/doc-edit done` (render) or `/doc-edit push`.
 
-1. `$E8 shots-ready --apply` = ingest (exact IDs, full decode, duration, aspect, audio, hashes; unchanged files
+1. `after_gen.py finish <video>` (the same script as footage+AI; on a `.production\` folder it runs
+   `$E8 shots-ready --apply`) = ingest (exact IDs, full decode, duration, aspect, audio, hashes; unchanged files
    reused; other names in `shots\` -> stop, the user moves them) -> body on V1 / A1 -> contact sheets.
 2. **Hook review** (Claude views the sheets; never set `hook_ok` without viewing): every spoiler-free slot with a
    `hook_role` gets `hook_ok` + reviewer, notes, evidence and the clean range `hook_start_s` / `hook_end_s` (peak
@@ -92,8 +96,8 @@ never a stop after step 1; one reply at the end. Then the user calls `/doc-edit 
    Mark 8+ (10–12 best). The hook = the 30 s highlight, never a resolution or a generic vista; roles round-robin,
    one cut per source, ordered threat → vulnerability → pursuit → obstacle → unanswered; retimed cuts have no A1.
    Too few clean sources -> widen ranges or mark more before asking for a new shot.
-3. **Sound picks** (only licensed files: `<name>.license.txt` / Pixabay note beside it in `D:\Audio_lib`,
-   `D:\Music\pixalbay`; a missing sound -> audio-expert fetch from Epidemic without asking, then `index.py`):
+3. **Sound picks** (only licensed files: `<name>.license.txt` / Pixabay note beside it in `D:\Audio_lib`
+   (Pixabay = `D:\Audio_lib\pixalbay`); a missing sound -> audio-expert fetch from Epidemic without asking, then `index.py`):
    - intro song: one tense track ≥ ~60 s with a real ending from `D:\Audio_lib\intro`; `music` cuts it itself (first
      sound at 0:00, drum / bass climax in the middle, the song's own ending into the first story shot, beat-grid
      cuts, 1 s crossfades A7 -> A8 -> A7). `climax_drive` < 0.7 -> a heavier trailer-drums track.
@@ -122,7 +126,7 @@ never overwrites (`_v2`), returns a job ID. Poll `$E8 render-status` until VERIF
 
 ## `/doc-edit push <video>` = `done` above, then SEO + upload (the command = the upload yes)
 
-**YouTube** (a time given -> `--publish-at <ISO time +07:00>`, none -> private): `$Y seo "<video>"` prints film facts + a trend digest (~200 quota units, cached 7 days; thin
+**YouTube** (a time given -> `--publish-at <ISO time +07:00>`, none -> private): `$Y seo "<video>"` prints film facts + a trend digest (~4 requests, shared research cache 7 days; thin
 digest -> once more with `--query "snow leopard mountain goat"`). Write `.production/seo_draft.json`:
 `{"titles":[3 full titles],"pick":1,"hook":"2–3 sentences","summary":"2–3 sentences, no payoff","tags":[20–30],
 "hashtags":[...],"chapters":[optional]}` (story.json `"lang": "es"`: the digest says `LANGUAGE: es` -> every text in Spanish, chapters required) -> `$Y seo "<video>" --write` builds `youtube_meta.json`; fix every FLAG.

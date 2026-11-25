@@ -57,7 +57,7 @@ def profile(path, step=STEP):
 def classify(rel):
     p = rel.replace("\\", "/").lower()
     top = p.split("/")[0]
-    if top in ("tense_music", "openning", "music", "intro") or any(m in p for m in MUSIC_NAMES):
+    if top in ("tense_music", "openning", "music", "intro", "pixalbay") or any(m in p for m in MUSIC_NAMES):
         return "music", 7, ["tension"] if top != "ambience_sound" else ["calm"]
     if top == "sxf":
         sub = "riser" if "riser" in p else "hit" if "hit" in p or "drop" in p or "impact" in p else \

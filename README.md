@@ -372,6 +372,7 @@ Nói tự nhiên bằng tiếng Việt, kèm thời điểm (phút:giây) trên 
 | `/thumbnail` + kéo ảnh vào | Làm thumbnail 4K có chữ + logo kênh |
 | `/review-frame 01:10` | Nhận xét màu / khung hình tại thời điểm đó |
 | `/research-youtube africa-wildlife` | 20 video nhiều view nhất 10 ngày qua |
+| `/research-youtube rising africa-wildlife` · `competitors --watchlist africa` · `outliers --watchlist africa` | Ứng viên đang lên / video mới của kênh đối thủ / video vượt mức kênh (watchlist trong `config/research_youtube.toml`; VPH & outlier ratio chỉ khi Google chấp thuận derived metrics) |
 
 **Màu trên timeline / trong plan (footage+AI):** **OK** = khớp câu chuyện; **WEAK** (vàng) = tạm được, nên xem lại;
 **THIẾU** (đỏ) = cần clip AI; **FALLBACK** = shot thay thế gần đúng.

@@ -7,21 +7,18 @@ r"""YouTube SEO for a finished video (user 2026-10-31): trend research with the 
 1. Film facts from .work/doc_edit/<video>/spec.txt (# FILM, # REGION, # INTRO, # BIBLE = chapters, # CAST = species):
    no transcript is read.
 2. Trend: 3 search.list (region + "wildlife documentary", the 2 main species + "documentary"; long videos of the last
-   90 days, most viewed; 100 units each, cached 7 days) + videos.list -> views per day, title patterns, the words and
-   tags of the most viewed titles.
+   90 days, most viewed; search bucket, 1 request each, shared research cache 7 days) + videos.list -> title
+   patterns, the words and tags of the most viewed titles (views/day only with YouTube metrics approval).
 3. One Gemini call (gemini-assist bridge, JSON): the 3 most trending titles (user 2026-10-31; most clicks first),
    hook, story bullets, summary, chapter names, tags, hashtags.
 4. Python builds the description (chapter times from the spec, fixed AI disclosure), trims tags to 500 chars and
    flags animals that are not in the cast. Title 1 is the default; youtube.upload reads the file.
 Exists already -> skipped (--force: old one kept as youtube_meta_prev.json).
 """
-import datetime as dt
-import hashlib
 import json
 import math
 import re
 import sys
-import time
 from collections import Counter
 from pathlib import Path
 
@@ -29,7 +26,6 @@ from .timecode import parse_clock as secs
 from .vtypes import region_id
 
 ROOT = Path(__file__).resolve().parents[1]  # not .config: tests run this file as a script for --selftest
-CACHE = ROOT / ".work" / "seo" / "cache"
 CACHE_DAYS, DAYS_BACK = 7, 90
 STOP = set("a an the of and or in on at to for with from by is are was be it its this that how why what who when "
            "where vs x into out up as their they them his her he she you your we our i my me one two not no can "
@@ -95,29 +91,20 @@ def youtube_client(vdir):
 
 
 def search(yt, q, lang="en"):
-    """Most viewed long videos of the last DAYS_BACK days for q -> [{title, views, days, tags}], cached CACHE_DAYS."""
-    CACHE.mkdir(parents=True, exist_ok=True)
-    key = q if lang == "en" else f"{q}|{lang}"  # en keeps the old cache names
-    cf = CACHE / (hashlib.sha256(key.encode()).hexdigest()[:16] + ".json")
-    if cf.exists() and time.time() - cf.stat().st_mtime < CACHE_DAYS * 86400:
-        return json.loads(cf.read_text("utf-8")), 0
-    after = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=DAYS_BACK)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    res = yt.search().list(part="snippet", q=q, type="video", order="viewCount", publishedAfter=after,
-                           videoDuration="long", relevanceLanguage=lang, maxResults=25).execute()
-    ids = [i["id"]["videoId"] for i in res.get("items", [])]
-    items = yt.videos().list(part="snippet,statistics", id=",".join(ids)).execute().get("items", []) if ids else []
-    today = dt.datetime.now(dt.timezone.utc)
-    out = [{"title": v["snippet"]["title"], "views": int(v["statistics"].get("viewCount", 0)),
-            "days": max(1, (today - dt.datetime.fromisoformat(v["snippet"]["publishedAt"].replace("Z", "+00:00"))).days),
-            "tags": v["snippet"].get("tags", [])} for v in items]
-    cf.write_text(json.dumps(out, ensure_ascii=False), "utf-8")
-    return out, 101
+    """Most viewed long videos of the last DAYS_BACK days for q -> ([{title, views, days, tags}], API requests);
+    the shared research cache + quota ledger (dvr_cowork.youtube_research), reused CACHE_DAYS."""
+    from .youtube_research.engine import search_rows
+    return search_rows(yt, q, days=DAYS_BACK, duration="long", lang=lang, n=25, max_age_h=CACHE_DAYS * 24)
 
 
-def trend_digest(videos, top=30):
-    """Text for Gemini: the most viewed per day titles, title patterns, weighted words, frequent tags."""
+def trend_digest(videos, top=30, per_day=None):
+    """Text for Gemini: the most viewed titles (per day only with YouTube metrics approval), title patterns, weighted
+    words, frequent tags."""
+    if per_day is None:
+        from .youtube_research.engine import metrics_ok
+        per_day = metrics_ok()  # views/day = a derived metric (YouTube API policies III.E.4.h)
     seen, vids = set(), []
-    for v in sorted(videos, key=lambda v: -v["views"] / v["days"]):
+    for v in sorted(videos, key=lambda v: -v["views"] / v["days"] if per_day else -v["views"]):
         if v["title"] not in seen:
             seen.add(v["title"])
             vids.append(v)
@@ -136,8 +123,8 @@ def trend_digest(videos, top=30):
            "question (?, why, how, what)": lambda t: "?" in t or re.match(r"(?i)(why|how|what|who)\b", t),
            "number": lambda t: re.search(r"\d", t), "ALL CAPS first word": lambda t: t.split()[0].isupper(),
            "vs": lambda t: re.search(r"(?i)\bvs\.?\b", t)}
-    lines = [f"TOP {n} BY VIEWS/DAY (views/day | views | title):"]
-    lines += [f"{v['views'] // v['days']} | {v['views']} | {v['title']}" for v in vids[:15]]
+    lines = [f"TOP {n} BY VIEWS/DAY (views/day | views | title):" if per_day else f"TOP {n} BY VIEWS (views | title):"]
+    lines += [(f"{v['views'] // v['days']} | " if per_day else "") + f"{v['views']} | {v['title']}" for v in vids[:15]]
     lines.append(f"TITLE PATTERNS (of {n}): " + ", ".join(f"{k} {sum(bool(f(v['title'])) for v in vids)}"
                                                          for k, f in pat.items())
                  + f", avg length {sum(len(v['title']) for v in vids) // n} chars")
@@ -255,7 +242,7 @@ def run(vdir, force=False):
         meta_f.replace(work / "youtube_meta_prev.json")
     work.mkdir(parents=True, exist_ok=True)
     meta_f.write_text(json.dumps(meta, ensure_ascii=False, indent=2), "utf-8")
-    quota = f"~{units + 1} quota units" if units else "trend cached (1 quota unit)"  # +1 = channels.list
+    quota = f"{units + 1} API requests" if units else "trend cached (1 API request)"  # +1 = channels.list
     lines = [f"seo {vdir.name}: {len(videos)} trend videos, {quota}, Gemini in {stats.get('in', 0)} "
              f"out {stats.get('out', 0) + stats.get('thoughts', 0)} tokens -> {meta_f}"]
     lines += [f"  {i}. {t['text']}" + ("  <- title" if i == 1 else "") for i, t in enumerate(meta["titles"], 1)]
@@ -286,7 +273,8 @@ def selftest():
     vids = [{"title": "WILD AMAZON | Why Jaguars Climb", "views": 900000, "days": 30, "tags": ["Jaguar", "amazon"]},
             {"title": "Jaguar vs Caiman: 5 Hunts", "views": 50000, "days": 10, "tags": ["jaguar"]},
             {"title": "WILD AMAZON | Why Jaguars Climb", "views": 900000, "days": 30, "tags": []}]
-    d = trend_digest(vids)
+    d = trend_digest(vids, per_day=True)
+    assert trend_digest(vids, per_day=False).startswith("TOP 2 BY VIEWS (views | title):\n900000 | WILD AMAZON")
     assert d.startswith("TOP 2") and "30000 | 900000 | WILD AMAZON" in d and "jaguar" in d.split("TAGS: ")[1], d
     assert "has | 1" in d and "vs 1" in d and "ALL CAPS first word 1" in d, d
     assert trend_digest([]) == "NO TREND DATA"

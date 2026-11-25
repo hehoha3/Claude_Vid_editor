@@ -168,9 +168,7 @@ class ProductionTests(unittest.TestCase):
         first=pipeline.missing_prompts(self.video)
         self.assertEqual(first["prompts"],61)
         self.assertEqual(pipeline.missing_prompts(self.video),first)
-        head=(self.video/"lock-assets.md").read_text("utf-8")
-        for part in ("1. CỐ ĐỊNH NHÂN VẬT","### A. ibex (M)","- leads the climb","**ABSOLUTE LOCK:** Notch on the RIGHT ear only.",
-                     "2. COUNT LOCK","1. Fixture shelf","4. TERRAIN LOCK","5. ÁNH SÁNG"): self.assertIn(part,head)
+        self.assertFalse((self.video/"lock-assets.md").exists())  # user 2026-11-24: prompts carry the locks
         from dvr_cowork.prompt_rules import prompt_rows
         rows=prompt_rows(self.video)
         self.assertEqual(len(rows),61)
@@ -422,8 +420,9 @@ class ProductionTests(unittest.TestCase):
         vids=[{"title":"Snow Leopard vs Ibex | Wildlife Documentary","channel":"A","views":900000,"days":30,"tags":["Snow Leopard","ibex"]},
               {"title":"Can the Kid Survive?","channel":"B","views":50000,"days":10,"tags":["snow leopard"]},
               {"title":"Snow Leopard vs Ibex | Wildlife Documentary","channel":"A","views":900000,"days":30,"tags":[]}]
-        d=seo.trend_digest(vids)
+        d=seo.trend_digest(vids,per_day=True)
         self.assertTrue(d.startswith("TOP 2") and "30000 | 900000 | Snow Leopard vs Ibex" in d,d)
+        self.assertIn("TOP 2 BY VIEWS (views | title | channel):\n900000 | Snow Leopard",seo.trend_digest(vids,per_day=False))
         self.assertIn("question 1/2",d);self.assertTrue(d.split("TAGS: ")[1].startswith("snow leopard"))
         self.assertEqual(seo.trend_digest([]),"NO TREND DATA")
         self.assertEqual(seo.tag_budget(["A b","a b","x"*495,"c"]),["a b"])
@@ -550,7 +549,8 @@ class ProductionTests(unittest.TestCase):
         self.assertTrue(a8[0].start<a7[0].end and a8[0].end>a7[1].start)  # real overlaps = crossfades
         self.assertEqual(a7[0].fades["FadeIn"],0)  # the film opens on the song's own first sound
         self.assertAlmostEqual(result["score"]["bpm"],120.0,delta=0.5)
-        self.assertGreater(result["score"]["climax_src_s"],20)  # the loud stretch, not the quiet opening
+        # the loud stretch (from 20 s), not the quiet opening; the analysis grid may land one hop before 20.00
+        self.assertGreater(result["score"]["climax_src_s"],19.5)
         a5=sorted(tl.items["audio",5],key=lambda x:x.start); pre,birds=a5[0],a5[1:]
         # pre-lap (user 2026-11-06): story 1's wind 4 s before the black gap -> 4 s into the story, 4 s fades
         gap=pipeline.intro_gap_f(plan)

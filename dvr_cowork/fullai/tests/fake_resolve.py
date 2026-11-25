@@ -17,6 +17,7 @@ class Item:
     def SetProperty(self,k,v): self.properties[k]=v;return True
     def SetFades(self,fades): self.fades=dict(fades);return True
     def GetFades(self): return dict(getattr(self,"fades",{}))
+    def GetType(self): return "transition" if getattr(self,"transition",False) else "clip"
     def SetSpeed(self,o):  # assumed: no ripple, record start kept, length = source length / speed (verify live)
         self.speed=o["Percentage"]/100;self.end=self.start+round((self.end-self.start)/self.speed);return True
 

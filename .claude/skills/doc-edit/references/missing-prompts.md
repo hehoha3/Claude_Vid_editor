@@ -12,8 +12,8 @@ slot, clip length) + the prompt as ONE paragraph, no line break (the user pastes
 essentials: length, camera / shot size, place, light, the animal's action + direction, the shared TAIL). Nothing
 else goes in the file (group, need, reason -> the reply). Written by `prompt_rules.txt_text`, read back with
 `prompt_rules.prompt_rows` (also reads the `missing-prompt.csv` of videos prompted 2026-11-05..16).
-Full-AI films write the same file plus `lock-assets.md` (`dvr_cowork ai prompts`, `references/full-ai.md`); footage+AI prompts carry no
-locks.
+Full-AI films write the same file only (`dvr_cowork ai prompts`, `references/full-ai.md`; their prompts carry the
+character / count / terrain / light locks; no `lock-assets.md` since 2026-11-24); footage+AI prompts carry no locks.
 
 ## Rules shared by both video types (`dvr_cowork/prompt_rules.py`, gated by `--check` and `dvr_cowork ai build`)
 - **No contact, ever**: no bite, grab, strike, pin, shove, ram, collision, horns meeting, kill, wound, blood. A

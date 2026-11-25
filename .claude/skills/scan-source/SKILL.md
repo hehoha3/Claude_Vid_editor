@@ -31,7 +31,7 @@ Z: is read-only: its indexes live in `.work/library/` (also SFX / Sound). Never 
 | `africa_ai_check` `D:\AI_video\_africa` (africa, ai) | `africa_ai_check_library.json` | (2026-10-22) `_check\` new, `<species>\` filed by `organize.py --africa`; kept out of the `ai` index |
 | `savannah` `Z:\Unseen\savannah` (africa, real) | `savannah_library.json` | scenery, `subject` = landscape |
 | `Z:\Unseen\Amazona\audio` | `.work/library/audio_library.json` | `<category>/` as the user names them (ambience_sound, Nature_sound, tense_music...) |
-| `audio_lib` `D:\Audio_lib` | `.work/library/Audio_lib_library.json` | same `<category>/` rule: `music/<mood>/`, `intro/`, `Nature_sound/`, `SXF/`, `ambience_sound/` (audio-expert `references/online_sources.md`) |
+| `audio_lib` `D:\Audio_lib` | `.work/library/Audio_lib_library.json` | same `<category>/` rule: `music/<mood>/`, `intro/`, `pixalbay/` (Pixabay + license txt, intro picks), `Nature_sound/`, `SXF/`, `ambience_sound/` (audio-expert `references/online_sources.md`) |
 
 Entries are keyed by content hash: moved / renamed files keep their entry (and the older vision tags of 62 video
 clips). Per file: path, folder fields (video: subject, action, setting_folder; audio: category), duration, video specs

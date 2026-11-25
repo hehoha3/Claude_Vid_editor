@@ -11,7 +11,8 @@ An existing source (`.production\story.json` = full-AI, `four_files.src.md` = fo
 0. **Channel list** (`/create-doc-mov chann1 chann2 chann3 …`, user 2026-11-05): one new film per named channel, no
    limit on channels or films (a channel named twice = two films; each extra film = its own `new_video.py` call / its
    own `next-video`). Step 1 for all films first (one question per film, AskUserQuestion holds 4: more films = more
-   calls), then steps 2–4 + write + review stop film by film in the order given, each film fully separate.
+   calls), then steps 2–4 + write film by film in the order given, each film fully separate. No stop between films
+   (user 2026-11-24): a film's four files PASS -> post its summary (step 7) and start the next film at once.
 1. **Type + region + minutes + narrator language** (user 2026-11-12; language 2026-11-17): type `footage` (f_, real
    footage only) / `footage+AI` (fa_, AI <= 40 %) / `full-AI` (a_); region amazon (jungle, Congo too) / africa (desert,
    savanna) / frozen (snow, ice, high mountains, polar; old name himalaya); runtime 8–180 min, the user's choice;
@@ -23,12 +24,15 @@ An existing source (`.production\story.json` = full-AI, `four_files.src.md` = fo
    Full-AI -> `references/full-ai.md` (`$E8` = `.venv/Scripts/python.exe -m dvr_cowork ai`, `$Y` = `... -m dvr_cowork
    youtube`) for steps 2–4 and after (`$E8 init` pins the profile, its `reminder` goes to the user at once); nothing
    after this section applies. Footage types -> everything below.
-2. **Trends, one parallel turn**, at most one vidIQ call (credit error -> one line, YouTube API alone; no retry):
-   full-AI = `$E8 next-video Chann_N --region <r> --lang <en|es>` + `$Y trends Chann_N` + `vidiq_outliers` (the region's predator /
-   prey); footage types = research-youtube `top_videos.py <amazon-wildlife|africa-wildlife>` + `vidiq_outliers` (region).
-   Read only the digests; trends steer species pairing, setting, title angle — never copy a plot.
+2. **Trends, one research pack** (plan 2026-11-20: one collection per niche, no duplicate trend calls):
+   full-AI = `$E8 next-video Chann_N --region <r> --lang <en|es>` + `$Y trends Chann_N` (shared research cache);
+   footage types = `.venv/Scripts/python.exe -m dvr_cowork.youtube_research pack --preset <amazon|africa>-wildlife`
+   (reused 6 h: 0 requests; prints `pack_id`, ≤ 12 items). No vidIQ by default: one `vidiq_outliers` only when the user
+   asks or the pack has < 5 items (label it provider data; credit error -> one line, no retry). Read only the digests;
+   trends steer species pairing, setting, title angle — never copy a plot, wording or footage. Note `pack_id` + the
+   2–3 proof links in the film's handoff line, never the raw list.
 3. **Three options** (user 2026-11-04: 3 are enough), the strongest by trend evidence, each in a short text card
-   with 1–2 trend proofs (title, views/day) and the story count it uses (`profile stories`; the recommended one unless
+   with 1–2 trend proofs (title, views, link; views/day only when the pack says metrics approved) and the story count it uses (`profile stories`; the recommended one unless
    the idea needs another option), then one AskUserQuestion (free text = own idea):
    - full-AI: 3 ideas. Card: working title · archetype · cast (protagonist / antagonist, exact counts) · dual peril ·
      clock · chokepoint · hook · stories (n × min) with 3–4 action passages each, one line each.
@@ -80,12 +84,12 @@ today; all films of the day share the day project `vid_DDMMYY`; one film per cha
 `<video>__Chann_N`, which doc-edit's `video_key` finds).
 Set `target: <minutes>` and `lang: en|es` in the source header (no `lang:` = en; es -> `_Screenplay_ES` /
 `_Timestamp_ES_VI` with `## Spanish`, production.md). Several films = write them one after another, each through steps 1–6,
-then one review stop (step 7) with a summary per film. For every film:
+each film's summary (step 7) posted as it finishes, no wait for "ok". For every film:
 1. Read [storycraft.md](references/storycraft.md) and production.md. Format (user 2026-11-03; not given -> ask):
    **(1) central question** (each story answers a part) or **(2) multi-story** (linked or not, each its own question +
    ending). Story count and minutes = the option picked from `profile stories` (scene ids `k.x` = story k, `0.x`
-   intro; build warns on another count unless a `stories_reason:` header line says why). Intro 00:00–00:30 under
-   20 min, 00:00–01:30 from 20 min. Story 1 the longest, fast action within its first 30 s, first attack by ~03:00
+   intro; build warns on another count unless a `stories_reason:` header line says why). Intro ~00:30 under
+   20 min, ~01:30 from 20 min, ± 20 % (24–36 s / 72–108 s; user 2026-11-23: the narration decides). Story 1 the longest, fast action within its first 30 s, first attack by ~03:00
    (~01:30 under 20 min); intro + Story 1 mostly strong motion shots; no slow motion in shot text (feeds AI prompts),
    animals always moving (storycraft.md "Motion"). footage (f_): every shot must exist in the library (no AI).
 2. Research: `check_refs.py` every DOI (and `--abstract` when a sentence carries a number). Say only what the source
@@ -107,9 +111,9 @@ then one review stop (step 7) with a summary per film. For every film:
 5. `--check` until there are no ERRORs or WARNs, then build (the validator runs inside the build; it must PASS).
 6. Organize: `<video>\audios` must hold exactly the four `.md` files (one glob per film). A copy that landed anywhere
    else (workspace, `.work`, another video) is moved in with Python `Path` and checked after; never overwrite one there.
-7. **Review stop.** Reply per film with the short summary below — the user reviews the intro and Story 1 (user
+7. **Summary, no stop** (user 2026-11-24). Post the short summary below — the user reviews the intro and Story 1 (user
    2026-10-30); the other stories get only their names — from the source you wrote, never by opening the generated
-   files, then stop and wait. Changes the user asks for = job B (together with the user), rebuild,
+   files, then go straight on to the next film (stop only after the last one). Changes the user asks for later = job B, rebuild,
    summary again. The user then records the voice themselves; their "có mp3 rồi / voice xong" starts job D.
 
    ```

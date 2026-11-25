@@ -17,7 +17,7 @@ film may run +-3 min: "20p" = 17-23, "1h" = 57-63, `vtypes.runtime_range`):
 - Folder `D:\Chann_N_<Name>\<f|fa|a>_<en|es>_<region>_DDMMYY_N` (lang = narrator; e.g. `fa_en_africa_151126_1`, `a_es_frozen_151126_2`); names without prefix / lang are older
   films. Type = `dvr_cowork profile detect <video>` (prefix, else the descriptor / files); `profile context <video>
   --phase <step>` = that step's numbers + the one reference to read. Stories = `profile stories --minutes N` (1 story
-  only up to 15 min, else 5-12 min each, Story 1 longest; intro 0:30 under 20 min, 1:30 from 20 min).
+  only up to 15 min, else 5-12 min each, Story 1 longest; intro ~0:30 under 20 min, ~1:30 from 20 min, +-20 % = 24-36 s / 72-108 s, `vtypes.INTRO_TOLERANCE`).
 - Region: `amazon` (Amazon, Congo jungle), `africa` (savanna, desert), `frozen` (snow, ice, high mountains, polar; old
   name `himalaya`; footage `Z:\AI Document` = real footage despite the name), `ocean` (disabled). Registry: `dvr_cowork/vtypes.py`. Full-AI amazon /
   africa have no prompt locks yet: `prompts` stops -> remind the user.
