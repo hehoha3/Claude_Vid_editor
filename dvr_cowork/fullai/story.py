@@ -6,6 +6,7 @@ import math
 import re
 from .core import Stop, atomic_text, config, event, frames, object_hash, prod, read_json, stamp, video_path, write_json
 from ..prompt_rules import SPEED, TAIL, dur_s, issues, paced
+from ..vtypes import INTRO_TOLERANCE, runtime_range
 
 OUTPUTS = ("screenplay.md", "timestamp.md", "transcript.md", "visual_plan.md")
 LANGS = {"en": "English", "es": "Spanish"}  # narrator language, story.json "lang" (user 2026-11-17)
@@ -66,7 +67,7 @@ def compile_story(source, durations=None, profile=None):
     bad = [c["id"] for c in s["characters"] if not strings(c.get("details"))]
     bad += [k for k in BIBLE if not strings(s.get(k))]
     if bad:
-        raise Stop("Production bible incomplete (written to lock-assets.md): "
+        raise Stop("Production bible incomplete (the prompts carry these locks): "
                    "each character needs details[] and the source needs count_lock[], zones[], terrain_lock[], light_lock[]. "
                    "Missing: " + ", ".join(bad))
     if tint := sorted({m.lower() for k in ("environment", "geography") for m in TINT.findall(s[k])}):
@@ -94,10 +95,30 @@ def compile_story(source, durations=None, profile=None):
             raise Stop(f"{sc['id']}: this film's intro is cut from reviewed body sources at /doc-edit hook; "
                        "the hook scene has voice only, no shots")
         start, local = cursor, []
+        lines = []
+        for block in sc["voice"]:
+            # ponytail: plan.json keeps the narration under "en" whatever the language (A2 receipt check, tests read it)
+            en, vi = str(block.get(lang, "")).strip(), str(block.get("vi", "")).strip()
+            if not en or "\n" in en or not vi or "\n" in vi or vi == en or vi.isascii():
+                raise Stop(f"{sc['id']}: each voice block needs one {LANGS[lang]} paragraph (key {lang!r}) "
+                           "and full Vietnamese translation.")
+            voice_id += 1
+            duration = float(durations[voice_id-1]) if durations is not None and voice_id <= len(durations) else len(en.split())*60/wpm
+            if not math.isfinite(duration) or duration <= 0:
+                raise Stop(f"Invalid voice duration #{voice_id}")
+            lines.append(dict(id=voice_id, en=en, vi=vi, duration_f=math.ceil(duration*fps-1e-8), scene=sc["id"]))
         if window:
-            ideal_time += float(intro["duration_s"])
+            # user 2026-11-23: the hook is ~duration_s, not fixed: it grows to fit its voice (or shrinks so no gap
+            # passes PAUSE_S), inside duration_s ± INTRO_TOLERANCE; story 1 and the runtime move with it.
+            base, vf, n = float(intro["duration_s"]), sum(v["duration_f"] for v in lines), len(lines)
+            pad = frames(.3, fps) + frames(.5, fps)
+            loose = vf + (pad if n > 1 else frames(.3, fps)) + max(n-1, 1)*frames(PAUSE_S, fps)  # widest gaps allowed
+            w = min(max(frames(base, fps), vf + pad + n - 1), loose)
+            w = min(max(w, frames(base*(1-INTRO_TOLERANCE), fps)), frames(base*(1+INTRO_TOLERANCE), fps))
+            ideal_time += w/fps
             end = frames(ideal_time, fps)
-            slot = {"duration_s": float(intro["duration_s"]), "id": "HOOK", "prompt_id": None,
+            hook_end = end
+            slot = {"duration_s": w/fps, "id": "HOOK", "prompt_id": None,
                     "start_f": cursor, "end_f": end, "phase": phase, "scene": sc["id"]}
             local.append(slot)
             slots.append(slot)
@@ -156,7 +177,7 @@ def compile_story(source, durations=None, profile=None):
             cursor = end
         if index == 0 and phase != "hook":
             raise Stop("The first scene must be hook.")
-        opening = float(intro["duration_s"]) + float(p.get("setup_s", 30))
+        opening = (hook_end/fps if index else 0) + float(p.get("setup_s", 30))
         if index == 1 and (phase != "setup" or abs(cursor/fps-opening) > 1/fps):
             raise Stop(f"Scene 2 must be the {p.get('setup_s', 30)}-second setup (ending at {opening:g}s).")
         story_start = index > 1 and sk[index] != sk[index-1]
@@ -170,18 +191,6 @@ def compile_story(source, durations=None, profile=None):
             raise Stop(f"{sc['id']}: an ending closes its story; the next scene must start story {sk[index]+1}.")
         if index == len(s["scenes"])-1 and phase != "ending":
             raise Stop("The final scene must be ending.")
-        lines = []
-        for block in sc["voice"]:
-            # ponytail: plan.json keeps the narration under "en" whatever the language (A2 receipt check, tests read it)
-            en, vi = str(block.get(lang, "")).strip(), str(block.get("vi", "")).strip()
-            if not en or "\n" in en or not vi or "\n" in vi or vi == en or vi.isascii():
-                raise Stop(f"{sc['id']}: each voice block needs one {LANGS[lang]} paragraph (key {lang!r}) "
-                           "and full Vietnamese translation.")
-            voice_id += 1
-            duration = float(durations[voice_id-1]) if durations is not None and voice_id <= len(durations) else len(en.split())*60/wpm
-            if not math.isfinite(duration) or duration <= 0:
-                raise Stop(f"Invalid voice duration #{voice_id}")
-            lines.append(dict(id=voice_id, en=en, vi=vi, duration_f=math.ceil(duration*fps-1e-8), scene=sc["id"]))
         spare = cursor-start-sum(v["duration_f"] for v in lines)
         if spare < len(lines)-1:
             timing.append(f"{sc['id']}: voice {(cursor-start-spare)/fps:.2f}s exceeds picture window {(cursor-start)/fps:.2f}s "
@@ -217,8 +226,9 @@ def compile_story(source, durations=None, profile=None):
     cast_leaks(s, slots)
     if timing:
         raise Stop("Voice timing problems; revise timing/source before generating shots; never cut speech:\n" + "\n".join(timing))
-    if abs(cursor-frames(target,fps)) > 1:
-        raise Stop(f"Picture totals {cursor/fps:.3f}s; target {target:.3f}s. Fix scene lengths.")
+    lo_m, hi_m = runtime_range(target/60)  # user 2026-11-23: "1h" may run 57-63 min, "15p" 12-18 min
+    if not frames(lo_m*60, fps)-1 <= cursor <= frames(hi_m*60, fps)+1:
+        raise Stop(f"Picture totals {cursor/fps:.3f}s; allowed {lo_m:g}–{hi_m:g} min (target {target/60:g}). Fix scene lengths.")
     if durations is not None and len(durations) != len(voice):
         raise Stop(f"{len(durations)} audio durations for {len(voice)} voice blocks")
     coverage = sum(v["duration_f"] for v in voice)/cursor
@@ -326,24 +336,6 @@ CALM = re.compile(r"\b(?:still(?:ness)?|motionless|slow(?:ly|s|er|ing)?|gentl[ey
 
 def strings(value):
     return isinstance(value, list) and bool(value) and all(isinstance(x, str) and x.strip() for x in value)
-
-
-def bible(source):
-    """Production bible printed above the prompts: the locks a generator project keeps for every shot."""
-    out = [f"# Production bible — {source['title']}", "",
-           "Keep these locks for every generation. Zone names are for reference only; prompts describe the place, "
-           "never print a name on screen.", "", "## 1. CỐ ĐỊNH NHÂN VẬT — CHARACTER LOCK", ""]
-    for n, c in enumerate(source["characters"]):
-        out += [f"### {chr(65+n)}. {c.get('name') or c['species']} ({c['id']})", "", c["lock"]]
-        out += [f"- {d}" for d in c["details"]]
-        if c.get("absolute_lock"):
-            out += ["", f"**ABSOLUTE LOCK:** {c['absolute_lock']}"]
-        out.append("")
-    sections = (("2. COUNT LOCK", "count_lock", "-"), ("3. CỐ ĐỊNH MÔI TRƯỜNG — ENVIRONMENT LOCK", "zones", "1."),
-                ("4. TERRAIN LOCK", "terrain_lock", "-"), ("5. ÁNH SÁNG — LIGHT LOCK", "light_lock", "-"))
-    for title, key, mark in sections:
-        out += [f"## {title}", ""] + [f"{i+1}. {x}" if mark == "1." else f"- {x}" for i, x in enumerate(source[key])] + [""]
-    return "\n".join(out)
 
 
 def documents(plan):

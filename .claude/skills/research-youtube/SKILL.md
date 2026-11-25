@@ -1,27 +1,38 @@
 ---
 model: sonnet
 name: research-youtube
-description: Top 20 most-viewed YouTube videos of the last 10 days for a topic, with links (presets amazon-wildlife, africa-wildlife; or any topic, "(ai)" = AI-made only). Use for /research-youtube, "tìm video nhiều view nhất tuần", "top video chủ đề X", "trend YouTube tuần này", or a niche check before a new video topic.
+description: YouTube market research for wildlife documentaries - top (most viewed of a topic, last N days), rising candidates of a niche, competitor channels' new uploads, outliers of a watchlist; presets amazon-wildlife, africa-wildlife, ocean-wildlife, frozen-wildlife or any topic ("(ai)" = AI-made only). Use for /research-youtube, "tìm video nhiều view nhất tuần", "top video chủ đề X", "trend YouTube tuần này", "video đang lên", "đối thủ / kênh cạnh tranh đăng gì", "video outlier", or a niche check before a new video topic.
 ---
 
 # research-youtube
 
-One script run (two at most); no vidIQ, browser or other API calls; never open a video.
+One engine, one CLI call per request (`$R` = `.venv/Scripts/python.exe -m dvr_cowork.youtube_research`); Python
+fetches, caches, filters and ranks; you read only its digest (≤ 12 rows). No vidIQ, browser, Gemini, MCP or subagent
+unless the user asks; never open a video. Read-only YouTube: nothing here uploads or edits.
 
-1. **Preset** (user 2026-11-01): `amazon-wildlife` = jungle documentaries anywhere (Amazon, Congo, Borneo, Central
-   America ...), `africa-wildlife` = savanna / bush (Serengeti, Mara, Kruger, Okavango ...); AI or real footage.
-   Run `.venv/Scripts/python.exe .claude/skills/research-youtube/scripts/top_videos.py <preset>` (its own queries,
-   >= 20 min, 30 rows) and keep 20: a narrated predator / survival story. Drop the other region, other habitats
-   (Arctic, North America ...), relax 4K footage without a story, movies.
-2. **Other topic**: 2-4 English queries the way creators title that niche (100 quota units each, 200 under 20 min):
-   `top_videos.py -q "..." -q "..." [--ai] [--days 10] [--n 20] [--min 3]`. `(ai)` / "AI" in the topic -> `--ai` and
-   "AI" in half the queries. Numbers from the user override the defaults.
-3. Drop clearly off-topic rows (search drift: "amazon" -> shopping); too few left -> one re-run with tighter queries.
-   Fewer than 20 = say so, never pad.
-4. Reply in Vietnamese: the table as printed (plain `https://youtu.be/...` links), then at most 3 lines of takeaways
-   (dominant channels, title / length patterns, views/ngày standouts).
+| User asks | Run |
+|---|---|
+| `/research-youtube <preset>` (legacy), "top / nhiều view nhất" | `$R top --preset <preset>` (>= 20 min, 30 rows) |
+| other topic | `$R top -q "..." -q "..." [--ai] [--days 10] [--top 20] [--min 3]` (2–4 English queries the way creators title the niche; `(ai)` -> `--ai`) |
+| `rising <preset>`, "video đang lên" | `$R rising --preset <preset> [--days 10]` (>= 30 min long-form + the preset's watchlist uploads) |
+| `competitors --watchlist <w>`, "đối thủ" | `$R competitors --watchlist <w> [--days 30]` |
+| `outliers --watchlist <w> [--topic "lion buffalo"]` | `$R outliers --watchlist <w> [--topic "..."]` |
 
-Errors: `no valid YouTube token` -> the user runs `.venv/Scripts/python.exe -m dvr_cowork youtube login --key Chann_N`. Quota error
--> stop, it resets ~14:00-15:00 giờ VN; no retry.
-Limits (say when relevant): `--ai` is a keyword check, AI videos that never say so are missed; search returns at most
-50 per query and length, so this is the top of what search surfaces, not a census.
+Presets: amazon (jungle anywhere: Amazon, Congo, Borneo ...), africa (savanna / bush), ocean (research only; ocean
+production stays off), frozen (mountain predator / prey). Numbers from the user override defaults. Unsure about quota
+-> `--dry-run` first (0 requests); `--cached-only` = store only; `$R doctor` = budget, reset, watchlists.
+
+Reply in Vietnamese: the table as printed (plain links), then 3–5 lines of semantic takeaways: species / conflict
+motifs, title formulas, length; for outliers per row a `why_to_inspect` hypothesis + what NOT to copy (plot chain,
+exact wording, footage). Drop clearly off-topic rows; fewer than asked = say so, never pad.
+
+Honesty rules (YouTube API policy III.E.4.h, enforced by the engine): `metrics approval_required` = no views/day, VPH,
+growth or outlier ratio exists; never estimate one yourself from views / age, never call raw totals "trending speed".
+Rows marked `*` are the tool's own metric (only with approval in config). No CTR, retention, revenue or traffic of other
+channels: not public. "Gaps" = angles missing from the rows seen, not the whole market.
+
+Stops: `STOP: no valid YouTube token` -> the user runs `.venv/Scripts/python.exe -m dvr_cowork youtube login --key
+Chann_N`. `STOP` quota / budget -> report the reset time it prints; no retry, never another key. Empty watchlist ->
+ask the user for competitor channels (UC id or @handle) and add them to `config/research_youtube.toml [watchlists]`.
+Limits: search returns ≤ 50 per query and length (the top of what search surfaces, not a census); `--ai` is a keyword
+check. Scheduled scans (Task Scheduler, no Claude): `references/schedule.md`.

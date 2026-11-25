@@ -25,6 +25,7 @@ TOLERANCE_MIN = 3  # user 2026-11-12: "20p" = 17-23 min, "1h" = 57-63 min: the s
 # Story math (user 2026-11-12): one story only up to 15 min; 2+ stories 5-12 min each, aim 8.5 (6-10 typical);
 # Story 1 the longest (x1.3, <= 15). Intro 30 s under 20 min, 1:30 from 20 min; the last line ends by target - 0:28.
 LONG_FROM_MIN, INTRO_SHORT_S, INTRO_LONG_S, END_S = 20, 30, 90, 28
+INTRO_TOLERANCE = 0.2  # user 2026-11-23: intro ~30 s = 24-36 s, ~1:30 = 72-108 s; the narration / story decides
 ONE_STORY_MAX, STORY_MIN, STORY_MAX, STORY_AIM, STORY1_GAIN, STORY1_MAX = 15.0, 5.0, 12.0, 8.5, 1.3, 15.0
 LANGS = ("en", "es")  # narrator language in the folder name (user 2026-11-17): a_es_frozen_151126_2; older films: none
 NAME = re.compile(r"^(?:(fa|f|a)_(?:(en|es)_)?)?([a-z]+)_(\d{6})(?:_(\d+))?$", re.I)
@@ -114,7 +115,10 @@ def stories(minutes, n=None) -> dict:
     ok = ok or [max(1, round(body / STORY_AIM))]
     best = sorted(ok, key=lambda k: (abs(body / k - STORY_AIM), k))
     pick = [n] if n else sorted(best[:3])
-    return {"minutes": m, "range": runtime_range(m), "intro_s": intro_s(m), "end_s": END_S, "body_min": round(body, 1),
+    i = intro_s(m)
+    return {"minutes": m, "range": runtime_range(m), "intro_s": i,
+            "intro_range": (round(i * (1 - INTRO_TOLERANCE)), round(i * (1 + INTRO_TOLERANCE))), "end_s": END_S,
+            "body_min": round(body, 1),
             "recommended": best[0],
             "options": [{"stories": k, "story_min": split_minutes(body, k)} for k in pick]}
 
@@ -141,6 +145,7 @@ def selftest():
     assert stories(12, 2)["options"][0]["story_min"][1] >= STORY_MIN and stories(15)["intro_s"] == 30
     assert runtime_range(20) == (17, 23) and runtime_range(60) == (57, 63) and runtime_range(8) == (8, 11)
     assert runtime_range(180) == (177, 180)
+    assert stories(15)["intro_range"] == (24, 36) and stories(60)["intro_range"] == (72, 108)
     print("vtypes selftest ok")
 
 

@@ -7,16 +7,12 @@ film doesn't have. No Gemini (workspace rule): the long text is assembled by cod
 """
 from __future__ import annotations
 
-import hashlib
-import json
 import math
 import re
-import time
 from collections import Counter
-from datetime import datetime,timedelta,timezone
-from .core import ROOT,Stop,prod,read_json,video_path,write_json
+from datetime import datetime,timezone
+from .core import Stop,prod,read_json,video_path,write_json
 
-CACHE=ROOT/".work/8p/seo_cache"  # apart from the 1h engine's .work/seo
 CACHE_DAYS,DAYS_BACK=7,90
 STOP=set("a an the of and or in on at to for with from by is are was be it its this that how why what who when where vs "
          "into out up as their they them his her he she you your we our can do will just not no full documentary hd 4k "
@@ -47,28 +43,20 @@ def film(v):
 
 
 def search(yt,q,lang="en"):
-    """Most viewed 4–20 min videos of the last DAYS_BACK days -> ([{title,channel,views,days,tags}], quota used)."""
-    CACHE.mkdir(parents=True,exist_ok=True)
-    key=q.lower() if lang=="en" else f"{q.lower()}|{lang}"  # en keeps the old cache names
-    cf=CACHE/(hashlib.sha256(key.encode()).hexdigest()[:16]+".json")
-    if cf.exists() and time.time()-cf.stat().st_mtime<CACHE_DAYS*86400 and (cached:=json.loads(cf.read_text("utf-8"))):
-        return cached,0  # an empty result is never reused: a bad query shouldn't block a week
-    now=datetime.now(timezone.utc)
-    after=(now-timedelta(days=DAYS_BACK)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    ids=[x["id"]["videoId"] for x in yt.search().list(part="id",q=q,type="video",order="viewCount",publishedAfter=after,
-         videoDuration="medium",relevanceLanguage=lang,maxResults=25).execute().get("items",[])]
-    items=yt.videos().list(part="snippet,statistics",id=",".join(ids)).execute().get("items",[]) if ids else []
-    out=[{"title":x["snippet"]["title"],"channel":x["snippet"]["channelTitle"],"views":int(x["statistics"].get("viewCount",0)),
-          "days":max(1,(now-datetime.fromisoformat(x["snippet"]["publishedAt"].replace("Z","+00:00"))).days),
-          "tags":x["snippet"].get("tags",[])} for x in items]
-    cf.write_text(json.dumps(out,ensure_ascii=False),"utf-8")
-    return out,101
+    """Most viewed 4–20 min videos of the last DAYS_BACK days -> ([{title,channel,views,days,tags}], API requests);
+    the shared research cache + quota ledger (dvr_cowork.youtube_research), reused CACHE_DAYS."""
+    from ..youtube_research.engine import search_rows
+    return search_rows(yt,q.lower(),days=DAYS_BACK,duration="medium",lang=lang,n=25,max_age_h=CACHE_DAYS*24)
 
 
-def trend_digest(videos,top=30):
-    """Text for Claude: top titles by views/day, title patterns, view-weighted words, frequent tags."""
+def trend_digest(videos,top=30,per_day=None):
+    """Text for Claude: top titles (by views/day only with YouTube metrics approval), title patterns, view-weighted
+    words, frequent tags."""
+    if per_day is None:
+        from ..youtube_research.engine import metrics_ok
+        per_day=metrics_ok()  # views/day = a derived metric (YouTube API policies III.E.4.h)
     seen,vids=set(),[]
-    for x in sorted(videos,key=lambda x:-x["views"]/x["days"]):
+    for x in sorted(videos,key=lambda x:-x["views"]/x["days"] if per_day else -x["views"]):
         if x["title"] not in seen: seen.add(x["title"]); vids.append(x)
     vids=vids[:top]
     if not vids: return "NO TREND DATA"
@@ -80,8 +68,10 @@ def trend_digest(videos,top=30):
     pat={"|":lambda t:"|" in t,"question":lambda t:"?" in t,"vs":lambda t:re.search(r"(?i)\bvs\.?\b",t),
          "mother/baby":lambda t:re.search(r"(?i)\b(mother|baby|kid|cub)\b",t),"cliff":lambda t:re.search(r"(?i)cliff",t)}
     n=len(vids)
-    return "\n".join([f"TOP {n} BY VIEWS/DAY (views/day | views | title | channel):"]
-                     +[f"{x['views']//x['days']} | {x['views']} | {x['title']} | {x['channel']}" for x in vids[:15]]
+    return "\n".join([f"TOP {n} BY VIEWS/DAY (views/day | views | title | channel):" if per_day
+                      else f"TOP {n} BY VIEWS (views | title | channel):"]
+                     +[(f"{x['views']//x['days']} | " if per_day else "")+f"{x['views']} | {x['title']} | {x['channel']}"
+                       for x in vids[:15]]
                      +["PATTERNS: "+", ".join(f"{k} {sum(bool(f(x['title'])) for x in vids)}/{n}" for k,f in pat.items())
                        +f", avg {sum(len(x['title']) for x in vids)//n} chars",
                        "WORDS BY VIEWS: "+", ".join(w for w,_ in words.most_common(25)),
@@ -105,7 +95,7 @@ def research(video,queries=None,yt=None):
     return "\n".join(spanish+[f"FILM: {s['title']} | archetype {s.get('archetype','?')}",f"PREMISE: {s['premise']}",
                       f"PAYOFF (do not reveal): {s['payoff']}","CAST: "+", ".join(species),
                       f"CHAPTERS ({len(chapters)}): "+" / ".join(f"{clock(t)} {n}" for t,n in chapters),
-                      f"QUERIES: {'; '.join(queries)} ({units} quota units; 0 = 7-day cache)","",trend_digest(videos)])
+                      f"QUERIES: {'; '.join(queries)} ({units} API requests; 0 = cached 7 days)","",trend_digest(videos)])
 
 
 TREND_QUERIES=["snow leopard ibex","wolf pack mountain goat","eagle mountain goat cliff","markhor lynx","wolves hunting sheep mountain"]
@@ -124,7 +114,7 @@ def trends(key,queries=None,yt=None):
     videos,units=[],0
     for q in queries or TREND_QUERIES:
         found,u=search(yt,q); videos+=found; units+=u
-    return f"QUERIES: {'; '.join(queries or TREND_QUERIES)} ({units} quota units; 0 = 7-day cache)\n\n"+trend_digest(videos)
+    return f"QUERIES: {'; '.join(queries or TREND_QUERIES)} ({units} API requests; 0 = cached 7 days)\n\n"+trend_digest(videos)
 
 
 def reference(key,url,yt=None):

@@ -376,7 +376,7 @@ Ví dụ: `SELECT count(*) FROM clips WHERE tags->'species' ? 'lion' AND tags->>
 |---|---|---|---|
 | `doc-edit` | footage / footage+AI: narration → brief → beat sheet → plan → place; missing-prompts (fa_), logo, delogo, ingest, fill, fill-THIEU, fallback-species, after-gen-vid, color, reframe, status, done, push, seo. full-AI: `references/full-ai.md` (voice → prompts → shots → cả phim → done / push) | `story.py`, `plan.py`, `place.py`, `missing.py`, `after_gen.py`, `gen_swap.py`, `fallback_swap.py`, `ledger.py`, `reframe.py`, `yolo.py`, `beats.py` (nhịp nhạc), `state.py`, `bench_story_first.py` | Timeline `channN_vidK`, `.work/doc_edit/` |
 | `create-doc-mov` | Người viết narration duy nhất: bốn file (Screenplay, transcript, Timestamp EN/VI, Visual Edit Plan) cho footage types; story.json + bốn file cho full-AI; tạo folder video | `new_video.py`, `build_four_files.py` | `<video>\audios`, `.work/doc_edit/<video>/` |
-| `research-youtube` | Top 20 video nhiều view 10 ngày qua theo chủ đề | `top_videos.py` | — |
+| `research-youtube` | top / rising / competitors / outliers / pack (create-doc-mov); một engine `dvr_cowork/youtube_research` (SQLite cache, quota theo bucket PT, policy guard derived metrics), `seo` + `youtube trends` dùng chung cache | `python -m dvr_cowork.youtube_research` | `.work/youtube_research/`, `config/research_youtube.toml` |
 | `tag-source` | Agent tagger nhìn 4 frame/clip một lần → tag; xếp clip AI mới vào thư mục loài | `tag_source.py`, `organize.py` | `.work/library/` |
 | `scan-source` | Cập nhật index sau khi thêm/đổi/xoá file | `scan_source.py` | `.work/library/` |
 | `process-ai-video` | Làm clip AI trông như quay thật, cắt character sheet đầu clip | `process_ai_video.py` | Ghi đè clip trong `D:\AI_video` |
@@ -440,6 +440,7 @@ gói không chứa đủ mọi file với đúng kích thước. Sau `import`: `
 
 ```powershell
 .venv\Scripts\python.exe -m unittest discover -s dvr_cowork\fullai\tests -t .   # full-AI + profile + loại video + YouTube, ~20 s
+.venv\Scripts\python.exe -m dvr_cowork.youtube_research selftest                  # research-youtube, offline, <1 s
 .venv\Scripts\python.exe -m dvr_cowork.vtypes                                     # loại / vùng / số story
 .venv\Scripts\python.exe .claude\skills\doc-edit\scripts\plan.py --selftest          # mỗi script skill có --selftest
 .venv\Scripts\python.exe .claude\skills\gemini-assist\scripts\test_gemini_bridge.py # bridge Gemini, offline

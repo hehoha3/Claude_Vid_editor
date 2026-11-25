@@ -1,7 +1,10 @@
 ## New video (footage f_ / footage+AI fa_, 8-180 min): `/doc-edit <audios-folder> [amazon|africa|frozen]`
 
 Order (user 2026-11-05): **0 preflight -> A narration (background) + B plan (foreground) -> C intro music + re-plan
--> D prompts (intro + story 1 only) -> E place**. The body after story 1 is filled at once by plan.py (BODY_SUB: the
+-> D prompts (intro + story 1 only) -> E place**. One run, no pause (user 2026-11-23): A2 + subtitles placed ->
+straight on to B, C, D, E with no status reply or "làm tiếp?" question between steps; stop only on a STOP / error
+the user must decide, or at the end (prompts out, Case 1 / 2). Progress = one short line between steps, the full
+reply at the end. The body after story 1 is filled at once by plan.py (BODY_SUB: the
 `--sub-all` + `--sub-broad` tiers, FALLBACK markers): no prompts there. Prompts come after C because the intro fit
 renumbers the groups (2026-11-05: prompts written before it had to be regenerated). **f_ films** (no AI): skip D
 and reply part 5; plan's THIẾU go to the reply, the user then calls fill-THIEU / fallback-species. **Under 20 min**:

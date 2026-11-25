@@ -158,8 +158,8 @@ class Session:
         self.preload([{"path":path,"bin":bin_name}])
         return self.clips[fkey(Path(path).resolve())]
 
-    def bounds(self,kind,track):
-        return self.tl.GetItemListInTrack(kind,track) or [] if self.tl else []
+    def bounds(self,kind,track):  # transitions are items of their own: never shots
+        return [i for i in self.tl.GetItemListInTrack(kind,track) or [] if i.GetType()!="transition"] if self.tl else []
 
     def rows(self,kind,track):
         """One read of a track: (start, end, path, source-in, item) per item."""
@@ -304,25 +304,18 @@ def black_fades(s):
     story shot after the intro (2.5 s), to black on the last intro cut (1.5 s) and on the film's last shot
     (3 s, at most the shot - 7 f); the same fades on each one's A1 sound. Only a missing / shorter fade is set,
     then read back. -> report line."""
+    from ..resolve_ops import apply_fades,story_start
     fps=s.plan["fps"]; t0=int(s.tl.GetStartFrame()); f=lambda x:round(x*fps)
     v=sorted(s.bounds("video",1),key=lambda i:int(i.GetStart()))
     if not v: return "black fades: V1 empty"
-    want=[(v[0],f(1.0),0)] if int(v[0].GetStart())==t0 else []
-    want.append((v[-1],0,min(f(3.0),int(v[-1].GetEnd())-int(v[-1].GetStart())-7)))
-    k=next((j for j,i in enumerate(v) if int(i.GetStart())==t0+hook_window(s.plan)[1]),0)
+    want=[(v[0],f(1.0),0),(v[-1],0,min(f(3.0),int(v[-1].GetEnd())-int(v[-1].GetStart())-7))]  # first shot always
+    end=t0+hook_window(s.plan)[1]
+    k=story_start(v,end,f(10)) or next((j for j,i in enumerate(v) if int(i.GetStart())==end),0)
     if k: want+=[(v[k-1],0,f(1.5)),(v[k],f(2.5),0)]  # intro on the timeline: dip to black into the story
     # A1 (user 2026-11-06): each faded shot's own sound fades with its picture (retimed intro cuts have no A1).
     a1={(int(i.GetStart()),int(i.GetEnd())):i for i in s.bounds("audio",SHOT_A)}
     want+=[(a1[key],fi,fo) for it,fi,fo in list(want) if (key:=(int(it.GetStart()),int(it.GetEnd()))) in a1]
-    fixed,bad=0,[]
-    for it,fi,fo in want:
-        g=it.GetFades() or {}
-        old=(int(g.get("FadeIn",0)),int(g.get("FadeOut",0)))
-        new=(max(old[0],fi),max(old[1],fo))
-        if new==old: continue
-        fixed+=1; it.SetFades({"FadeIn":new[0],"FadeOut":new[1]})
-        g=it.GetFades() or {}
-        if (int(g.get("FadeIn",0)),int(g.get("FadeOut",0)))!=new: bad.append(f"{(int(it.GetStart())-t0)/fps:.1f}s")
+    fixed,bad=apply_fades(want,t0,fps)
     return f"black fades: {len(want)} checked, {fixed} set"+(f", NOT SET at {bad}" if bad else "")
 
 
@@ -673,6 +666,9 @@ def render_start(video,resolve=None):
             if existing.exists() and read_json(existing).get("status") in ("STARTING","RUNNING","UNKNOWN"):
                 raise Stop("An earlier render is pending/uncertain; inspect render-status, do not duplicate the job")
             s.project.SetCurrentTimeline(s.tl)
+            # User 2026-11-23: the fades are set at assemble; the render checks them once more (Resolve 21.1 can drop
+            # SetFades on V1 video items at a project reopen) and puts back only a missing one.
+            fades_check=black_fades(s); event(v,"BLACK_FADES_CHECK",result=fades_check)
             preset=config().get("resolve",{}).get("render_preset","YouTube 1080 HEVC")
             if not s.project.LoadRenderPreset(preset): raise Stop(f"Create Resolve render preset {preset!r}")
             if not s.pm.SaveProject(): raise Stop("Save project failed before render")
@@ -693,7 +689,7 @@ def render_start(video,resolve=None):
             # Subtitle export is configured in the named preset; do not change the user's subtitle track state.
             job=s.project.AddRenderJob()
             if not job: raise Stop("Could not create render job")
-            result={"status":"STARTING","job":job,"path":str(v/(stem+".mp4")),"preset":preset,
+            result={"status":"STARTING","job":job,"path":str(v/(stem+".mp4")),"preset":preset,"fades_check":fades_check,
                     "project":s.project.GetName(),"runtime_s":report["runtime_s"],"snapshot_hash":report["snapshot_hash"]}
             write_json(existing,result)
             if not s.project.StartRendering(job):

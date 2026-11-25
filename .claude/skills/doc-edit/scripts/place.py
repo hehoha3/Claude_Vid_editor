@@ -293,7 +293,7 @@ def black_fades(video):
     missing / shorter fade is set, then read back and saved. Called at the end of every main() run, by
     ledger.render_done before every render and by
     hide_logo --overwrite-all after it reopens the project (2026-10-30: V1 fades were lost on that reopen). -> line."""
-    from dvr_cowork.resolve_ops import CHANNEL_ENV, find_timeline
+    from dvr_cowork.resolve_ops import CHANNEL_ENV, apply_fades, find_timeline, story_start, v1_clips
     from dvr_cowork.videokey import timeline_name
     plan = json.loads((ROOT / ".work" / "doc_edit" / video_key(video) / "plan.json").read_text("utf-8"))
     name = timeline_name(plan.get("video_dir")) or "?"
@@ -310,25 +310,17 @@ def black_fades(video):
         pr.SetCurrentTimeline(tl)
         fps, t0 = timeline_fps(tl, pr), int(tl.GetStartFrame())
         f = lambda s: round(s * fps)  # noqa: E731
-        v = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: int(i.GetStart()))
+        v = v1_clips(tl)
         slot = {f(s["start"]): s for s in plan["slots"]}
-        k = sum(int(i.GetStart()) - t0 < f(plan.get("intro", 0)) - 1 for i in v)  # intro items before story 1
-        want = ([(0, f(EDGE_IN), 0)] if v and int(v[0].GetStart()) == t0 else [])             + ([(len(v) - 1, 0, min(f(EDGE_OUT), int(v[-1].GetDuration()) - 7))] if v else [])  # impact: black, then a hard cut on the hit
+        k = story_start(v, t0 + f(plan.get("intro", 0)), f(10)) \
+            or sum(int(i.GetStart()) - t0 < f(plan.get("intro", 0)) - 1 for i in v)  # no black gap: the plan's intro
+        # user 2026-11-23: from black on the first shot even when V1 starts at 1.00 s (black + riser before it)
+        cap = lambda i, s: min(f(s), int(i.GetDuration()) - 7)  # noqa: E731  (Resolve refuses a fade > the shot)
+        want = [(v[0], cap(v[0], EDGE_IN), 0), (v[-1], 0, cap(v[-1], EDGE_OUT))] if v else []
         if 0 < k < len(v):
-            cap = lambda j, s: min(f(s), int(v[j].GetDuration()) - 7)  # noqa: E731  (Resolve refuses a fade > the shot)
-            want += [(k - 1, 0, cap(k - 1, slot.get(int(v[k - 1].GetStart()) - t0, {}).get("fade_out") or 1.5)),
-                     (k, cap(k, slot.get(int(v[k].GetStart()) - t0, {}).get("fade_in") or 2.5), 0)]
-        fixed, bad = 0, []
-        for j, fi, fo in want:
-            g = v[j].GetFades() or {}
-            old = (int(g.get("FadeIn", 0)), int(g.get("FadeOut", 0)))
-            new = (max(old[0], fi), max(old[1], fo))
-            if new != old:
-                fixed += 1
-                v[j].SetFades({"FadeIn": new[0], "FadeOut": new[1]})
-                g = v[j].GetFades() or {}
-                if (int(g.get("FadeIn", 0)), int(g.get("FadeOut", 0))) != new:
-                    bad.append(f"{(int(v[j].GetStart()) - t0) / fps:.1f}s")
+            want += [(v[k - 1], 0, cap(v[k - 1], slot.get(int(v[k - 1].GetStart()) - t0, {}).get("fade_out") or 1.5)),
+                     (v[k], cap(v[k], slot.get(int(v[k].GetStart()) - t0, {}).get("fade_in") or 2.5), 0)]
+        fixed, bad = apply_fades(want, t0, fps)
         if fixed:
             pm.SaveProject()
         if cur:

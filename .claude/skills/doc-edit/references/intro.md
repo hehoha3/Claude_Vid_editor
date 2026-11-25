@@ -10,7 +10,7 @@ hit). Needs: A2 placed (narrator from 0:03.6) and plan.json. Called from
 
        .venv/Scripts/python.exe .claude/skills/doc-edit/scripts/intro.py <video> ["<music file>"]
 
-   No file (the default): it ranks the `D:\Music` tracks that have their Pixabay license beside them (`*-<id>-license.txt`,
+   No file (the default): it ranks the `D:\Audio_lib\pixalbay` tracks that have their Pixabay license beside them (`*-<id>-license.txt`,
    `*-<id>.txt`, any txt naming the id) and the `D:\Audio_lib\intro` tracks (Epidemic edit / Suno, `<stem>.license.txt`,
    audio-expert fetch); the library music only when there is none; early climax, or a quiet / mysterious start that rises before
    ~45 s; hits per 10 s, steady tempo, energy that holds; tracks already on this video's A7, the intro music of the 6
